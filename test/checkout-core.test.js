@@ -94,3 +94,14 @@ test('buildOrderPayload prefers the accepted CB order and falls back to the form
   assert.equal(p.address_text, 'ул. Роза 5');
   assert.deepEqual(p.items, []);
 });
+
+test('buildOrderPayload tolerates missing fields', () => {
+  let p;
+  assert.doesNotThrow(() => { p = plain(core.buildOrderPayload({ id: 'X', order: {} }, { type: '' }, null, 'u')); });
+  assert.equal(p.cb_order_id, 'X');
+});
+
+test('buildOrderPayload falls back to detail.items with alternate keys', () => {
+  const p = plain(core.buildOrderPayload({ id: 'Y', items: [{ id: 'p9', quantity: 2, item_price: 9 }], order: {} }, { type: '' }, {}, 'u'));
+  assert.deepEqual(p.items, [{ name: 'p9', qty: 2, price: 9 }]);
+});

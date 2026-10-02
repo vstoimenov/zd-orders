@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>zdo harness</title>
+<style>
+body{font-family:sans-serif;max-width:520px;margin:20px auto;padding:0 16px}
+.tick-wrapper{padding:4px;border:1px dashed #ccc;margin:2px 0}
+pre{background:#f4f4f4;padding:8px;white-space:pre-wrap;font-size:12px}
+</style>
+<script>
+  window.WebPlatform = {
+    checkoutInterceptor: null,
+    onReady: function (fn) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn); else fn(); }
+  };
+  var FIX_OFFICES = [
+    { id: 'econt:4001', code: '4001', name: 'Пловдив Център', city: 'Пловдив', postCode: '4000', address: 'ул. Гладстон 1', isAutomat: false },
+    { id: 'econt:4002', code: '4002', name: 'Тракия', city: 'Пловдив', postCode: '4000', address: 'бул. Освобождение 31', isAutomat: true },
+    { id: 'econt:1001', code: '1001', name: 'Лозенец', city: 'София', postCode: '1000', address: 'ул. Бяла черква 2', isAutomat: false }
+  ];
+  var FIX_CITIES = [
+    { id: 1, name: 'Варна', postCode: '9000', region: 'Варна', hasOffice: true },
+    { id: 2, name: 'Велико Търново', postCode: '5000', region: 'Велико Търново', hasOffice: true },
+    { id: 3, name: 'Долни Воден', postCode: '4000', region: 'Пловдив', hasOffice: false }
+  ];
+  var realFetch = window.fetch.bind(window);
+  window.fetch = function (url, init) {
+    url = String(url);
+    var reply = function (status, data) { return Promise.resolve(new Response(JSON.stringify(data), { status: status })); };
+    if (url.indexOf('/api/offices') > -1) return window.__failOffices ? reply(500, {}) : reply(200, { offices: FIX_OFFICES });
+    if (url.indexOf('/api/cities') > -1) return reply(200, { cities: FIX_CITIES });
+    return realFetch(url, init);
+  };
+  window.__beacons = [];
+  navigator.sendBeacon = function (url, blob) {
+    blob.text().then(function (t) {
+      window.__beacons.push({ url: url, body: JSON.parse(t) });
+      document.getElementById('beacon').textContent = JSON.stringify(window.__beacons, null, 2);
+    });
+    return true;
+  };
+</script>
+<script src="/public/checkout.js" defer></script>
+</head>
+<body>
+<h3>Фалшив чекаут</h3>
+<input name="name" placeholder="Име" value="Мария Тестова"><br>
+<input name="email" placeholder="Имейл" value="test@example.com"><br>
+<input name="shippingPhone" value="+359888123456"><br>
+<div class="col20 f-left" data-role="address-part">
+  <input name="shippingAddress" placeholder="Адрес">
+  <div class="input-row"><input name="shippingCity" placeholder="Град"></div>
+</div>
+<input type="hidden" name="shippingZipCode">
+<div class="tick-wrapper"><input type="radio" name="shippingOption"> До офис ECONT 4.07€ (7.96 лв)</div>
+<div class="tick-wrapper"><input type="radio" name="shippingOption" checked> До офис speedy 4.07€ (7.96 лв)</div>
+<div class="tick-wrapper"><input type="radio" name="shippingOption"> До адрес speedy 4.04€ (7.90 лв)</div>
+<p><a data-role="continue" href="#" id="go">ПОРЪЧАЙ СЕГА</a></p>
+<div id="status"></div>
+<h4>Родни полета (какво вижда CB)</h4><pre id="native"></pre>
+<h4>Beacon</h4><pre id="beacon">—</pre>
+<script>
+  // Mimics ConvertBuilder: interceptor → "completeOrder" → platform.events.order_completed
+  document.getElementById('go').addEventListener('click', function (e) {
+    e.preventDefault();
+    var accept = function () {
+      var v = function (n) { return document.querySelector('[name=' + n + ']').value; };
+      var order = { id: 'TEST-' + Date.now(), customerName: v('name'), customerEmail: v('email'), paymentType: 'cod', total: 22.57, currency: 'EUR',
+        shippingAddress: { phone: v('shippingPhone') }, items: [{ productId: 'p1', title: 'Да се заобичаме с думи', quantity: 1, price: 18.5 }] };
+      document.getElementById('status').textContent = 'ПРИЕТА: ' + order.id;
+      document.body.dispatchEvent(new CustomEvent('platform.events.order_completed', { bubbles: true,
+        detail: { id: order.id, total: order.total, currency: 'EUR', items: [], customerName: order.customerName, customerEmail: order.customerEmail, order: order } }));
+    };
+    var ci = WebPlatform.checkoutInterceptor;
+    if (ci && ci.beforeComplete) ci.beforeComplete(accept, function (msg) { document.getElementById('status').textContent = 'СПРЯНА: ' + msg; });
+    else accept();
+  });
+  setInterval(function () {
+    var v = function (n) { var f = document.querySelector('[name=' + n + ']'); return f ? f.value : ''; };
+    var checked = [].map.call(document.querySelectorAll('[name=shippingOption]'), function (r) { return r.checked ? 'X' : '·'; }).join(' ');
+    document.getElementById('native').textContent = 'shippingAddress: ' + v('shippingAddress') + '\nshippingCity: ' + v('shippingCity') +
+      '\nshippingZipCode: ' + v('shippingZipCode') + '\nshippingOption: ' + checked;
+  }, 300);
+</script>
+</body>
+</html>
