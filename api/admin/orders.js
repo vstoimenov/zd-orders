@@ -9,20 +9,15 @@ const PAGE_SIZE = 50;
 
 export default async function handler(req, res) {
   if (!isAdmin(req)) return send(res, 401, { error: 'auth' });
-  const q = getQuery();
-  if (req.method === 'PATCH') {
-    try {
+  try {
+    const q = getQuery();
+    if (req.method === 'PATCH') {
       const b = readJson(req) || {};
       return (await updateStatus(q, String(b.id || ''), String(b.status || '')))
         ? send(res, 200, { ok: true })
         : send(res, 400, { error: 'invalid' });
-    } catch (err) {
-      console.error('[admin] orders failed', err);
-      return send(res, 500, { error: 'server' });
     }
-  }
-  if (req.method !== 'GET') return send(res, 405, { error: 'method' });
-  try {
+    if (req.method !== 'GET') return send(res, 405, { error: 'method' });
     const p = searchParams(req);
     const filters = { status: p.get('status') || '', from: p.get('from') || '', to: p.get('to') || '', search: p.get('q') || '' };
     if (p.get('format') === 'csv') {

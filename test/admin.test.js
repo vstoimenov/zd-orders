@@ -52,6 +52,18 @@ test('ordersToCsv uses a BOM, semicolons and quotes', () => {
   assert.ok(lines[1].includes(';30.50;EUR;new;да;A1'));
 });
 
+test('ordersToCsv escapes formula injection', () => {
+  const lines = ordersToCsv([{ ...sample, name: '=1+1', email: '@evil', phone: '+359888123456' }]).split('\r\n');
+  const cols = lines[1].split(';');
+  assert.equal(cols[1], "'=1+1");
+  assert.equal(cols[3], "'@evil");
+  assert.equal(cols[2], '+359888123456');
+
+  const lines2 = ordersToCsv([{ ...sample, name: '-x' }]).split('\r\n');
+  const cols2 = lines2[1].split(';');
+  assert.equal(cols2[1], "'-x");
+});
+
 let q;
 beforeEach(async () => { q = await makeTestQuery(); setQueryForTests(q); });
 
@@ -94,4 +106,10 @@ test('admin orders: auth, list with waybill, status change, csv', async () => {
   assert.match(res.headers['content-type'], /text\/csv/);
   assert.match(res.headers['content-disposition'], /attachment; filename="porachki-\d{4}-\d{2}-\d{2}\.csv"/);
   assert.equal(res.body.split('\r\n').length, 2);
+});
+
+test('admin orders rejects malformed cookie with 401', async () => {
+  const res = fakeRes();
+  await adminOrders(fakeReq({ url: '/api/admin/orders', headers: { cookie: 'zdo_admin=%' } }), res);
+  assert.equal(res.statusCode, 401);
 });
