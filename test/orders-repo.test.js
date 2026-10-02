@@ -31,6 +31,11 @@ test('same phone within 24h flags both orders as duplicates', async () => {
   assert.equal((await insertOrder(q, order({ cbOrderId: 'A2' }))).duplicate, true);
   const flags = Object.fromEntries((await listOrders(q)).rows.map((r) => [r.cbOrderId, r.isDuplicate]));
   assert.deepEqual(flags, { OLD: false, A1: true, A2: true });
+  // New assertion: different phone should not be flagged as duplicate
+  const diffPhoneRes = await insertOrder(q, order({ cbOrderId: 'B1', phoneNorm: '+359877000000' }));
+  assert.equal(diffPhoneRes.duplicate, false);
+  const diffPhoneOrder = (await listOrders(q)).rows.find((r) => r.cbOrderId === 'B1');
+  assert.equal(diffPhoneOrder.isDuplicate, false);
 });
 
 test('countRecentByIp counts the last 10 minutes only', async () => {
@@ -58,6 +63,10 @@ test('listOrders filters by status, search and date; paginates', async () => {
   const page2 = await listOrders(q, { page: 2, pageSize: 2 });
   assert.equal(page2.total, 3);
   assert.equal(page2.rows.length, 1);
+  // New assertion: Infinity page should not throw and should return valid results
+  const infinityResult = await listOrders(q, { page: Infinity });
+  assert.equal(typeof infinityResult.rows, 'object');
+  assert.equal(Array.isArray(infinityResult.rows), true);
 });
 
 test('updateStatus rejects unknown statuses and ids', async () => {
