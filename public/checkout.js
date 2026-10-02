@@ -381,8 +381,11 @@
   function widgetInactive() {
     if (!root || !document.contains(root)) return true;
     var addr = field('shippingAddress'), part = addr && addr.closest('[data-role="address-part"]');
-    return !!(part && part.style.display === 'none');
+    // ConvertBuilder hides it with its `none` class (toggleDisplay); our own hiding is the :has() CSS rule
+    return !!(part && (part.classList.contains('none') || part.style.display === 'none'));
   }
+
+  var shippingFailedAt = 0;
 
   function installInterceptor() {
     var prev = window.WebPlatform.checkoutInterceptor || null;
@@ -393,7 +396,11 @@
           if (!widgetInactive()) {
             msg = validateSelection(selection());
             // a clicked shipping radio starts an async price update in ConvertBuilder — don't submit before it settles
-            if (!msg && sync()) msg = MSG_SHIPPING_UPDATED;
+            // ask for one more press at most once per 30 s, so a store that keeps resetting the method can't lock the customer out
+            if (!msg && sync()) {
+              if (Date.now() - shippingFailedAt > 30000) { shippingFailedAt = Date.now(); msg = MSG_SHIPPING_UPDATED; }
+              else console.warn('[zdo] shipping option not accepted by the store');
+            }
           }
         } catch (err) {
           // never hang or break the store's checkout because of our code
