@@ -1,0 +1,37 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { makeTestQuery } from './helpers/pglite.js';
+import { replaceOffices, replaceCities, listOffices, listCities } from '../lib/catalog-repo.js';
+
+const office = (code, city, extra = {}) => ({ id: `econt:${code}`, courier: 'econt', code, name: `Офис ${code}`, city, cityId: 1, postCode: '4000', address: 'ул. Х 1', isAutomat: false, ...extra });
+
+test('replaceOffices upserts, removes vanished offices and lists them sorted', async () => {
+  const q = await makeTestQuery();
+  assert.deepEqual(await replaceOffices(q, 'econt', [office('2', 'София'), office('1', 'Пловдив'), office('3', 'София')]), { upserted: 3, removed: 0 });
+  assert.deepEqual(await replaceOffices(q, 'econt', [office('1', 'Пловдив', { name: 'Ново име', isAutomat: true }), office('2', 'София')]), { upserted: 2, removed: 1 });
+  assert.deepEqual(await listOffices(q, 'econt'), [
+    { id: 'econt:1', code: '1', name: 'Ново име', city: 'Пловдив', postCode: '4000', address: 'ул. Х 1', isAutomat: true },
+    { id: 'econt:2', code: '2', name: 'Офис 2', city: 'София', postCode: '4000', address: 'ул. Х 1', isAutomat: false },
+  ]);
+});
+
+test('an empty list never wipes the cache', async () => {
+  const q = await makeTestQuery();
+  await replaceOffices(q, 'econt', [office('1', 'Пловдив')]);
+  assert.deepEqual(await replaceOffices(q, 'econt', []), { upserted: 0, removed: 0 });
+  assert.equal((await listOffices(q, 'econt')).length, 1);
+  await replaceCities(q, [{ id: 1, name: 'Пловдив', postCode: '4000', region: 'Пловдив', hasOffice: true }]);
+  assert.deepEqual(await replaceCities(q, []), { upserted: 0, removed: 0 });
+  assert.equal((await listCities(q)).length, 1);
+});
+
+test('listCities puts cities with an office first', async () => {
+  const q = await makeTestQuery();
+  await replaceCities(q, [
+    { id: 3, name: 'Арда', postCode: '4790', region: 'Смолян', hasOffice: false },
+    { id: 2, name: 'Бургас', postCode: '8000', region: 'Бургас', hasOffice: true },
+    { id: 1, name: 'Айтос', postCode: '8500', region: 'Бургас', hasOffice: true },
+  ]);
+  assert.deepEqual((await listCities(q)).map((c) => c.name), ['Айтос', 'Бургас', 'Арда']);
+  assert.deepEqual((await listCities(q))[0], { id: 1, name: 'Айтос', postCode: '8500', region: 'Бургас', hasOffice: true });
+});
