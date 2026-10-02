@@ -20,9 +20,14 @@ export default async function handler(req, res) {
   if (!token || !body || body.token !== token) return send(res, 401, { error: 'token' });
   const v = validateOrder(body);
   if (!v.ok) return send(res, 400, { error: v.error });
-  const q = getQuery();
-  const ip = clientIp(req);
-  if ((await countRecentByIp(q, ip)) >= RATE_LIMIT) return send(res, 429, { error: 'rate' });
-  const r = await insertOrder(q, { ...v.order, ip, userAgent: String(req.headers['user-agent'] || '').slice(0, 300) });
-  return send(res, 200, { ok: true, inserted: r.inserted, duplicate: r.duplicate });
+  try {
+    const q = getQuery();
+    const ip = clientIp(req);
+    if ((await countRecentByIp(q, ip)) >= RATE_LIMIT) return send(res, 429, { error: 'rate' });
+    const r = await insertOrder(q, { ...v.order, ip, userAgent: String(req.headers['user-agent'] || '').slice(0, 300) });
+    return send(res, 200, { ok: true, inserted: r.inserted, duplicate: r.duplicate });
+  } catch (err) {
+    console.error('[orders] store failed', v.order.cbOrderId, err);
+    return send(res, 500, { error: 'server' });
+  }
 }

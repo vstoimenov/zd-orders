@@ -30,7 +30,7 @@ test('GET /api/offices returns cached Econt offices with CDN caching', async () 
   assert.equal(res.statusCode, 200);
   assert.equal(json(res).offices[0].name, 'Център');
   assert.match(res.headers['cache-control'], /s-maxage=3600/);
-  assert.equal(res.headers['access-control-allow-origin'], ORIGIN);
+  assert.equal(res.headers['access-control-allow-origin'], '*');
   const bad = fakeRes();
   await offices(fakeReq({ url: '/api/offices?courier=dhl' }), bad);
   assert.equal(bad.statusCode, 400);
@@ -39,8 +39,9 @@ test('GET /api/offices returns cached Econt offices with CDN caching', async () 
 test('GET /api/cities returns cities', async () => {
   await replaceCities(q, [{ id: 1, name: 'Пловдив', postCode: '4000', region: 'Пловдив', hasOffice: true }]);
   const res = fakeRes();
-  await cities(fakeReq({ url: '/api/cities' }), res);
+  await cities(fakeReq({ url: '/api/cities', headers: { origin: ORIGIN } }), res);
   assert.deepEqual(json(res).cities, [{ id: 1, name: 'Пловдив', postCode: '4000', region: 'Пловдив', hasOffice: true }]);
+  assert.equal(res.headers['access-control-allow-origin'], '*');
 });
 
 test('POST /api/orders guards origin, token and fields', async () => {
@@ -92,4 +93,75 @@ test('GET /api/cron/refresh requires the secret and stores Econt data', async ()
   assert.deepEqual(json(res), { offices: { upserted: 1, removed: 0 }, cities: { upserted: 1, removed: 0 } });
   const [c] = await q('select has_office from zd.cities where id = 7');
   assert.equal(c.has_office, true);
+});
+
+test('POST /api/orders handles and logs DB errors', async () => {
+  const savedError = console.error;
+  let errorLogged = '';
+  console.error = (msg, ...args) => { errorLogged = msg + ' ' + args.join(' '); };
+  try {
+    setQueryForTests(async () => { throw new Error('db down'); });
+    const res = fakeRes(); await orders(post(body()), res);
+    assert.equal(res.statusCode, 500);
+    assert.deepEqual(json(res), { error: 'server' });
+    assert.equal(res.headers['access-control-allow-origin'], ORIGIN);
+    assert.match(errorLogged, /\[orders\]/);
+  } finally {
+    console.error = savedError;
+    q = await makeTestQuery(); setQueryForTests(q);
+  }
+});
+
+test('GET /api/offices handles and logs DB errors, no cache on error', async () => {
+  const savedError = console.error;
+  let errorLogged = '';
+  console.error = (msg, ...args) => { errorLogged = msg + ' ' + args.join(' '); };
+  try {
+    setQueryForTests(async () => { throw new Error('db down'); });
+    const res = fakeRes();
+    await offices(fakeReq({ url: '/api/offices?courier=econt', headers: { origin: ORIGIN } }), res);
+    assert.equal(res.statusCode, 500);
+    assert.deepEqual(json(res), { error: 'server' });
+    assert.equal(res.headers['cache-control'], undefined);
+    assert.match(errorLogged, /\[offices\]/);
+  } finally {
+    console.error = savedError;
+    q = await makeTestQuery(); setQueryForTests(q);
+  }
+});
+
+test('GET /api/cities handles and logs DB errors, no cache on error', async () => {
+  const savedError = console.error;
+  let errorLogged = '';
+  console.error = (msg, ...args) => { errorLogged = msg + ' ' + args.join(' '); };
+  try {
+    setQueryForTests(async () => { throw new Error('db down'); });
+    const res = fakeRes();
+    await cities(fakeReq({ url: '/api/cities', headers: { origin: ORIGIN } }), res);
+    assert.equal(res.statusCode, 500);
+    assert.deepEqual(json(res), { error: 'server' });
+    assert.equal(res.headers['cache-control'], undefined);
+    assert.match(errorLogged, /\[cities\]/);
+  } finally {
+    console.error = savedError;
+    q = await makeTestQuery(); setQueryForTests(q);
+  }
+});
+
+test('GET /api/cron/refresh handles and logs errors', async () => {
+  const savedError = console.error;
+  let errorLogged = '';
+  console.error = (msg, ...args) => { errorLogged = msg + ' ' + args.join(' '); };
+  const realFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => ({ ok: false, status: 503 });
+    const res = fakeRes();
+    await refresh(fakeReq({ headers: { authorization: 'Bearer cron' } }), res);
+    assert.equal(res.statusCode, 500);
+    assert.equal(json(res).error, 'server');
+    assert.match(errorLogged, /\[cron\]/);
+  } finally {
+    globalThis.fetch = realFetch;
+    console.error = savedError;
+  }
 });
