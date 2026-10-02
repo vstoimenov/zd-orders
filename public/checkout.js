@@ -227,10 +227,12 @@
   }
 
   function selectShippingOption() {
-    if (!state.type) return;
+    if (!state.type) return false;
     var o = shippingOptions(), i = pickOptionIndex(o.labels, state.type);
-    if (i < 0) { console.warn('[zdo] no ConvertBuilder shipping method for', state.type); return; }
-    if (!o.radios[i].checked) o.radios[i].click();
+    if (i < 0) { console.warn('[zdo] no ConvertBuilder shipping method for', state.type); return false; }
+    if (o.radios[i].checked) return false;
+    o.radios[i].click();
+    return true;
   }
 
   /** Copies the choice into ConvertBuilder's own fields so its validation and order see it. */
@@ -278,7 +280,7 @@
     var list = el('city-list'), q = el('addr-city').value;
     if (!cities || !norm(q) || (state.addrPost && q === state.addrCity)) { list.innerHTML = ''; return; }
     list.innerHTML = searchCities(cities, q, 8).map(function (c) {
-      return '<button type="button" class="zdo-item" data-city="' + c.id + '">' + esc(c.name) + (c.region ? ' <small>обл. ' + esc(c.region) + '</small>' : '') + '</button>';
+      return '<button type="button" class="zdo-item" data-city="' + esc(c.id) + '">' + esc(c.name) + (c.region ? ' <small>обл. ' + esc(c.region) + '</small>' : '') + '</button>';
     }).join('');
   }
 
@@ -365,9 +367,14 @@
     var prev = window.WebPlatform.checkoutInterceptor || null;
     var mine = {
       beforeComplete: function (ok, fail) {
-        var msg = validateSelection(selection());
-        if (msg) { showError(msg); fail(msg); return; }
-        sync();
+        try {
+          var msg = validateSelection(selection());
+          if (msg) { showError(msg); fail(msg); return; }
+          sync();
+        } catch (err) {
+          // never hang or break the store's checkout because of our code
+          console.warn('[zdo]', err);
+        }
         if (prev && prev.beforeComplete) prev.beforeComplete(ok, fail); else ok();
       }
     };
@@ -391,6 +398,26 @@
     } catch (err) { console.warn('[zdo]', err); }
   }
 
+  function shippingNeedsClick() {
+    if (!state.type) return false;
+    var o = shippingOptions(), i = pickOptionIndex(o.labels, state.type);
+    return i >= 0 && !o.radios[i].checked;
+  }
+
+  var reselectTimes = [];
+  /** Re-apply our shipping option and prices after ConvertBuilder re-rendered; at most 3 re-select clicks per 5 s. */
+  function onOrderChanged() {
+    setTimeout(function () {
+      try {
+        var now = Date.now();
+        reselectTimes = reselectTimes.filter(function (t) { return now - t < 5000; });
+        if (reselectTimes.length >= 3) { if (shippingNeedsClick()) console.warn('[zdo] shipping option keeps resetting'); }
+        else if (selectShippingOption()) reselectTimes.push(now);
+        fillPrices();
+      } catch (err) { console.warn('[zdo]', err); }
+    }, 50);
+  }
+
   function mount() {
     var addr = field('shippingAddress');
     var part = addr && addr.closest('[data-role="address-part"]');
@@ -407,9 +434,9 @@
     bind();
     render();
     installInterceptor();
-    document.addEventListener('platform.events.order_completed', onOrderCompleted);
+    document.addEventListener('platform.events.order_completed', onOrderCompleted, true);
     // ConvertBuilder may re-render its shipping methods after an address change: re-apply ours
-    document.addEventListener('platform.events.order_changed', function () { setTimeout(selectShippingOption, 0); });
+    document.addEventListener('platform.events.order_changed', onOrderChanged, true);
     return true;
   }
 

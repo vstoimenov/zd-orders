@@ -69,7 +69,7 @@ pre{background:#f4f4f4;padding:8px;white-space:pre-wrap;font-size:12px}
       var order = { id: 'TEST-' + Date.now(), customerName: v('name'), customerEmail: v('email'), paymentType: 'cod', total: 22.57, currency: 'EUR',
         shippingAddress: { phone: v('shippingPhone') }, items: [{ productId: 'p1', title: 'Да се заобичаме с думи', quantity: 1, price: 18.5 }] };
       document.getElementById('status').textContent = 'ПРИЕТА: ' + order.id;
-      document.body.dispatchEvent(new CustomEvent('platform.events.order_completed', { bubbles: true,
+      document.body.dispatchEvent(new CustomEvent('platform.events.order_completed', {
         detail: { id: order.id, total: order.total, currency: 'EUR', items: [], customerName: order.customerName, customerEmail: order.customerEmail, order: order } }));
     };
     var ci = WebPlatform.checkoutInterceptor;
