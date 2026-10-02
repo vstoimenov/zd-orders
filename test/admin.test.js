@@ -64,6 +64,16 @@ test('ordersToCsv escapes formula injection', () => {
   assert.equal(cols2[1], "'-x");
 });
 
+test('ordersToCsv escapes formula injection with dangerous separators', () => {
+  const csv = ordersToCsv([{ ...sample, name: '@a;=HYPERLINK("http://evil";"x")' }]);
+  // The name cell must be quoted and prefixed to prevent semicolon from breaking the row
+  assert.ok(csv.includes(';"\'@a;=HYPERLINK(""http://evil"";""x"")";'), 'name cell should be quoted and prefixed');
+
+  const csv2 = ordersToCsv([{ ...sample, name: '=1\r\n=cmd|x!A0' }]);
+  // The newline inside must be quoted (and the formula prefixed)
+  assert.ok(csv2.includes('"\'=1\r\n=cmd|x!A0"'), 'name cell with newline should be quoted and prefixed');
+});
+
 let q;
 beforeEach(async () => { q = await makeTestQuery(); setQueryForTests(q); });
 
