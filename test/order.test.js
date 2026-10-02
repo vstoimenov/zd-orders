@@ -8,6 +8,9 @@ test('normalizePhone handles Bulgarian formats', () => {
   assert.equal(normalizePhone('+359 888-123-456'), '+359888123456');
   assert.equal(normalizePhone('00359888123456'), '+359888123456');
   assert.equal(normalizePhone('888123456'), '+359888123456');
+  assert.equal(normalizePhone('+359 0888 123 456'), '+359888123456');
+  assert.equal(normalizePhone('00359 0888123456'), '+359888123456');
+  assert.equal(normalizePhone('+359888123'), null);
   assert.equal(normalizePhone('02 987 6543'), '+35929876543');
   assert.equal(normalizePhone('+40 721 234 567'), '+40721234567');
   assert.equal(normalizePhone('12'), null);
@@ -41,6 +44,9 @@ test('validateOrder rejects bad input with a reason', () => {
   assert.equal(bad({ name: 'М' }), 'name required');
   assert.equal(bad({ phone: '123' }), 'invalid phone');
   assert.equal(bad({ delivery_type: 'pigeon' }), 'invalid delivery_type');
+  assert.equal(bad({ delivery_type: 'constructor' }), 'invalid delivery_type');
+  assert.equal(bad({ delivery_type: 'toString' }), 'invalid delivery_type');
+  assert.equal(bad({ delivery_type: '__proto__' }), 'invalid delivery_type');
   assert.equal(bad({ office_text: '' }), 'office required');
   assert.equal(bad({ delivery_type: 'speedy_address', address_text: '' }), 'address required');
   assert.equal(bad({ total: 'abc' }), 'invalid total');
