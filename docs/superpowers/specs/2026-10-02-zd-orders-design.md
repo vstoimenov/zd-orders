@@ -16,9 +16,9 @@ ConvertBuilder продължава да приема поръчките нор�
 
 - **Няма договори с куриери** (няма активна фирма). Еконт номенклатурите са публични (проверено: `getOffices` → 634 офиса/автомата, `getCities` → 1093 града, без креденшъли). Спиди API изисква логин; сайтът speedy.bg е зад Cloudflare → **никакво скрейпване**.
   - Офис Еконт: пълен избор от списък.
-  - Офис Спиди: град (търсене) + свободен текст „име или адрес на офиса“; офисът се уточнява при телефонното потвърждение.
+  - Офис Спиди: **официалната публична карта на Спиди** (`https://services.speedy.bg/office_locator_widget_v3/office_locator.php`, iframe в прозорец; при „Избери“ праща офиса с `postMessage` — същият механизъм работи в memopic). Без договор. Ако картата не се зареди → текстово поле „име или адрес на офиса“.
   - Адрес Спиди: град (търсене) + улица/номер (свободен текст).
-  - Кодът поддържа Спиди API зад env `SPEEDY_USER`/`SPEEDY_PASS`; когато са зададени, cron-ът дърпа и офисите на Спиди и „Офис Спиди“ минава на избор от списък. Без ключове — изключено.
+  - (Ревизия 2026-10-02: първоначално Спиди офис беше свободен текст; сменено на картата по решение на собственика.)
 - **Без известия** за нова поръчка (по решение на собственика). Не се строи.
 - Без код/скриптове на Middleware.bg. Никакви тайни във фронтенда или в git.
 - Живата страница се пипа само след тест на копие.
@@ -44,7 +44,7 @@ URL: `https://dasezaobichame.convertbuilder.com/checkout` (+ чекаутите 
 
 1. Клик на `a[data-role="continue"]` → ако `WebPlatform.checkoutInterceptor.beforeComplete(ok, fail)` съществува, вика се преди изпращането; `ok()` продължава, `fail(msg)` спира. Сега е `null` (Middleware не го ползва).
 2. AJAX `completeOrder` (POST); сървърът на CB валидира полетата.
-3. При успех: `WebPlatform.Store.reportPurchase(…, order)` (Meta Pixel `Purchase`), после след 80 ms → страница за благодарност (освен ако има `checkoutInterceptor.onCompleted` — **не го ползваме**, защото заменя пренасочването).
+3. При успех: `WebPlatform.Store.reportPurchase(…, order)` → излъчва `platform.events.order_completed` (CustomEvent с цялата поръчка; `order.items[] = {productId, title, quantity, price}`) и Meta Pixel `Purchase`, после след 80 ms → страница за благодарност (освен ако има `checkoutInterceptor.onCompleted` — **не го ползваме**, защото заменя пренасочването).
 
 ## Архитектура
 
@@ -53,8 +53,8 @@ URL: `https://dasezaobichame.convertbuilder.com/checkout` (+ чекаутите 
 ```
 zd-orders/
   api/
-    cities.js        GET  ?q=...            → [{name, postCode, region}]
-    offices.js       GET  ?courier=econt&city=...|&q=... → [{id, courier, city, name, address, postCode, isAutomat}]
+    cities.js        GET                    → всички градове [{id, name, postCode, region, hasOffice}] (CDN кеш 1 ч)
+    offices.js       GET  ?courier=econt    → всички офиси [{id, code, name, city, postCode, address, isAutomat}] (CDN кеш 1 ч)
     orders.js        POST (beacon от чекаута)
     admin/login.js   POST парола → подписана бисквитка
     admin/orders.js  GET списък/филтри/CSV · PATCH статус
@@ -71,9 +71,9 @@ zd-orders/
 
 Достъп: отделна Postgres роля `zd_app` (права само върху `zd`) през pooler, `DATABASE_URL` в Vercel env (моделът на memopic). Без PostgREST/anon достъп.
 
-- `zd.cities` — `id int` PK (ID на града в Еконт), `name`, `name_norm` (lowercase, за търсене), `post_code`, `region`, `has_econt_office bool`. В autocomplete се показва „Име (област)“, защото имената се повтарят; градовете с офис на Еконт са първи.
-- `zd.offices` — `id text` (напр. `econt:7538`), `courier` (`econt|speedy`), `code`, `name`, `city`, `city_norm`, `post_code`, `address`, `is_automat bool`, `updated_at`. Refresh = upsert + изтриване на изчезналите за същия куриер (само ако новият списък не е празен).
-- `zd.orders` — `id uuid`, `created_at`, `cb_order_id text unique`, `name`, `phone`, `phone_norm`, `email`, `delivery_type` (`econt_office|speedy_office|speedy_address`), `courier`, `office_id`, `office_text`, `city`, `post_code`, `address_text`, `items jsonb`, `total numeric`, `currency`, `payment_method`, `page_url`, `user_agent`, `ip`, `status` (`new|confirmed|shipped|delivered|returned|cancelled`, default `new`), `is_duplicate bool`, `note text`, `status_changed_at`.
+- `zd.cities` — `id int` PK (ID на града в Еконт), `name`, `post_code`, `region`, `has_office bool`. В autocomplete се показва „Име (област)“, защото имената се повтарят; градовете с офис на Еконт са първи.
+- `zd.offices` — `id text` (напр. `econt:7538`), `courier` (`econt`), `code`, `name`, `city`, `post_code`, `address`, `is_automat bool`, `updated_at`. Refresh = upsert + изтриване на изчезналите за същия куриер (само ако новият списък не е празен).
+- `zd.orders` — `id uuid`, `created_at`, `cb_order_id text unique`, `name`, `phone`, `phone_norm`, `email`, `delivery_type` (`econt_office|speedy_office|speedy_address`), `courier`, `office_id`, `office_text`, `city`, `post_code`, `address_text`, `items jsonb`, `total numeric`, `currency`, `payment_method`, `page_url`, `user_agent`, `ip`, `status` (`new|confirmed|shipped|delivered|returned|cancelled`, default `new`), `is_duplicate bool`, `status_changed_at`.
 
 ### Джаджа `public/checkout.js`
 
@@ -81,15 +81,15 @@ zd-orders/
 
 - Изчаква `WebPlatform.onReady`; работи само ако на страницата има `a[data-role="continue"]` и `input[name="shippingAddress"]`.
 - Вмъква над `[data-role="address-part"]` блок с три радио опции + полета:
-  - Офис Еконт: град (autocomplete от `/api/cities`) → офис (autocomplete от `/api/offices?courier=econt&city=`); може и директно търсене на офис по име (`?q=`).
-  - Офис Спиди: град (autocomplete) + текст „име или адрес на офиса“.
+  - Офис Еконт: едно поле „Напишете град или име на офис“ — целият списък (~634 записа, ~20 KB gzip) се зарежда веднъж и се филтрира в браузъра мигновено (всички думи трябва да се срещат в град/име/адрес); резултатите са групирани като „Град – офис, адрес“.
+  - Офис Спиди: бутон „Избери офис от картата“ → прозорец с картата на Спиди; след избор се показва избраният офис с „Смени“.
   - Адрес Спиди: град (autocomplete) + текст „улица, номер, блок, вход, ет., ап.“.
   - Ако градът липсва в списъка (малко село) — позволява се свободно въведен град.
 - При всяка промяна попълва `shippingAddress` (напр. `ЕКОНТ – офис Айдемир (7538), кв. Деленките ул. София №7`; `СПИДИ – офис: <текст>`; `СПИДИ – адрес: <текст>`), `shippingCity`, `shippingZipCode`, и праща `input` + `change`.
 - Избира съответния `shippingOption` по текста на етикета (ECONT / офис speedy / адрес speedy) с истински `click`, за да преизчисли CB доставката. Ако няма съвпадение — не пипа и логва в конзолата.
 - Скрива родните `shippingAddress`/`shippingCity` и списъка с `shippingOption` (CSS), не ги маха от DOM.
 - Задава `WebPlatform.checkoutInterceptor = { beforeComplete(ok, fail) }`: ако изборът е непълен → `fail("Моля, изберете офис на Еконт.")` и т.н. + скрол до блока; иначе `ok()`. Ако вече има чужд interceptor — обвива го (нашата проверка първо, после неговата).
-- Обвива `WebPlatform.Store.reportPurchase`: вика оригинала първо (пикселът не се пипа), после в `try/catch` праща `navigator.sendBeacon('/api/orders', Blob(text/plain))` с: `cb_order_id`, име/имейл/телефон (от order обекта, fallback от полетата), избора за доставка, `items` (име, количество, цена от order обекта), `total`, `currency`, `payment_method`, `page_url`, `token`. Грешка в нашия код никога не прекъсва потока на CB.
+- Слуша официалното събитие на платформата `document.addEventListener('platform.events.order_completed', e => …)` (CustomEvent, `e.detail = {id, total, currency, items, customerName, customerEmail, order}`; излъчва се от `reportPurchase` преди пренасочването). Нищо от платформата не се обвива → пикселът не се пипа. В `try/catch` праща `navigator.sendBeacon('/api/orders', Blob(text/plain))` с: `cb_order_id`, име/имейл/телефон (от order обекта, fallback от полетата), избора за доставка, `items` (име, количество, цена от order обекта), `total`, `currency`, `payment_method`, `page_url`, `token`. Грешка в нашия код никога не прекъсва потока на CB.
 - Стил: namespace `.zdo-…`, без глобални селектори, розово/бяло в тон с формата, мобилен; целево тегло < 10 KB minified. Всичко на български.
 
 ### `POST /api/orders`
@@ -111,11 +111,11 @@ zd-orders/
 
 ### Cron
 
-Vercel Cron `0 3 * * *` → `/api/cron/refresh` (проверка `CRON_SECRET`): Еконт `getCities` + `getOffices` (`countryCode: "BGR"`) → нормализация → upsert. Спиди — само ако има ключове.
+Vercel Cron `0 3 * * *` → `/api/cron/refresh` (проверка `CRON_SECRET`): Еконт `getCities` + `getOffices` (`countryCode: "BGR"`) → нормализация → upsert. (Спиди няма нужда — ползва се картата им.)
 
 ## Env (Vercel)
 
-`DATABASE_URL`, `ALLOWED_ORIGINS`, `ORDER_TOKEN`, `ADMIN_PASSWORD`, `ADMIN_SECRET`, `CRON_SECRET`, по избор `SPEEDY_USER`, `SPEEDY_PASS`.
+`DATABASE_URL`, `ALLOWED_ORIGINS`, `ORDER_TOKEN`, `ADMIN_PASSWORD`, `ADMIN_SECRET`, `CRON_SECRET`.
 
 ## Обработка на грешки
 
@@ -137,4 +137,4 @@ Vercel Cron `0 3 * * *` → `/api/cron/refresh` (проверка `CRON_SECRET`)
 
 ## Извън обхвата (етап 2)
 
-Създаване на товарителница през API на куриерите; известия; избор на офис Спиди от списък (идва автоматично с ключовете).
+Създаване на товарителница през API на куриерите (иска договори); известия.
