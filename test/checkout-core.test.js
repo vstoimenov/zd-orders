@@ -72,7 +72,22 @@ test('parseSpeedyMessage trusts only the Speedy map', () => {
     { id: 'speedy:79', code: '79', name: 'ПЛОВДИВ - ОФИС', address: 'ул. Константин Стоилов 19', city: 'ПЛОВДИВ', postCode: '4000', isAutomat: false });
   assert.equal(plain(core.parseSpeedyMessage('https://services.speedy.bg', JSON.stringify({ ...data, type: 'APT' }))).isAutomat, true);
   assert.equal(core.parseSpeedyMessage('https://services.speedy.bg', { id: 'abc' }), null);
+  assert.equal(core.parseSpeedyMessage('https://services.speedy.bg', 'abc'), null);
   assert.equal(core.parseSpeedyMessage('https://services.speedy.bg', 'not json'), null);
+});
+
+test('parseSpeedyMessage accepts a bare numeric office id from the Speedy origin', () => {
+  const bare = { id: 'speedy:79', code: '79', name: '', address: '', city: '', postCode: '', isAutomat: false };
+  assert.deepEqual(plain(core.parseSpeedyMessage('https://services.speedy.bg', 79)), bare);
+  assert.deepEqual(plain(core.parseSpeedyMessage('https://services.speedy.bg', '79')), bare);
+  assert.equal(core.parseSpeedyMessage('https://evil.example', 79), null);
+  assert.equal(core.parseSpeedyMessage('https://services.speedy.bg', 'abc'), null);
+});
+
+test('formatSelection formats a nameless Speedy office', () => {
+  const nameless = { id: 'speedy:79', code: '79', name: '', address: '', city: '', postCode: '', isAutomat: false };
+  assert.deepEqual(plain(core.formatSelection({ type: 'speedy_office', office: nameless })),
+    { address: 'СПИДИ – офис №79', city: '', zip: '', officeId: 'speedy:79' });
 });
 
 test('buildOrderPayload prefers the accepted CB order and falls back to the form', () => {

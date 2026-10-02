@@ -57,6 +57,7 @@ pre{background:#f4f4f4;padding:8px;white-space:pre-wrap;font-size:12px}
 <div class="tick-wrapper"><input type="radio" name="shippingOption" checked> До офис speedy 4.07€ (7.96 лв)</div>
 <div class="tick-wrapper"><input type="radio" name="shippingOption"> До адрес speedy 4.04€ (7.90 лв)</div>
 <p><a data-role="continue" href="#" id="go">ПОРЪЧАЙ СЕГА</a></p>
+<p><button type="button" id="reset-method">Нулирай метода + order_changed</button></p>
 <div id="status"></div>
 <h4>Родни полета (какво вижда CB)</h4><pre id="native"></pre>
 <h4>Beacon</h4><pre id="beacon">—</pre>
@@ -72,9 +73,22 @@ pre{background:#f4f4f4;padding:8px;white-space:pre-wrap;font-size:12px}
       document.body.dispatchEvent(new CustomEvent('platform.events.order_completed', {
         detail: { id: order.id, total: order.total, currency: 'EUR', items: [], customerName: order.customerName, customerEmail: order.customerEmail, order: order } }));
     };
+    // like CB: if the widget had to re-select the shipping radio it calls fail() and the customer presses the button again
     var ci = WebPlatform.checkoutInterceptor;
     if (ci && ci.beforeComplete) ci.beforeComplete(accept, function (msg) { document.getElementById('status').textContent = 'СПРЯНА: ' + msg; });
     else accept();
+  });
+  // Simulates CB re-rendering the shipping methods: unchecks all, checks a method that is NOT the widget's current type, fires order_changed
+  document.getElementById('reset-method').addEventListener('click', function () {
+    var patterns = { econt_office: /офис\s+econt/i, speedy_office: /офис\s+speedy/i, speedy_address: /адрес\s+speedy/i };
+    var picked = document.querySelector('input[name="zdo-type"]:checked');
+    var re = picked && patterns[picked.value];
+    var radios = [].slice.call(document.querySelectorAll('input[name="shippingOption"]'));
+    radios.forEach(function (r) { r.checked = false; });
+    for (var i = 0; i < radios.length; i++) {
+      if (!re || !re.test(radios[i].parentNode.textContent)) { radios[i].checked = true; break; }
+    }
+    document.dispatchEvent(new CustomEvent('platform.events.order_changed'));
   });
   setInterval(function () {
     var v = function (n) { var f = document.querySelector('[name=' + n + ']'); return f ? f.value : ''; };

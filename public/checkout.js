@@ -44,7 +44,7 @@
       var o = sel.office;
       if (o) {
         return {
-          address: COURIER_LABEL[sel.type] + ' – ' + (o.isAutomat ? 'автомат ' : 'офис ') + o.name + ' (' + o.code + ')' + (o.address ? ', ' + o.address : ''),
+          address: COURIER_LABEL[sel.type] + ' – ' + (o.isAutomat ? 'автомат ' : 'офис ') + (o.name ? o.name + ' (' + o.code + ')' : '№' + o.code) + (o.address ? ', ' + o.address : ''),
           city: o.city || '', zip: o.postCode || '', officeId: o.id
         };
       }
@@ -90,6 +90,7 @@
   function parseSpeedyMessage(origin, data) {
     if (origin !== SPEEDY_ORIGIN) return null;
     if (typeof data === 'string') { try { data = JSON.parse(data); } catch (e) { return null; } }
+    if (typeof data === 'number') data = { id: data }; // bare office id (also covers the string "79", parsed above)
     if (!data || typeof data !== 'object') return null;
     var id = clean(data.id);
     if (!/^\d{1,10}$/.test(id)) return null;
@@ -235,13 +236,13 @@
     return true;
   }
 
-  /** Copies the choice into ConvertBuilder's own fields so its validation and order see it. */
+  /** Copies the choice into ConvertBuilder's own fields so its validation and order see it. Returns true if it had to click a shipping radio. */
   function sync() {
     var f = formatSelection(selection());
     setField('shippingAddress', f ? f.address : '');
     setField('shippingCity', f ? f.city : '');
     setField('shippingZipCode', f ? f.zip : '');
-    selectShippingOption();
+    return selectShippingOption();
   }
 
   function showError(msg) {
@@ -251,7 +252,8 @@
   }
 
   function pickedHtml(o) {
-    return '<b>' + esc((o.isAutomat ? 'Автомат ' : 'Офис ') + o.name) + '</b>' + (o.address ? '<br>' + esc(o.address) : '') +
+    var title = o.name ? (o.isAutomat ? 'Автомат ' : 'Офис ') + o.name : 'Офис на Спиди №' + o.code;
+    return '<b>' + esc(title) + '</b>' + (o.address ? '<br>' + esc(o.address) : '') +
       (o.city ? '<br>' + esc(o.city) : '') + ' <button type="button" data-role="change">Смени</button>';
   }
 
@@ -286,6 +288,16 @@
 
   function econtFailed() { state.econtFallback = true; render(); sync(); }
 
+  /** True if src is the iframe's window or a frame nested up to 3 levels inside it (the widget may post from a child frame). */
+  function fromFrame(src, win) {
+    var w = src;
+    for (var i = 0; w && win && i < 4; i++) {
+      if (w === win) return true;
+      try { w = w.parent === w ? null : w.parent; } catch (err) { return false; }
+    }
+    return false;
+  }
+
   function openSpeedyMap() {
     var m = document.createElement('div');
     m.className = 'zdo-modal';
@@ -295,7 +307,7 @@
     function close() { window.removeEventListener('message', onMessage); m.remove(); }
     function onMessage(e) {
       var frame = m.querySelector('iframe');
-      if (!frame || e.source !== frame.contentWindow) return;
+      if (!frame || !fromFrame(e.source, frame.contentWindow)) return;
       var o = parseSpeedyMessage(e.origin, e.data);
       if (!o) return;
       state.speedy = o; state.speedyFallback = false;
@@ -363,17 +375,35 @@
     });
   }
 
+  var MSG_SHIPPING_UPDATED = 'Цената на доставката беше обновена – натиснете „ПОРЪЧАЙ СЕГА“ отново.';
+
+  /** True when our widget isn't in play (unmounted, or ConvertBuilder itself hid the address part): never block checkout then. */
+  function widgetInactive() {
+    if (!root || !document.contains(root)) return true;
+    var addr = field('shippingAddress'), part = addr && addr.closest('[data-role="address-part"]');
+    return !!(part && part.style.display === 'none');
+  }
+
   function installInterceptor() {
     var prev = window.WebPlatform.checkoutInterceptor || null;
     var mine = {
       beforeComplete: function (ok, fail) {
+        var msg = '';
         try {
-          var msg = validateSelection(selection());
-          if (msg) { showError(msg); fail(msg); return; }
-          sync();
+          if (!widgetInactive()) {
+            msg = validateSelection(selection());
+            // a clicked shipping radio starts an async price update in ConvertBuilder — don't submit before it settles
+            if (!msg && sync()) msg = MSG_SHIPPING_UPDATED;
+          }
         } catch (err) {
           // never hang or break the store's checkout because of our code
           console.warn('[zdo]', err);
+          msg = '';
+        }
+        if (msg) {
+          try { showError(msg); } catch (err) { console.warn('[zdo]', err); }
+          fail(msg);
+          return;
         }
         if (prev && prev.beforeComplete) prev.beforeComplete(ok, fail); else ok();
       }
@@ -406,16 +436,32 @@
 
   var reselectTimes = [];
   /** Re-apply our shipping option and prices after ConvertBuilder re-rendered; at most 3 re-select clicks per 5 s. */
-  function onOrderChanged() {
-    setTimeout(function () {
+  function reapplyShipping() {
+    try {
+      var now = Date.now();
+      reselectTimes = reselectTimes.filter(function (t) { return now - t < 5000; });
+      if (reselectTimes.length >= 3) { if (shippingNeedsClick()) console.warn('[zdo] shipping option keeps resetting'); }
+      else if (selectShippingOption()) reselectTimes.push(now);
+      fillPrices();
+    } catch (err) { console.warn('[zdo]', err); }
+  }
+
+  function onOrderChanged() { setTimeout(reapplyShipping, 50); }
+
+  /** ConvertBuilder rebuilds the shipping radios after an address change without always firing order_changed — watch them. */
+  function watchShipping() {
+    if (typeof MutationObserver === 'undefined') return;
+    var radio = document.querySelector('input[name="shippingOption"]');
+    var wrap = radio && radio.closest('.tick-wrapper');
+    var box = document.querySelector('[data-role="shipping-methods"]') || (wrap && wrap.parentNode) || document.body;
+    var timer = null;
+    new MutationObserver(function (muts) {
       try {
-        var now = Date.now();
-        reselectTimes = reselectTimes.filter(function (t) { return now - t < 5000; });
-        if (reselectTimes.length >= 3) { if (shippingNeedsClick()) console.warn('[zdo] shipping option keeps resetting'); }
-        else if (selectShippingOption()) reselectTimes.push(now);
-        fillPrices();
+        if (!muts.some(function (m) { return !root || !root.contains(m.target); })) return; // ignore our own .zdo changes
+        clearTimeout(timer);
+        timer = setTimeout(reapplyShipping, 100);
       } catch (err) { console.warn('[zdo]', err); }
-    }, 50);
+    }).observe(box, { childList: true, subtree: true });
   }
 
   function mount() {
@@ -437,11 +483,12 @@
     document.addEventListener('platform.events.order_completed', onOrderCompleted, true);
     // ConvertBuilder may re-render its shipping methods after an address change: re-apply ours
     document.addEventListener('platform.events.order_changed', onOrderChanged, true);
+    watchShipping();
     return true;
   }
 
   function boot() {
-    API = SCRIPT && SCRIPT.src ? new URL(SCRIPT.src).origin : '';
+    API = SCRIPT && SCRIPT.src ? new URL(SCRIPT.src).origin : 'https://zd-orders.vercel.app';
     var tries = 0;
     (function attempt() { if (!mount() && ++tries < 40) setTimeout(attempt, 250); })();
   }

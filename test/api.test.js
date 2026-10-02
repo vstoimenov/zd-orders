@@ -49,9 +49,15 @@ test('POST /api/orders guards origin, token and fields', async () => {
   assert.equal(res.statusCode, 403);
   res = fakeRes(); await orders(post(body({ token: 'nope' })), res);
   assert.equal(res.statusCode, 401);
-  res = fakeRes(); await orders(post(body({ phone: '1' })), res);
+  const savedWarn = console.warn;
+  const warned = [];
+  console.warn = (...a) => warned.push(a);
+  try {
+    res = fakeRes(); await orders(post(body({ phone: '1' })), res);
+  } finally { console.warn = savedWarn; }
   assert.equal(res.statusCode, 400);
   assert.equal(json(res).error, 'invalid phone');
+  assert.deepEqual(warned, [['[orders] rejected', 'A1', 'invalid phone']]);
   res = fakeRes(); await orders(post('not json'), res);
   assert.equal(res.statusCode, 401);
 });
@@ -68,13 +74,20 @@ test('POST /api/orders stores once and answers CORS preflight', async () => {
   assert.equal(res.headers['access-control-allow-origin'], ORIGIN);
 });
 
-test('POST /api/orders rate-limits 5 orders per IP per 10 minutes', async () => {
-  for (let i = 1; i <= 5; i++) {
-    const res = fakeRes(); await orders(post(body({ cb_order_id: `R${i}` })), res);
-    assert.equal(res.statusCode, 200);
-  }
-  const res = fakeRes(); await orders(post(body({ cb_order_id: 'R6' })), res);
-  assert.equal(res.statusCode, 429);
+test('POST /api/orders rate-limits 20 orders per IP per 10 minutes', async () => {
+  const savedWarn = console.warn;
+  const warned = [];
+  console.warn = (...a) => warned.push(a);
+  try {
+    for (let i = 1; i <= 20; i++) {
+      const res = fakeRes(); await orders(post(body({ cb_order_id: `R${i}` })), res);
+      assert.equal(res.statusCode, 200);
+    }
+    const res = fakeRes(); await orders(post(body({ cb_order_id: 'R21' })), res);
+    assert.equal(res.statusCode, 429);
+    assert.equal(warned.length, 1);
+    assert.deepEqual(warned[0], ['[orders] rate-limited', '9.9.9.9', 'R21']);
+  } finally { console.warn = savedWarn; }
 });
 
 test('GET /api/cron/refresh requires the secret and stores Econt data', async () => {

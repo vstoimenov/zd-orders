@@ -3,7 +3,7 @@ import { validateOrder } from '../lib/order.js';
 import { insertOrder, countRecentByIp } from '../lib/orders-repo.js';
 import { originAllowed, setCors, readJson, send, clientIp } from '../lib/http.js';
 
-const RATE_LIMIT = 5; // orders per IP per 10 minutes
+const RATE_LIMIT = 20; // orders per IP per 10 minutes (generous: shared mobile IPs / CGNAT)
 
 export default async function handler(req, res) {
   const origin = originAllowed(req);
@@ -19,11 +19,17 @@ export default async function handler(req, res) {
   const token = process.env.ORDER_TOKEN;
   if (!token || !body || body.token !== token) return send(res, 401, { error: 'token' });
   const v = validateOrder(body);
-  if (!v.ok) return send(res, 400, { error: v.error });
+  if (!v.ok) {
+    console.warn('[orders] rejected', body.cb_order_id, v.error);
+    return send(res, 400, { error: v.error });
+  }
   try {
     const q = getQuery();
     const ip = clientIp(req);
-    if ((await countRecentByIp(q, ip)) >= RATE_LIMIT) return send(res, 429, { error: 'rate' });
+    if ((await countRecentByIp(q, ip)) >= RATE_LIMIT) {
+      console.warn('[orders] rate-limited', ip, body.cb_order_id);
+      return send(res, 429, { error: 'rate' });
+    }
     const r = await insertOrder(q, { ...v.order, ip, userAgent: String(req.headers['user-agent'] || '').slice(0, 300) });
     return send(res, 200, { ok: true, inserted: r.inserted, duplicate: r.duplicate });
   } catch (err) {
