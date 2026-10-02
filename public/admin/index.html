@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Поръчки – Да се заобичаме с думи</title>
+<style>
+:root{--rose:#b0426b;--line:#eadde1;--muted:#6f6266;--bg:#faf7f8}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:#222}
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#fff;border-bottom:1px solid var(--line)}
+h1{font-size:17px;margin:0}
+main{padding:16px;max-width:1400px;margin:0 auto}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+input,select,button{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:#222}
+button{cursor:pointer}
+.primary{background:var(--rose);border-color:var(--rose);color:#fff;font-weight:600}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line)}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:#f6eef1;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
+tr.st-new{background:#fff6f9}
+.dup{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:10px;background:#fde7c8;color:#8a4b00;font-size:11px;font-weight:700}
+.muted{color:var(--muted);font-size:12px}
+.pager{display:flex;gap:8px;align-items:center;margin-top:12px}
+#login{max-width:320px;margin:15vh auto;background:#fff;padding:24px;border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;gap:10px}
+.err{color:#a1122f;min-height:1.2em}
+[hidden]{display:none!important}
+@media (max-width:800px){table,thead,tbody,tr,td{display:block}thead{display:none}tr{border-bottom:2px solid var(--line)}td{border:0;padding:4px 10px}}
+</style>
+</head>
+<body>
+<form id="login" hidden>
+  <h1>Вход в поръчките</h1>
+  <input type="password" id="pw" placeholder="Парола" autocomplete="current-password" required>
+  <button class="primary">Вход</button>
+  <div class="err" id="loginErr"></div>
+</form>
+<div id="app" hidden>
+  <header><h1>Поръчки</h1><span class="muted" id="count"></span></header>
+  <main>
+    <form class="filters" id="filters">
+      <select id="fStatus"><option value="">Всички статуси</option></select>
+      <input type="date" id="fFrom" title="От дата">
+      <input type="date" id="fTo" title="До дата">
+      <input type="search" id="fQ" placeholder="Име или телефон">
+      <button class="primary">Търси</button>
+      <button type="button" id="csv">Експорт CSV</button>
+    </form>
+    <table>
+      <thead><tr><th>Дата</th><th>Клиент</th><th>Доставка</th><th>Артикули</th><th>Сума</th><th>Статус</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="pager"><button id="prev" type="button">‹ Назад</button><span id="pageInfo" class="muted"></span><button id="next" type="button">Напред ›</button></div>
+  </main>
+</div>
+<script>
+(function () {
+  var STATUSES = [['new', 'Нова'], ['confirmed', 'Потвърдена'], ['shipped', 'Изпратена'], ['delivered', 'Доставена'], ['returned', 'Върната'], ['cancelled', 'Отказана']];
+  var page = 1, pageSize = 50, total = 0, orders = [];
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  STATUSES.forEach(function (s) { $('fStatus').insertAdjacentHTML('beforeend', '<option value="' + s[0] + '">' + s[1] + '</option>'); });
+
+  function filters() {
+    var p = new URLSearchParams();
+    if ($('fStatus').value) p.set('status', $('fStatus').value);
+    if ($('fFrom').value) p.set('from', $('fFrom').value);
+    if ($('fTo').value) p.set('to', $('fTo').value);
+    if ($('fQ').value.trim()) p.set('q', $('fQ').value.trim());
+    return p;
+  }
+  function showLogin() { $('app').hidden = true; $('login').hidden = false; $('pw').focus(); }
+  function load() {
+    var p = filters(); p.set('page', page);
+    fetch('/api/admin/orders?' + p, { credentials: 'same-origin' })
+      .then(function (r) { if (r.status === 401) { showLogin(); return null; } return r.json(); })
+      .then(function (d) {
+        if (!d) return;
+        orders = d.orders; total = d.total; pageSize = d.pageSize;
+        $('login').hidden = true; $('app').hidden = false;
+        render();
+      })
+      .catch(function () { alert('Грешка при зареждане. Опитайте пак.'); });
+  }
+  function render() {
+    $('count').textContent = total + ' поръчки';
+    $('rows').innerHTML = orders.map(function (o, i) {
+      var date = new Date(o.createdAt).toLocaleString('bg-BG', { timeZone: 'Europe/Sofia', day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+      var items = o.items.map(function (it) { return esc(it.qty + ' × ' + it.name); }).join('<br>');
+      var opts = STATUSES.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === o.status ? ' selected' : '') + '>' + s[1] + '</option>'; }).join('');
+      return '<tr class="st-' + esc(o.status) + '">' +
+        '<td>' + esc(date) + '</td>' +
+        '<td><b>' + esc(o.name) + '</b>' + (o.isDuplicate ? '<span class="dup" title="Същият телефон в последните 24 ч">дубликат?</span>' : '') +
+          '<br><a href="tel:' + esc(o.phone) + '">' + esc(o.phone) + '</a>' + (o.email ? '<br><span class="muted">' + esc(o.email) + '</span>' : '') + '</td>' +
+        '<td>' + esc(o.officeText) + '<br><span class="muted">' + esc(o.city) + (o.postCode ? ' ' + esc(o.postCode) : '') + '</span></td>' +
+        '<td>' + items + '</td>' +
+        '<td><b>' + o.total.toFixed(2) + ' ' + esc(o.currency) + '</b></td>' +
+        '<td><select data-status="' + i + '">' + opts + '</select></td>' +
+        '<td><button type="button" data-copy="' + i + '">Копирай за товарителница</button></td>' +
+        '</tr>';
+    }).join('') || '<tr><td colspan="7" class="muted">Няма поръчки.</td></tr>';
+    var pages = Math.max(1, Math.ceil(total / pageSize));
+    $('pageInfo').textContent = 'Стр. ' + page + ' от ' + pages;
+    $('prev').disabled = page <= 1;
+    $('next').disabled = page >= pages;
+  }
+
+  $('login').addEventListener('submit', function (e) {
+    e.preventDefault();
+    $('loginErr').textContent = '';
+    fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: $('pw').value }) })
+      .then(function (r) { if (r.ok) { $('pw').value = ''; load(); } else $('loginErr').textContent = 'Грешна парола.'; });
+  });
+  $('filters').addEventListener('submit', function (e) { e.preventDefault(); page = 1; load(); });
+  $('csv').addEventListener('click', function () { location.href = '/api/admin/orders?' + filters() + '&format=csv'; });
+  $('prev').addEventListener('click', function () { page--; load(); });
+  $('next').addEventListener('click', function () { page++; load(); });
+  $('rows').addEventListener('change', function (e) {
+    var i = e.target.getAttribute('data-status');
+    if (i == null) return;
+    var o = orders[i], prev = o.status, next = e.target.value;
+    fetch('/api/admin/orders', { method: 'PATCH', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: o.id, status: next }) })
+      .then(function (r) {
+        if (!r.ok) throw new Error(r.status);
+        o.status = next; e.target.closest('tr').className = 'st-' + next;
+      })
+      .catch(function () { e.target.value = prev; alert('Статусът не беше записан. Опитайте пак.'); });
+  });
+  $('rows').addEventListener('click', function (e) {
+    var i = e.target.getAttribute('data-copy');
+    if (i == null) return;
+    navigator.clipboard.writeText(orders[i].waybill).then(function () {
+      e.target.textContent = 'Копирано ✓';
+      setTimeout(function () { e.target.textContent = 'Копирай за товарителница'; }, 1500);
+    });
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>
