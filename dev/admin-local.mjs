@@ -6,9 +6,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { makeTestQuery } from '../test/helpers/pglite.js';
 import { setQueryForTests } from '../lib/db.js';
-import { insertOrder, saveNekorekten } from '../lib/orders-repo.js';
+import { insertOrder, saveNekorekten, updateStatus } from '../lib/orders-repo.js';
 import login from '../api/admin/login.js';
 import orders from '../api/admin/orders.js';
+import stats from '../api/admin/stats.js';
 
 process.env.ADMIN_PASSWORD = 'local-test';
 process.env.ADMIN_SECRET = 'local-secret';
@@ -24,6 +25,8 @@ await insertOrder(q, { ...base, cbOrderId: 'L3', name: 'Петя <b>Петров
 const ids = Object.fromEntries((await q('select id, cb_order_id from zd.orders')).map((r) => [r.cb_order_id, r.id]));
 await saveNekorekten(q, ids.L1, { status: 'flagged', count: 2, reportIds: ['12345', '12346'] });
 await saveNekorekten(q, ids.L3, { status: 'clean', count: 0 });
+await updateStatus(q, ids.L2, 'delivered');
+await updateStatus(q, ids.L3, 'returned');
 
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8' };
 http.createServer(async (req, res) => {
@@ -32,7 +35,7 @@ http.createServer(async (req, res) => {
     let body = '';
     for await (const c of req) body += c;
     req.body = body || undefined;
-    return (url === '/api/admin/login' ? login : orders)(req, res);
+    return (url === '/api/admin/login' ? login : url === '/api/admin/stats' ? stats : orders)(req, res);
   }
   const file = path.join(root, url.endsWith('/') ? url + 'index.html' : url);
   if (!file.startsWith(root)) { res.statusCode = 403; return res.end(); }

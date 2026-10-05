@@ -30,6 +30,24 @@ tr.st-new{background:#fff6f9}
 #login{max-width:320px;margin:15vh auto;background:#fff;padding:24px;border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;gap:10px}
 .err{color:#a1122f;min-height:1.2em}
 [hidden]{display:none!important}
+.tabs{display:flex;gap:4px}
+.tab{border:0;background:none;padding:6px 12px;border-radius:8px;font-weight:700;font-size:15px;color:var(--muted)}
+.tab.on{background:#f6eef1;color:var(--rose)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.card{background:#fff;border:1px solid var(--line);border-left:4px solid var(--rose);border-radius:10px;padding:12px 14px}
+.card .label{font-size:12px;color:var(--muted)}
+.card .val{font-size:22px;font-weight:700;margin-top:4px}
+.card .hint{font-size:11px;color:var(--muted);margin-top:2px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:16px}
+.panel h2{font-size:14px;margin:0 0 10px}
+.panel table{border:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart{display:flex;align-items:flex-end;gap:6px;height:170px;overflow-x:auto;padding-top:6px}
+.bar{flex:1 0 22px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.bar i{display:block;width:100%;max-width:48px;background:var(--rose);border-radius:4px 4px 0 0;min-height:2px}
+.bar b{font-size:11px}
+.bar span{font-size:10px;color:var(--muted);margin-top:4px;white-space:nowrap}
+@media (max-width:900px){.grid2{grid-template-columns:1fr}}
 @media (max-width:800px){table,thead,tbody,tr,td{display:block}thead{display:none}tr{border-bottom:2px solid var(--line)}td{border:0;padding:4px 10px}td[data-label]::before{content:attr(data-label);display:block;font-size:11px;color:var(--muted);text-transform:uppercase}}
 </style>
 </head>
@@ -41,8 +59,31 @@ tr.st-new{background:#fff6f9}
   <div class="err" id="loginErr"></div>
 </form>
 <div id="app" hidden>
-  <header><h1>Поръчки</h1><span class="muted" id="count"></span></header>
+  <header><div class="tabs"><button type="button" class="tab on" data-view="orders">Поръчки</button><button type="button" class="tab" data-view="dash">Табло</button></div><span class="muted" id="count"></span></header>
   <main>
+    <section id="dashView" hidden>
+      <form class="filters" id="dFilters">
+        <select id="dPeriod">
+          <option value="today">Днес</option><option value="yesterday">Вчера</option><option value="7" selected>Последните 7 дни</option>
+          <option value="30">Последните 30 дни</option><option value="month">Този месец</option><option value="custom">По избор</option>
+        </select>
+        <input type="date" id="dFrom" title="От дата" hidden>
+        <input type="date" id="dTo" title="До дата" hidden>
+        <select id="dStore"><option value="">Всички магазини</option></select>
+        <button class="primary">Покажи</button>
+      </form>
+      <div class="cards" id="dCards"></div>
+      <div class="panel"><h2>Поръчки по дни</h2><div class="chart" id="dChart"></div></div>
+      <div class="grid2">
+        <div class="panel"><h2>Топ продукти</h2><table id="dTop"></table></div>
+        <div class="panel"><h2>Последни поръчки</h2><table id="dRecent"></table></div>
+      </div>
+      <div class="grid2">
+        <div class="panel"><h2>По вид доставка</h2><table id="dDelivery"></table></div>
+        <div class="panel"><h2>По статус</h2><table id="dStatus"></table></div>
+      </div>
+    </section>
+    <section id="ordersView">
     <form class="filters" id="filters">
       <select id="fStatus"><option value="">Всички статуси</option></select>
       <input type="date" id="fFrom" title="От дата">
@@ -56,6 +97,7 @@ tr.st-new{background:#fff6f9}
       <tbody id="rows"></tbody>
     </table>
     <div class="pager"><button id="prev" type="button">‹ Назад</button><span id="pageInfo" class="muted"></span><button id="next" type="button">Напред ›</button></div>
+    </section>
   </main>
 </div>
 <script>
@@ -201,6 +243,78 @@ tr.st-new{background:#fff6f9}
   });
 
   snapshot();
+  /* ---- Табло ---- */
+  var DELIVERY = { econt_office: 'Еконт – офис', speedy_office: 'Спиди – офис', speedy_address: 'Спиди – адрес' };
+  var STATUS_LABEL = {};
+  STATUSES.forEach(function (s) { STATUS_LABEL[s[0]] = s[1]; });
+  var dashLoaded = false;
+  function sofiaDay(offset) { return new Date(Date.now() + offset * 864e5).toLocaleDateString('sv-SE', { timeZone: 'Europe/Sofia' }); }
+  function periodRange(v) {
+    var t = sofiaDay(0);
+    if (v === 'today') return [t, t];
+    if (v === 'yesterday') return [sofiaDay(-1), sofiaDay(-1)];
+    if (v === '30') return [sofiaDay(-29), t];
+    if (v === 'month') return [t.slice(0, 8) + '01', t];
+    if (v === 'custom') return [$('dFrom').value || t, $('dTo').value || t];
+    return [sofiaDay(-6), t];
+  }
+  function cur(c) { return c === 'EUR' ? '€' : c === 'USD' ? '$' : c; }
+  function money(amount, currency) { return amount.toFixed(2).replace('.', ',') + ' ' + cur(currency); }
+  function moneyList(list) { return list && list.length ? list.map(function (m) { return money(m.amount, m.currency); }).join(' + ') : '—'; }
+  function pct(v) { return v == null ? '—' : (v * 100).toFixed(1).replace('.', ',') + '%'; }
+  function card(label, val, hint) {
+    return '<div class="card"><div class="label">' + esc(label) + '</div><div class="val">' + esc(val) + '</div>' + (hint ? '<div class="hint">' + esc(hint) + '</div>' : '') + '</div>';
+  }
+  /** cells must already be escaped */
+  function table(head, rows) {
+    return '<thead><tr>' + head.map(function (h) { return '<th>' + esc(h) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      (rows.length ? rows.map(function (r) { return '<tr>' + r.map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>'; }).join('')
+        : '<tr><td colspan="' + head.length + '" class="muted">Няма данни.</td></tr>') + '</tbody>';
+  }
+  function renderDash(d) {
+    dashLoaded = true;
+    var sel = $('dStore'), chosen = sel.value;
+    sel.innerHTML = '<option value="">Всички магазини</option>' + d.stores.map(function (st) {
+      return '<option value="' + esc(st) + '"' + (st === chosen ? ' selected' : '') + '>' + esc(st) + '</option>';
+    }).join('');
+    var c = d.cards, period = d.period.from === d.period.to ? d.period.from : d.period.from + ' – ' + d.period.to;
+    $('dCards').innerHTML = card('Оборот', moneyList(c.revenue), 'без отказаните') + card('Реален приход', moneyList(c.delivered), 'само доставените') +
+      card('Поръчки', String(c.orders), period) + card('Средна поръчка (AOV)', moneyList(c.aov)) +
+      card('Върнати', pct(c.returnRate), 'от изпратените') + card('⚠️ В НЕкоректен', String(c.nkFlagged), pct(c.nkFlaggedPct) + ' от поръчките');
+    var max = Math.max.apply(null, d.daily.map(function (x) { return x.orders; }).concat([1]));
+    $('dChart').innerHTML = d.daily.length ? d.daily.map(function (x) {
+      return '<div class="bar" title="' + esc(x.day + ': ' + x.orders + ' поръчки, оборот ' + x.revenue.toFixed(2)) + '"><b>' + x.orders + '</b>' +
+        '<i style="height:' + Math.round(x.orders / max * 120) + 'px"></i><span>' + esc(x.day.slice(8) + '.' + x.day.slice(5, 7)) + '</span></div>';
+    }).join('') : '<div class="muted">Няма поръчки за периода.</div>';
+    $('dTop').innerHTML = table(['Продукт', 'Бройки', 'Оборот'], d.topProducts.map(function (t) { return [esc(t.name), String(t.qty), esc(t.revenue.toFixed(2).replace('.', ','))]; }));
+    $('dRecent').innerHTML = table(['Дата', 'Клиент', 'Сума', 'Статус'], d.recent.map(function (o) {
+      var dt = new Date(o.createdAt).toLocaleString('bg-BG', { timeZone: 'Europe/Sofia', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+      return [esc(dt), esc(o.name), esc(money(o.total, o.currency)), esc(STATUS_LABEL[o.status] || o.status)];
+    }));
+    $('dDelivery').innerHTML = table(['Доставка', 'Поръчки', 'Оборот'], d.byDelivery.map(function (x) { return [esc(DELIVERY[x.deliveryType] || x.deliveryType), String(x.orders), esc(x.revenue.toFixed(2).replace('.', ','))]; }));
+    $('dStatus').innerHTML = table(['Статус', 'Поръчки'], d.byStatus.map(function (x) { return [esc(STATUS_LABEL[x.status] || x.status), String(x.orders)]; }));
+  }
+  function loadDash() {
+    var r = periodRange($('dPeriod').value), p = new URLSearchParams({ from: r[0], to: r[1] });
+    if ($('dStore').value) p.set('store', $('dStore').value);
+    $('dCards').innerHTML = '<div class="muted">Зареждане…</div>';
+    fetch('/api/admin/stats?' + p, { credentials: 'same-origin' })
+      .then(function (res) { if (res.status === 401) { showLogin(); return null; } if (!res.ok) throw new Error(res.status); return res.json(); })
+      .then(function (d) { if (d) renderDash(d); })
+      .catch(function () { $('dCards').innerHTML = '<div class="err">Грешка при зареждане на таблото. Опитайте пак.</div>'; });
+  }
+  function showView(view) {
+    [].forEach.call(document.querySelectorAll('.tab'), function (t) { t.classList.toggle('on', t.getAttribute('data-view') === view); });
+    $('ordersView').hidden = view !== 'orders';
+    $('dashView').hidden = view !== 'dash';
+    $('count').hidden = view !== 'orders';
+    if (view === 'dash' && !dashLoaded) loadDash();
+  }
+  [].forEach.call(document.querySelectorAll('.tab'), function (t) { t.addEventListener('click', function () { showView(t.getAttribute('data-view')); }); });
+  $('dPeriod').addEventListener('change', function () { var custom = $('dPeriod').value === 'custom'; $('dFrom').hidden = !custom; $('dTo').hidden = !custom; if (!custom) loadDash(); });
+  $('dStore').addEventListener('change', loadDash);
+  $('dFilters').addEventListener('submit', function (e) { e.preventDefault(); loadDash(); });
+
   load(1);
 })();
 </script>
