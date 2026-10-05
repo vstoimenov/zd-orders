@@ -1,7 +1,7 @@
 import { getQuery } from '../../lib/db.js';
 import { pendingNekorekten } from '../../lib/orders-repo.js';
 import { checkOrders } from '../../lib/nk-check.js';
-import { nekorektenKey } from '../../lib/integrations-repo.js';
+import { nekorektenKey } from '../../lib/nekorekten.js';
 import { send, safeEqual, searchParams } from '../../lib/http.js';
 
 const BATCH = 4; // free plan: 5 API requests/min and 30 searches/day
@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   if (!secret || !safeEqual(req.headers.authorization || '', `Bearer ${secret}`)) return send(res, 401, { error: 'auth' });
   try {
     const q = getQuery();
-    const apiKey = await nekorektenKey(q);
+    const apiKey = nekorektenKey();
     if (!apiKey) return send(res, 200, { skipped: 'nekorekten is not connected' });
     const summary = await checkOrders(q, await pendingNekorekten(q, BATCH), apiKey);
     const out = { summary };

@@ -148,16 +148,21 @@ test('a mistyped shop domain gets a plain-language error', async () => {
   assert.match(json(res).error, /Невалиден домейн/);
 });
 
-test('the nekorekten key can be saved from the admin and is used instead of the env', async () => {
-  const { nekorektenKey } = await import('../lib/integrations-repo.js');
-  process.env.NEKOREKTEN_API_KEY = 'ENV-KEY';
-  assert.equal(await nekorektenKey(q), 'ENV-KEY');
-  const res = fakeRes();
-  await withFetch(async () => ({ ok: true, status: 200, json: async () => ({ items: { plan: { name: 'Безплатен' }, searchRequests: { used: 1, limit: 30 } } }) }),
-    () => integrationsApi(fakeReq({ method: 'POST', headers: { cookie: cookie() }, body: JSON.stringify({ action: 'save_nekorekten', apiKey: 'DB-KEY' }) }), res));
-  assert.equal(json(res).ok, true);
-  assert.equal(await nekorektenKey(q), 'DB-KEY');
+test('nekorekten is a platform service: only the env key is used and the shop admin cannot set one', async () => {
+  const { nekorektenKey } = await import('../lib/nekorekten.js');
   delete process.env.NEKOREKTEN_API_KEY;
+  assert.equal(nekorektenKey(), null);
+  process.env.NEKOREKTEN_API_KEY = 'PLATFORM-KEY';
+  try {
+    assert.equal(nekorektenKey(), 'PLATFORM-KEY');
+    let res = fakeRes();
+    await integrationsApi(fakeReq({ method: 'POST', headers: { cookie: cookie() }, body: JSON.stringify({ action: 'save_nekorekten', apiKey: 'SHOP-KEY' }) }), res);
+    assert.equal(res.statusCode, 400);
+    assert.equal(nekorektenKey(), 'PLATFORM-KEY');
+    res = fakeRes(); await integrationsApi(fakeReq({ url: '/api/admin/integrations', headers: { cookie: cookie() } }), res);
+    assert.deepEqual(json(res).nekorekten, { enabled: true });
+    assert.equal(JSON.stringify(json(res)).includes('PLATFORM-KEY'), false);
+  } finally { delete process.env.NEKOREKTEN_API_KEY; }
 });
 
 const post = (body) => fakeReq({ method: 'POST', headers: { cookie: cookie() }, body: JSON.stringify(body) });

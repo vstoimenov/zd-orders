@@ -1,10 +1,9 @@
 import { randomBytes } from 'node:crypto';
 import { getQuery } from '../../lib/db.js';
 import { isAdmin } from '../../lib/auth.js';
-import { getIntegration, saveIntegration, getSecret, nekorektenKey } from '../../lib/integrations-repo.js';
+import { getIntegration, saveIntegration, getSecret } from '../../lib/integrations-repo.js';
 import { normalizeDomain, testConnection, ensureWebhook, removeWebhook } from '../../lib/convertbuilder.js';
 import { syncOrders } from '../../lib/cb-sync.js';
-import { getUsage } from '../../lib/nekorekten.js';
 import { readJson, send } from '../../lib/http.js';
 import { humanize } from '../../lib/errors-bg.js';
 import { assertReady } from '../../lib/secretbox.js';
@@ -13,9 +12,8 @@ const base = () => (process.env.PUBLIC_BASE_URL || 'https://kurier.profitbrand.o
 const fail = (res, err) => send(res, 400, { error: humanize(err) });
 
 async function status(q) {
-  const [cb, nk, offices] = await Promise.all([
+  const [cb, offices] = await Promise.all([
     getIntegration(q, 'convertbuilder'),
-    getIntegration(q, 'nekorekten'),
     q(`select courier, count(*)::int as n, max(updated_at) as updated from zd.offices group by courier`),
   ]);
   const c = cb.config;
@@ -26,7 +24,7 @@ async function status(q) {
       webhook: Boolean(c.webhookId), connectedAt: c.connectedAt || null, lastSyncAt: c.lastSyncAt || null, lastSyncResult: c.lastSyncResult || null,
       lastError: c.lastError || null,
     },
-    nekorekten: { configured: nk.hasSecret || Boolean(process.env.NEKOREKTEN_API_KEY), source: nk.hasSecret ? 'admin' : process.env.NEKOREKTEN_API_KEY ? 'env' : null },
+    nekorekten: { enabled: Boolean(process.env.NEKOREKTEN_API_KEY) }, // platform service, key only in the platform's env
     econt: byCourier.econt || { offices: 0, updatedAt: null },
     speedy: byCourier.speedy || { offices: 0, updatedAt: null },
     meta: { soon: true },
@@ -79,7 +77,7 @@ async function saveConvertBuilder(q, b) {
 }
 
 /** GET status · POST {action}: save_convertbuilder {domain, apiKey, active} | test_convertbuilder | sync_convertbuilder {from, to}
- *  | save_nekorekten {apiKey} | test_nekorekten. Keys are sealed in the DB and never sent back. */
+ *  (nekorekten.com is a platform service: its key is only in the platform's env). Keys are sealed in the DB and never sent back. */
 export default async function handler(req, res) {
   if (!isAdmin(req)) return send(res, 401, { error: 'auth' });
   const q = getQuery();
@@ -97,18 +95,6 @@ export default async function handler(req, res) {
         return send(res, 200, { ok: true, ...(await testConnection({ domain: i.config.domain, apiKey: await getSecret(q, 'convertbuilder') })) });
       }
       case 'sync_convertbuilder': return send(res, 200, { ok: true, result: await syncOrders(q, { from: b.from, to: b.to }) });
-      case 'save_nekorekten': {
-        const key = String(b.apiKey || '').trim();
-        if (!key) throw new Error('Въведете API ключ');
-        const usage = await getUsage(key);
-        await saveIntegration(q, 'nekorekten', { config: { connectedAt: new Date().toISOString() }, secret: key });
-        return send(res, 200, { ok: true, usage });
-      }
-      case 'test_nekorekten': {
-        const key = await nekorektenKey(q);
-        if (!key) throw new Error('НЕкоректен не е свързан');
-        return send(res, 200, { ok: true, usage: await getUsage(key) });
-      }
       default: return send(res, 400, { error: 'unknown action' });
     }
   } catch (err) {

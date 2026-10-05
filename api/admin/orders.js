@@ -2,7 +2,7 @@ import { getQuery } from '../../lib/db.js';
 import { isAdmin } from '../../lib/auth.js';
 import { listOrders, updateStatus, pendingNekorekten, deleteOrder } from '../../lib/orders-repo.js';
 import { checkOrders } from '../../lib/nk-check.js';
-import { nekorektenKey } from '../../lib/integrations-repo.js';
+import { nekorektenKey } from '../../lib/nekorekten.js';
 import { waybillText } from '../../lib/waybill.js';
 import { ordersToCsv } from '../../lib/csv.js';
 import { readJson, send, searchParams } from '../../lib/http.js';
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       return res.end(ordersToCsv(rows));
     }
     const plainFirstPage = !p.get('page') || p.get('page') === '1';
-    const nkKey = plainFirstPage && !filters.status && !filters.from && !filters.to && !filters.search ? await nekorektenKey(q) : null;
+    const nkKey = plainFirstPage && !filters.status && !filters.from && !filters.to && !filters.search ? nekorektenKey() : null;
     if (nkKey) {
       try { await checkOrders(q, await pendingNekorekten(q, NK_RETRY), nkKey); } catch (err) { console.error('[admin] nekorekten retry', err); }
     }

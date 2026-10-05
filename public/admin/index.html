@@ -114,10 +114,7 @@ tr.st-new{background:#fff6f9}
       </div>
       <div class="panel integ">
         <h2>НЕкоректен <span class="chip" id="iNkChip"></span></h2>
-        <p class="muted">Автоматична проверка на телефона на всяка поръчка. Ключът е в nekorekten.com → Профил → API ключове (IP: 0.0.0.0/0).</p>
-        <div class="costgrid"><label>API ключ<input type="password" id="iNkKey" autocomplete="off" placeholder="поставете ключа"></label></div>
-        <button type="button" class="primary" id="iNkSave">Запази</button> <button type="button" id="iNkTest">Тествай</button>
-        <div class="muted" id="iNkInfo"></div>
+        <p class="muted">Всеки телефон от поръчка се проверява автоматично в nekorekten.com. Услугата се осигурява от платформата — не е нужен ваш ключ.</p>
       </div>
       <div class="grid2">
         <div class="panel integ"><h2>Еконт <span class="chip ok">публични данни</span></h2><div class="muted" id="iEcont"></div></div>
@@ -430,8 +427,7 @@ tr.st-new{background:#fff6f9}
     $('iCbInfo').innerHTML = (cb.webhook ? '✓ Уебхук регистриран · ' : '') + 'Последна синхронизация: ' + esc(when(cb.lastSyncAt)) +
       (r ? ' (' + r.fetched + ' поръчки, нови ' + r.inserted + ', обновени ' + r.updated + ')' : '') +
       (cb.lastError ? '<br><span class="err">Последна грешка: ' + esc(cb.lastError) + '</span>' : '');
-    chip('iNkChip', s.nekorekten.configured, s.nekorekten.source === 'env' ? 'Свързан (ключ във Vercel)' : 'Свързан', 'Не е свързан');
-    $('iNkKey').placeholder = s.nekorekten.configured ? '•••••• запазен (въведете нов, за да го смените)' : 'поставете ключа';
+    chip('iNkChip', s.nekorekten.enabled, 'Включена от платформата', 'Не е включена');
     $('iEcont').textContent = s.econt.offices + ' офиса и автомата · обновено ' + when(s.econt.updatedAt);
     $('iSpeedy').textContent = s.speedy.offices + ' офиса и автомата · обновено ' + when(s.speedy.updatedAt);
   }
@@ -459,18 +455,6 @@ tr.st-new{background:#fff6f9}
       .then(function (d) { loadIntegrations(); alert('Готово: ' + d.result.fetched + ' поръчки, нови ' + d.result.inserted + ', обновени ' + d.result.updated + '.'); })
       .catch(function (e) { showErr('iCbInfo', e); });
   });
-  $('iNkSave').addEventListener('click', function () {
-    busy($('iNkSave'), integ({ action: 'save_nekorekten', apiKey: $('iNkKey').value }))
-      .then(function (d) { $('iNkKey').value = ''; loadIntegrations(); nkUsage(d.usage); })
-      .catch(function (e) { showErr('iNkInfo', e); });
-  });
-  $('iNkTest').addEventListener('click', function () {
-    busy($('iNkTest'), integ({ action: 'test_nekorekten' })).then(function (d) { nkUsage(d.usage); }).catch(function (e) { showErr('iNkInfo', e); });
-  });
-  function nkUsage(u) {
-    var s = u && u.searchRequests ? u.searchRequests : null;
-    $('iNkInfo').textContent = 'Работи ✓ План: ' + ((u && u.plan && u.plan.name) || '—') + (s ? ' · проверки днес: ' + s.used + ' от ' + s.limit : '');
-  }
 
   /* ---- Разходи ---- */
   var costsData = null;
