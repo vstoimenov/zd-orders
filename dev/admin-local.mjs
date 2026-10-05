@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { makeTestQuery } from '../test/helpers/pglite.js';
 import { setQueryForTests } from '../lib/db.js';
-import { insertOrder } from '../lib/orders-repo.js';
+import { insertOrder, saveNekorekten } from '../lib/orders-repo.js';
 import login from '../api/admin/login.js';
 import orders from '../api/admin/orders.js';
 
@@ -19,6 +19,11 @@ const base = { email: 'm@x.bg', courier: 'econt', deliveryType: 'econt_office', 
 await insertOrder(q, { ...base, cbOrderId: 'L1', name: 'Мария Иванова', phone: '0888123456', phoneNorm: '+359888123456', officeText: 'ЕКОНТ – автомат Тракия (4002), бул. Освобождение 31', city: 'Пловдив', items: [{ name: 'Да се заобичаме с думи', qty: 1, price: 18.5 }], total: 22.57 });
 await insertOrder(q, { ...base, cbOrderId: 'L2', name: 'Мария Иванова', phone: '0888123456', phoneNorm: '+359888123456', officeText: 'ЕКОНТ – офис Пловдив Център (4001), ул. Гладстон 1', city: 'Пловдив', items: [{ name: 'Да се заобичаме с думи', qty: 2, price: 37 }], total: 41.07 });
 await insertOrder(q, { ...base, cbOrderId: 'L3', name: 'Петя <b>Петрова</b>', phone: '0899000111', phoneNorm: '+359899000111', courier: 'speedy', deliveryType: 'speedy_address', officeId: '', officeText: 'СПИДИ – адрес: ул. Роза 5', addressText: 'ул. Роза 5', city: 'Варна', postCode: '9000', items: [{ name: 'Тесте за син', qty: 1, price: 18.5 }], total: 22.54 });
+
+// sample nekorekten results: L1 flagged, L3 clean, L2 left unchecked
+const ids = Object.fromEntries((await q('select id, cb_order_id from zd.orders')).map((r) => [r.cb_order_id, r.id]));
+await saveNekorekten(q, ids.L1, { status: 'flagged', count: 2, reportIds: ['12345', '12346'] });
+await saveNekorekten(q, ids.L3, { status: 'clean', count: 0 });
 
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8' };
 http.createServer(async (req, res) => {

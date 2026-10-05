@@ -76,3 +76,23 @@ test('updateStatus rejects unknown statuses and ids', async () => {
   assert.equal(await updateStatus(q, 'not-a-uuid', 'confirmed'), false);
   assert.equal(await updateStatus(q, '00000000-0000-0000-0000-000000000000', 'confirmed'), false);
 });
+
+test('Nekorekten results are saved, exposed on the order and pending ones are listed for retry', async () => {
+  const { saveNekorekten, pendingNekorekten } = await import('../lib/orders-repo.js');
+  const q = await makeTestQuery();
+  const a = await insertOrder(q, order({ cbOrderId: 'N1' }));
+  const b = await insertOrder(q, order({ cbOrderId: 'N2', phoneNorm: '+359899000111' }));
+  let rows = (await listOrders(q)).rows;
+  assert.deepEqual(rows.map((r) => r.nkStatus), ['pending', 'pending']);
+  assert.deepEqual((await pendingNekorekten(q, 10)).map((r) => r.id).sort(), [a.id, b.id].sort());
+  await saveNekorekten(q, a.id, { status: 'flagged', count: 2, reportIds: ['101', '102'] });
+  await saveNekorekten(q, b.id, { status: 'error' });
+  const byId = Object.fromEntries((await listOrders(q)).rows.map((r) => [r.id, r]));
+  assert.equal(byId[a.id].nkStatus, 'flagged');
+  assert.equal(byId[a.id].nkCount, 2);
+  assert.deepEqual(byId[a.id].nkReportIds, ['101', '102']);
+  assert.ok(byId[a.id].nkCheckedAt);
+  assert.equal(byId[b.id].nkStatus, 'error');
+  assert.deepEqual((await pendingNekorekten(q, 10)).map((r) => r.id), [b.id]);
+  assert.deepEqual((await pendingNekorekten(q, 10))[0].phoneNorm, '+359899000111');
+});

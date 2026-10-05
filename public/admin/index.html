@@ -21,6 +21,10 @@ th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;verti
 th{background:#f6eef1;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
 tr.st-new{background:#fff6f9}
 .dup{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:10px;background:#fde7c8;color:#8a4b00;font-size:11px;font-weight:700}
+.nk{display:inline-block;margin-top:4px;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;text-decoration:none}
+.nk-bad{background:#fdecee;color:#a1122f}
+.nk-ok{background:#e8f6ec;color:#1d6b35}
+.nk-wait{background:#f1edef;color:var(--muted)}
 .muted{color:var(--muted);font-size:12px}
 .pager{display:flex;gap:8px;align-items:center;margin-top:12px}
 #login{max-width:320px;margin:15vh auto;background:#fff;padding:24px;border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;gap:10px}
@@ -61,6 +65,17 @@ tr.st-new{background:#fff6f9}
   var current = { status: '', from: '', to: '', q: '' };
   var reqId = 0, loading = false, shown = false;
   function $(id) { return document.getElementById(id); }
+  /** nekorekten.com check: red with a link to the first report, green when clean, grey while unchecked */
+  function nkBadge(o) {
+    if (o.nkStatus === 'flagged') {
+      var id = (o.nkReportIds || [])[0];
+      var label = '⚠️ ' + o.nkCount + (o.nkCount === 1 ? ' сигнал' : ' сигнала') + ' в НЕкоректен';
+      return id ? '<a class="nk nk-bad" target="_blank" rel="noopener" href="https://nekorekten.com/reports/' + encodeURIComponent(id) + '">' + esc(label) + '</a>' : '<span class="nk nk-bad">' + esc(label) + '</span>';
+    }
+    if (o.nkStatus === 'clean') return '<span class="nk nk-ok">✓ НЕкоректен: няма сигнали</span>';
+    return '<span class="nk nk-wait" title="Проверката ще се повтори автоматично">НЕкоректен: непроверен</span>';
+  }
+
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
   STATUSES.forEach(function (s) { $('fStatus').insertAdjacentHTML('beforeend', '<option value="' + s[0] + '">' + s[1] + '</option>'); });
@@ -128,7 +143,8 @@ tr.st-new{background:#fff6f9}
       return '<tr class="st-' + esc(o.status) + '">' +
         '<td data-label="Дата">' + esc(date) + '</td>' +
         '<td data-label="Клиент"><b>' + esc(o.name) + '</b>' + (o.isDuplicate ? '<span class="dup" title="Същият телефон в последните 24 ч">дубликат?</span>' : '') +
-          '<br><a href="tel:' + esc(o.phone) + '">' + esc(o.phone) + '</a>' + (o.email ? '<br><span class="muted">' + esc(o.email) + '</span>' : '') + '</td>' +
+          '<br><a href="tel:' + esc(o.phone) + '">' + esc(o.phone) + '</a>' + (o.email ? '<br><span class="muted">' + esc(o.email) + '</span>' : '') +
+          '<br>' + nkBadge(o) + '</td>' +
         '<td data-label="Доставка">' + esc(o.officeText) + '<br><span class="muted">' + esc(o.city) + (o.postCode ? ' ' + esc(o.postCode) : '') + '</span></td>' +
         '<td data-label="Артикули">' + items + '</td>' +
         '<td data-label="Сума"><b>' + o.total.toFixed(2) + ' ' + esc(o.currency) + '</b></td>' +

@@ -3,17 +3,54 @@
   "framework": null,
   "buildCommand": "",
   "outputDirectory": "public",
-  "crons": [{ "path": "/api/cron/refresh", "schedule": "0 3 * * *" }],
-  "functions": { "api/cron/refresh.js": { "maxDuration": 60 } },
+  "crons": [
+    {
+      "path": "/api/cron/refresh",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/nekorekten",
+      "schedule": "30 3 * * *"
+    }
+  ],
+  "functions": {
+    "api/cron/refresh.js": {
+      "maxDuration": 60
+    },
+    "api/cron/nekorekten.js": {
+      "maxDuration": 60
+    }
+  },
   "headers": [
-    { "source": "/checkout.js", "headers": [
-      { "key": "Cache-Control", "value": "public, max-age=300, s-maxage=300" },
-      { "key": "Access-Control-Allow-Origin", "value": "*" }
-    ] },
-    { "source": "/admin(.*)", "headers": [
-      { "key": "X-Robots-Tag", "value": "noindex" },
-      { "key": "X-Frame-Options", "value": "DENY" },
-      { "key": "Cache-Control", "value": "no-store" }
-    ] }
+    {
+      "source": "/checkout.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300, s-maxage=300"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
+      ]
+    },
+    {
+      "source": "/admin(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    }
   ]
 }
