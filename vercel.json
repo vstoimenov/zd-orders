@@ -23,7 +23,7 @@
   },
   "headers": [
     {
-      "source": "/checkout.js",
+      "source": "/(checkout|kurier).js",
       "headers": [
         {
           "key": "Cache-Control",
@@ -51,6 +51,12 @@
           "value": "no-store"
         }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/kurier.js",
+      "destination": "/checkout.js"
     }
   ]
 }
