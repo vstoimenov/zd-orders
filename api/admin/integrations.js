@@ -2,25 +2,14 @@ import { randomBytes } from 'node:crypto';
 import { getQuery } from '../../lib/db.js';
 import { isAdmin } from '../../lib/auth.js';
 import { getIntegration, saveIntegration, getSecret, nekorektenKey } from '../../lib/integrations-repo.js';
-import { normalizeDomain, testConnection, ensureWebhook } from '../../lib/convertbuilder.js';
+import { normalizeDomain, testConnection, ensureWebhook, removeWebhook } from '../../lib/convertbuilder.js';
 import { syncOrders } from '../../lib/cb-sync.js';
 import { getUsage } from '../../lib/nekorekten.js';
 import { readJson, send } from '../../lib/http.js';
+import { humanize } from '../../lib/errors-bg.js';
+import { assertReady } from '../../lib/secretbox.js';
 
 const base = () => (process.env.PUBLIC_BASE_URL || 'https://kurier.profitbrand.online').replace(/\/$/, '');
-// errors are shown to the shop owner in the admin: say what to fix, in Bulgarian, keeping the HTTP code
-function humanize(err) {
-  const m = err?.message || String(err);
-  if (m === 'invalid domain') return 'Невалиден домейн — въведете само домейна на магазина, напр. adhdbg.eu';
-  if (/HTTP (401|403)/.test(m)) return `Ключът е отхвърлен (${m}). Проверете API ключа и домейна.`;
-  if (/HTTP 404/.test(m)) return `Домейнът не отговаря като ConvertBuilder магазин (${m}). Проверете домейна.`;
-  if (/HTTP 429/.test(m)) return `Твърде много заявки (${m}). Опитайте след минута.`;
-  if (err?.name === 'AbortError' || err?.name === 'TimeoutError') return 'Магазинът не отговори навреме. Опитайте отново.';
-  if (/fetch failed|ENOTFOUND|EAI_AGAIN/.test(m)) return 'Домейнът не е достъпен. Проверете домейна.';
-  if (m === 'ConvertBuilder is not connected') return 'ConvertBuilder не е свързан';
-  if (m === 'INTEGRATIONS_SECRET is not set') return 'Сървърът не е настроен за пазене на ключове (липсва INTEGRATIONS_SECRET).';
-  return m;
-}
 const fail = (res, err) => send(res, 400, { error: humanize(err) });
 
 async function status(q) {
@@ -44,18 +33,42 @@ async function status(q) {
   };
 }
 
+/** Hosts the checkout widget recorded orders under lately (api/orders.js keys them by the page's domain without www). */
+async function widgetStores(q) {
+  const rows = await q(`select distinct split_part(cb_order_id, ':', 1) as store from zd.orders
+    where source = 'widget' and created_at > now() - interval '60 days' order by 1`);
+  return rows.map((r) => r.store);
+}
+
 async function saveConvertBuilder(q, b) {
+  assertReady(); // nothing may change at ConvertBuilder if the key could not be stored afterwards
   const domain = normalizeDomain(b.domain);
-  const apiKey = String(b.apiKey || '').trim() || (await getSecret(q, 'convertbuilder'));
-  if (!apiKey) throw new Error('Въведете API ключ');
+  const store = domain.replace(/^www\./, '');
+  const current = await getIntegration(q, 'convertbuilder');
+  const typedKey = String(b.apiKey || '').trim();
+  // the stored key only ever goes to the domain it was saved for
+  if (!typedKey && (!current.hasSecret || current.config.domain !== domain)) {
+    throw new Error(current.hasSecret ? 'При смяна на домейна въведете API ключа отново' : 'Въведете API ключ');
+  }
+  // the same order must get the same id from the widget and from the API, or every order would be stored twice
+  const stores = await widgetStores(q);
+  if (stores.length && !stores.includes(store)) {
+    throw new Error(`Чекаутът записва поръчките под домейн ${stores.join(', ')}. Въведете този домейн, за да не се дублират поръчките.`);
+  }
+  const apiKey = typedKey || (await getSecret(q, 'convertbuilder'));
   const active = b.active !== false;
-  const test = await testConnection({ domain, apiKey });
-  const config = { domain, store: domain.replace(/^www\./, ''), active, currency: 'EUR', connectedAt: new Date().toISOString(), lastError: null };
+  const cfg = { domain, apiKey };
+  const test = await testConnection(cfg);
+  const target = `${base()}/api/cb/webhook`;
+  const config = { domain, store, active, currency: 'EUR', connectedAt: new Date().toISOString(), lastError: null };
   if (active) {
     config.webhookSecret = randomBytes(32).toString('hex');
-    config.webhookId = (await ensureWebhook({ domain, apiKey }, `${base()}/api/cb/webhook`, config.webhookSecret)).id;
+    config.webhookId = (await ensureWebhook(cfg, target, config.webhookSecret)).id;
+  } else {
+    try { await removeWebhook(cfg, target); } catch (err) { console.error('[admin] webhook removal failed', err.message); }
+    Object.assign(config, { webhookId: null, webhookSecret: null });
   }
-  await saveIntegration(q, 'convertbuilder', { config, secret: String(b.apiKey || '').trim() || undefined });
+  await saveIntegration(q, 'convertbuilder', { config, secret: typedKey || undefined });
   return test;
 }
 

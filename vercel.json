@@ -19,6 +19,12 @@
     },
     "api/cron/nekorekten.js": {
       "maxDuration": 60
+    },
+    "api/admin/integrations.js": {
+      "maxDuration": 60
+    },
+    "api/cb/webhook.js": {
+      "maxDuration": 30
     }
   },
   "headers": [

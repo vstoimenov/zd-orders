@@ -7,6 +7,7 @@ import { readRaw, send } from '../../lib/http.js';
 export default async function handler(req, res) {
   if (req.method !== 'POST') return send(res, 405, { error: 'method' });
   const raw = await readRaw(req);
+  if (raw == null) return send(res, 400, { error: 'body' });
   try {
     const q = getQuery();
     const cfg = await cbConfig(q);

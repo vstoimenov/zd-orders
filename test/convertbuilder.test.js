@@ -35,7 +35,7 @@ test('mapOrder turns a ConvertBuilder order into our order', () => {
     deliveryType: 'econt_office', courier: 'econt', officeId: '', officeText: 'ЕКОНТ – офис Плевен (5803), ул. Кара Колю 5А',
     city: 'Плевен', postCode: '5800', addressText: '', items: [{ name: 'Книга', qty: 1, price: 12.9 }, { name: 'Бонус', qty: 1, price: 0 }],
     total: 16.45, currency: 'EUR', paymentMethod: 'cod', pageUrl: '', createdAt: new Date(1791200000 * 1000).toISOString(),
-    insertStatus: 'new', updateStatus: null,
+    cbStatus: 'pending', insertStatus: 'new', updateStatus: null,
   });
 });
 

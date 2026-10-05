@@ -9,12 +9,15 @@ import { cbConfig, syncOrders } from '../../lib/cb-sync.js';
 export default async function handler(req, res) {
   const secret = process.env.CRON_SECRET;
   if (!secret || !safeEqual(req.headers.authorization || '', `Bearer ${secret}`)) return send(res, 401, { error: 'auth' });
+  const q = getQuery();
+  const result = {};
+  let econtOk = true;
   try {
     const [officesJson, citiesJson] = await Promise.all([fetchEcont('getOffices'), fetchEcont('getCities')]);
     const offices = normalizeOffices(officesJson);
     const cities = normalizeCities(citiesJson, offices);
-    const q = getQuery();
-    const result = { offices: await replaceOffices(q, 'econt', offices), cities: await replaceCities(q, cities) };
+    result.offices = await replaceOffices(q, 'econt', offices);
+    result.cities = await replaceCities(q, cities);
     // Speedy comes from an unofficial public page: a failure there must not fail the Econt refresh
     try {
       result.speedy = await replaceOffices(q, 'speedy', attachPostCodes(parseSpeedyOffices(await fetchSpeedyMap()), cities, econtPoints(officesJson)), { minRatio: 0.8 });
@@ -22,16 +25,16 @@ export default async function handler(req, res) {
       console.error('[cron] speedy refresh failed', err);
       result.speedy = { error: err.message };
     }
-    // catch up on ConvertBuilder orders a webhook might have missed (last 3 days)
-    try {
-      if (await cbConfig(q)) result.convertbuilder = await syncOrders(q);
-    } catch (err) {
-      console.error('[cron] convertbuilder sync failed', err);
-      result.convertbuilder = { error: err.message };
-    }
-    return send(res, 200, result);
   } catch (err) {
     console.error('[cron] refresh failed', err);
-    return send(res, 500, { error: 'server' });
+    econtOk = false;
   }
+  // catch up on ConvertBuilder orders a webhook might have missed (last 3 days) — independent of the courier refresh
+  try {
+    if (await cbConfig(q)) result.convertbuilder = await syncOrders(q, { max: 500 });
+  } catch (err) {
+    console.error('[cron] convertbuilder sync failed', err);
+    result.convertbuilder = { error: err.message };
+  }
+  return econtOk ? send(res, 200, result) : send(res, 500, { error: 'server', ...result });
 }

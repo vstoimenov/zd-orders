@@ -159,3 +159,112 @@ test('the nekorekten key can be saved from the admin and is used instead of the 
   assert.equal(await nekorektenKey(q), 'DB-KEY');
   delete process.env.NEKOREKTEN_API_KEY;
 });
+
+const post = (body) => fakeReq({ method: 'POST', headers: { cookie: cookie() }, body: JSON.stringify(body) });
+const recording = (impl) => { const calls = []; const f = async (url, init = {}) => { calls.push({ url: String(url), method: init.method || 'GET', auth: init.headers?.Authorization }); return impl(url, init); }; f.calls = calls; return f; };
+
+test('a manual status change survives re-syncs; only a new ConvertBuilder status moves it', async () => {
+  const { updateStatus } = await import('../lib/orders-repo.js');
+  const r = await upsertCbOrder(q, mapOrder(cbOrder({ status: 'completed' }), { store: 'adhdbg.eu' }));
+  await updateStatus(q, r.id, 'returned');
+  await upsertCbOrder(q, mapOrder(cbOrder({ status: 'completed' }), { store: 'adhdbg.eu' }));
+  assert.equal((await listOrders(q)).rows[0].status, 'returned', 'same CB status again → keep the admin status');
+  await upsertCbOrder(q, mapOrder(cbOrder({ status: 'canceled' }), { store: 'adhdbg.eu' }));
+  assert.equal((await listOrders(q)).rows[0].status, 'cancelled', 'CB status changed → follow it');
+  const r2 = await upsertCbOrder(q, mapOrder(cbOrder({ id: 99, status: 'pending' }), { store: 'adhdbg.eu' }));
+  await updateStatus(q, r2.id, 'delivered');
+  await upsertCbOrder(q, mapOrder(cbOrder({ id: 99, status: 'shipped' }), { store: 'adhdbg.eu' }));
+  assert.equal((await listOrders(q)).rows.find((o) => o.id === r2.id).status, 'delivered', 'never back from delivered to shipped');
+});
+
+test('the stored key is never sent to a different domain', async () => {
+  await connect();
+  const f = recording(cbApi([]));
+  const res = fakeRes();
+  await withFetch(f, () => integrationsApi(post({ action: 'save_convertbuilder', domain: 'attacker.example', apiKey: '' }), res));
+  assert.equal(res.statusCode, 400);
+  assert.match(json(res).error, /въведете API ключа отново/);
+  assert.equal(f.calls.length, 0);
+  assert.equal((await getIntegration(q, 'convertbuilder')).config.domain, 'adhdbg.eu');
+});
+
+test('the shop domain must match the one the checkout widget records orders under', async () => {
+  await insertOrder(q, { cbOrderId: 'adhdbg.eu:81', name: 'А', phone: '', phoneNorm: '', email: '', deliveryType: 'econt_office', courier: 'econt',
+    officeId: 'econt:1', officeText: 'ЕКОНТ – офис', city: 'Х', postCode: '1000', addressText: '', items: [], total: 1, currency: 'EUR', paymentMethod: 'cod', pageUrl: '', ip: '1', userAgent: '' });
+  const f = recording(cbApi([]));
+  let res = fakeRes();
+  await withFetch(f, () => integrationsApi(post({ action: 'save_convertbuilder', domain: 'viktorstoimenov12-70.convertbuilder.com', apiKey: 'API-KEY' }), res));
+  assert.equal(res.statusCode, 400);
+  assert.match(json(res).error, /adhdbg\.eu/);
+  assert.equal(f.calls.length, 0);
+  res = fakeRes();
+  await withFetch(cbApi([]), () => integrationsApi(post({ action: 'save_convertbuilder', domain: 'www.adhdbg.eu', apiKey: 'API-KEY' }), res));
+  assert.equal(res.statusCode, 200);
+});
+
+test('nothing is registered at ConvertBuilder while keys cannot be stored', async () => {
+  const saved = process.env.INTEGRATIONS_SECRET;
+  delete process.env.INTEGRATIONS_SECRET;
+  const f = recording(cbApi([]));
+  const res = fakeRes();
+  try { await withFetch(f, () => integrationsApi(post({ action: 'save_convertbuilder', domain: 'adhdbg.eu', apiKey: 'API-KEY' }), res)); }
+  finally { process.env.INTEGRATIONS_SECRET = saved; }
+  assert.equal(res.statusCode, 400);
+  assert.match(json(res).error, /INTEGRATIONS_SECRET/);
+  assert.equal(f.calls.length, 0);
+});
+
+test('switching the integration off removes our webhook', async () => {
+  const hooks = [{ id: 'wh0', target: 'https://kurier.profitbrand.online/api/cb/webhook' }, { id: 'other', target: 'https://else.example/hook' }];
+  const base = cbApi([]);
+  const f = recording(async (url, init = {}) => {
+    const path = new URL(url).pathname;
+    if ((init.method || 'GET') === 'GET' && path === '/api/site/webhooks') return { ok: true, status: 200, json: async () => ({ items: hooks }) };
+    if (init.method === 'DELETE') return { ok: true, status: 200, json: async () => ({}) };
+    return base(url, init);
+  });
+  await saveIntegration(q, 'convertbuilder', { config: { domain: 'adhdbg.eu', store: 'adhdbg.eu', active: true, webhookSecret: 'whsec', webhookId: 'wh0' }, secret: 'API-KEY' });
+  const res = fakeRes();
+  await withFetch(f, () => integrationsApi(post({ action: 'save_convertbuilder', domain: 'adhdbg.eu', apiKey: '', active: false }), res));
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(f.calls.filter((c) => c.method === 'DELETE').map((c) => new URL(c.url).pathname), ['/api/site/webhooks/wh0']);
+  const i = await getIntegration(q, 'convertbuilder');
+  assert.deepEqual([i.config.active, i.config.webhookId, i.config.webhookSecret], [false, null, null]);
+});
+
+test('config writes merge in the database, so a finishing sync cannot restore an old webhook secret', async () => {
+  await saveIntegration(q, 'convertbuilder', { config: { domain: 'adhdbg.eu', webhookSecret: 'old' }, secret: 'API-KEY' });
+  // admin re-save and a finishing sync at the same moment: neither may drop the other's fields
+  await Promise.all([
+    saveIntegration(q, 'convertbuilder', { config: { webhookSecret: 'new' } }),
+    saveIntegration(q, 'convertbuilder', { config: { lastSyncAt: 'now' } }),
+  ]);
+  assert.deepEqual((await getIntegration(q, 'convertbuilder')).config, { domain: 'adhdbg.eu', webhookSecret: 'new', lastSyncAt: 'now' });
+});
+
+test('sync rejects impossible dates and stores errors in Bulgarian', async () => {
+  const { syncOrders } = await import('../lib/cb-sync.js');
+  await connect();
+  await assert.rejects(syncOrders(q, { from: '2026-13-45' }), /Невалидна дата/);
+  await withFetch(async () => ({ ok: false, status: 500, json: async () => ({}) }), () => assert.rejects(syncOrders(q, { from: '2026-10-01' })));
+  assert.match((await getIntegration(q, 'convertbuilder')).config.lastError, /временно не отговаря/);
+});
+
+test('sync day boundaries follow Sofia summer and winter time', async () => {
+  const { dayRange } = await import('../lib/cb-sync.js');
+  assert.equal(dayRange('2026-10-05', false), Date.parse('2026-10-05T00:00:00+03:00') / 1000);
+  assert.equal(dayRange('2026-11-05', true), Date.parse('2026-11-05T23:59:59+02:00') / 1000);
+});
+
+test('the nightly cron still catches up ConvertBuilder orders when Econt is down', async () => {
+  const { default: refresh } = await import('../api/cron/refresh.js');
+  process.env.CRON_SECRET = 'cron';
+  await connect();
+  const cb = cbApi([cbOrder({ id: 120 })]);
+  const res = fakeRes();
+  await withFetch(async (url, init) => (String(url).includes('/api/site/') ? cb(url, init) : { ok: false, status: 503, json: async () => ({}) }),
+    () => refresh(fakeReq({ headers: { authorization: 'Bearer cron' } }), res));
+  assert.equal(res.statusCode, 500, 'the Econt failure is still reported');
+  assert.deepEqual(json(res).convertbuilder, { fetched: 1, inserted: 1, updated: 0 });
+  assert.equal((await listOrders(q)).rows[0].cbOrderId, 'adhdbg.eu:120');
+});
