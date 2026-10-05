@@ -11,17 +11,19 @@
   function clean(v) { return v == null ? '' : String(v).replace(/\s+/g, ' ').trim(); }
   function norm(v) { return clean(v).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim(); }
 
-  /** Every word of the query must appear in the office's city, name, address or code. */
+  /** Every word of the query must appear in the office's city, name, address or code; offices in a city that starts with the first word come first. */
   function searchOffices(offices, query, limit) {
     var words = norm(query).split(' ').filter(Boolean);
-    var out = [];
-    if (!words.length) return out;
-    for (var i = 0; i < offices.length && out.length < (limit || 80); i++) {
+    if (!words.length) return [];
+    var first = [], rest = [], max = limit || 80;
+    for (var i = 0; i < offices.length && first.length < max; i++) {
       var o = offices[i];
       var hay = o._hay || (o._hay = norm(o.city + ' ' + o.name + ' ' + o.address + ' ' + o.code));
-      if (words.every(function (w) { return hay.indexOf(w) !== -1; })) out.push(o);
+      if (!words.every(function (w) { return hay.indexOf(w) !== -1; })) continue;
+      var city = o._city || (o._city = norm(o.city));
+      (city.indexOf(words[0]) === 0 ? first : rest).push(o);
     }
-    return out;
+    return first.concat(rest).slice(0, max);
   }
 
   function searchCities(cities, query, limit) {

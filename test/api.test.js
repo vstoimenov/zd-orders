@@ -120,6 +120,8 @@ test('GET /api/cron/refresh requires the secret and stores Econt data', async ()
   assert.deepEqual(json(res), { offices: { upserted: 1, removed: 0 }, cities: { upserted: 1, removed: 0 }, speedy: { upserted: 1, removed: 0 } });
   const [sp] = await q("select name, city, is_automat from zd.offices where id = 'speedy:190'");
   assert.deepEqual(sp, { name: 'АЙТОС - КИРИЛ И МЕТОДИЙ (УЛ.)', city: 'Айтос', is_automat: false });
+  const [pc] = await q("select post_code from zd.offices where id = 'speedy:190'");
+  assert.equal(pc.post_code, '', 'Айтос is not in the stubbed city list');
   const [c] = await q('select has_office from zd.cities where id = 7');
   assert.equal(c.has_office, true);
 });

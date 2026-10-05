@@ -23,6 +23,16 @@ test('searchOffices matches every word in city, name or address', () => {
   assert.equal(core.searchOffices(OFFICES, 'плов', 1).length, 1);
 });
 
+test('searchOffices lists offices in the searched city before other places that mention it', () => {
+  const list = [
+    { id: 'speedy:263', code: '263', name: 'БЯЛА (ВАРНА)', city: 'Бяла (Варна)', address: '', isAutomat: false },
+    { id: 'speedy:1', code: '1', name: 'ВАРНА - 3-ТИ МАРТ (АВТОМАТ)', city: 'Варна', address: '', isAutomat: true },
+    { id: 'speedy:2', code: '2', name: 'ВАРНА - ЦЕНТЪР', city: 'Варна', address: '', isAutomat: false },
+  ];
+  assert.deepEqual(plain(core.searchOffices(list, 'варна')).map((o) => o.id), ['speedy:1', 'speedy:2', 'speedy:263']);
+  assert.deepEqual(plain(core.searchOffices(list, 'варна', 2)).map((o) => o.id), ['speedy:1', 'speedy:2']);
+});
+
 test('searchCities puts prefix matches first', () => {
   const cities = [{ id: 1, name: 'Долни Воден' }, { id: 2, name: 'Вода' }, { id: 3, name: 'Пловдив' }];
   assert.deepEqual(plain(core.searchCities(cities, 'вод')).map((c) => c.id), [2, 1]);

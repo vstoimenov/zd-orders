@@ -1,6 +1,6 @@
 import { getQuery } from '../../lib/db.js';
 import { fetchEcont, normalizeOffices, normalizeCities } from '../../lib/econt.js';
-import { fetchSpeedyMap, parseSpeedyOffices } from '../../lib/speedy.js';
+import { fetchSpeedyMap, parseSpeedyOffices, attachPostCodes } from '../../lib/speedy.js';
 import { replaceOffices, replaceCities } from '../../lib/catalog-repo.js';
 import { send, safeEqual } from '../../lib/http.js';
 
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     const result = { offices: await replaceOffices(q, 'econt', offices), cities: await replaceCities(q, cities) };
     // Speedy comes from an unofficial public page: a failure there must not fail the Econt refresh
     try {
-      result.speedy = await replaceOffices(q, 'speedy', parseSpeedyOffices(await fetchSpeedyMap()));
+      result.speedy = await replaceOffices(q, 'speedy', attachPostCodes(parseSpeedyOffices(await fetchSpeedyMap()), cities));
     } catch (err) {
       console.error('[cron] speedy refresh failed', err);
       result.speedy = { error: err.message };
