@@ -63,6 +63,17 @@ test('pickOptionIndex finds ConvertBuilder shipping methods by label', () => {
   assert.equal(core.pickOptionIndex(labels, 'speedy_address'), 2);
   assert.equal(core.pickOptionIndex(labels.slice(0, 1), 'speedy_address'), -1);
   assert.equal(core.pickOptionIndex(labels, ''), -1);
+  const cyr = ['Доставка до офис на Спиди $2.48', 'Доставка до офис на Еконт $3.55', 'Доставка до адрес със Спиди 5,10 лв.'];
+  assert.equal(core.pickOptionIndex(cyr, 'econt_office'), 1);
+  assert.equal(core.pickOptionIndex(cyr, 'speedy_office'), 0);
+  assert.equal(core.pickOptionIndex(cyr, 'speedy_address'), 2);
+});
+
+test('optionPrice reads the price shown in a ConvertBuilder shipping label', () => {
+  assert.equal(core.optionPrice('До офис ECONT 4.07€ (7.96 лв)'), '4.07 €');
+  assert.equal(core.optionPrice('Доставка до офис на Спиди $2.48'), '$2.48');
+  assert.equal(core.optionPrice('До адрес със Спиди 5,10 лв.'), '5.10 лв.');
+  assert.equal(core.optionPrice('Безплатна доставка'), '');
 });
 
 test('parseSpeedyMessage trusts only the Speedy map', () => {

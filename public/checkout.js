@@ -7,7 +7,8 @@
   var SPEEDY_ORIGIN = 'https://services.speedy.bg';
   var SPEEDY_MAP = SPEEDY_ORIGIN + '/office_locator_widget_v3/office_locator.php?lang=bg&selectOfficeButtonCaption=' + encodeURIComponent('Избери');
   var COURIER_LABEL = { econt_office: 'ЕКОНТ', speedy_office: 'СПИДИ' };
-  var OPTION_PATTERN = { econt_office: /офис\s+econt/i, speedy_office: /офис\s+speedy/i, speedy_address: /адрес\s+speedy/i };
+  // ConvertBuilder method names differ per store ("До офис ECONT", "Доставка до офис на Еконт"…): match the kind + courier in Latin or Cyrillic
+  var OPTION_PATTERN = { econt_office: /офис.*(econt|еконт)/i, speedy_office: /офис.*(speedy|спиди)/i, speedy_address: /адрес.*(speedy|спиди)/i };
 
   function clean(v) { return v == null ? '' : String(v).replace(/\s+/g, ' ').trim(); }
   function norm(v) { return clean(v).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim(); }
@@ -86,6 +87,13 @@
     return -1;
   }
 
+  /** Price as printed in a shipping label: "4.07€" → "4.07 €", "$2.48" → "$2.48", "5,10 лв." → "5.10 лв."; '' when none. */
+  function optionPrice(label) {
+    var m = String(label).match(/([$€£])\s*(\d+[.,]\d{2})|(\d+[.,]\d{2})\s*(€|лв\.?)/i);
+    if (!m) return '';
+    return m[1] ? m[1] + m[2].replace(',', '.') : m[3].replace(',', '.') + ' ' + m[4];
+  }
+
   /** The Speedy map posts the chosen office to its parent page; anything from another origin is ignored. */
   function parseSpeedyMessage(origin, data) {
     if (origin !== SPEEDY_ORIGIN) return null;
@@ -132,7 +140,7 @@
 
   var core = {
     TOKEN: TOKEN, norm: norm, searchOffices: searchOffices, searchCities: searchCities, formatSelection: formatSelection,
-    validateSelection: validateSelection, pickOptionIndex: pickOptionIndex, parseSpeedyMessage: parseSpeedyMessage,
+    validateSelection: validateSelection, pickOptionIndex: pickOptionIndex, optionPrice: optionPrice, parseSpeedyMessage: parseSpeedyMessage,
     buildOrderPayload: buildOrderPayload
   };
   if (typeof window !== 'undefined' && window.__ZDO_TEST__) { window.__zdoCore = core; return; }
@@ -325,8 +333,7 @@
       var i = pickOptionIndex(o.labels, t);
       available[t] = i >= 0;
       anyAvailable = anyAvailable || i >= 0;
-      var m = i >= 0 && o.labels[i].match(/(\d+[.,]\d{2})\s*€/);
-      root.querySelector('[data-price="' + t + '"]').textContent = m ? m[1].replace(',', '.') + ' €' : '';
+      root.querySelector('[data-price="' + t + '"]').textContent = i >= 0 ? optionPrice(o.labels[i]) : '';
     });
     // hide only choices ConvertBuilder can't price; if it offers none, keep all (its own error will show)
     if (anyAvailable) [].forEach.call(root.querySelectorAll('.zdo-opt input'), function (r) { r.closest('.zdo-opt').hidden = !available[r.value]; });
