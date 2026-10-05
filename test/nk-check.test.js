@@ -105,3 +105,13 @@ test('the CSV export has a nekorekten column', async () => {
   assert.ok(lines[0].endsWith(';НЕкоректен'));
   assert.deepEqual(lines.slice(1).map((l) => l.split(';').pop()), ['2 сигнала', 'чист', 'непроверен']);
 });
+
+test('orders without a valid phone are not sent to nekorekten.com nor retried', async () => {
+  const { pendingNekorekten } = await import('../lib/orders-repo.js');
+  const a = await insertOrder(q, order({ cbOrderId: 'NP', phone: '12', phoneNorm: '' }));
+  let calls = 0;
+  const summary = await checkOrders(q, [{ id: a.id, phoneNorm: '' }], 'KEY', async () => { calls++; return { ok: true, json: async () => ({ items: [], count: 0 }) }; });
+  assert.equal(calls, 0);
+  assert.deepEqual(summary, { checked: 0, flagged: 0, clean: 0, errors: 0 });
+  assert.deepEqual(await pendingNekorekten(q, 10), []);
+});

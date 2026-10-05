@@ -41,8 +41,6 @@ test('validateOrder rejects bad input with a reason', () => {
   const bad = (patch) => validateOrder({ ...base, ...patch }).error;
   assert.equal(validateOrder(null).error, 'invalid body');
   assert.equal(bad({ cb_order_id: '' }), 'cb_order_id required');
-  assert.equal(bad({ name: 'М' }), 'name required');
-  assert.equal(bad({ phone: '123' }), 'invalid phone');
   assert.equal(bad({ delivery_type: 'pigeon' }), 'invalid delivery_type');
   assert.equal(bad({ delivery_type: 'constructor' }), 'invalid delivery_type');
   assert.equal(bad({ delivery_type: 'toString' }), 'invalid delivery_type');
@@ -59,4 +57,12 @@ test('validateOrder accepts a Speedy address order and cleans items', () => {
   assert.equal(r.ok, true);
   assert.equal(r.order.courier, 'speedy');
   assert.deepEqual(r.order.items, [{ name: 'Тесте', qty: 2, price: 37 }]);
+});
+
+test('validateOrder accepts a missing name and an unrecognised phone (ConvertBuilder already took the order)', () => {
+  const r = validateOrder({ ...base, name: '', phone: '123' });
+  assert.equal(r.ok, true);
+  assert.equal(r.order.name, '');
+  assert.equal(r.order.phone, '123');
+  assert.equal(r.order.phoneNorm, '');
 });

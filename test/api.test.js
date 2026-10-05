@@ -57,11 +57,11 @@ test('POST /api/orders guards origin, token and fields', async () => {
   const warned = [];
   console.warn = (...a) => warned.push(a);
   try {
-    res = fakeRes(); await orders(post(body({ phone: '1' })), res);
+    res = fakeRes(); await orders(post(body({ delivery_type: 'pigeon' })), res);
   } finally { console.warn = savedWarn; }
   assert.equal(res.statusCode, 400);
-  assert.equal(json(res).error, 'invalid phone');
-  assert.deepEqual(warned, [['[orders] rejected', 'A1', 'invalid phone']]);
+  assert.equal(json(res).error, 'invalid delivery_type');
+  assert.deepEqual(warned, [['[orders] rejected', 'A1', 'invalid delivery_type']]);
   res = fakeRes(); await orders(post('not json'), res);
   assert.equal(res.statusCode, 401);
 });
@@ -85,6 +85,15 @@ test('POST /api/orders keys the ConvertBuilder order id by store domain', async 
   assert.equal(json(res).inserted, true);
   const ids = (await q('select cb_order_id from zd.orders order by cb_order_id')).map((r) => r.cb_order_id);
   assert.deepEqual(ids, ['blagoslovii.com:1', 'dasezaobichame.convertbuilder.com:1']);
+});
+
+test('POST /api/orders keeps an order copy even without a name or with an odd phone', async () => {
+  let res = fakeRes(); await orders(post(body({ cb_order_id: 'N1', name: '', phone: '12' })), res);
+  assert.equal(json(res).inserted, true);
+  const [row] = await q("select name, phone, phone_norm, is_duplicate from zd.orders where cb_order_id like '%:N1'");
+  assert.deepEqual(row, { name: '', phone: '12', phone_norm: '', is_duplicate: false });
+  res = fakeRes(); await orders(post(body({ cb_order_id: 'N2', name: '', phone: '13' })), res);
+  assert.equal(json(res).duplicate, false, 'orders without a valid phone are never duplicates of each other');
 });
 
 test('POST /api/orders rate-limits 20 orders per IP per 10 minutes', async () => {
