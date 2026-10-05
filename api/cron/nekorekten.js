@@ -3,7 +3,7 @@ import { pendingNekorekten } from '../../lib/orders-repo.js';
 import { checkOrders } from '../../lib/nk-check.js';
 import { send, safeEqual, searchParams } from '../../lib/http.js';
 
-const BATCH = 8; // nekorekten.com allows 10 requests per minute
+const BATCH = 4; // free plan: 5 API requests/min and 30 searches/day
 
 /** Daily (Vercel Cron, Bearer CRON_SECRET): retries orders whose nekorekten.com check is pending or failed. ?debug=1 adds the plan usage. */
 export default async function handler(req, res) {
