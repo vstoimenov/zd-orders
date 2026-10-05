@@ -123,3 +123,20 @@ test('admin orders rejects malformed cookie with 401', async () => {
   await adminOrders(fakeReq({ url: '/api/admin/orders', headers: { cookie: 'zdo_admin=%' } }), res);
   assert.equal(res.statusCode, 401);
 });
+
+test('admin can delete an order permanently', async () => {
+  const { insertOrder: ins, deleteOrder, listOrders: list } = await import('../lib/orders-repo.js');
+  const { id } = await ins(q, { ...sample, cbOrderId: 'DEL1', ip: '1', userAgent: '' });
+  assert.equal(await deleteOrder(q, 'not-a-uuid'), false);
+  const c = await cookie();
+  let res = fakeRes();
+  await adminOrders(fakeReq({ method: 'DELETE', headers: { cookie: c }, body: JSON.stringify({ id }) }), res);
+  assert.deepEqual(json(res), { ok: true });
+  assert.equal((await list(q)).total, 0);
+  res = fakeRes();
+  await adminOrders(fakeReq({ method: 'DELETE', headers: { cookie: c }, body: JSON.stringify({ id }) }), res);
+  assert.equal(res.statusCode, 404);
+  res = fakeRes();
+  await adminOrders(fakeReq({ method: 'DELETE', body: JSON.stringify({ id }) }), res);
+  assert.equal(res.statusCode, 401);
+});

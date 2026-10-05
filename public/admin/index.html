@@ -20,6 +20,8 @@ table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(-
 th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 th{background:#f6eef1;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
 tr.st-new{background:#fff6f9}
+.del{display:block;margin-top:6px;color:#a1122f;border-color:#f3c6cf;background:#fff;font-size:12px;padding:4px 10px}
+.del:hover{background:#fdecee}
 .dup{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:10px;background:#fde7c8;color:#8a4b00;font-size:11px;font-weight:700}
 .nk{display:inline-block;margin-top:4px;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;text-decoration:none}
 .nk-bad{background:#fdecee;color:#a1122f}
@@ -191,7 +193,7 @@ tr.st-new{background:#fff6f9}
         '<td data-label="Артикули">' + items + '</td>' +
         '<td data-label="Сума"><b>' + o.total.toFixed(2) + ' ' + esc(o.currency) + '</b></td>' +
         '<td data-label="Статус"><select data-status="' + i + '">' + opts + '</select></td>' +
-        '<td><button type="button" data-copy="' + i + '">Копирай за товарителница</button></td>' +
+        '<td><button type="button" data-copy="' + i + '">Копирай за товарителница</button><button type="button" class="del" data-del="' + i + '" title="Изтрий поръчката от системата">Изтрий</button></td>' +
         '</tr>';
     }).join('') || '<tr><td colspan="7" class="muted">Няма поръчки.</td></tr>';
     updatePager();
@@ -230,6 +232,20 @@ tr.st-new{background:#fff6f9}
   $('rows').addEventListener('click', function (e) {
     var btn = e.target;
     if (btn.getAttribute('data-retry') != null) { load(page); return; }
+    var d = btn.getAttribute('data-del');
+    if (d != null) {
+      var o = orders[d];
+      if (!window.confirm('Да изтрия ли поръчката на ' + (o.name || 'клиент без име') + ' (' + o.total.toFixed(2) + ' ' + o.currency + ')?\n\nТя ще изчезне само от тази система (не и от ConvertBuilder) и не може да се върне.')) return;
+      btn.disabled = true;
+      fetch('/api/admin/orders', { method: 'DELETE', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: o.id }) })
+        .then(function (r) {
+          if (r.status === 401) { showLogin(); return; }
+          if (!r.ok && r.status !== 404) throw new Error(r.status);
+          orders.splice(Number(d), 1); total = Math.max(0, total - 1); render();
+        })
+        .catch(function () { btn.disabled = false; alert('Поръчката не беше изтрита. Опитайте пак.'); });
+      return;
+    }
     var i = btn.getAttribute('data-copy');
     if (i == null) return;
     var text = orders[i].waybill;

@@ -1,6 +1,6 @@
 import { getQuery } from '../../lib/db.js';
 import { isAdmin } from '../../lib/auth.js';
-import { listOrders, updateStatus, pendingNekorekten } from '../../lib/orders-repo.js';
+import { listOrders, updateStatus, pendingNekorekten, deleteOrder } from '../../lib/orders-repo.js';
 import { checkOrders } from '../../lib/nk-check.js';
 import { waybillText } from '../../lib/waybill.js';
 import { ordersToCsv } from '../../lib/csv.js';
@@ -18,6 +18,10 @@ export default async function handler(req, res) {
       return (await updateStatus(q, String(b.id || ''), String(b.status || '')))
         ? send(res, 200, { ok: true })
         : send(res, 400, { error: 'invalid' });
+    }
+    if (req.method === 'DELETE') {
+      const b = readJson(req) || {};
+      return (await deleteOrder(q, String(b.id || ''))) ? send(res, 200, { ok: true }) : send(res, 404, { error: 'not found' });
     }
     if (req.method !== 'GET') return send(res, 405, { error: 'method' });
     const p = searchParams(req);
