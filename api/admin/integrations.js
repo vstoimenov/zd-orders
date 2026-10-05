@@ -56,20 +56,26 @@ async function saveConvertBuilder(q, b) {
     throw new Error(`Чекаутът записва поръчките под домейн ${stores.join(', ')}. Въведете този домейн, за да не се дублират поръчките.`);
   }
   const apiKey = typedKey || (await getSecret(q, 'convertbuilder'));
-  const active = b.active !== false;
   const cfg = { domain, apiKey };
-  const test = await testConnection(cfg);
   const target = `${base()}/api/cb/webhook`;
-  const config = { domain, store, active, currency: 'EUR', connectedAt: new Date().toISOString(), lastError: null };
-  if (active) {
-    config.webhookSecret = randomBytes(32).toString('hex');
-    config.webhookId = (await ensureWebhook(cfg, target, config.webhookSecret)).id;
-  } else {
+  const config = { domain, store, currency: 'EUR', lastError: null };
+  if (b.active === false) {
+    // switching off must work even with a revoked key: remove our webhook if ConvertBuilder still lets us
     try { await removeWebhook(cfg, target); } catch (err) { console.error('[admin] webhook removal failed', err.message); }
-    Object.assign(config, { webhookId: null, webhookSecret: null });
+    await saveIntegration(q, 'convertbuilder', { config: { ...config, active: false, webhookId: null, webhookSecret: null }, secret: typedKey || undefined });
+    return { active: false };
+  }
+  const test = await testConnection(cfg);
+  Object.assign(config, { active: true, connectedAt: new Date().toISOString(), webhookSecret: randomBytes(32).toString('hex') });
+  try {
+    config.webhookId = (await ensureWebhook(cfg, target, config.webhookSecret)).id;
+  } catch (err) {
+    // the old hook may already be deleted: do not keep showing it as registered
+    await saveIntegration(q, 'convertbuilder', { config: { webhookId: null } });
+    throw err;
   }
   await saveIntegration(q, 'convertbuilder', { config, secret: typedKey || undefined });
-  return test;
+  return { active: true, ...test };
 }
 
 /** GET status · POST {action}: save_convertbuilder {domain, apiKey, active} | test_convertbuilder | sync_convertbuilder {from, to}

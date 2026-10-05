@@ -442,7 +442,10 @@ tr.st-new{background:#fff6f9}
   $('iCbSave').addEventListener('click', function () {
     $('iCbInfo').textContent = 'Свързване…';
     busy($('iCbSave'), integ({ action: 'save_convertbuilder', domain: $('iCbDomain').value, apiKey: $('iCbKey').value, active: $('iCbActive').checked }))
-      .then(function (d) { $('iCbKey').value = ''; loadIntegrations(); alert('Свързано ✓ В магазина има ' + (d.totalOrders == null ? '?' : d.totalOrders) + ' поръчки.'); })
+      .then(function (d) {
+        $('iCbKey').value = ''; loadIntegrations();
+        alert(d.active ? 'Свързано ✓ В магазина има ' + (d.totalOrders == null ? '?' : d.totalOrders) + ' поръчки.' : 'Интеграцията е изключена.');
+      })
       .catch(function (e) { showErr('iCbInfo', e); });
   });
   $('iCbTest').addEventListener('click', function () {

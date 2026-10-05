@@ -165,10 +165,10 @@ const recording = (impl) => { const calls = []; const f = async (url, init = {})
 
 test('a manual status change survives re-syncs; only a new ConvertBuilder status moves it', async () => {
   const { updateStatus } = await import('../lib/orders-repo.js');
-  const r = await upsertCbOrder(q, mapOrder(cbOrder({ status: 'completed' }), { store: 'adhdbg.eu' }));
-  await updateStatus(q, r.id, 'returned');
-  await upsertCbOrder(q, mapOrder(cbOrder({ status: 'completed' }), { store: 'adhdbg.eu' }));
-  assert.equal((await listOrders(q)).rows[0].status, 'returned', 'same CB status again → keep the admin status');
+  const r = await upsertCbOrder(q, mapOrder(cbOrder({ status: 'pending' }), { store: 'adhdbg.eu' }));
+  await updateStatus(q, r.id, 'shipped');
+  await upsertCbOrder(q, mapOrder(cbOrder({ status: 'pending' }), { store: 'adhdbg.eu' }));
+  assert.equal((await listOrders(q)).rows[0].status, 'shipped', 'same CB status again → keep the admin status');
   await upsertCbOrder(q, mapOrder(cbOrder({ status: 'canceled' }), { store: 'adhdbg.eu' }));
   assert.equal((await listOrders(q)).rows[0].status, 'cancelled', 'CB status changed → follow it');
   const r2 = await upsertCbOrder(q, mapOrder(cbOrder({ id: 99, status: 'pending' }), { store: 'adhdbg.eu' }));
@@ -267,4 +267,51 @@ test('the nightly cron still catches up ConvertBuilder orders when Econt is down
   assert.equal(res.statusCode, 500, 'the Econt failure is still reported');
   assert.deepEqual(json(res).convertbuilder, { fetched: 1, inserted: 1, updated: 0 });
   assert.equal((await listOrders(q)).rows[0].cbOrderId, 'adhdbg.eu:120');
+});
+
+test('a status set in the admin is kept when ConvertBuilder first reports the order', async () => {
+  const { updateStatus } = await import('../lib/orders-repo.js');
+  const w = await insertOrder(q, { cbOrderId: 'adhdbg.eu:82', name: 'Мария', phone: '0888123456', phoneNorm: '+359888123456', email: '',
+    deliveryType: 'econt_office', courier: 'econt', officeId: 'econt:5803', officeText: 'ЕКОНТ – офис', city: 'Плевен', postCode: '5800',
+    addressText: '', items: [], total: 16.45, currency: 'EUR', paymentMethod: 'cod', pageUrl: '', ip: '1', userAgent: '' });
+  await updateStatus(q, w.id, 'returned');
+  await upsertCbOrder(q, mapOrder(cbOrder({ status: 'completed' }), { store: 'adhdbg.eu' }));
+  assert.equal((await listOrders(q)).rows[0].status, 'returned', 'first sighting does not override a handled order');
+  const fresh = await insertOrder(q, { cbOrderId: 'adhdbg.eu:83', name: 'Б', phone: '', phoneNorm: '', email: '', deliveryType: 'econt_office', courier: 'econt',
+    officeId: 'econt:1', officeText: 'ЕКОНТ – офис', city: 'Х', postCode: '1000', addressText: '', items: [], total: 1, currency: 'EUR', paymentMethod: 'cod', pageUrl: '', ip: '2', userAgent: '' });
+  await upsertCbOrder(q, mapOrder(cbOrder({ id: 83, status: 'shipped' }), { store: 'adhdbg.eu' }));
+  assert.equal((await listOrders(q)).rows.find((o) => o.id === fresh.id).status, 'shipped', 'a new order follows ConvertBuilder');
+});
+
+test('a returned order is never moved automatically', async () => {
+  const { updateStatus } = await import('../lib/orders-repo.js');
+  const r = await upsertCbOrder(q, mapOrder(cbOrder({ status: 'shipped' }), { store: 'adhdbg.eu' }));
+  await updateStatus(q, r.id, 'returned');
+  await upsertCbOrder(q, mapOrder(cbOrder({ status: 'completed' }), { store: 'adhdbg.eu' }));
+  assert.equal((await listOrders(q)).rows[0].status, 'returned');
+});
+
+test('the integration can be switched off even with a revoked key', async () => {
+  await saveIntegration(q, 'convertbuilder', { config: { domain: 'adhdbg.eu', store: 'adhdbg.eu', active: true, webhookSecret: 'whsec', webhookId: 'wh0' }, secret: 'REVOKED' });
+  const res = fakeRes();
+  await withFetch(cbApi([]), () => integrationsApi(post({ action: 'save_convertbuilder', domain: 'adhdbg.eu', apiKey: '', active: false }), res));
+  assert.equal(res.statusCode, 200);
+  const i = await getIntegration(q, 'convertbuilder');
+  assert.deepEqual([i.config.active, i.config.webhookId], [false, null]);
+});
+
+test('a failed webhook registration does not leave a stale "registered" mark', async () => {
+  await saveIntegration(q, 'convertbuilder', { config: { domain: 'adhdbg.eu', store: 'adhdbg.eu', active: true, webhookSecret: 'whsec', webhookId: 'wh0' }, secret: 'API-KEY' });
+  const base = cbApi([]);
+  const res = fakeRes();
+  await withFetch(async (url, init = {}) => (init.method === 'POST' ? { ok: false, status: 500, json: async () => ({}) } : base(url, init)),
+    () => integrationsApi(post({ action: 'save_convertbuilder', domain: 'adhdbg.eu', apiKey: '' }), res));
+  assert.equal(res.statusCode, 400);
+  assert.equal((await getIntegration(q, 'convertbuilder')).config.webhookId, null);
+});
+
+test('a redirecting domain (www → bare) is reported instead of a misleading key error', async () => {
+  const { cbRequest } = await import('../lib/convertbuilder.js');
+  const fetchImpl = async () => ({ ok: false, status: 301, headers: new Headers({ location: 'https://adhdbg.eu/api/site/orders?limit=1' }), json: async () => ({}) });
+  await assert.rejects(cbRequest({ domain: 'www.adhdbg.eu', apiKey: 'K' }, '/orders?limit=1', { fetchImpl }), /въведете adhdbg\.eu/);
 });
