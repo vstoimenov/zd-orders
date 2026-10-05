@@ -30,7 +30,9 @@ export default async function handler(req, res) {
       console.warn('[orders] rate-limited', ip, body.cb_order_id);
       return send(res, 429, { error: 'rate' });
     }
-    const r = await insertOrder(q, { ...v.order, ip, userAgent: String(req.headers['user-agent'] || '').slice(0, 300) });
+    // ConvertBuilder numbers orders per store (each starts at 1): key them by the store's domain
+    const cbOrderId = `${new URL(origin).host}:${v.order.cbOrderId}`;
+    const r = await insertOrder(q, { ...v.order, cbOrderId, ip, userAgent: String(req.headers['user-agent'] || '').slice(0, 300) });
     return send(res, 200, { ok: true, inserted: r.inserted, duplicate: r.duplicate });
   } catch (err) {
     console.error('[orders] store failed', v.order.cbOrderId, err);

@@ -74,6 +74,15 @@ test('POST /api/orders stores once and answers CORS preflight', async () => {
   assert.equal(res.headers['access-control-allow-origin'], ORIGIN);
 });
 
+test('POST /api/orders keys the ConvertBuilder order id by store domain', async () => {
+  let res = fakeRes(); await orders(post(body({ cb_order_id: '1' })), res);
+  assert.equal(json(res).inserted, true);
+  res = fakeRes(); await orders(post(body({ cb_order_id: '1', phone: '0899000111' }), { origin: 'https://blagoslovii.com' }), res);
+  assert.equal(json(res).inserted, true);
+  const ids = (await q('select cb_order_id from zd.orders order by cb_order_id')).map((r) => r.cb_order_id);
+  assert.deepEqual(ids, ['blagoslovii.com:1', 'dasezaobichame.convertbuilder.com:1']);
+});
+
 test('POST /api/orders rate-limits 20 orders per IP per 10 minutes', async () => {
   const savedWarn = console.warn;
   const warned = [];
