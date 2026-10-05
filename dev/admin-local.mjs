@@ -10,6 +10,7 @@ import { insertOrder, saveNekorekten, updateStatus } from '../lib/orders-repo.js
 import login from '../api/admin/login.js';
 import orders from '../api/admin/orders.js';
 import stats from '../api/admin/stats.js';
+import costs from '../api/admin/costs.js';
 
 process.env.ADMIN_PASSWORD = 'local-test';
 process.env.ADMIN_SECRET = 'local-secret';
@@ -35,7 +36,8 @@ http.createServer(async (req, res) => {
     let body = '';
     for await (const c of req) body += c;
     req.body = body || undefined;
-    return (url === '/api/admin/login' ? login : url === '/api/admin/stats' ? stats : orders)(req, res);
+    const routes = { '/api/admin/login': login, '/api/admin/stats': stats, '/api/admin/costs': costs };
+    return (routes[url] || orders)(req, res);
   }
   const file = path.join(root, url.endsWith('/') ? url + 'index.html' : url);
   if (!file.startsWith(root)) { res.statusCode = 403; return res.end(); }

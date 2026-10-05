@@ -49,6 +49,10 @@ tr.st-new{background:#fff6f9}
 .bar i{display:block;width:100%;max-width:48px;background:var(--rose);border-radius:4px 4px 0 0;min-height:2px}
 .bar b{font-size:11px}
 .bar span{font-size:10px;color:var(--muted);margin-top:4px;white-space:nowrap}
+.costgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:8px}
+.costgrid label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.cost-in{width:110px}
+.neg{color:#a1122f!important}
 @media (max-width:900px){.grid2{grid-template-columns:1fr}}
 @media (max-width:800px){table,thead,tbody,tr,td{display:block}thead{display:none}tr{border-bottom:2px solid var(--line)}td{border:0;padding:4px 10px}td[data-label]::before{content:attr(data-label);display:block;font-size:11px;color:var(--muted);text-transform:uppercase}}
 </style>
@@ -61,7 +65,7 @@ tr.st-new{background:#fff6f9}
   <div class="err" id="loginErr"></div>
 </form>
 <div id="app" hidden>
-  <header><div class="tabs"><button type="button" class="tab on" data-view="orders">Поръчки</button><button type="button" class="tab" data-view="dash">Табло</button></div><span class="muted" id="count"></span></header>
+  <header><div class="tabs"><button type="button" class="tab on" data-view="orders">Поръчки</button><button type="button" class="tab" data-view="dash">Табло</button><button type="button" class="tab" data-view="costs">Разходи</button></div><span class="muted" id="count"></span></header>
   <main>
     <section id="dashView" hidden>
       <form class="filters" id="dFilters">
@@ -83,6 +87,34 @@ tr.st-new{background:#fff6f9}
       <div class="grid2">
         <div class="panel"><h2>По вид доставка</h2><table id="dDelivery"></table></div>
         <div class="panel"><h2>По статус</h2><table id="dStatus"></table></div>
+      </div>
+    </section>
+    <section id="costsView" hidden>
+      <div class="panel">
+        <h2>Себестойност на продуктите (€ за брой)</h2>
+        <table id="cProducts"></table>
+      </div>
+      <div class="panel">
+        <h2>Разходи на поръчка (€)</h2>
+        <div class="costgrid">
+          <label>Опаковка на поръчка<input type="number" step="0.01" min="0" id="cPackaging"></label>
+          <label>Такса наложен платеж (%)<input type="number" step="0.01" min="0" id="cCodFeePct"></label>
+          <label>Доставка Еконт при безплатна доставка<input type="number" step="0.01" min="0" id="cFreeEcont"></label>
+          <label>Доставка Спиди при безплатна доставка<input type="number" step="0.01" min="0" id="cFreeSpeedy"></label>
+          <label>Разход при върната пратка<input type="number" step="0.01" min="0" id="cReturn"></label>
+        </div>
+        <p class="muted">Безплатна доставка се отчита автоматично, когато клиентът не е платил доставка (над 20 €). Тогава цената ѝ е ваш разход.</p>
+        <button type="button" class="primary" id="cSave">Запази разходите</button> <span class="muted" id="cSaved"></span>
+      </div>
+      <div class="panel">
+        <h2>Други разходи</h2>
+        <form class="filters" id="eForm">
+          <input type="date" id="eDate" required>
+          <input type="text" id="eName" placeholder="Описание (напр. ConvertBuilder)" maxlength="120" required>
+          <input type="number" step="0.01" min="0" id="eAmount" placeholder="Сума €" required>
+          <button class="primary">Добави</button>
+        </form>
+        <table id="cExpenses"></table>
       </div>
     </section>
     <section id="ordersView">
@@ -287,6 +319,15 @@ tr.st-new{background:#fff6f9}
       (rows.length ? rows.map(function (r) { return '<tr>' + r.map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>'; }).join('')
         : '<tr><td colspan="' + head.length + '" class="muted">Няма данни.</td></tr>') + '</tbody>';
   }
+  function profitCards(p) {
+    if (!p) return '';
+    var other = 'опаковки ' + money(p.packaging, 'EUR') + ' · НП ' + money(p.codFee, 'EUR') + ' · доставки ' + money(p.freeShipping, 'EUR') +
+      ' · връщания ' + money(p.returns, 'EUR') + ' · разходи ' + money(p.expenses, 'EUR');
+    return card('Разход за продукти', money(p.productCost, 'EUR'), 'себестойност (въвежда се в „Разходи“)') +
+      card('Други разходи', money(p.otherCosts, 'EUR'), other) +
+      card('Печалба преди ДДС', money(p.profit, 'EUR'), 'от приход от артикули ' + money(p.itemsRevenue, 'EUR')).replace('class="val"', p.profit < 0 ? 'class="val neg"' : 'class="val"') +
+      card('Марж', pct(p.margin), 'печалба ÷ приход');
+  }
   function renderDash(d) {
     dashLoaded = true;
     var sel = $('dStore'), chosen = sel.value;
@@ -296,7 +337,7 @@ tr.st-new{background:#fff6f9}
     var c = d.cards, period = d.period.from === d.period.to ? d.period.from : d.period.from + ' – ' + d.period.to;
     $('dCards').innerHTML = card('Оборот', moneyList(c.revenue), 'без отказаните') + card('Реален приход', moneyList(c.delivered), 'само доставените') +
       card('Поръчки', String(c.orders), period) + card('Средна поръчка (AOV)', moneyList(c.aov)) +
-      card('Върнати', pct(c.returnRate), 'от изпратените') + card('⚠️ В НЕкоректен', String(c.nkFlagged), pct(c.nkFlaggedPct) + ' от поръчките');
+      card('Върнати', pct(c.returnRate), 'от изпратените') + card('⚠️ В НЕкоректен', String(c.nkFlagged), pct(c.nkFlaggedPct) + ' от поръчките') + profitCards(d.profit);
     var max = Math.max.apply(null, d.daily.map(function (x) { return x.orders; }).concat([1]));
     $('dChart').innerHTML = d.daily.length ? d.daily.map(function (x) {
       return '<div class="bar" title="' + esc(x.day + ': ' + x.orders + ' поръчки, оборот ' + x.revenue.toFixed(2)) + '"><b>' + x.orders + '</b>' +
@@ -323,9 +364,56 @@ tr.st-new{background:#fff6f9}
     [].forEach.call(document.querySelectorAll('.tab'), function (t) { t.classList.toggle('on', t.getAttribute('data-view') === view); });
     $('ordersView').hidden = view !== 'orders';
     $('dashView').hidden = view !== 'dash';
+    $('costsView').hidden = view !== 'costs';
     $('count').hidden = view !== 'orders';
-    if (view === 'dash' && !dashLoaded) loadDash();
+    if (view === 'dash') loadDash();
+    if (view === 'costs') loadCosts();
   }
+
+  /* ---- Разходи ---- */
+  var costsData = null;
+  function costsFetch(method, body) {
+    return fetch('/api/admin/costs', { method: method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+      .then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } if (!r.ok) throw new Error(r.status); return r.json(); });
+  }
+  function num(v) { return v == null ? '' : String(v); }
+  function renderCosts() {
+    var d = costsData;
+    $('cProducts').innerHTML = table(['Продукт', 'Продадени', 'Себестойност'], d.products.map(function (p, i) {
+      return [esc(p.name), String(p.soldQty), '<input type="number" step="0.01" min="0" class="cost-in" data-pi="' + i + '" value="' + esc(num(p.unitCost)) + '">'];
+    }));
+    $('cPackaging').value = num(d.settings.packaging); $('cCodFeePct').value = num(d.settings.codFeePct);
+    $('cFreeEcont').value = num(d.settings.freeShippingEcont); $('cFreeSpeedy').value = num(d.settings.freeShippingSpeedy);
+    $('cReturn').value = num(d.settings.returnCost);
+    $('cExpenses').innerHTML = table(['Дата', 'Описание', 'Сума', ''], d.expenses.map(function (e) {
+      return [esc(e.spentOn), esc(e.name), esc(money(e.amount, 'EUR')), '<button type="button" class="del" data-eid="' + esc(e.id) + '">Изтрий</button>'];
+    }));
+  }
+  function loadCosts() {
+    if (!$('eDate').value) $('eDate').value = sofiaDay(0);
+    costsFetch('GET').then(function (d) { costsData = d; renderCosts(); }).catch(function (e) { if (e.message !== 'auth') alert('Разходите не се заредиха. Опитайте пак.'); });
+  }
+  $('cSave').addEventListener('click', function () {
+    var products = [].map.call(document.querySelectorAll('[data-pi]'), function (inp) { return { name: costsData.products[inp.getAttribute('data-pi')].name, unitCost: inp.value === '' ? 0 : inp.value }; });
+    var v = function (id) { return $(id).value === '' ? 0 : $(id).value; };
+    var settings = { packaging: v('cPackaging'), codFeePct: v('cCodFeePct'), freeShippingEcont: v('cFreeEcont'), freeShippingSpeedy: v('cFreeSpeedy'), returnCost: v('cReturn') };
+    $('cSave').disabled = true;
+    costsFetch('PUT', { products: products, settings: settings })
+      .then(function () { $('cSaved').textContent = 'Запазено ✓'; dashLoaded = false; setTimeout(function () { $('cSaved').textContent = ''; }, 2000); })
+      .catch(function (e) { if (e.message !== 'auth') alert('Не е запазено: проверете за отрицателни или празни стойности.'); })
+      .then(function () { $('cSave').disabled = false; });
+  });
+  $('eForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    costsFetch('POST', { spentOn: $('eDate').value, name: $('eName').value, amount: $('eAmount').value })
+      .then(function () { $('eName').value = ''; $('eAmount').value = ''; loadCosts(); })
+      .catch(function (err) { if (err.message !== 'auth') alert('Разходът не е добавен. Проверете датата, описанието и сумата.'); });
+  });
+  $('cExpenses').addEventListener('click', function (e) {
+    var id = e.target.getAttribute('data-eid');
+    if (!id || !window.confirm('Да изтрия ли този разход?')) return;
+    costsFetch('DELETE', { id: id }).then(loadCosts).catch(function (err) { if (err.message !== 'auth') alert('Не е изтрит. Опитайте пак.'); });
+  });
   [].forEach.call(document.querySelectorAll('.tab'), function (t) { t.addEventListener('click', function () { showView(t.getAttribute('data-view')); }); });
   $('dPeriod').addEventListener('change', function () { var custom = $('dPeriod').value === 'custom'; $('dFrom').hidden = !custom; $('dTo').hidden = !custom; if (!custom) loadDash(); });
   $('dStore').addEventListener('change', loadDash);

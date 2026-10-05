@@ -89,6 +89,8 @@ test('GET /api/admin/stats needs the admin cookie and defaults to the last 7 day
   const body = json(res);
   assert.equal(body.period.to, today());
   assert.equal(body.cards.orders, 1);
+  assert.equal(body.profit.currency, 'EUR');
+  assert.equal(body.profit.itemsRevenue, 18.5);
 });
 
 test('GET /api/admin/stats rejects impossible dates instead of failing', async () => {
