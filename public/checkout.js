@@ -169,6 +169,7 @@
     '.zdo-note{padding:8px 2px;font-size:14px;color:#7a6a6f}',
     '.zdo-picked:not(:empty){padding:10px 12px;margin:0 0 8px;border-radius:8px;background:#f3faf4;border:1px solid #bfe0c6;font-size:14px;line-height:1.4}',
     '.zdo-picked button{border:0;background:none;color:#b0426b;text-decoration:underline;padding:0;margin-left:6px;cursor:pointer;font-size:14px}',
+    '.zdo-link{display:inline-block;font-size:13px;color:#7a6a6f!important;text-decoration:underline;margin:0 0 8px}',
     '.zdo-error:not(:empty){margin:4px 0 10px;padding:10px 12px;border-radius:8px;background:#fdecee;color:#a1122f;font-size:14px;font-weight:600}'
   ].join('');
 
@@ -176,8 +177,9 @@
     return '<label class="zdo-opt"><input type="radio" name="zdo-type" value="' + type + '"><span>До офис или автомат на <b>' + name + '</b></span><span class="zdo-price" data-price="' + type + '"></span></label>' +
       '<div class="zdo-panel" data-for="' + type + '">' +
         '<div class="zdo-picked" data-role="' + courier + '-picked"></div>' +
-        '<div data-role="' + courier + '-pick"><input class="zdo-input" data-role="' + courier + '-search" type="text" placeholder="Напишете град или име на офис" autocomplete="off"><div class="zdo-list" data-role="' + courier + '-list"></div></div>' +
-        '<div data-role="' + courier + '-fallback" hidden><div class="zdo-note">Списъкът с офиси не се зареди. Въведете офиса ръчно:</div>' +
+        '<div data-role="' + courier + '-pick"><input class="zdo-input" data-role="' + courier + '-search" type="text" placeholder="Напишете град или име на офис" autocomplete="off"><div class="zdo-list" data-role="' + courier + '-list"></div>' +
+          '<a href="#" class="zdo-link" data-role="' + courier + '-manual">Не намирам офиса си – въведи ръчно</a></div>' +
+        '<div data-role="' + courier + '-fallback" hidden><div class="zdo-note">Въведете офиса ръчно:</div>' +
           '<input class="zdo-input" data-role="' + courier + '-city" type="text" placeholder="Населено място"><input class="zdo-input" data-role="' + courier + '-text" type="text" placeholder="Име или адрес на офиса на ' + name + '"></div>' +
       '</div>';
   }
@@ -198,7 +200,13 @@
   function field(name) { return document.querySelector('[name="' + name + '"]'); }
   function val(name) { var f = field(name); return f ? f.value : ''; }
   function getJson(path) { return fetch(API + path).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); }
-  function loadOffices(courier) { return offices[courier] ? Promise.resolve(offices[courier]) : getJson('/api/offices?courier=' + courier).then(function (d) { return (offices[courier] = d.offices || []); }); }
+  function loadOffices(courier) {
+    if (offices[courier]) return Promise.resolve(offices[courier]);
+    return getJson('/api/offices?courier=' + courier).then(function (d) {
+      if (!d.offices || !d.offices.length) throw new Error('empty office list'); // treat as a failure → manual entry
+      return (offices[courier] = d.offices);
+    });
+  }
   /** 'econt_office' → 'econt' for the two office types, '' otherwise */
   function officeCourier(type) { return type === 'econt_office' ? 'econt' : type === 'speedy_office' ? 'speedy' : ''; }
   function loadCities() { return cities ? Promise.resolve(cities) : getJson('/api/cities').then(function (d) { return (cities = d.cities || []); }); }
@@ -234,12 +242,21 @@
     return true;
   }
 
+  /** Post code for a typed city name (ConvertBuilder requires one); '0000' for places missing from the list so the sale is never blocked. */
+  function zipFor(city) {
+    var n = norm(city);
+    if (!n) return '';
+    var hits = (cities || []).filter(function (c) { return (c._n || (c._n = norm(c.name))) === n; });
+    var best = hits.filter(function (c) { return c.hasOffice; })[0] || hits[0];
+    return best ? best.postCode : '0000';
+  }
+
   /** Copies the choice into ConvertBuilder's own fields so its validation and order see it. Returns true if it had to click a shipping radio. */
   function sync() {
     var f = formatSelection(selection());
     setField('shippingAddress', f ? f.address : '');
     setField('shippingCity', f ? f.city : '');
-    setField('shippingZipCode', f ? f.zip : '');
+    setField('shippingZipCode', f ? f.zip || zipFor(f.city) : '');
     return selectShippingOption();
   }
 
@@ -284,7 +301,7 @@
     }).join('');
   }
 
-  function officesFailed(courier) { state[courier + 'Fallback'] = true; render(); sync(); }
+  function officesFailed(courier) { state[courier + 'Fallback'] = true; render(); sync(); loadCities().then(sync, function () {}); }
 
   function fillPrices() {
     var o = shippingOptions(), anyAvailable = false, available = {};
@@ -334,6 +351,11 @@
         if (c) { state.addrCity = c.name; state.addrPost = c.postCode; el('addr-city').value = c.name; }
         el('city-list').innerHTML = '';
         sync(); el('addr-street').focus();
+      } else if (role === 'econt-manual' || role === 'speedy-manual') {
+        e.preventDefault();
+        var mc = role.split('-')[0];
+        state[mc + 'Fallback'] = true; render(); sync(); el(mc + '-city').focus();
+        loadCities().then(sync, function () {});
       } else if (role === 'change') {
         var cc = officeCourier(state.type);
         if (cc) { state[cc] = null; render(); sync(); el(cc + '-search').focus(); }

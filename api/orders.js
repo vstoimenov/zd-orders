@@ -32,7 +32,7 @@ export default async function handler(req, res) {
       return send(res, 429, { error: 'rate' });
     }
     // ConvertBuilder numbers orders per store (each starts at 1): key them by the store's domain
-    const cbOrderId = `${new URL(origin).host}:${v.order.cbOrderId}`;
+    const cbOrderId = `${new URL(origin).host.replace(/^www\./, '')}:${v.order.cbOrderId}`;
     const r = await insertOrder(q, { ...v.order, cbOrderId, ip, userAgent: String(req.headers['user-agent'] || '').slice(0, 300) });
     // check the phone on nekorekten.com now; failures are stored as 'error' and retried later — never fail the order for it
     const nkKey = process.env.NEKOREKTEN_API_KEY;

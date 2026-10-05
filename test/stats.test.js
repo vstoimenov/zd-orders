@@ -90,3 +90,11 @@ test('GET /api/admin/stats needs the admin cookie and defaults to the last 7 day
   assert.equal(body.period.to, today());
   assert.equal(body.cards.orders, 1);
 });
+
+test('GET /api/admin/stats rejects impossible dates instead of failing', async () => {
+  process.env.ADMIN_SECRET = 'secret';
+  const res = fakeRes();
+  await statsApi(fakeReq({ url: '/api/admin/stats?from=2026-13-45&to=2026-10-05', headers: { cookie: `zdo_admin=${signSession('secret')}` } }), res);
+  assert.equal(res.statusCode, 200);
+  assert.notEqual(json(res).period.from, '2026-13-45');
+});

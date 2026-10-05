@@ -26,3 +26,8 @@ test('lookupPhone fails with the API message on HTTP errors', async () => {
   await assert.rejects(lookupPhone('+359888123456', 'KEY', fetchImpl), /HTTP 429: Too many requests/);
   await assert.rejects(lookupPhone('', 'KEY', fetchImpl), /no phone/);
 });
+
+test('lookupPhone does not treat a 200 without a reports list as clean', async () => {
+  await assert.rejects(lookupPhone('+359888123456', 'KEY', async () => ({ ok: true, json: async () => { throw new Error('html'); } })), /unexpected response/);
+  await assert.rejects(lookupPhone('+359888123456', 'KEY', async () => ({ ok: true, json: async () => ({ message: 'quota' }) })), /unexpected response/);
+});

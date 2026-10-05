@@ -7,7 +7,7 @@ import { ordersToCsv } from '../../lib/csv.js';
 import { readJson, send, searchParams } from '../../lib/http.js';
 
 const PAGE_SIZE = 50;
-const NK_RETRY = 3; // unchecked orders re-checked on nekorekten.com each time the list opens
+const NK_RETRY = 2; // unchecked orders re-checked on nekorekten.com when the plain first page opens (free plan: 5 req/min)
 
 export default async function handler(req, res) {
   if (!isAdmin(req)) return send(res, 401, { error: 'auth' });
@@ -35,7 +35,8 @@ export default async function handler(req, res) {
       return res.end(ordersToCsv(rows));
     }
     const nkKey = process.env.NEKOREKTEN_API_KEY;
-    if (nkKey) {
+    const plainFirstPage = !p.get('page') || p.get('page') === '1';
+    if (nkKey && plainFirstPage && !filters.status && !filters.from && !filters.to && !filters.search) {
       try { await checkOrders(q, await pendingNekorekten(q, NK_RETRY), nkKey); } catch (err) { console.error('[admin] nekorekten retry', err); }
     }
     const page = Math.max(1, Number(p.get('page')) || 1);

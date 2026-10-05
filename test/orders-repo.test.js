@@ -93,6 +93,7 @@ test('Nekorekten results are saved, exposed on the order and pending ones are li
   assert.deepEqual(byId[a.id].nkReportIds, ['101', '102']);
   assert.ok(byId[a.id].nkCheckedAt);
   assert.equal(byId[b.id].nkStatus, 'error');
-  assert.deepEqual((await pendingNekorekten(q, 10)).map((r) => r.id), [b.id]);
-  assert.deepEqual((await pendingNekorekten(q, 10))[0].phoneNorm, '+359899000111');
+  assert.deepEqual(await pendingNekorekten(q, 10), [], 'a failed check waits 30 minutes before the next try');
+  await q(`update zd.orders set nk_checked_at = now() - interval '31 minutes' where id = $1`, [b.id]);
+  assert.deepEqual(await pendingNekorekten(q, 10), [{ id: b.id, phoneNorm: '+359899000111' }]);
 });

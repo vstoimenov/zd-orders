@@ -85,7 +85,7 @@ test('the nekorekten cron retries pending orders and needs the cron secret', asy
   assert.equal((await listOrders(q)).rows[0].nkStatus, 'clean');
 });
 
-test('opening the admin list retries up to 3 unchecked orders', async () => {
+test('opening the plain first admin page retries up to 2 unchecked orders, filtered views do not', async () => {
   const { signSession } = await import('../lib/auth.js');
   const adminOrders = (await import('../api/admin/orders.js')).default;
   process.env.ADMIN_SECRET = 'secret';
@@ -95,7 +95,11 @@ test('opening the admin list retries up to 3 unchecked orders', async () => {
   await withFetch(async () => ({ ok: true, json: async () => ({ items: [{ id: 1 }], count: 1 }) }),
     () => adminOrders(fakeReq({ url: '/api/admin/orders', headers: { cookie: `zdo_admin=${signSession('secret')}` } }), res));
   const statuses = json(res).orders.map((o) => o.nkStatus).sort();
-  assert.deepEqual(statuses, ['flagged', 'flagged', 'flagged', 'pending']);
+  assert.deepEqual(statuses, ['flagged', 'flagged', 'pending', 'pending']);
+  const res2 = fakeRes();
+  await withFetch(async () => ({ ok: true, json: async () => ({ items: [], count: 0 }) }),
+    () => adminOrders(fakeReq({ url: '/api/admin/orders?q=Мария', headers: { cookie: `zdo_admin=${signSession('secret')}` } }), res2));
+  assert.equal(json(res2).orders.filter((o) => o.nkStatus === 'clean').length, 0, 'searching does not spend nekorekten requests');
 });
 
 test('the CSV export has a nekorekten column', async () => {
@@ -114,4 +118,14 @@ test('orders without a valid phone are not sent to nekorekten.com nor retried', 
   assert.equal(calls, 0);
   assert.deepEqual(summary, { checked: 0, flagged: 0, clean: 0, errors: 0 });
   assert.deepEqual(await pendingNekorekten(q, 10), []);
+});
+
+test('pending checks back off for 30 minutes after a failed attempt', async () => {
+  const { pendingNekorekten, saveNekorekten } = await import('../lib/orders-repo.js');
+  const a = await insertOrder(q, order({ cbOrderId: 'B1', phoneNorm: '+359888000011' }));
+  const b = await insertOrder(q, order({ cbOrderId: 'B2', phoneNorm: '+359888000012' }));
+  await saveNekorekten(q, a.id, { status: 'error' });
+  assert.deepEqual((await pendingNekorekten(q, 10)).map((o) => o.id), [b.id]);
+  await q(`update zd.orders set nk_checked_at = now() - interval '31 minutes' where id = $1`, [a.id]);
+  assert.deepEqual((await pendingNekorekten(q, 10)).map((o) => o.id).sort(), [a.id, b.id].sort());
 });

@@ -16,7 +16,7 @@ export default async function handler(req, res) {
     const result = { offices: await replaceOffices(q, 'econt', offices), cities: await replaceCities(q, cities) };
     // Speedy comes from an unofficial public page: a failure there must not fail the Econt refresh
     try {
-      result.speedy = await replaceOffices(q, 'speedy', attachPostCodes(parseSpeedyOffices(await fetchSpeedyMap()), cities, econtPoints(officesJson)));
+      result.speedy = await replaceOffices(q, 'speedy', attachPostCodes(parseSpeedyOffices(await fetchSpeedyMap()), cities, econtPoints(officesJson)), { minRatio: 0.8 });
     } catch (err) {
       console.error('[cron] speedy refresh failed', err);
       result.speedy = { error: err.message };

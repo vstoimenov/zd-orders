@@ -35,3 +35,14 @@ test('listCities puts cities with an office first', async () => {
   assert.deepEqual((await listCities(q)).map((c) => c.name), ['Айтос', 'Бургас', 'Арда']);
   assert.deepEqual((await listCities(q))[0], { id: 1, name: 'Айтос', postCode: '8500', region: 'Бургас', hasOffice: true });
 });
+
+test('replaceOffices refuses a list that shrank by more than 20%', async () => {
+  const q = await makeTestQuery();
+  const many = Array.from({ length: 10 }, (_, i) => office(String(i + 1), 'Град'));
+  await replaceOffices(q, 'speedy', many.map((o) => ({ ...o, id: `speedy:${o.code}` })));
+  const r = await replaceOffices(q, 'speedy', many.slice(0, 7).map((o) => ({ ...o, id: `speedy:${o.code}` })), { minRatio: 0.8 });
+  assert.equal(r.skipped, true);
+  assert.equal((await listOffices(q, 'speedy')).length, 10);
+  const ok = await replaceOffices(q, 'speedy', many.slice(0, 9).map((o) => ({ ...o, id: `speedy:${o.code}` })), { minRatio: 0.8 });
+  assert.deepEqual(ok, { upserted: 9, removed: 1 });
+});

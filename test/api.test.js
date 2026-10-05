@@ -96,6 +96,15 @@ test('POST /api/orders keeps an order copy even without a name or with an odd ph
   assert.equal(json(res).duplicate, false, 'orders without a valid phone are never duplicates of each other');
 });
 
+test('POST /api/orders treats www. and the bare domain as one store', async () => {
+  process.env.ALLOWED_ORIGINS = `${ORIGIN}, https://www.dasezaobichame.convertbuilder.com`;
+  const res = fakeRes(); await orders(post(body({ cb_order_id: 'W1' }), { origin: 'https://www.dasezaobichame.convertbuilder.com' }), res);
+  assert.equal(json(res).inserted, true);
+  const [row] = await q("select cb_order_id from zd.orders where cb_order_id like '%W1'");
+  assert.equal(row.cb_order_id, 'dasezaobichame.convertbuilder.com:W1');
+  process.env.ALLOWED_ORIGINS = `${ORIGIN}, https://blagoslovii.com`;
+});
+
 test('POST /api/orders rate-limits 20 orders per IP per 10 minutes', async () => {
   const savedWarn = console.warn;
   const warned = [];

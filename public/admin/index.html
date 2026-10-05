@@ -241,7 +241,7 @@ tr.st-new{background:#fff6f9}
         .then(function (r) {
           if (r.status === 401) { showLogin(); return; }
           if (!r.ok && r.status !== 404) throw new Error(r.status);
-          orders.splice(Number(d), 1); total = Math.max(0, total - 1); render();
+          orders = orders.filter(function (x) { return x.id !== o.id; }); total = Math.max(0, total - 1); render();
         })
         .catch(function () { btn.disabled = false; alert('Поръчката не беше изтрита. Опитайте пак.'); });
       return;
