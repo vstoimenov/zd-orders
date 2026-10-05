@@ -2,6 +2,7 @@ import { getQuery } from '../../lib/db.js';
 import { isAdmin } from '../../lib/auth.js';
 import { listOrders, updateStatus, pendingNekorekten, deleteOrder } from '../../lib/orders-repo.js';
 import { checkOrders } from '../../lib/nk-check.js';
+import { nekorektenKey } from '../../lib/integrations-repo.js';
 import { waybillText } from '../../lib/waybill.js';
 import { ordersToCsv } from '../../lib/csv.js';
 import { readJson, send, searchParams } from '../../lib/http.js';
@@ -34,9 +35,9 @@ export default async function handler(req, res) {
       res.setHeader('Content-Disposition', `attachment; filename="porachki-${day}.csv"`);
       return res.end(ordersToCsv(rows));
     }
-    const nkKey = process.env.NEKOREKTEN_API_KEY;
     const plainFirstPage = !p.get('page') || p.get('page') === '1';
-    if (nkKey && plainFirstPage && !filters.status && !filters.from && !filters.to && !filters.search) {
+    const nkKey = plainFirstPage && !filters.status && !filters.from && !filters.to && !filters.search ? await nekorektenKey(q) : null;
+    if (nkKey) {
       try { await checkOrders(q, await pendingNekorekten(q, NK_RETRY), nkKey); } catch (err) { console.error('[admin] nekorekten retry', err); }
     }
     const page = Math.max(1, Number(p.get('page')) || 1);

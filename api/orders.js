@@ -2,6 +2,7 @@ import { getQuery } from '../lib/db.js';
 import { validateOrder } from '../lib/order.js';
 import { insertOrder, countRecentByIp } from '../lib/orders-repo.js';
 import { checkOrders } from '../lib/nk-check.js';
+import { nekorektenKey } from '../lib/integrations-repo.js';
 import { originAllowed, setCors, readJson, send, clientIp } from '../lib/http.js';
 
 const RATE_LIMIT = 20; // orders per IP per 10 minutes (generous: shared mobile IPs / CGNAT)
@@ -35,8 +36,8 @@ export default async function handler(req, res) {
     const cbOrderId = `${new URL(origin).host.replace(/^www\./, '')}:${v.order.cbOrderId}`;
     const r = await insertOrder(q, { ...v.order, cbOrderId, ip, userAgent: String(req.headers['user-agent'] || '').slice(0, 300) });
     // check the phone on nekorekten.com now; failures are stored as 'error' and retried later — never fail the order for it
-    const nkKey = process.env.NEKOREKTEN_API_KEY;
-    if (r.inserted && nkKey) {
+    const nkKey = r.inserted && v.order.phoneNorm ? await nekorektenKey(q) : null;
+    if (nkKey) {
       try { await checkOrders(q, [{ id: r.id, phoneNorm: v.order.phoneNorm }], nkKey); } catch (err) { console.error('[orders] nekorekten', err); }
     }
     return send(res, 200, { ok: true, inserted: r.inserted, duplicate: r.duplicate });

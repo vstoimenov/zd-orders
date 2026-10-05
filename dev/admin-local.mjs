@@ -11,9 +11,11 @@ import login from '../api/admin/login.js';
 import orders from '../api/admin/orders.js';
 import stats from '../api/admin/stats.js';
 import costs from '../api/admin/costs.js';
+import integrations from '../api/admin/integrations.js';
 
 process.env.ADMIN_PASSWORD = 'local-test';
 process.env.ADMIN_SECRET = 'local-secret';
+process.env.INTEGRATIONS_SECRET = 'local-integrations-secret';
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public');
 const q = await makeTestQuery();
 setQueryForTests(q);
@@ -36,7 +38,7 @@ http.createServer(async (req, res) => {
     let body = '';
     for await (const c of req) body += c;
     req.body = body || undefined;
-    const routes = { '/api/admin/login': login, '/api/admin/stats': stats, '/api/admin/costs': costs };
+    const routes = { '/api/admin/login': login, '/api/admin/stats': stats, '/api/admin/costs': costs, '/api/admin/integrations': integrations };
     return (routes[url] || orders)(req, res);
   }
   const file = path.join(root, url.endsWith('/') ? url + 'index.html' : url);

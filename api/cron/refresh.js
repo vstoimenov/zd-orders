@@ -3,6 +3,7 @@ import { fetchEcont, normalizeOffices, normalizeCities, econtPoints } from '../.
 import { fetchSpeedyMap, parseSpeedyOffices, attachPostCodes } from '../../lib/speedy.js';
 import { replaceOffices, replaceCities } from '../../lib/catalog-repo.js';
 import { send, safeEqual } from '../../lib/http.js';
+import { cbConfig, syncOrders } from '../../lib/cb-sync.js';
 
 /** Vercel Cron calls this daily with `Authorization: Bearer $CRON_SECRET`. */
 export default async function handler(req, res) {
@@ -20,6 +21,13 @@ export default async function handler(req, res) {
     } catch (err) {
       console.error('[cron] speedy refresh failed', err);
       result.speedy = { error: err.message };
+    }
+    // catch up on ConvertBuilder orders a webhook might have missed (last 3 days)
+    try {
+      if (await cbConfig(q)) result.convertbuilder = await syncOrders(q);
+    } catch (err) {
+      console.error('[cron] convertbuilder sync failed', err);
+      result.convertbuilder = { error: err.message };
     }
     return send(res, 200, result);
   } catch (err) {
