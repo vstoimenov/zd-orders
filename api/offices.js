@@ -5,9 +5,10 @@ import { send, searchParams } from '../lib/http.js';
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method !== 'GET') return send(res, 405, { error: 'method' });
-  if (searchParams(req).get('courier') !== 'econt') return send(res, 400, { error: 'courier' });
+  const courier = searchParams(req).get('courier');
+  if (courier !== 'econt' && courier !== 'speedy') return send(res, 400, { error: 'courier' });
   try {
-    const offices = await listOffices(getQuery(), 'econt');
+    const offices = await listOffices(getQuery(), courier);
     res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
     return send(res, 200, { offices });
   } catch (err) {

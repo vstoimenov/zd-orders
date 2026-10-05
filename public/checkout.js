@@ -4,8 +4,6 @@
 
   var SCRIPT = typeof document !== 'undefined' ? document.currentScript : null;
   var TOKEN = 'zdo_pub_2026_k7q3'; // not a secret — only filters out random spam
-  var SPEEDY_ORIGIN = 'https://services.speedy.bg';
-  var SPEEDY_MAP = SPEEDY_ORIGIN + '/office_locator_widget_v3/office_locator.php?lang=bg&selectOfficeButtonCaption=' + encodeURIComponent('Избери');
   var COURIER_LABEL = { econt_office: 'ЕКОНТ', speedy_office: 'СПИДИ' };
   // ConvertBuilder method names differ per store ("До офис ECONT", "Доставка до офис на Еконт"…): match the kind + courier in Latin or Cyrillic
   var OPTION_PATTERN = { econt_office: /офис.*(econt|еконт)/i, speedy_office: /офис.*(speedy|спиди)/i, speedy_address: /адрес.*(speedy|спиди)/i };
@@ -39,13 +37,20 @@
     return starts.concat(inner).slice(0, limit || 8);
   }
 
+  /** "автомат " / "офис " before a name, unless the name already says it (Speedy: "… (АВТОМАТ)"). */
+  function kindPrefix(o, capital) {
+    if (o.isAutomat && /автомат/i.test(o.name || '')) return '';
+    var w = o.isAutomat ? 'автомат ' : 'офис ';
+    return capital ? w.charAt(0).toUpperCase() + w.slice(1) : w;
+  }
+
   function formatSelection(sel) {
     if (!sel) return null;
     if (sel.type === 'econt_office' || sel.type === 'speedy_office') {
       var o = sel.office;
       if (o) {
         return {
-          address: COURIER_LABEL[sel.type] + ' – ' + (o.isAutomat ? 'автомат ' : 'офис ') + (o.name ? o.name + ' (' + o.code + ')' : '№' + o.code) + (o.address ? ', ' + o.address : ''),
+          address: COURIER_LABEL[sel.type] + ' – ' + kindPrefix(o) + o.name + ' (' + o.code + ')' + (o.address ? ', ' + o.address : ''),
           city: o.city || '', zip: o.postCode || '', officeId: o.id
         };
       }
@@ -70,7 +75,7 @@
         if (!clean(sel.officeText)) return 'Моля, въведете име или адрес на офиса.';
         return '';
       }
-      return type === 'econt_office' ? 'Моля, изберете офис или автомат на Еконт.' : 'Моля, изберете офис на Спиди от картата.';
+      return type === 'econt_office' ? 'Моля, изберете офис или автомат на Еконт.' : 'Моля, изберете офис или автомат на Спиди.';
     }
     if (type === 'speedy_address') {
       if (!clean(sel.city)) return 'Моля, въведете населено място.';
@@ -94,20 +99,11 @@
     return m[1] ? m[1] + m[2].replace(',', '.') : m[3].replace(',', '.') + ' ' + m[4];
   }
 
-  /** The Speedy map posts the chosen office to its parent page; anything from another origin is ignored. */
-  function parseSpeedyMessage(origin, data) {
-    if (origin !== SPEEDY_ORIGIN) return null;
-    if (typeof data === 'string') { try { data = JSON.parse(data); } catch (e) { return null; } }
-    if (typeof data === 'number') data = { id: data }; // bare office id (also covers the string "79", parsed above)
-    if (!data || typeof data !== 'object') return null;
-    var id = clean(data.id);
-    if (!/^\d{1,10}$/.test(id)) return null;
-    var a = data.address || {};
-    return {
-      id: 'speedy:' + id, code: id, name: clean(data.name),
-      address: clean(a.fullAddressString) || [clean(a.localAddressString), clean(a.siteAddressString)].filter(Boolean).join(', '),
-      city: clean(a.siteName), postCode: clean(a.postCode), isAutomat: clean(data.type).toUpperCase() === 'APT'
-    };
+  /** List label: Speedy names already start with the city ("АЙТОС - …") and may say "(АВТОМАТ)" — don't repeat either. */
+  function officeLabel(o) {
+    var name = clean(o.name), city = clean(o.city);
+    var prefix = city && norm(name).indexOf(norm(city)) !== 0 ? city + ' – ' : '';
+    return prefix + (o.isAutomat ? kindPrefix(o) : '') + name;
   }
 
   /** detail = CustomEvent detail of platform.events.order_completed; order.items[].price is the line total. */
@@ -140,13 +136,13 @@
 
   var core = {
     TOKEN: TOKEN, norm: norm, searchOffices: searchOffices, searchCities: searchCities, formatSelection: formatSelection,
-    validateSelection: validateSelection, pickOptionIndex: pickOptionIndex, optionPrice: optionPrice, parseSpeedyMessage: parseSpeedyMessage,
+    validateSelection: validateSelection, pickOptionIndex: pickOptionIndex, optionPrice: optionPrice, officeLabel: officeLabel,
     buildOrderPayload: buildOrderPayload
   };
   if (typeof window !== 'undefined' && window.__ZDO_TEST__) { window.__zdoCore = core; return; }
 
   var API = '';
-  var root = null, offices = null, cities = null;
+  var root = null, cities = null, offices = { econt: null, speedy: null };
   var state = {
     type: '', econt: null, econtFallback: false, econtCity: '', econtText: '',
     speedy: null, speedyFallback: false, speedyCity: '', speedyText: '',
@@ -171,33 +167,23 @@
     '.zdo-note{padding:8px 2px;font-size:14px;color:#7a6a6f}',
     '.zdo-picked:not(:empty){padding:10px 12px;margin:0 0 8px;border-radius:8px;background:#f3faf4;border:1px solid #bfe0c6;font-size:14px;line-height:1.4}',
     '.zdo-picked button{border:0;background:none;color:#b0426b;text-decoration:underline;padding:0;margin-left:6px;cursor:pointer;font-size:14px}',
-    '.zdo-btn{display:block;width:100%;height:46px;border:0;border-radius:8px;background:#b0426b!important;color:#fff!important;font-size:16px;font-weight:700;cursor:pointer;margin:0 0 8px}',
-    '.zdo-link{display:inline-block;font-size:13px;color:#7a6a6f!important;text-decoration:underline;margin:0 0 8px}',
-    '.zdo-error:not(:empty){margin:4px 0 10px;padding:10px 12px;border-radius:8px;background:#fdecee;color:#a1122f;font-size:14px;font-weight:600}',
-    '.zdo-modal{position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:12px}',
-    '.zdo-modal-box{background:#fff;border-radius:12px;width:100%;max-width:960px;height:90vh;display:flex;flex-direction:column;overflow:hidden}',
-    '.zdo-modal-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #eee;font-size:15px}',
-    '.zdo-modal-head button{border:0;background:#f4f4f4;border-radius:20px;padding:6px 12px;cursor:pointer;font-size:14px}',
-    '.zdo-modal iframe{flex:1;width:100%;border:0}',
-    '.zdo-modal-foot{padding:8px 14px;font-size:12px;color:#777;border-top:1px solid #eee}',
-    '@media (max-width:600px){.zdo-modal{padding:0}.zdo-modal-box{height:100%;border-radius:0}}'
+    '.zdo-error:not(:empty){margin:4px 0 10px;padding:10px 12px;border-radius:8px;background:#fdecee;color:#a1122f;font-size:14px;font-weight:600}'
   ].join('');
+
+  function officePanel(courier, type, name) {
+    return '<label class="zdo-opt"><input type="radio" name="zdo-type" value="' + type + '"><span>До офис или автомат на <b>' + name + '</b></span><span class="zdo-price" data-price="' + type + '"></span></label>' +
+      '<div class="zdo-panel" data-for="' + type + '">' +
+        '<div class="zdo-picked" data-role="' + courier + '-picked"></div>' +
+        '<div data-role="' + courier + '-pick"><input class="zdo-input" data-role="' + courier + '-search" type="text" placeholder="Напишете град или име на офис" autocomplete="off"><div class="zdo-list" data-role="' + courier + '-list"></div></div>' +
+        '<div data-role="' + courier + '-fallback" hidden><div class="zdo-note">Списъкът с офиси не се зареди. Въведете офиса ръчно:</div>' +
+          '<input class="zdo-input" data-role="' + courier + '-city" type="text" placeholder="Населено място"><input class="zdo-input" data-role="' + courier + '-text" type="text" placeholder="Име или адрес на офиса на ' + name + '"></div>' +
+      '</div>';
+  }
 
   var TEMPLATE =
     '<div class="zdo-title">Доставка</div>' +
-    '<label class="zdo-opt"><input type="radio" name="zdo-type" value="econt_office"><span>До офис или автомат на <b>Еконт</b></span><span class="zdo-price" data-price="econt_office"></span></label>' +
-    '<div class="zdo-panel" data-for="econt_office">' +
-      '<div class="zdo-picked" data-role="econt-picked"></div>' +
-      '<div data-role="econt-pick"><input class="zdo-input" data-role="econt-search" type="text" placeholder="Напишете град или име на офис" autocomplete="off"><div class="zdo-list" data-role="econt-list"></div></div>' +
-      '<div data-role="econt-fallback" hidden><div class="zdo-note">Списъкът с офиси не се зареди. Въведете офиса ръчно:</div>' +
-        '<input class="zdo-input" data-role="econt-city" type="text" placeholder="Населено място"><input class="zdo-input" data-role="econt-text" type="text" placeholder="Име или адрес на офиса на Еконт"></div>' +
-    '</div>' +
-    '<label class="zdo-opt"><input type="radio" name="zdo-type" value="speedy_office"><span>До офис или автомат на <b>Спиди</b></span><span class="zdo-price" data-price="speedy_office"></span></label>' +
-    '<div class="zdo-panel" data-for="speedy_office">' +
-      '<div class="zdo-picked" data-role="speedy-picked"></div>' +
-      '<div data-role="speedy-pick"><button type="button" class="zdo-btn" data-role="speedy-open">Избери офис от картата</button><a href="#" class="zdo-link" data-role="speedy-manual">Картата не се зарежда? Въведете офиса ръчно</a></div>' +
-      '<div data-role="speedy-fallback" hidden><input class="zdo-input" data-role="speedy-city" type="text" placeholder="Населено място"><input class="zdo-input" data-role="speedy-text" type="text" placeholder="Име или адрес на офиса на Спиди"></div>' +
-    '</div>' +
+    officePanel('econt', 'econt_office', 'Еконт') +
+    officePanel('speedy', 'speedy_office', 'Спиди') +
     '<label class="zdo-opt"><input type="radio" name="zdo-type" value="speedy_address"><span>До адрес със <b>Спиди</b></span><span class="zdo-price" data-price="speedy_address"></span></label>' +
     '<div class="zdo-panel" data-for="speedy_address">' +
       '<input class="zdo-input" data-role="addr-city" type="text" placeholder="Населено място" autocomplete="off"><div class="zdo-list" data-role="city-list"></div>' +
@@ -210,7 +196,9 @@
   function field(name) { return document.querySelector('[name="' + name + '"]'); }
   function val(name) { var f = field(name); return f ? f.value : ''; }
   function getJson(path) { return fetch(API + path).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); }
-  function loadOffices() { return offices ? Promise.resolve(offices) : getJson('/api/offices?courier=econt').then(function (d) { return (offices = d.offices || []); }); }
+  function loadOffices(courier) { return offices[courier] ? Promise.resolve(offices[courier]) : getJson('/api/offices?courier=' + courier).then(function (d) { return (offices[courier] = d.offices || []); }); }
+  /** 'econt_office' → 'econt' for the two office types, '' otherwise */
+  function officeCourier(type) { return type === 'econt_office' ? 'econt' : type === 'speedy_office' ? 'speedy' : ''; }
   function loadCities() { return cities ? Promise.resolve(cities) : getJson('/api/cities').then(function (d) { return (cities = d.cities || []); }); }
 
   function selection() {
@@ -260,7 +248,7 @@
   }
 
   function pickedHtml(o) {
-    var title = o.name ? (o.isAutomat ? 'Автомат ' : 'Офис ') + o.name : 'Офис на Спиди №' + o.code;
+    var title = kindPrefix(o, true) + o.name;
     return '<b>' + esc(title) + '</b>' + (o.address ? '<br>' + esc(o.address) : '') +
       (o.city ? '<br>' + esc(o.city) : '') + ' <button type="button" data-role="change">Смени</button>';
   }
@@ -268,21 +256,21 @@
   function render() {
     [].forEach.call(root.querySelectorAll('.zdo-opt'), function (l) { l.classList.toggle('is-on', l.querySelector('input').value === state.type); });
     [].forEach.call(root.querySelectorAll('.zdo-panel'), function (p) { p.classList.toggle('is-on', p.getAttribute('data-for') === state.type); });
-    el('econt-picked').innerHTML = state.econt && !state.econtFallback ? pickedHtml(state.econt) : '';
-    el('econt-pick').hidden = !!state.econt || state.econtFallback;
-    el('econt-fallback').hidden = !state.econtFallback;
-    el('speedy-picked').innerHTML = state.speedy && !state.speedyFallback ? pickedHtml(state.speedy) : '';
-    el('speedy-pick').hidden = !!state.speedy || state.speedyFallback;
-    el('speedy-fallback').hidden = !state.speedyFallback;
+    ['econt', 'speedy'].forEach(function (c) {
+      var picked = state[c], fallback = state[c + 'Fallback'];
+      el(c + '-picked').innerHTML = picked && !fallback ? pickedHtml(picked) : '';
+      el(c + '-pick').hidden = !!picked || fallback;
+      el(c + '-fallback').hidden = !fallback;
+    });
   }
 
-  function renderEcontList() {
-    var list = el('econt-list'), q = el('econt-search').value;
+  function renderOfficeList(courier) {
+    var list = el(courier + '-list'), q = el(courier + '-search').value;
     if (!norm(q)) { list.innerHTML = ''; return; }
-    if (!offices) { list.innerHTML = '<div class="zdo-note">Зареждане…</div>'; return; }
-    var found = searchOffices(offices, q, 80);
+    if (!offices[courier]) { list.innerHTML = '<div class="zdo-note">Зареждане…</div>'; return; }
+    var found = searchOffices(offices[courier], q, 80);
     list.innerHTML = found.length ? found.map(function (o) {
-      return '<button type="button" class="zdo-item" data-id="' + esc(o.id) + '">' + esc(o.city + ' – ' + (o.isAutomat ? 'автомат ' : '') + o.name) + '<small>' + esc(o.address) + '</small></button>';
+      return '<button type="button" class="zdo-item" data-id="' + esc(o.id) + '">' + esc(officeLabel(o)) + (o.address ? '<small>' + esc(o.address) + '</small>' : '') + '</button>';
     }).join('') : '<div class="zdo-note">Няма намерен офис. Опитайте само с името на града.</div>';
   }
 
@@ -294,38 +282,7 @@
     }).join('');
   }
 
-  function econtFailed() { state.econtFallback = true; render(); sync(); }
-
-  /** True if src is the iframe's window or a frame nested up to 3 levels inside it (the widget may post from a child frame). */
-  function fromFrame(src, win) {
-    var w = src;
-    for (var i = 0; w && win && i < 4; i++) {
-      if (w === win) return true;
-      try { w = w.parent === w ? null : w.parent; } catch (err) { return false; }
-    }
-    return false;
-  }
-
-  function openSpeedyMap() {
-    var m = document.createElement('div');
-    m.className = 'zdo-modal';
-    m.innerHTML = '<div class="zdo-modal-box"><div class="zdo-modal-head"><b>Изберете офис на Спиди</b><button type="button">Затвори ✕</button></div>' +
-      '<iframe title="Офиси на Спиди" allow="geolocation" src="' + SPEEDY_MAP + '"></iframe>' +
-      '<div class="zdo-modal-foot">Потърсете града си, после натиснете „Избери“ на офиса.</div></div>';
-    function close() { window.removeEventListener('message', onMessage); m.remove(); }
-    function onMessage(e) {
-      var frame = m.querySelector('iframe');
-      if (!frame || !fromFrame(e.source, frame.contentWindow)) return;
-      var o = parseSpeedyMessage(e.origin, e.data);
-      if (!o) return;
-      state.speedy = o; state.speedyFallback = false;
-      close(); render(); sync(); showError('');
-    }
-    window.addEventListener('message', onMessage);
-    m.querySelector('.zdo-modal-head button').addEventListener('click', close);
-    m.addEventListener('click', function (e) { if (e.target === m) close(); });
-    document.body.appendChild(m);
-  }
+  function officesFailed(courier) { state[courier + 'Fallback'] = true; render(); sync(); }
 
   function fillPrices() {
     var o = shippingOptions(), anyAvailable = false, available = {};
@@ -344,12 +301,13 @@
       if (e.target.name !== 'zdo-type') return;
       state.type = e.target.value;
       render(); sync(); showError('');
-      if (state.type === 'econt_office' && !state.econt) loadOffices().then(renderEcontList, econtFailed);
+      var courier = officeCourier(state.type);
+      if (courier && !state[courier]) loadOffices(courier).then(function () { renderOfficeList(courier); }, function () { officesFailed(courier); });
       if (state.type === 'speedy_address') loadCities().then(renderCityList, function () {});
     });
     root.addEventListener('input', function (e) {
       var role = e.target.getAttribute('data-role'), v = e.target.value;
-      if (role === 'econt-search') renderEcontList();
+      if (role === 'econt-search' || role === 'speedy-search') renderOfficeList(role.split('-')[0]);
       else if (role === 'econt-city') state.econtCity = v;
       else if (role === 'econt-text') state.econtText = v;
       else if (role === 'speedy-city') state.speedyCity = v;
@@ -357,16 +315,16 @@
       else if (role === 'addr-city') { state.addrCity = v; state.addrPost = ''; renderCityList(); }
       else if (role === 'addr-street') state.addrStreet = v;
       else return;
-      if (role !== 'econt-search') { sync(); showError(''); }
+      if (!/-search$/.test(role)) { sync(); showError(''); }
     });
     root.addEventListener('click', function (e) {
       var t = e.target.closest('button,a');
       if (!t || !root.contains(t)) return;
       var role = t.getAttribute('data-role');
       if (t.hasAttribute('data-id')) {
-        var id = t.getAttribute('data-id');
-        state.econt = offices.filter(function (o) { return o.id === id; })[0] || null;
-        el('econt-search').value = ''; el('econt-list').innerHTML = '';
+        var id = t.getAttribute('data-id'), c = id.split(':')[0];
+        state[c] = (offices[c] || []).filter(function (o) { return o.id === id; })[0] || null;
+        el(c + '-search').value = ''; el(c + '-list').innerHTML = '';
         render(); sync(); showError('');
       } else if (t.hasAttribute('data-city')) {
         var cid = Number(t.getAttribute('data-city'));
@@ -375,10 +333,9 @@
         el('city-list').innerHTML = '';
         sync(); el('addr-street').focus();
       } else if (role === 'change') {
-        if (state.type === 'econt_office') { state.econt = null; render(); sync(); el('econt-search').focus(); }
-        else { state.speedy = null; render(); sync(); openSpeedyMap(); }
-      } else if (role === 'speedy-open') openSpeedyMap();
-      else if (role === 'speedy-manual') { e.preventDefault(); state.speedyFallback = true; render(); sync(); el('speedy-city').focus(); }
+        var cc = officeCourier(state.type);
+        if (cc) { state[cc] = null; render(); sync(); el(cc + '-search').focus(); }
+      }
     });
   }
 

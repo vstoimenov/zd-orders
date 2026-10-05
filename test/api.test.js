@@ -31,6 +31,10 @@ test('GET /api/offices returns cached Econt offices with CDN caching', async () 
   assert.equal(json(res).offices[0].name, 'Център');
   assert.match(res.headers['cache-control'], /s-maxage=3600/);
   assert.equal(res.headers['access-control-allow-origin'], '*');
+  await replaceOffices(q, 'speedy', [{ id: 'speedy:190', code: '190', name: 'АЙТОС - КИРИЛ И МЕТОДИЙ (УЛ.)', city: 'Айтос', cityId: null, postCode: '', address: '', isAutomat: false }]);
+  const sp = fakeRes();
+  await offices(fakeReq({ url: '/api/offices?courier=speedy' }), sp);
+  assert.deepEqual(json(sp).offices.map((o) => o.id), ['speedy:190']);
   const bad = fakeRes();
   await offices(fakeReq({ url: '/api/offices?courier=dhl' }), bad);
   assert.equal(bad.statusCode, 400);
@@ -105,6 +109,7 @@ test('GET /api/cron/refresh requires the secret and stores Econt data', async ()
   const realFetch = globalThis.fetch;
   globalThis.fetch = async (url) => ({
     ok: true,
+    text: async () => "var speedy_offices = { 190: {oID: 190, officeName: 'АЙТОС - КИРИЛ И МЕТОДИЙ (УЛ.)', officeIcon: iconMarker, officeIconFocused: iconMarkerFocused, officeDescription: null, Y: 42.7, X: 27.2, officeType: 'OFFICE', dropOffAllowed: 1, pickUpAllowed: 1} };",
     json: async () => (String(url).includes('getOffices')
       ? { offices: [{ code: '1', name: 'Център', address: { city: { id: 7, name: 'Пловдив', postCode: '4000', country: { code3: 'BGR' } }, fullAddress: 'Пловдив ул. Х 1' } }] }
       : { cities: [{ id: 7, name: 'Пловдив', postCode: '4000', regionName: 'Пловдив' }] }),
@@ -112,9 +117,28 @@ test('GET /api/cron/refresh requires the secret and stores Econt data', async ()
   try {
     res = fakeRes(); await refresh(fakeReq({ headers: { authorization: 'Bearer cron' } }), res);
   } finally { globalThis.fetch = realFetch; }
-  assert.deepEqual(json(res), { offices: { upserted: 1, removed: 0 }, cities: { upserted: 1, removed: 0 } });
+  assert.deepEqual(json(res), { offices: { upserted: 1, removed: 0 }, cities: { upserted: 1, removed: 0 }, speedy: { upserted: 1, removed: 0 } });
+  const [sp] = await q("select name, city, is_automat from zd.offices where id = 'speedy:190'");
+  assert.deepEqual(sp, { name: 'АЙТОС - КИРИЛ И МЕТОДИЙ (УЛ.)', city: 'Айтос', is_automat: false });
   const [c] = await q('select has_office from zd.cities where id = 7');
   assert.equal(c.has_office, true);
+});
+
+test('GET /api/cron/refresh keeps the Econt refresh when Speedy fails', async () => {
+  const realFetch = globalThis.fetch, savedError = console.error;
+  console.error = () => {};
+  globalThis.fetch = async (url) => (String(url).includes('speedy')
+    ? { ok: false, status: 503 }
+    : { ok: true, json: async () => (String(url).includes('getOffices')
+      ? { offices: [{ code: '1', name: 'Център', address: { city: { id: 7, name: 'Пловдив', postCode: '4000', country: { code3: 'BGR' } }, fullAddress: 'Пловдив ул. Х 1' } }] }
+      : { cities: [{ id: 7, name: 'Пловдив', postCode: '4000', regionName: 'Пловдив' }] }) });
+  let res;
+  try {
+    res = fakeRes(); await refresh(fakeReq({ headers: { authorization: 'Bearer cron' } }), res);
+  } finally { globalThis.fetch = realFetch; console.error = savedError; }
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(json(res).offices, { upserted: 1, removed: 0 });
+  assert.match(json(res).speedy.error, /HTTP 503/);
 });
 
 test('POST /api/orders handles and logs DB errors', async () => {

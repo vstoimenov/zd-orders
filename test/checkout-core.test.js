@@ -49,7 +49,7 @@ test('formatSelection builds the text ConvertBuilder stores', () => {
 test('validateSelection explains what is missing', () => {
   assert.equal(core.validateSelection({ type: '' }), 'Моля, изберете начин на доставка.');
   assert.equal(core.validateSelection({ type: 'econt_office', office: null }), 'Моля, изберете офис или автомат на Еконт.');
-  assert.equal(core.validateSelection({ type: 'speedy_office', office: null }), 'Моля, изберете офис на Спиди от картата.');
+  assert.equal(core.validateSelection({ type: 'speedy_office', office: null }), 'Моля, изберете офис или автомат на Спиди.');
   assert.equal(core.validateSelection({ type: 'speedy_office', office: null, fallback: true, city: '', officeText: 'x' }), 'Моля, въведете населено място.');
   assert.equal(core.validateSelection({ type: 'econt_office', office: null, fallback: true, city: 'Русе', officeText: '' }), 'Моля, въведете име или адрес на офиса.');
   assert.equal(core.validateSelection({ type: 'speedy_address', city: 'Русе', street: '' }), 'Моля, въведете адрес за доставка.');
@@ -76,29 +76,16 @@ test('optionPrice reads the price shown in a ConvertBuilder shipping label', () 
   assert.equal(core.optionPrice('Безплатна доставка'), '');
 });
 
-test('parseSpeedyMessage trusts only the Speedy map', () => {
-  const data = { id: 79, name: 'ПЛОВДИВ - ОФИС', type: 'OFFICE', address: { fullAddressString: 'ул. Константин Стоилов 19', siteName: 'ПЛОВДИВ', postCode: '4000' } };
-  assert.equal(core.parseSpeedyMessage('https://evil.example', data), null);
-  assert.deepEqual(plain(core.parseSpeedyMessage('https://services.speedy.bg', data)),
-    { id: 'speedy:79', code: '79', name: 'ПЛОВДИВ - ОФИС', address: 'ул. Константин Стоилов 19', city: 'ПЛОВДИВ', postCode: '4000', isAutomat: false });
-  assert.equal(plain(core.parseSpeedyMessage('https://services.speedy.bg', JSON.stringify({ ...data, type: 'APT' }))).isAutomat, true);
-  assert.equal(core.parseSpeedyMessage('https://services.speedy.bg', { id: 'abc' }), null);
-  assert.equal(core.parseSpeedyMessage('https://services.speedy.bg', 'abc'), null);
-  assert.equal(core.parseSpeedyMessage('https://services.speedy.bg', 'not json'), null);
+test('formatSelection does not repeat "автомат" when the Speedy name already says it', () => {
+  const apt = { id: 'speedy:9364', code: '9364', name: 'СТАРА ЗАГОРА – СЛАВЯНСКА (УЛ.) (АВТОМАТ)', city: 'Стара Загора', postCode: '', address: '', isAutomat: true };
+  assert.equal(plain(core.formatSelection({ type: 'speedy_office', office: apt })).address, 'СПИДИ – СТАРА ЗАГОРА – СЛАВЯНСКА (УЛ.) (АВТОМАТ) (9364)');
 });
 
-test('parseSpeedyMessage accepts a bare numeric office id from the Speedy origin', () => {
-  const bare = { id: 'speedy:79', code: '79', name: '', address: '', city: '', postCode: '', isAutomat: false };
-  assert.deepEqual(plain(core.parseSpeedyMessage('https://services.speedy.bg', 79)), bare);
-  assert.deepEqual(plain(core.parseSpeedyMessage('https://services.speedy.bg', '79')), bare);
-  assert.equal(core.parseSpeedyMessage('https://evil.example', 79), null);
-  assert.equal(core.parseSpeedyMessage('https://services.speedy.bg', 'abc'), null);
-});
-
-test('formatSelection formats a nameless Speedy office', () => {
-  const nameless = { id: 'speedy:79', code: '79', name: '', address: '', city: '', postCode: '', isAutomat: false };
-  assert.deepEqual(plain(core.formatSelection({ type: 'speedy_office', office: nameless })),
-    { address: 'СПИДИ – офис №79', city: '', zip: '', officeId: 'speedy:79' });
+test('officeLabel shows the city only when the office name does not start with it', () => {
+  assert.equal(core.officeLabel({ city: 'Пловдив', name: 'Тракия', isAutomat: true }), 'Пловдив – автомат Тракия');
+  assert.equal(core.officeLabel({ city: 'Пловдив', name: 'Пловдив Център', isAutomat: false }), 'Пловдив Център');
+  assert.equal(core.officeLabel({ city: 'Айтос', name: 'АЙТОС - КИРИЛ И МЕТОДИЙ (УЛ.)', isAutomat: false }), 'АЙТОС - КИРИЛ И МЕТОДИЙ (УЛ.)');
+  assert.equal(core.officeLabel({ city: 'Стара Загора', name: 'СТАРА ЗАГОРА – СЛАВЯНСКА (УЛ.) (АВТОМАТ)', isAutomat: true }), 'СТАРА ЗАГОРА – СЛАВЯНСКА (УЛ.) (АВТОМАТ)');
 });
 
 test('buildOrderPayload prefers the accepted CB order and falls back to the form', () => {

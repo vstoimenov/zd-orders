@@ -19,6 +19,11 @@ pre{background:#f4f4f4;padding:8px;white-space:pre-wrap;font-size:12px}
     { id: 'econt:4002', code: '4002', name: 'Тракия', city: 'Пловдив', postCode: '4000', address: 'бул. Освобождение 31', isAutomat: true },
     { id: 'econt:1001', code: '1001', name: 'Лозенец', city: 'София', postCode: '1000', address: 'ул. Бяла черква 2', isAutomat: false }
   ];
+  var FIX_SPEEDY = [
+    { id: 'speedy:190', code: '190', name: 'АЙТОС - КИРИЛ И МЕТОДИЙ (УЛ.)', city: 'Айтос', postCode: '', address: '', isAutomat: false },
+    { id: 'speedy:9364', code: '9364', name: 'СТАРА ЗАГОРА – СЛАВЯНСКА (УЛ.) (АВТОМАТ)', city: 'Стара Загора', postCode: '', address: '', isAutomat: true },
+    { id: 'speedy:79', code: '79', name: 'ПЛОВДИВ - ОФИС', city: 'Пловдив', postCode: '', address: '', isAutomat: false }
+  ];
   var FIX_CITIES = [
     { id: 1, name: 'Варна', postCode: '9000', region: 'Варна', hasOffice: true },
     { id: 2, name: 'Велико Търново', postCode: '5000', region: 'Велико Търново', hasOffice: true },
@@ -28,7 +33,7 @@ pre{background:#f4f4f4;padding:8px;white-space:pre-wrap;font-size:12px}
   window.fetch = function (url, init) {
     url = String(url);
     var reply = function (status, data) { return Promise.resolve(new Response(JSON.stringify(data), { status: status })); };
-    if (url.indexOf('/api/offices') > -1) return window.__failOffices ? reply(500, {}) : reply(200, { offices: FIX_OFFICES });
+    if (url.indexOf('/api/offices') > -1) return window.__failOffices ? reply(500, {}) : reply(200, { offices: url.indexOf('courier=speedy') > -1 ? FIX_SPEEDY : FIX_OFFICES });
     if (url.indexOf('/api/cities') > -1) return reply(200, { cities: FIX_CITIES });
     return realFetch(url, init);
   };
