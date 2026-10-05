@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeOffices, normalizeCities, fetchEcont } from '../lib/econt.js';
+import { normalizeOffices, normalizeCities, fetchEcont, econtPoints } from '../lib/econt.js';
 
 const country = { code3: 'BGR' };
 const OFFICES = {
@@ -44,4 +44,13 @@ test('fetchEcont posts countryCode BGR and fails on HTTP errors', async () => {
   assert.equal(call.url, 'https://ee.econt.com/services/Nomenclatures/NomenclaturesService.getOffices.json');
   assert.deepEqual(JSON.parse(call.init.body), { countryCode: 'BGR' });
   await assert.rejects(fetchEcont('getCities', async () => ({ ok: false, status: 503 })), /HTTP 503/);
+});
+
+test('econtPoints lists the coordinates and post code of BG offices', () => {
+  const json = { offices: [
+    { code: '1', address: { city: { postCode: '9000', country: { code3: 'BGR' } }, location: { latitude: 43.2, longitude: 27.9 } } },
+    { code: '2', address: { city: { postCode: '1000', country: { code3: 'BGR' } }, location: null } },
+    { code: '3', address: { city: { postCode: '', country: { code3: 'BGR' } }, location: { latitude: 1, longitude: 2 } } },
+  ] };
+  assert.deepEqual(econtPoints(json), [{ lat: 43.2, lng: 27.9, postCode: '9000' }]);
 });

@@ -16,10 +16,10 @@ const HTML = `<script> var speedy_offices = {
 
 test('parseSpeedyOffices reads the offices embedded in the public Speedy map', () => {
   assert.deepEqual(parseSpeedyOffices(HTML), [
-    { id: 'speedy:190', courier: 'speedy', code: '190', name: 'АЙТОС - КИРИЛ И МЕТОДИЙ (УЛ.)', city: 'Айтос', cityId: null, postCode: '', address: '', isAutomat: false },
-    { id: 'speedy:9364', courier: 'speedy', code: '9364', name: 'СТАРА ЗАГОРА – СЛАВЯНСКА (УЛ.) (АВТОМАТ)', city: 'Стара Загора', cityId: null, postCode: '', address: '', isAutomat: true },
-    { id: 'speedy:77', courier: 'speedy', code: '77', name: 'ДОБРИЧ', city: 'Добрич', cityId: null, postCode: '', address: '', isAutomat: false },
-    { id: 'speedy:88', courier: 'speedy', code: '88', name: "СОФИЯ - Д'АРТ ЦЕНТЪР", city: 'София', cityId: null, postCode: '', address: '', isAutomat: true },
+    { id: 'speedy:190', courier: 'speedy', code: '190', name: 'АЙТОС - КИРИЛ И МЕТОДИЙ (УЛ.)', city: 'Айтос', cityId: null, postCode: '', address: '', isAutomat: false, lat: 42.1, lng: 24.7 },
+    { id: 'speedy:9364', courier: 'speedy', code: '9364', name: 'СТАРА ЗАГОРА – СЛАВЯНСКА (УЛ.) (АВТОМАТ)', city: 'Стара Загора', cityId: null, postCode: '', address: '', isAutomat: true, lat: 42.1, lng: 24.7 },
+    { id: 'speedy:77', courier: 'speedy', code: '77', name: 'ДОБРИЧ', city: 'Добрич', cityId: null, postCode: '', address: '', isAutomat: false, lat: 42.1, lng: 24.7 },
+    { id: 'speedy:88', courier: 'speedy', code: '88', name: "СОФИЯ - Д'АРТ ЦЕНТЪР", city: 'София', cityId: null, postCode: '', address: '', isAutomat: true, lat: 42.1, lng: 24.7 },
   ]);
 });
 
@@ -55,4 +55,16 @@ test('attachPostCodes gives Speedy offices the post code of their city (bracket 
     { id: 'speedy:9', city: 'Нямагоград', postCode: '' },
   ];
   assert.deepEqual(attachPostCodes(offices, cities).map((o) => o.postCode), ['9000', '9101', '9101', '']);
+});
+
+test('parseSpeedyOffices drops "(АВТОМАТ)" from the city name', () => {
+  const html = "var speedy_offices = { 7: {oID: 7, officeName: 'ПЛОДОВИТОВО (АВТОМАТ)', officeIcon: iconMarker, officeIconFocused: iconMarkerFocused, officeDescription: null, Y: 42.2, X: 25.5, officeType: 'APT', dropOffAllowed: 1, pickUpAllowed: 1} };";
+  assert.equal(parseSpeedyOffices(html)[0].city, 'Плодовитово');
+});
+
+test('attachPostCodes falls back to the nearest Econt office when the city is unknown', async () => {
+  const { attachPostCodes } = await import('../lib/speedy.js');
+  const points = [{ lat: 43.21, lng: 27.91, postCode: '9000' }, { lat: 42.70, lng: 23.32, postCode: '1000' }];
+  const [o] = attachPostCodes([{ id: 'speedy:9', city: 'Белослав', postCode: '', lat: 43.19, lng: 27.70 }], [], points);
+  assert.equal(o.postCode, '9000');
 });
