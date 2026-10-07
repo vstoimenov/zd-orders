@@ -51,7 +51,7 @@ test('ad account ids, insight rows and Meta errors in Bulgarian', () => {
   assert.deepEqual(parseInsight(day('2026-10-06', 12.5)), { day: '2026-10-06', spend: 12.5, impressions: 1000, clicks: 25, purchases: 2, purchaseValue: 41.1 });
   assert.match(metaError({ code: 190, message: 'x' }).message, /невалиден или изтекъл/);
   assert.match(metaError({ code: 100, error_subcode: 33, message: 'x' }).message, /няма достъп/);
-  assert.match(metaError({ code: 200, message: 'x' }).message, /ads_read/);
+  assert.match(metaError({ code: 200, message: '(#200) Missing Permissions' }).message, /Няма достъп до рекламния акаунт.*Meta: \(#200\) Missing Permissions/);
   assert.match(metaError({ code: 17, message: 'x' }).message, /ограничи/);
 });
 
