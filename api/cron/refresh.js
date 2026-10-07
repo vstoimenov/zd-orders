@@ -40,6 +40,8 @@ export default async function handler(req, res) {
   // anonymous visit statistics are kept 400 days
   try {
     result.visitsDeleted = (await q(`delete from zd.visits where day < current_date - 400 returning 1`)).length;
+    // salts older than 2 days are destroyed: from then on no visit can be linked to anyone
+    await q(`delete from zd.settings where key like 'visit_salt:%' and key < 'visit_salt:' || to_char(current_date - 2, 'YYYY-MM-DD')`);
   } catch (err) {
     console.error('[cron] visits cleanup failed', err);
   }

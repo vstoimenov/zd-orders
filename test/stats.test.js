@@ -104,16 +104,19 @@ test('GET /api/admin/stats rejects impossible dates instead of failing', async (
 test('getStats adds visits, conversion, traffic sources and ad spend', async () => {
   const day = today();
   const visit = (visitor, source, minutes) => q(`insert into zd.visits (day, site, visitor, path, source, created_at) values ($1::date, 'live.bg', $2, '/', $3, now() - ($4 || ' minutes')::interval)`, [day, visitor, source, String(minutes)]);
-  await visit('a', 'facebook', 30); await visit('a', 'direct', 10); await visit('b', 'direct', 5);
+  await visit('a', 'facebook', 30); await visit('b', 'direct', 5); // one row per visitor per day
   await visit('c', 'google', 5).then(() => q(`update zd.visits set site = 'other.bg' where visitor = 'c'`));
   await add({ trafficSource: 'facebook' });
   await add();
   await q(`insert into zd.ad_spend (platform, account_id, day, spend, impressions, clicks, purchases, purchase_value, currency) values ('meta', '1', $1::date, 10, 2000, 40, 1, 22.57, 'EUR')`, [day]);
+  await q(`insert into zd.integrations (provider, config) values ('meta', '{"accountId":"1"}'::jsonb)`); // the connected account
   const s = await getStats(q, { from: day, to: day, store: 'live.bg' });
+  const all = await getStats(q, { from: day, to: day });
   assert.equal(s.cards.visits, 2);
   assert.equal(s.cards.cr, 1);
   assert.deepEqual(s.sources, [{ source: 'facebook', visits: 1, orders: 1 }, { source: 'direct', visits: 1, orders: 0 }, { source: '', visits: 0, orders: 1 }]);
-  assert.deepEqual([s.ads.spend, s.ads.impressions, s.ads.purchases], [10, 2000, 1]);
+  assert.equal(s.ads, null, 'ad spend is not split per store');
+  assert.deepEqual([all.ads.spend, all.ads.impressions, all.ads.purchases], [10, 2000, 1]);
   const empty = await getStats(q, { from: '2000-01-01', to: '2000-01-01' });
   assert.deepEqual([empty.cards.visits, empty.cards.cr, empty.sources], [0, null, []]);
 });

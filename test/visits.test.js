@@ -41,9 +41,9 @@ test('devices, bots and a daily-changing anonymous visitor id', () => {
   assert.equal(isBot('facebookexternalhit/1.1'), true);
   assert.equal(isBot('Mozilla/5.0 (compatible; Googlebot/2.1)'), true);
   assert.equal(isBot(UA), false);
-  const a = visitorId({ ip: '1.2.3.4', ua: UA, site: 'adhdbg.eu', day: '2026-10-07' });
-  assert.equal(a, visitorId({ ip: '1.2.3.4', ua: UA, site: 'adhdbg.eu', day: '2026-10-07' }));
-  assert.notEqual(a, visitorId({ ip: '1.2.3.4', ua: UA, site: 'adhdbg.eu', day: '2026-10-08' }), 'a new day is a new id');
+  const a = visitorId({ ip: '1.2.3.4', ua: UA, site: 'adhdbg.eu', salt: 's1' });
+  assert.equal(a, visitorId({ ip: '1.2.3.4', ua: UA, site: 'adhdbg.eu', salt: 's1' }));
+  assert.notEqual(a, visitorId({ ip: '1.2.3.4', ua: UA, site: 'adhdbg.eu', salt: 's2' }), 'a new day (new salt) is a new id');
   assert.match(a, /^[0-9a-f]{16}$/);
   assert.equal(a.includes('1.2.3.4'), false);
 });
@@ -80,4 +80,39 @@ test('the nightly job deletes visits older than 400 days', async () => {
   globalThis.fetch = async () => ({ ok: false, status: 503, json: async () => ({}) }); console.error = () => {};
   try { await refresh(fakeReq({ headers: { authorization: 'Bearer cron' } }), fakeRes()); } finally { globalThis.fetch = real; console.error = err; }
   assert.deepEqual((await q(`select visitor from zd.visits`)).map((r) => r.visitor), ['kept']);
+});
+
+test('one row per visitor per day; a flood from one address counts at most 50 visitors; odd utm_source is cleaned', async () => {
+  for (let i = 0; i < 5; i++) await beacon({ p: '/p' + i, s: '?utm_source=facebook' });
+  assert.equal((await q(`select count(*)::int as n from zd.visits`))[0].n, 1, 'reloads do not add rows');
+  for (let i = 0; i < 60; i++) await beacon({ p: '/', s: `?utm_source=spam-${i}` }, { ua: `${UA} v${i}`, ip: '6.6.6.6' });
+  assert.equal((await q(`select count(*)::int as n from zd.visits`))[0].n, 51, '50 per address per day + the first visitor');
+  await beacon({ p: '/', s: '?utm_source=<script>FB Ads</script>' }, { ua: `${UA} other`, ip: '7.7.7.7' });
+  const [r] = await q(`select source from zd.visits order by id desc limit 1`);
+  assert.equal(r.source, 'scriptfbadsscript');
+});
+
+test('the daily salt is random, stored only while needed, and deleted by the nightly job after 2 days', async () => {
+  const { default: refresh } = await import('../api/cron/refresh.js');
+  await beacon({ p: '/' });
+  const salts = await q(`select key from zd.settings where key like 'visit_salt:%'`);
+  assert.equal(salts.length, 1);
+  await q(`insert into zd.settings (key, value) values ('visit_salt:2000-01-01', '{"salt":"old"}'::jsonb)`);
+  process.env.CRON_SECRET = 'cron';
+  const real = globalThis.fetch, err = console.error;
+  globalThis.fetch = async () => ({ ok: false, status: 503, json: async () => ({}) }); console.error = () => {};
+  try { await refresh(fakeReq({ headers: { authorization: 'Bearer cron' } }), fakeRes()); } finally { globalThis.fetch = real; console.error = err; }
+  assert.deepEqual((await q(`select key from zd.settings where key like 'visit_salt:%'`)).map((r) => r.key), salts.map((r) => r.key));
+});
+
+test('the order is saved even when the traffic source lookup fails', async () => {
+  const err = console.error; console.error = () => {};
+  try {
+    await q(`alter table zd.visits rename to visits_broken`);
+    const res = fakeRes();
+    await ordersApi(fakeReq({ method: 'POST', url: '/api/orders', headers: { origin: 'https://adhdbg.eu', 'user-agent': UA, 'x-forwarded-for': '1.2.3.4' }, body: JSON.stringify({
+      token: 'tok', cb_order_id: '91', name: 'Мария', phone: '0888123456', delivery_type: 'econt_office', office_id: 'econt:1',
+      office_text: 'ЕКОНТ – офис (1)', city: 'Х', items: [], total: 20 }) }), res);
+    assert.equal(res.statusCode, 200);
+  } finally { console.error = err; }
 });

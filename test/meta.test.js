@@ -100,3 +100,35 @@ test('the nightly job also pulls the last 7 days of Meta spend', async () => {
   assert.equal(range.until, today());
   assert.equal((Date.parse(range.until) - Date.parse(range.since)) / 864e5, 6);
 });
+
+test('only the connected ad account counts; switching accounts drops the old spend from totals and profit', async () => {
+  await withFetch(graph(), () => post({ action: 'save_meta', accountId: '123', token: 'GOOD-TOKEN' }));
+  await q(`insert into zd.ad_spend (platform, account_id, day, spend, currency) values ('meta', '123', $1::date, 10, 'EUR'), ('meta', '999', $1::date, 50, 'EUR')`, [today()]);
+  assert.equal((await adSpendTotals(q, { from: today(), to: today() })).spend, 10);
+  assert.equal((await getProfit(q, { from: today(), to: today() })).adSpend, 10);
+});
+
+test('a broken or partial Meta answer keeps the stored days; errors are Bulgarian and Meta-specific', async () => {
+  await withFetch(graph(), () => post({ action: 'save_meta', accountId: '123', token: 'GOOD-TOKEN' }));
+  await q(`insert into zd.ad_spend (platform, account_id, day, spend, currency) values ('meta', '123', $1::date, 10, 'EUR')`, [today()]);
+  let res = await withFetch(async () => ({ ok: true, status: 200, json: async () => ({ paging: {} }) }), () => post({ action: 'sync_meta', from: today(), to: today() }));
+  assert.equal(res.statusCode, 400);
+  assert.equal((await q(`select count(*)::int as n from zd.ad_spend`))[0].n, 1, 'nothing deleted');
+  res = await withFetch(async () => { const e = new Error('The operation was aborted due to timeout'); e.name = 'TimeoutError'; throw e; }, () => post({ action: 'sync_meta', from: today(), to: today() }));
+  assert.match(json(res).error, /Meta не отговори/);
+  res = await withFetch(async () => ({ ok: false, status: 404, json: async () => { throw new Error('html'); } }), () => post({ action: 'test_meta' }));
+  assert.match(json(res).error, /Meta/);
+  assert.doesNotMatch(json(res).error, /ConvertBuilder/);
+  const st = await (async () => { const r = fakeRes(); await router(fakeReq({ url: '/api/admin/integrations', headers }), r); return json(r); })();
+  assert.match(st.meta.lastError, /Meta не отговори|Meta/);
+  assert.doesNotMatch(st.meta.lastError, /aborted/);
+});
+
+test('with a store selected, ad figures are not mixed into that store (no subtraction, no ad cards)', async () => {
+  const { getStats } = await import('../lib/stats.js');
+  await withFetch(graph(), () => post({ action: 'save_meta', accountId: '123', token: 'GOOD-TOKEN' }));
+  await q(`insert into zd.ad_spend (platform, account_id, day, spend, currency) values ('meta', '123', $1::date, 10, 'EUR')`, [today()]);
+  assert.equal((await getProfit(q, { from: today(), to: today(), store: 'other.bg' })).adSpend, 0);
+  assert.equal((await getStats(q, { from: today(), to: today(), store: 'other.bg' })).ads, null);
+  assert.equal((await getStats(q, { from: today(), to: today() })).ads.spend, 10);
+});

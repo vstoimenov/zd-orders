@@ -30,16 +30,16 @@ export default async function handler(req, res) {
   try {
     const q = getQuery();
     const ip = clientIp(req);
-    if ((await countRecentByIp(q, ip)) >= RATE_LIMIT) {
+    const site = new URL(origin).host.replace(/^www\./, '');
+    const userAgent = String(req.headers['user-agent'] || '').slice(0, 400);
+    // where this buyer came from today (anonymous visit statistics) — looked up alongside the rate check; never fails the order
+    const [recent, trafficSource] = await Promise.all([countRecentByIp(q, ip), trafficSourceFor(q, { site, ip, ua: userAgent }).catch(() => '')]);
+    if (recent >= RATE_LIMIT) {
       console.warn('[orders] rate-limited', ip, body.cb_order_id);
       return send(res, 429, { error: 'rate' });
     }
     // ConvertBuilder numbers orders per store (each starts at 1): key them by the store's domain
-    const site = new URL(origin).host.replace(/^www\./, '');
     const cbOrderId = `${site}:${v.order.cbOrderId}`;
-    const userAgent = String(req.headers['user-agent'] || '').slice(0, 400);
-    // where this buyer came from today (anonymous visit statistics); never fails the order
-    const trafficSource = await trafficSourceFor(q, { site, ip, ua: userAgent }).catch(() => '');
     const r = await insertOrder(q, { ...v.order, cbOrderId, ip, userAgent: userAgent.slice(0, 300), trafficSource });
     await syncStockSafe(q, r.id); // takes stock for a new order (never fails the order)
     // check the phone on nekorekten.com now; failures are stored as 'error' and retried later — never fail the order for it

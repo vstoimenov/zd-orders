@@ -610,13 +610,15 @@ tr.st-new{background:#fffbeb}
   }
   var SOURCE_LABEL = { facebook: 'Facebook', instagram: 'Instagram', google: 'Google', tiktok: 'TikTok', youtube: 'YouTube', bing: 'Bing', direct: 'Директно', '': 'Неизвестен (поръчка без посещение)' };
   function adCards(d) {
-    var a = d.ads || { spend: 0, impressions: 0, unconverted: [] }, p = d.profit || {}, c = d.cards;
+    var c = d.cards;
+    var visitCards = card('Посещения', String(c.visits || 0), 'уникални посетители по дни') + card('CR', c.cr == null ? '—' : pct(c.cr), 'поръчки ÷ посещения', 'ok');
+    if (!d.ads) return visitCards; // a single store is selected: ad spend belongs to the whole account
+    var a = d.ads, p = d.profit || {};
     var eur = (c.revenue || []).filter(function (m) { return m.currency === 'EUR'; })[0];
     var rev = eur ? eur.amount : 0, spend = a.spend;
     var ratio = function (v) { return spend ? v.toFixed(2).replace('.', ',') : '—'; };
     var extra = a.unconverted && a.unconverted.length ? 'и ' + a.unconverted.map(function (u) { return money(u.amount, u.currency); }).join(', ') + ' без превръщане' : 'Meta реклами';
-    return card('Посещения', String(c.visits || 0), 'уникални посетители по дни') +
-      card('CR', c.cr == null ? '—' : pct(c.cr), 'поръчки ÷ посещения', 'ok') +
+    return visitCards +
       card('Рекламен разход', money(spend, 'EUR'), extra, 'bad') +
       card('ROAS', ratio(rev / spend), 'оборот ÷ рекламен разход') +
       card('CPA', spend && c.orders ? money(spend / c.orders, 'EUR') : '—', 'разход за една поръчка') +
