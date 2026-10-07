@@ -71,3 +71,13 @@ test('a checkout order gets the traffic source of the same visitor that day', as
   assert.equal(res.statusCode, 200);
   assert.equal((await q(`select traffic_source from zd.orders`))[0].traffic_source, 'facebook');
 });
+
+test('the nightly job deletes visits older than 400 days', async () => {
+  const { default: refresh } = await import('../api/cron/refresh.js');
+  process.env.CRON_SECRET = 'cron';
+  await q(`insert into zd.visits (day, site, visitor) values (current_date - 401, 'adhdbg.eu', 'old'), (current_date - 399, 'adhdbg.eu', 'kept')`);
+  const real = globalThis.fetch, err = console.error;
+  globalThis.fetch = async () => ({ ok: false, status: 503, json: async () => ({}) }); console.error = () => {};
+  try { await refresh(fakeReq({ headers: { authorization: 'Bearer cron' } }), fakeRes()); } finally { globalThis.fetch = real; console.error = err; }
+  assert.deepEqual((await q(`select visitor from zd.visits`)).map((r) => r.visitor), ['kept']);
+});

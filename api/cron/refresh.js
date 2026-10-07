@@ -37,6 +37,12 @@ export default async function handler(req, res) {
     console.error('[cron] convertbuilder sync failed', err);
     result.convertbuilder = { error: err.message };
   }
+  // anonymous visit statistics are kept 400 days
+  try {
+    result.visitsDeleted = (await q(`delete from zd.visits where day < current_date - 400 returning 1`)).length;
+  } catch (err) {
+    console.error('[cron] visits cleanup failed', err);
+  }
   // Meta ad spend of the last 7 days (Meta keeps refining recent days)
   try {
     if (await metaConfig(q)) result.meta = await syncMeta(q);
