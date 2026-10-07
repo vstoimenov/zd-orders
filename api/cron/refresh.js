@@ -4,6 +4,7 @@ import { fetchSpeedyMap, parseSpeedyOffices, attachPostCodes } from '../../lib/s
 import { replaceOffices, replaceCities } from '../../lib/catalog-repo.js';
 import { send, safeEqual } from '../../lib/http.js';
 import { cbConfig, syncOrders } from '../../lib/cb-sync.js';
+import { metaConfig, syncMeta } from '../../lib/meta.js';
 
 /** Vercel Cron calls this daily with `Authorization: Bearer $CRON_SECRET`. */
 export default async function handler(req, res) {
@@ -35,6 +36,13 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error('[cron] convertbuilder sync failed', err);
     result.convertbuilder = { error: err.message };
+  }
+  // Meta ad spend of the last 7 days (Meta keeps refining recent days)
+  try {
+    if (await metaConfig(q)) result.meta = await syncMeta(q);
+  } catch (err) {
+    console.error('[cron] meta sync failed', err);
+    result.meta = { error: err.message };
   }
   return econtOk ? send(res, 200, result) : send(res, 500, { error: 'server', ...result });
 }

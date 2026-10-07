@@ -4,6 +4,7 @@ import { insertOrder, countRecentByIp } from '../lib/orders-repo.js';
 import { checkOrders } from '../lib/nk-check.js';
 import { nekorektenKey } from '../lib/nekorekten.js';
 import { syncStockSafe } from '../lib/stock.js';
+import { trafficSourceFor } from '../lib/visits.js';
 import { originAllowed, setCors, readJson, send, clientIp } from '../lib/http.js';
 
 const RATE_LIMIT = 20; // orders per IP per 10 minutes (generous: shared mobile IPs / CGNAT)
@@ -34,8 +35,12 @@ export default async function handler(req, res) {
       return send(res, 429, { error: 'rate' });
     }
     // ConvertBuilder numbers orders per store (each starts at 1): key them by the store's domain
-    const cbOrderId = `${new URL(origin).host.replace(/^www\./, '')}:${v.order.cbOrderId}`;
-    const r = await insertOrder(q, { ...v.order, cbOrderId, ip, userAgent: String(req.headers['user-agent'] || '').slice(0, 300) });
+    const site = new URL(origin).host.replace(/^www\./, '');
+    const cbOrderId = `${site}:${v.order.cbOrderId}`;
+    const userAgent = String(req.headers['user-agent'] || '').slice(0, 400);
+    // where this buyer came from today (anonymous visit statistics); never fails the order
+    const trafficSource = await trafficSourceFor(q, { site, ip, ua: userAgent }).catch(() => '');
+    const r = await insertOrder(q, { ...v.order, cbOrderId, ip, userAgent: userAgent.slice(0, 300), trafficSource });
     await syncStockSafe(q, r.id); // takes stock for a new order (never fails the order)
     // check the phone on nekorekten.com now; failures are stored as 'error' and retried later — never fail the order for it
     const nkKey = r.inserted && v.order.phoneNorm ? nekorektenKey() : null;

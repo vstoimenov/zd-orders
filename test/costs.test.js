@@ -59,7 +59,7 @@ test('getProfit applies product costs, packaging, COD fee, free shipping, return
   const p = await getProfit(q, { from: today(), to: today() });
   assert.deepEqual(p, {
     currency: 'EUR', itemsRevenue: 38.7, productCost: 12, packaging: 1.5, codFee: 0.85, freeShipping: 2.48, returns: 7,
-    expenses: 10, otherCosts: 21.83, profit: 4.87, margin: 0.1258,
+    expenses: 10, otherCosts: 21.83, adSpend: 0, profitBeforeAds: 4.87, profit: 4.87, margin: 0.1258,
   });
 });
 

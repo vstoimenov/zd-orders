@@ -136,10 +136,15 @@
     };
   }
 
+  /** Anonymous page view for the shop's visit statistics: page, query (UTM / ad click ids) and referrer — no cookies, nothing personal. */
+  function visitPayload(loc, doc) {
+    return JSON.stringify({ p: String(loc.pathname || '/').slice(0, 200), s: String(loc.search || '').slice(0, 400), r: String(doc.referrer || '').slice(0, 400) });
+  }
+
   var core = {
     TOKEN: TOKEN, norm: norm, searchOffices: searchOffices, searchCities: searchCities, formatSelection: formatSelection,
     validateSelection: validateSelection, pickOptionIndex: pickOptionIndex, optionPrice: optionPrice, officeLabel: officeLabel,
-    buildOrderPayload: buildOrderPayload
+    buildOrderPayload: buildOrderPayload, visitPayload: visitPayload
   };
   if (typeof window !== 'undefined' && window.__ZDO_TEST__) { window.__zdoCore = core; return; }
 
@@ -482,8 +487,20 @@
     return true;
   }
 
+  function trackVisit() {
+    if (window.__zdoVisitSent) return; // once per page load
+    window.__zdoVisitSent = true;
+    try {
+      var body = visitPayload(location, document), url = API + '/api/visit';
+      if (!(navigator.sendBeacon && navigator.sendBeacon(url, new Blob([body], { type: 'text/plain' })))) {
+        fetch(url, { method: 'POST', body: body, keepalive: true, headers: { 'Content-Type': 'text/plain' } }).catch(function () {});
+      }
+    } catch (e) { /* statistics must never disturb the shop */ }
+  }
+
   function boot() {
     API = SCRIPT && SCRIPT.src ? new URL(SCRIPT.src).origin : 'https://zd-orders.vercel.app';
+    trackVisit();
     var tries = 0;
     (function attempt() { if (!mount() && ++tries < 40) setTimeout(attempt, 250); })();
   }

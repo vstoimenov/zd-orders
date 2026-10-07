@@ -128,3 +128,10 @@ test('buildOrderPayload falls back to detail.items with alternate keys', () => {
   const p = plain(core.buildOrderPayload({ id: 'Y', items: [{ id: 'p9', quantity: 2, item_price: 9 }], order: {} }, { type: '' }, {}, 'u'));
   assert.deepEqual(p.items, [{ name: 'p9', qty: 2, price: 9 }]);
 });
+
+test('visitPayload sends only page, query and referrer, trimmed', () => {
+  const v = JSON.parse(core.visitPayload({ pathname: '/kniga', search: '?utm_source=facebook&fbclid=1' }, { referrer: 'https://l.facebook.com/' }));
+  assert.deepEqual(v, { p: '/kniga', s: '?utm_source=facebook&fbclid=1', r: 'https://l.facebook.com/' });
+  const long = JSON.parse(core.visitPayload({ pathname: '/' + 'x'.repeat(500), search: '' }, { referrer: '' }));
+  assert.equal(long.p.length, 200);
+});

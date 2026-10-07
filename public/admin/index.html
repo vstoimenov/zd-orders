@@ -209,6 +209,7 @@ tr.st-new{background:#fffbeb}
       </div>
       <div class="cards" id="dCards"></div>
       <div class="panel"><h2>Поръчки по дни</h2><div class="chart" id="dChart"></div></div>
+      <div class="panel"><h2>Източници на трафик</h2><table id="dSources"></table><p class="muted" style="margin:10px 0 0">Посещение = един анонимен посетител за деня, отчетен към първия източник. Без бисквитки и без лични данни.</p></div>
       <div class="grid2">
         <div class="panel"><h2>Топ продукти</h2><table id="dTop"></table></div>
         <div class="panel"><h2>Последни поръчки</h2><table id="dRecent"></table></div>
@@ -232,7 +233,7 @@ tr.st-new{background:#fffbeb}
       <div class="isec">
         <div class="isec-head"><span class="isec-ic"><svg viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span><div><h2>Реклами</h2><div class="muted">Рекламен разход, ROAS и CPA в таблото</div></div></div>
         <div class="igrid">
-          <div class="icard"><div class="tile meta">∞<img src="https://www.google.com/s2/favicons?domain=facebook.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Meta реклами</b> <span class="chip">скоро</span><div class="muted">Facebook и Instagram реклами</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
+          <div class="icard"><div class="tile meta">∞<img src="https://www.google.com/s2/favicons?domain=facebook.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Meta реклами</b> <span class="chip" id="iMetaChip"></span><div class="muted">Facebook и Instagram реклами</div><div class="muted" id="iMetaLine"></div></div><button type="button" class="primary" id="iMetaOpen">+ Свържи</button></div>
           <div class="icard"><div class="tile google">G<img src="https://www.google.com/s2/favicons?domain=ads.google.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Google Ads</b> <span class="chip">скоро</span><div class="muted">Търсене, YouTube и Performance Max</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
           <div class="icard"><div class="tile tiktok">TT<img src="https://www.google.com/s2/favicons?domain=tiktok.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>TikTok Ads</b> <span class="chip">скоро</span><div class="muted">Реклами в TikTok</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
         </div>
@@ -343,6 +344,32 @@ tr.st-new{background:#fffbeb}
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="histTitle">
       <div class="dhead"><div><h2 id="histTitle">История</h2><div class="muted">Последните 50 движения</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
       <div class="dbody"><table id="histTable"></table></div>
+    </div>
+  </div>
+  <div class="modal" id="metaModal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="metaTitle">
+      <div class="dhead"><div class="tile meta">∞<img src="https://www.google.com/s2/favicons?domain=facebook.com&amp;sz=128" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></div><div><h2 id="metaTitle">Meta реклами <span class="chip" id="iMetaChip2"></span></h2><div class="muted" style="font-size:15px">Рекламен разход, ROAS, CPA и CPM в таблото</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div class="tip">💡 <b>Как да вземете ключа (еднократно):</b><br>
+          1. business.facebook.com → Настройки на бизнеса → Потребители → <b>Системни потребители</b> → Добавяне.<br>
+          2. „Присвояване на активи“ → Рекламни акаунти → вашият акаунт → право <b>„Преглед на ефективността“</b>.<br>
+          3. „Генериране на нов токен“ → изберете приложението си → право <b>ads_read</b> → срок „Никога“ → копирайте токена и го поставете тук.<br>
+          4. ID на рекламния акаунт е числото в Ads Manager (след <b>act=</b> в адреса).</div>
+        <div class="fgrid">
+          <label>ID на рекламния акаунт<input type="text" id="iMetaAccount" placeholder="напр. 1234567890"></label>
+          <label>Access token<input type="password" id="iMetaToken" autocomplete="off" placeholder="поставете токена"></label>
+          <label class="check"><input type="checkbox" id="iMetaActive" checked> Активна интеграция</label>
+        </div>
+        <div class="actions"><button type="button" class="primary" id="iMetaSave">Запази и свържи</button><button type="button" class="ghost" id="iMetaTest">Тествай връзката</button></div>
+        <div class="syncbox">
+          <h3>Синхронизация на рекламния разход</h3>
+          <div class="actions">
+            <input type="date" id="iMetaFrom" title="от дата"><input type="date" id="iMetaTo" title="до дата">
+            <button type="button" class="ghost" id="iMetaSync">Синхронизирай</button>
+          </div>
+          <div class="muted" id="iMetaInfo" style="margin-top:10px"></div>
+        </div>
+      </div>
     </div>
   </div>
   <div class="modal" id="cbModal" hidden>
@@ -581,13 +608,28 @@ tr.st-new{background:#fffbeb}
       (rows.length ? rows.map(function (r) { return '<tr>' + r.map(function (c) { return '<td>' + c + '</td>'; }).join('') + '</tr>'; }).join('')
         : '<tr><td colspan="' + head.length + '" class="muted">Няма данни.</td></tr>') + '</tbody>';
   }
+  var SOURCE_LABEL = { facebook: 'Facebook', instagram: 'Instagram', google: 'Google', tiktok: 'TikTok', youtube: 'YouTube', bing: 'Bing', direct: 'Директно', '': 'Неизвестен (поръчка без посещение)' };
+  function adCards(d) {
+    var a = d.ads || { spend: 0, impressions: 0, unconverted: [] }, p = d.profit || {}, c = d.cards;
+    var eur = (c.revenue || []).filter(function (m) { return m.currency === 'EUR'; })[0];
+    var rev = eur ? eur.amount : 0, spend = a.spend;
+    var ratio = function (v) { return spend ? v.toFixed(2).replace('.', ',') : '—'; };
+    var extra = a.unconverted && a.unconverted.length ? 'и ' + a.unconverted.map(function (u) { return money(u.amount, u.currency); }).join(', ') + ' без превръщане' : 'Meta реклами';
+    return card('Посещения', String(c.visits || 0), 'уникални посетители по дни') +
+      card('CR', c.cr == null ? '—' : pct(c.cr), 'поръчки ÷ посещения', 'ok') +
+      card('Рекламен разход', money(spend, 'EUR'), extra, 'bad') +
+      card('ROAS', ratio(rev / spend), 'оборот ÷ рекламен разход') +
+      card('CPA', spend && c.orders ? money(spend / c.orders, 'EUR') : '—', 'разход за една поръчка') +
+      card('CPM', spend && a.impressions ? money(spend / a.impressions * 1000, 'EUR') : '—', 'цена за 1000 показвания') +
+      card('POAS', ratio((p.profitBeforeAds || 0) / spend), 'печалба преди реклама ÷ рекламен разход');
+  }
   function profitCards(p) {
     if (!p) return '';
     var other = 'опаковки ' + money(p.packaging, 'EUR') + ' · НП ' + money(p.codFee, 'EUR') + ' · доставки ' + money(p.freeShipping, 'EUR') +
       ' · връщания ' + money(p.returns, 'EUR') + ' · разходи ' + money(p.expenses, 'EUR');
     return card('Разход за продукти', money(p.productCost, 'EUR'), 'себестойност (въвежда се във „Финанси“)') +
       card('Други разходи', money(p.otherCosts, 'EUR'), other) +
-      card('Печалба преди ДДС', money(p.profit, 'EUR'), 'от приход от артикули ' + money(p.itemsRevenue, 'EUR'), p.profit < 0 ? 'bad' : 'ok') +
+      card('Печалба преди ДДС', money(p.profit, 'EUR'), 'от приход от артикули ' + money(p.itemsRevenue, 'EUR') + (p.adSpend ? ', след реклама ' + money(p.adSpend, 'EUR') : ''), p.profit < 0 ? 'bad' : 'ok') +
       card('Марж', pct(p.margin), 'печалба ÷ приход');
   }
   function renderDash(d) {
@@ -599,7 +641,10 @@ tr.st-new{background:#fffbeb}
     var c = d.cards, period = d.period.from === d.period.to ? d.period.from : d.period.from + ' – ' + d.period.to;
     $('dCards').innerHTML = card('Оборот', moneyList(c.revenue), 'без отказаните') + card('Реален приход', moneyList(c.delivered), 'само доставените', 'ok') +
       card('Поръчки', String(c.orders), period) + card('Средна поръчка (AOV)', moneyList(c.aov)) +
-      card('Върнати', pct(c.returnRate), 'от изпратените', 'warn') + card('⚠️ В НЕкоректен', String(c.nkFlagged), pct(c.nkFlaggedPct) + ' от поръчките', c.nkFlagged ? 'bad' : '') + profitCards(d.profit);
+      card('Върнати', pct(c.returnRate), 'от изпратените', 'warn') + card('⚠️ В НЕкоректен', String(c.nkFlagged), pct(c.nkFlaggedPct) + ' от поръчките', c.nkFlagged ? 'bad' : '') + adCards(d) + profitCards(d.profit);
+    $('dSources').innerHTML = table(['Източник', 'Посещения', 'Поръчки', 'CR'], (d.sources || []).map(function (x) {
+      return [esc(SOURCE_LABEL[x.source] || x.source), String(x.visits), String(x.orders), x.visits ? esc(pct(x.orders / x.visits)) : '—'];
+    }));
     var max = Math.max.apply(null, d.daily.map(function (x) { return x.orders; }).concat([1]));
     $('dChart').innerHTML = d.daily.length ? d.daily.map(function (x) {
       return '<div class="bar" title="' + esc(x.day + ': ' + x.orders + ' поръчки, оборот ' + x.revenue.toFixed(2)) + '"><b>' + x.orders + '</b>' +
@@ -682,6 +727,18 @@ tr.st-new{background:#fffbeb}
       (r ? ' (' + r.fetched + ' поръчки, нови ' + r.inserted + ', обновени ' + r.updated + ')' : '') +
       (cb.lastError ? '<br><span class="err">Последна грешка: ' + esc(cb.lastError) + '</span>' : '');
     chip('iNkChip', s.nekorekten.enabled, 'Включена от платформата', 'Не е включена');
+    var m = s.meta || {};
+    chip('iMetaChip', m.connected, 'Свързан', m.configured ? 'Неактивен' : 'Не е свързан');
+    chip('iMetaChip2', m.connected, 'Свързан', m.configured ? 'Неактивен' : 'Не е свързан');
+    $('iMetaOpen').textContent = m.configured ? 'Настройки' : '+ Свържи';
+    $('iMetaOpen').className = m.configured ? 'ghost' : 'primary';
+    $('iMetaLine').textContent = m.accountId ? (m.accountName || 'акаунт') + ' · act_' + m.accountId + ' · ' + (m.currency || '') + ' · синхронизация ' + when(m.lastSyncAt) : '';
+    if (!$('iMetaAccount').value) $('iMetaAccount').value = m.accountId || '';
+    $('iMetaToken').placeholder = m.configured ? '•••••• запазен (въведете нов, за да го смените)' : 'поставете токена';
+    $('iMetaActive').checked = m.active !== false;
+    var mr = m.lastSyncResult;
+    $('iMetaInfo').innerHTML = 'Последна синхронизация: ' + esc(when(m.lastSyncAt)) + (mr ? ' (' + mr.days + ' дни)' : '') +
+      (m.lastError ? '<br><span class="err">Последна грешка: ' + esc(m.lastError) + '</span>' : '');
     $('iEcont').textContent = s.econt.offices + ' офиса и автомата · обновено ' + when(s.econt.updatedAt);
     $('iSpeedy').textContent = s.speedy.offices + ' офиса и автомата · обновено ' + when(s.speedy.updatedAt);
   }
@@ -693,6 +750,33 @@ tr.st-new{background:#fffbeb}
   function openCb(tab) { $('cbModal').hidden = false; cbTab(tab); }
   function closeCb() { $('cbModal').hidden = true; loadIntegrations(); }
   $('iCbOpen').addEventListener('click', function () { openCb('shop'); });
+  $('iMetaOpen').addEventListener('click', function () {
+    if (!$('iMetaFrom').value) $('iMetaFrom').value = sofiaDay(-29);
+    if (!$('iMetaTo').value) $('iMetaTo').value = sofiaDay(0);
+    $('metaModal').hidden = false;
+  });
+  $('iMetaSave').addEventListener('click', function () {
+    $('iMetaInfo').textContent = 'Свързване…';
+    busy($('iMetaSave'), integ({ action: 'save_meta', accountId: $('iMetaAccount').value, token: $('iMetaToken').value, active: $('iMetaActive').checked }))
+      .then(function (d) {
+        $('iMetaToken').value = '';
+        if (d.active === false) { $('iMetaInfo').textContent = 'Интеграцията е изключена.'; loadIntegrations(); return; }
+        $('iMetaInfo').textContent = 'Свързано ✓ ' + d.accountName + ' (' + d.currency + '). Дърпам разхода за последните 30 дни…';
+        return integ({ action: 'sync_meta', from: sofiaDay(-29), to: sofiaDay(0) }).then(function () { loadIntegrations(); dashLoaded = false; });
+      })
+      .catch(function (e) { showErr('iMetaInfo', e); });
+  });
+  $('iMetaTest').addEventListener('click', function () {
+    busy($('iMetaTest'), integ({ action: 'test_meta' }))
+      .then(function (d) { $('iMetaInfo').textContent = 'Връзката работи ✓ ' + d.accountName + ' (' + d.currency + ')'; })
+      .catch(function (e) { showErr('iMetaInfo', e); });
+  });
+  $('iMetaSync').addEventListener('click', function () {
+    $('iMetaInfo').textContent = 'Синхронизиране…';
+    busy($('iMetaSync'), integ({ action: 'sync_meta', from: $('iMetaFrom').value || undefined, to: $('iMetaTo').value || undefined }))
+      .then(function (d) { loadIntegrations(); dashLoaded = false; alert('Готово: ' + d.result.days + ' дни с рекламен разход.'); })
+      .catch(function (e) { showErr('iMetaInfo', e); });
+  });
   $('cbClose').addEventListener('click', closeCb);
   $('cbModal').addEventListener('click', function (e) { if (e.target === $('cbModal')) closeCb(); });
   document.addEventListener('keydown', function (e) {

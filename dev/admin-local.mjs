@@ -27,6 +27,14 @@ await saveNekorekten(q, ids.L1, { status: 'flagged', count: 2, reportIds: ['1234
 await saveNekorekten(q, ids.L3, { status: 'clean', count: 0 });
 await updateStatus(q, ids.L2, 'delivered');
 await updateStatus(q, ids.L3, 'returned');
+// sample anonymous visits and Meta ad spend for today
+const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Sofia' });
+for (const [visitor, source] of [['v1', 'facebook'], ['v2', 'facebook'], ['v3', 'instagram'], ['v4', 'direct'], ['v5', 'google'], ['v6', 'facebook'], ['v7', 'direct']]) {
+  await q(`insert into zd.visits (day, site, visitor, path, source, device) values ($1::date, 'adhdbg.eu', $2, '/', $3, 'mobile')`, [today, visitor, source]);
+}
+await q(`update zd.orders set traffic_source = 'facebook' where cb_order_id in ('L1', 'L2')`);
+await q(`insert into zd.ad_spend (platform, account_id, day, spend, impressions, clicks, purchases, purchase_value, currency) values ('meta', '1234567890', $1::date, 18.4, 5200, 96, 2, 63.64, 'EUR')`, [today]);
+await saveIntegration(q, 'meta', { config: { accountId: '1234567890', accountName: 'adhd реклами', currency: 'EUR', active: true, lastSyncAt: new Date().toISOString(), lastSyncResult: { days: 30 } }, secret: 'LOCAL-FAKE-TOKEN' });
 // a connected ConvertBuilder store (fake key — the local server never calls ConvertBuilder unless you press its buttons)
 await saveIntegration(q, 'convertbuilder', { config: { domain: 'adhdbg.eu', store: 'adhdbg.eu', active: true, currency: 'EUR', webhookId: 'wh_local', webhookSecret: 'local', connectedAt: new Date().toISOString(), lastSyncAt: new Date().toISOString(), lastSyncResult: { fetched: 6, inserted: 6, updated: 0 } }, secret: 'LOCAL-FAKE-KEY' });
 
