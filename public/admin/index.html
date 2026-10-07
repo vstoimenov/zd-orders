@@ -134,6 +134,13 @@ tr.st-new{background:#fffbeb}
 .actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .syncbox{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
 .syncbox h3{font-size:14px;margin:0 0 10px}
+.empty{padding:40px 16px;text-align:center;color:var(--muted)}
+.stock{font-weight:800;font-size:16px}
+.stock.ok{color:var(--ok)}.stock.low{color:var(--warn)}.stock.out{color:var(--bad)}
+.rowbtns{display:flex;flex-wrap:wrap;gap:6px}
+.rowbtns button{font-size:12px;padding:5px 10px}
+.plus{color:var(--ok);font-weight:700}.minus{color:var(--bad);font-weight:700}
+.dialog.small{max-width:560px}
 .cost-in{width:110px}
 
 @media (max-width:900px){
@@ -175,6 +182,8 @@ tr.st-new{background:#fffbeb}
       <a href="#dash" data-view="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Табло</a>
       <a href="#orders" data-view="orders"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Поръчки</a>
       <a href="#costs" data-view="costs"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>Финанси</a>
+      <div class="sec">Отчети</div>
+      <a href="#inventory" data-view="inventory"><svg viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/></svg>Наличности</a>
       <div class="sec">Система</div>
       <a href="#integrations" data-view="integrations"><svg viewBox="0 0 24 24"><path d="M9 2v6M15 2v6"/><path d="M6 8h12v4a6 6 0 0 1-12 0z"/><path d="M12 18v4"/></svg>Интеграции</a>
     </nav>
@@ -270,6 +279,15 @@ tr.st-new{background:#fffbeb}
         <table id="cExpenses"></table>
       </div>
     </section>
+    <section id="inventoryView" hidden>
+      <div class="pagehead"><div><h1>Наличности</h1><div class="sub">Намаляват автоматично с всяка поръчка</div></div><button type="button" class="primary" id="invNew">+ Създай продукт</button></div>
+      <div class="cards" id="invCards"></div>
+      <div class="toolbar"><input type="search" id="invQ" class="search" placeholder="Търси по име или SKU…"></div>
+      <div class="pills" id="invPills">
+        <button type="button" class="pill on" data-inv="all">Всички</button><button type="button" class="pill" data-inv="low">Ниска наличност</button><button type="button" class="pill" data-inv="out">Изчерпани</button><button type="button" class="pill" data-inv="untracked">Не се следят</button>
+      </div>
+      <div class="tablecard"><table id="invTable"></table></div>
+    </section>
     <section id="ordersView" hidden>
       <div class="pagehead"><div><h1>Поръчки</h1><div class="sub" id="count"></div></div><button type="button" class="primary" id="csv">Експорт CSV</button></div>
       <form class="toolbar" id="filters">
@@ -289,6 +307,40 @@ tr.st-new{background:#fffbeb}
       <div class="pager"><button id="prev" type="button">‹ Назад</button><span id="pageInfo" class="muted"></span><button id="next" type="button">Напред ›</button></div>
     </section>
     </main>
+  </div>
+  <div class="modal" id="prodModal" hidden>
+    <div class="dialog small" role="dialog" aria-modal="true" aria-labelledby="prodTitle">
+      <div class="dhead"><div><h2 id="prodTitle">Нов продукт</h2><div class="muted">Празна наличност = продуктът не се следи</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div class="fgrid">
+          <label style="grid-column:1/-1">Име (точно както е в магазина)<input type="text" id="pName" maxlength="200"></label>
+          <label>SKU<input type="text" id="pSku" maxlength="60" placeholder="по избор"></label>
+          <label>Наличност (бр.)<input type="number" step="1" id="pStock" placeholder="не се следи"></label>
+          <label>Праг за ниска наличност<input type="number" step="1" min="0" id="pLow" value="5"></label>
+          <label>Себестойност (€ за брой)<input type="number" step="0.01" min="0" id="pCost" placeholder="0,00"></label>
+        </div>
+        <div class="actions"><button type="button" class="primary" id="pSave">Запази</button><span class="err" id="pErr"></span></div>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="adjModal" hidden>
+    <div class="dialog small" role="dialog" aria-modal="true" aria-labelledby="adjTitle">
+      <div class="dhead"><div><h2 id="adjTitle">Корекция</h2><div class="muted" id="adjNow"></div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div class="fgrid">
+          <label>Количество (+ добавя, − изважда)<input type="number" step="1" id="aDelta" placeholder="напр. 20 или -2"></label>
+          <label>Причина<select id="aReason"><option>Доставка</option><option>Брак</option><option>Преброяване</option><option>Друго</option></select></label>
+          <label style="grid-column:1/-1">Бележка<input type="text" id="aNote" maxlength="200" placeholder="по избор"></label>
+        </div>
+        <div class="actions"><button type="button" class="primary" id="aSave">Запиши корекцията</button><span class="err" id="aErr"></span></div>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="histModal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="histTitle">
+      <div class="dhead"><div><h2 id="histTitle">История</h2><div class="muted">Последните 50 движения</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody"><table id="histTable"></table></div>
+    </div>
   </div>
   <div class="modal" id="cbModal" hidden>
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="cbTitle">
@@ -568,7 +620,7 @@ tr.st-new{background:#fffbeb}
       .catch(function () { $('dCards').innerHTML = '<div class="err">Грешка при зареждане на таблото. Опитайте пак.</div>'; });
   }
   /* ---- навигация: страницата е в адреса (#orders, #dash, …) ---- */
-  var VIEWS = { orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', integrations: 'Интеграции' };
+  var VIEWS = { orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции' };
   function viewFromHash() { var v = location.hash.slice(1); return Object.prototype.hasOwnProperty.call(VIEWS, v) ? v : 'orders'; }
   function showView(view) {
     [].forEach.call(document.querySelectorAll('.nav a[data-view]'), function (a) { a.classList.toggle('on', a.getAttribute('data-view') === view); });
@@ -578,6 +630,7 @@ tr.st-new{background:#fffbeb}
     if (view === 'dash') loadDash();
     if (view === 'costs') loadCosts();
     if (view === 'integrations') loadIntegrations();
+    if (view === 'inventory') loadInventory();
   }
 
   /* ---- Интеграции ---- */
@@ -639,7 +692,14 @@ tr.st-new{background:#fffbeb}
   $('iCbOpen').addEventListener('click', function () { openCb('shop'); });
   $('cbClose').addEventListener('click', closeCb);
   $('cbModal').addEventListener('click', function (e) { if (e.target === $('cbModal')) closeCb(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('cbModal').hidden) closeCb(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (!$('cbModal').hidden) closeCb();
+    [].forEach.call(document.querySelectorAll('.modal:not(#cbModal)'), function (m) { m.hidden = true; });
+  });
+  [].forEach.call(document.querySelectorAll('.modal:not(#cbModal)'), function (m) {
+    m.addEventListener('click', function (e) { if (e.target === m || e.target.hasAttribute('data-close')) m.hidden = true; });
+  });
   document.querySelector('.seg').addEventListener('click', function (e) { var t = e.target.getAttribute('data-tab'); if (t) cbTab(t); });
   function loadIntegrations() {
     if (!$('iCbFrom').value) $('iCbFrom').value = sofiaDay(-30);
@@ -664,6 +724,96 @@ tr.st-new{background:#fffbeb}
     busy($('iCbSync'), integ({ action: 'sync_convertbuilder', from: $('iCbFrom').value || undefined, to: $('iCbTo').value || undefined }))
       .then(function (d) { loadIntegrations(); alert('Готово: ' + d.result.fetched + ' поръчки, нови ' + d.result.inserted + ', обновени ' + d.result.updated + '.'); })
       .catch(function (e) { showErr('iCbInfo', e); });
+  });
+
+  /* ---- Наличности ---- */
+  var inv = null, invFilter = 'all', invEditing = null, invAdjusting = null;
+  var STATE_LABEL = { ok: 'в наличност', low: 'ниска наличност', out: 'изчерпан', untracked: 'не се следи' };
+  function invCall(body, query) {
+    return fetch('/api/admin/inventory' + (query || ''), { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+      .then(function (r) {
+        if (r.status === 401) { showLogin(); throw new Error('auth'); }
+        return r.json().then(function (d) { if (!r.ok) throw new Error(d.error === 'server' ? 'Грешка на сървъра. Опитайте пак.' : d.error || ('HTTP ' + r.status)); return d; });
+      });
+  }
+  function loadInventory() {
+    invCall().then(function (d) { inv = d; renderInventory(); })
+      .catch(function (e) { if (e.message !== 'auth') $('invTable').innerHTML = '<tbody><tr><td class="err">' + esc(e.message) + '</td></tr></tbody>'; });
+  }
+  function renderInventory() {
+    var c = inv.cards;
+    $('invCards').innerHTML = card('Продукти', String(c.products), 'които се следят') + card('Общо налични', String(c.totalStock), 'броя на склад', 'ok') +
+      card('Ниска наличност', String(c.low), 'под прага', 'warn') + card('Изчерпани', String(c.out), '0 или по-малко', 'bad');
+    var term = $('invQ').value.trim().toLowerCase();
+    var list = inv.products.filter(function (p) {
+      return (invFilter === 'all' || p.state === invFilter) && (!term || p.name.toLowerCase().indexOf(term) >= 0 || (p.sku || '').toLowerCase().indexOf(term) >= 0);
+    });
+    if (!list.length) { $('invTable').innerHTML = '<tbody><tr><td class="empty">Няма намерени продукти.</td></tr></tbody>'; return; }
+    $('invTable').innerHTML = '<thead><tr><th>Продукт</th><th>SKU</th><th>Наличност</th><th>Праг</th><th>Продадени (30 дни)</th><th>Себестойност</th><th></th></tr></thead><tbody>' +
+      list.map(function (p) {
+        var i = inv.products.indexOf(p);
+        var stock = p.stock == null ? '<span class="muted">не се следи</span>' : '<span class="stock ' + p.state + '">' + p.stock + '</span><div class="muted">' + STATE_LABEL[p.state] + '</div>';
+        var btns = p.stock == null
+          ? '<button type="button" class="primary" data-inv-edit="' + i + '">Въведи наличност</button>'
+          : '<button type="button" data-inv-edit="' + i + '">Редактирай</button><button type="button" data-inv-adj="' + i + '">Корекция</button><button type="button" data-inv-hist="' + i + '">История</button>';
+        return '<tr><td data-label="Продукт"><b>' + esc(p.name) + '</b></td><td data-label="SKU">' + (esc(p.sku) || '<span class="muted">—</span>') + '</td>' +
+          '<td data-label="Наличност">' + stock + '</td><td data-label="Праг">' + p.lowStock + '</td><td data-label="Продадени (30 дни)">' + p.sold30 + '</td>' +
+          '<td data-label="Себестойност">' + esc(money(p.unitCost, 'EUR')) + '</td><td><div class="rowbtns">' + btns + '</div></td></tr>';
+      }).join('') + '</tbody>';
+  }
+  $('invQ').addEventListener('input', function () { if (inv) renderInventory(); });
+  $('invPills').addEventListener('click', function (e) {
+    var v = e.target.getAttribute('data-inv');
+    if (!v) return;
+    invFilter = v;
+    [].forEach.call($('invPills').children, function (b) { b.classList.toggle('on', b === e.target); });
+    renderInventory();
+  });
+  function openProduct(p) {
+    invEditing = p;
+    $('prodTitle').textContent = p ? 'Редактирай продукт' : 'Нов продукт';
+    $('pName').value = p ? p.name : ''; $('pName').readOnly = !!p;
+    $('pSku').value = p ? p.sku : ''; $('pStock').value = p && p.stock != null ? p.stock : '';
+    $('pLow').value = p ? p.lowStock : 5; $('pCost').value = p && p.unitCost ? p.unitCost : '';
+    $('pErr').textContent = ''; $('prodModal').hidden = false;
+    (p ? $('pStock') : $('pName')).focus();
+  }
+  $('invNew').addEventListener('click', function () { openProduct(null); });
+  $('pSave').addEventListener('click', function () {
+    $('pErr').textContent = '';
+    busy($('pSave'), invCall({ action: 'save', create: !invEditing, name: $('pName').value, sku: $('pSku').value, stock: $('pStock').value, lowStock: $('pLow').value, unitCost: $('pCost').value }))
+      .then(function () { $('prodModal').hidden = true; loadInventory(); })
+      .catch(function (e) { if (e.message !== 'auth') $('pErr').textContent = e.message; });
+  });
+  $('aSave').addEventListener('click', function () {
+    $('aErr').textContent = '';
+    busy($('aSave'), invCall({ action: 'adjust', name: invAdjusting.name, delta: $('aDelta').value, reason: $('aReason').value, note: $('aNote').value }))
+      .then(function () { $('adjModal').hidden = true; loadInventory(); })
+      .catch(function (e) { if (e.message !== 'auth') $('aErr').textContent = e.message; });
+  });
+  function moveLabel(m) {
+    if (m.reason === 'order') return 'Поръчка ' + esc(m.order || '');
+    if (m.reason === 'order_restore') return 'Върната / отказана / изтрита поръчка ' + esc(m.order || '');
+    return esc(m.note || 'Ръчна корекция');
+  }
+  $('invTable').addEventListener('click', function (e) {
+    var t = e.target, p;
+    if (t.hasAttribute('data-inv-edit')) { openProduct(inv.products[t.getAttribute('data-inv-edit')]); return; }
+    if (t.hasAttribute('data-inv-adj')) {
+      p = inv.products[t.getAttribute('data-inv-adj')]; invAdjusting = p;
+      $('adjTitle').textContent = 'Корекция — ' + p.name; $('adjNow').textContent = 'Сега: ' + p.stock + ' бр.';
+      $('aDelta').value = ''; $('aNote').value = ''; $('aReason').value = 'Доставка'; $('aErr').textContent = '';
+      $('adjModal').hidden = false; $('aDelta').focus(); return;
+    }
+    if (t.hasAttribute('data-inv-hist')) {
+      p = inv.products[t.getAttribute('data-inv-hist')];
+      $('histTitle').textContent = 'История — ' + p.name; $('histTable').innerHTML = '<tbody><tr><td class="muted">Зареждане…</td></tr></tbody>'; $('histModal').hidden = false;
+      invCall(null, '?history=' + encodeURIComponent(p.name)).then(function (d) {
+        $('histTable').innerHTML = table(['Дата', 'Промяна', 'Причина'], d.moves.map(function (m) {
+          return [esc(when(m.createdAt)), '<span class="' + (m.qty > 0 ? 'plus' : 'minus') + '">' + (m.qty > 0 ? '+' : '−') + Math.abs(m.qty) + '</span>', moveLabel(m)];
+        }));
+      }).catch(function (err) { if (err.message !== 'auth') $('histTable').innerHTML = '<tbody><tr><td class="err">' + esc(err.message) + '</td></tr></tbody>'; });
+    }
   });
 
   /* ---- Разходи ---- */

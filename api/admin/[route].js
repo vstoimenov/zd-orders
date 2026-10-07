@@ -4,9 +4,10 @@ import orders from '../../lib/admin/orders.js';
 import stats from '../../lib/admin/stats.js';
 import costs from '../../lib/admin/costs.js';
 import integrations from '../../lib/admin/integrations.js';
+import inventory from '../../lib/admin/inventory.js';
 import { send } from '../../lib/http.js';
 
-const ROUTES = { login, orders, stats, costs, integrations };
+const ROUTES = { login, orders, stats, costs, integrations, inventory };
 const pick = (name) => (typeof name === 'string' && Object.hasOwn(ROUTES, name) ? ROUTES[name] : null);
 
 export default function handler(req, res) {
