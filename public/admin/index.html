@@ -218,6 +218,20 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
         </form>
       </div>
       <div class="cards" id="dCards"></div>
+      <div class="panel" id="beCalc">
+        <h2>Калкулатор: break-even ROAS</h2>
+        <p class="muted" style="margin-top:-4px">Над break-even ROAS рекламите се изплащат. Полетата са попълнени от избрания период — променете ги свободно. <button type="button" class="ghost" id="beFill" style="padding:4px 10px;font-size:12px">Попълни от периода</button></p>
+        <div class="costgrid">
+          <label>Средна поръчка (€)<input type="number" step="0.01" min="0" id="beAov"></label>
+          <label>Себестойност на поръчка (€)<input type="number" step="0.01" min="0" id="beCost"></label>
+          <label>Доставка + опаковка на поръчка (€)<input type="number" step="0.01" min="0" id="beShip"></label>
+          <label>Такса наложен платеж (%)<input type="number" step="0.01" min="0" id="beCod"></label>
+          <label>Върнати поръчки (%)<input type="number" step="0.1" min="0" max="95" id="beRet"></label>
+          <label>Разход при върната пратка (€)<input type="number" step="0.01" min="0" id="beRetCost"></label>
+          <label>Желана печалба (% от поръчката)<input type="number" step="1" min="0" id="beMargin" value="10"></label>
+        </div>
+        <div class="cards" id="beOut" style="margin:6px 0 0"></div>
+      </div>
       <div class="panel"><h2>Поръчки по дни</h2><div class="chart" id="dChart"></div></div>
       <div class="panel"><h2>Източници на трафик</h2><table id="dSources"></table><p class="muted" style="margin:10px 0 0">Посещение = един анонимен посетител за деня, отчетен към първия източник. Без бисквитки и без лични данни.</p></div>
       <div class="grid2">
@@ -429,6 +443,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     </div>
   </div>
 </div>
+<script src="roas.js"></script>
 <script>
 (function () {
   var STATUSES = [['new', 'Нова'], ['confirmed', 'Потвърдена'], ['shipped', 'Изпратена'], ['delivered', 'Доставена'], ['returned', 'Върната'], ['cancelled', 'Отказана']];
@@ -639,11 +654,44 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     var extra = a.unconverted && a.unconverted.length ? 'и ' + a.unconverted.map(function (u) { return money(u.amount, u.currency); }).join(', ') + ' без превръщане' : 'Meta реклами';
     return visitCards +
       card('Рекламен разход', money(spend, 'EUR'), extra, 'bad') +
-      card('ROAS', ratio(rev / spend), 'оборот ÷ рекламен разход') +
+      card('ROAS', ratio(rev / spend), 'оборот ÷ рекламен разход', spend && p.profitBeforeAds > 0 ? (rev / spend >= rev / p.profitBeforeAds ? 'ok' : 'bad') : '') +
+      card('Break-even ROAS', p.profitBeforeAds > 0 ? (rev / p.profitBeforeAds).toFixed(2).replace('.', ',') : '—', 'над това рекламите се изплащат', 'warn') +
       card('CPA', spend && c.orders ? money(spend / c.orders, 'EUR') : '—', 'разход за една поръчка') +
       card('CPM', spend && a.impressions ? money(spend / a.impressions * 1000, 'EUR') : '—', 'цена за 1000 показвания') +
       card('POAS', ratio((p.profitBeforeAds || 0) / spend), 'печалба преди реклама ÷ рекламен разход');
   }
+  /* ---- калкулатор break-even ROAS (формулите са в roas.js) ---- */
+  var beTouched = false, beData = null;
+  var BE_FIELDS = ['beAov', 'beCost', 'beShip', 'beCod', 'beRet', 'beRetCost'];
+  function fmt2(v) { return v.toFixed(2).replace('.', ','); }
+  function renderCalc() {
+    var v = function (id) { return $(id).value; };
+    var r = window.zdRoas.breakEven({ aov: v('beAov'), productCost: v('beCost'), shipping: v('beShip'), codPct: v('beCod'), returnPct: v('beRet'), returnCost: v('beRetCost'), targetMarginPct: v('beMargin') });
+    var m = Number(v('beMargin')) || 0;
+    $('beOut').innerHTML = card('Печалба на поръчка преди реклама', money(r.profit, 'EUR'), r.margin == null ? '' : 'марж ' + pct(r.margin), r.profit > 0 ? 'ok' : 'bad') +
+      card('Break-even ROAS', r.beRoas == null ? '—' : fmt2(r.beRoas), r.beRoas == null ? 'няма печалба преди реклама' : 'под това губите пари', 'warn') +
+      card('Максимален CPA', r.profit > 0 ? money(r.beCpa, 'EUR') : '—', 'най-много за една поръчка от реклама') +
+      card('ROAS за ' + m + '% печалба', r.targetRoas == null ? '—' : fmt2(r.targetRoas), 'цел за рекламите', 'ok') +
+      card('CPA за ' + m + '% печалба', r.targetCpa > 0 ? money(r.targetCpa, 'EUR') : '—', 'цена на поръчка при тази цел');
+  }
+  /** per-order averages of the selected period (+ the cost settings from Финанси) */
+  function fillCalc(force) {
+    if (!beData || (beTouched && !force)) { renderCalc(); return; }
+    var d = beData, p = d.profit || {}, c = d.cards;
+    var count = (d.byStatus || []).reduce(function (n, x) { return n + (x.status === 'cancelled' ? 0 : x.orders); }, 0);
+    var aov = (c.aov || []).filter(function (a) { return a.currency === 'EUR'; })[0];
+    var put = function (id, val) { $(id).value = val == null || !Number.isFinite(val) ? '' : Math.round(val * 100) / 100; };
+    put('beAov', aov ? aov.amount : null);
+    put('beCost', count ? p.productCost / count : null);
+    put('beShip', count ? (p.packaging + p.freeShipping) / count : null);
+    put('beRet', c.returnRate == null ? 0 : c.returnRate * 100);
+    var withSettings = function (st) { put('beCod', st.codFeePct); put('beRetCost', st.returnCost); beTouched = false; renderCalc(); };
+    if (costsData) withSettings(costsData.settings);
+    else costsFetch('GET').then(function (cd) { costsData = cd; withSettings(cd.settings); }).catch(function () { renderCalc(); });
+  }
+  BE_FIELDS.concat(['beMargin']).forEach(function (id) { $(id).addEventListener('input', function () { if (id !== 'beMargin') beTouched = true; renderCalc(); }); });
+  $('beFill').addEventListener('click', function () { fillCalc(true); });
+
   function profitCards(p) {
     if (!p) return '';
     var other = 'опаковки ' + money(p.packaging, 'EUR') + ' · НП ' + money(p.codFee, 'EUR') + ' · доставки ' + money(p.freeShipping, 'EUR') +
@@ -655,6 +703,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   }
   function renderDash(d) {
     dashLoaded = true;
+    beData = d;
     var sel = $('dStore'), chosen = sel.value;
     sel.innerHTML = '<option value="">Всички магазини</option>' + d.stores.map(function (st) {
       return '<option value="' + esc(st) + '"' + (st === chosen ? ' selected' : '') + '>' + esc(st) + '</option>';
@@ -663,6 +712,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     $('dCards').innerHTML = card('Оборот', moneyList(c.revenue), 'без отказаните') + card('Реален приход', moneyList(c.delivered), 'само доставените', 'ok') +
       card('Поръчки', String(c.orders), period) + card('Средна поръчка (AOV)', moneyList(c.aov)) +
       card('Върнати', pct(c.returnRate), 'от изпратените', 'warn') + card('⚠️ В НЕкоректен', String(c.nkFlagged), pct(c.nkFlaggedPct) + ' от поръчките', c.nkFlagged ? 'bad' : '') + adCards(d) + profitCards(d.profit);
+    fillCalc(false);
     $('dSources').innerHTML = table(['Източник', 'Посещения', 'Поръчки', 'CR'], (d.sources || []).map(function (x) {
       return [esc(SOURCE_LABEL[x.source] || x.source), String(x.visits), String(x.orders), x.visits ? esc(pct(x.orders / x.visits)) : '—'];
     }));
