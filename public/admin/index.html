@@ -142,6 +142,16 @@ tr.st-new{background:#fffbeb}
 .rowbtns button{font-size:12px;padding:5px 10px}
 .plus{color:var(--ok);font-weight:700}.minus{color:var(--bad);font-weight:700}
 .dialog.small{max-width:560px}
+.fb{background:#1877f2;border-color:#1877f2;color:#fff;font-weight:700;padding:12px 20px;font-size:15px;display:inline-flex;align-items:center;gap:10px;text-decoration:none;border-radius:10px}
+.fb:hover{background:#166fe0}
+.fbbox{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-bottom:18px}
+.acct{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;cursor:pointer;background:#fff}
+.acct:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.acct input{margin-top:3px}
+.acct .muted{display:block;margin-top:2px}
+details.manual{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
+.warn{color:var(--warn);font-weight:600}
 .cost-in{width:110px}
 
 @media (max-width:900px){
@@ -350,6 +360,14 @@ tr.st-new{background:#fffbeb}
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="metaTitle">
       <div class="dhead"><div class="tile meta">∞<img src="https://www.google.com/s2/favicons?domain=facebook.com&amp;sz=128" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></div><div><h2 id="metaTitle">Meta реклами <span class="chip" id="iMetaChip2"></span></h2><div class="muted" style="font-size:15px">Рекламен разход, ROAS, CPA и CPM в таблото</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
       <div class="dbody">
+        <div class="fbbox" id="iMetaOauthBox" hidden>
+          <a class="primary fb" href="/api/admin/meta?start=1" id="iMetaFb"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12z"/></svg>Вход с Facebook</a>
+          <span class="muted">Влизате с профила, който управлява рекламите, и избирате рекламния акаунт от списък.</span>
+        </div>
+        <div class="warn" id="iMetaExpiry" hidden></div>
+        <div id="iMetaPick" hidden></div>
+        <details class="manual" id="iMetaManual">
+        <summary>Свързване с ключ (System User token)</summary>
         <div class="tip">💡 <b>Как да вземете ключа (еднократно):</b><br>
           1. business.facebook.com → Настройки на бизнеса → Потребители → <b>Системни потребители</b> → Добавяне.<br>
           2. „Присвояване на активи“ → Рекламни акаунти → вашият акаунт → право <b>„Преглед на ефективността“</b>.<br>
@@ -360,7 +378,8 @@ tr.st-new{background:#fffbeb}
           <label>Access token<input type="password" id="iMetaToken" autocomplete="off" placeholder="поставете токена"></label>
           <label class="check"><input type="checkbox" id="iMetaActive" checked> Активна интеграция</label>
         </div>
-        <div class="actions"><button type="button" class="primary" id="iMetaSave">Запази и свържи</button><button type="button" class="ghost" id="iMetaTest">Тествай връзката</button></div>
+        <div class="actions"><button type="button" class="primary" id="iMetaSave">Запази и свържи</button><button type="button" class="ghost" id="iMetaList">Покажи акаунтите</button><button type="button" class="ghost" id="iMetaTest">Тествай връзката</button></div>
+        </details>
         <div class="syncbox">
           <h3>Синхронизация на рекламния разход</h3>
           <div class="actions">
@@ -485,7 +504,7 @@ tr.st-new{background:#fffbeb}
         shown = true;
         $('login').hidden = true; $('app').hidden = false;
         render();
-        if (!booted) { booted = true; showView(viewFromHash()); loadShop(); }
+        if (!booted) { booted = true; showView(viewFromHash()); loadShop(); afterFacebook(); }
       })
       .catch(function () {
         if (id !== reqId) return;
@@ -695,6 +714,19 @@ tr.st-new{background:#fffbeb}
   function when(iso) { return iso ? new Date(iso).toLocaleString('bg-BG', { timeZone: 'Europe/Sofia', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'; }
   function busy(btn, p) { btn.disabled = true; return p.then(function (x) { btn.disabled = false; return x; }, function (e) { btn.disabled = false; throw e; }); }
   function showErr(id, e) { if (e.message !== 'auth') { $(id).innerHTML = '<span class="err">' + esc(e.message) + '</span>'; } }
+  /* back from "Вход с Facebook": open the Meta window with the account list (or the error) and tidy the address */
+  function afterFacebook() {
+    var sp = new URLSearchParams(location.search), err = sp.get('meta_error');
+    if (sp.get('meta') !== 'choose' && !err) return;
+    history.replaceState(null, '', location.pathname + location.hash);
+    openMeta();
+    // after the status has rendered, so it does not overwrite the message or the list
+    loadIntegrations().then(function () {
+      if (err) $('iMetaInfo').innerHTML = '<span class="err">' + esc(err) + '</span>';
+      else loadAccounts('');
+    });
+  }
+
   /* ---- магазин: име и буква в лявата лента ---- */
   function setShop(shop) {
     var name = (shop && shop.display) || 'Моят магазин';
@@ -734,7 +766,14 @@ tr.st-new{background:#fffbeb}
     chip('iMetaChip2', m.connected, 'Свързан', m.configured ? 'Неактивен' : 'Не е свързан');
     $('iMetaOpen').textContent = m.configured ? 'Настройки' : '+ Свържи';
     $('iMetaOpen').className = m.configured ? 'ghost' : 'primary';
-    $('iMetaLine').textContent = m.accountId ? (m.accountName || 'акаунт') + ' · act_' + m.accountId + ' · ' + (m.currency || '') + ' · синхронизация ' + when(m.lastSyncAt) : '';
+    var daysLeft = m.tokenExpiresAt ? Math.floor((Date.parse(m.tokenExpiresAt) - Date.now()) / 864e5) : null;
+    $('iMetaLine').textContent = m.accountId ? (m.accountName || 'акаунт') + ' · act_' + m.accountId + ' · ' + (m.currency || '') + ' · синхронизация ' + when(m.lastSyncAt) +
+      (daysLeft != null ? ' · връзката е валидна още ' + Math.max(0, daysLeft) + ' дни' : '') : (m.configured && m.oauth ? 'Влязохте с Facebook — изберете рекламен акаунт' : '');
+    $('iMetaOauthBox').hidden = !m.oauth;
+    $('iMetaManual').open = !m.oauth;
+    $('iMetaExpiry').hidden = !(daysLeft != null && daysLeft <= 10);
+    $('iMetaExpiry').textContent = daysLeft != null && daysLeft <= 10 ? 'Връзката с Facebook изтича след ' + Math.max(0, daysLeft) + ' дни — натиснете „Вход с Facebook“ отново.' : '';
+    lastMeta = m;
     if (!$('iMetaAccount').value) $('iMetaAccount').value = m.accountId || '';
     $('iMetaToken').placeholder = m.configured ? '•••••• запазен (въведете нов, за да го смените)' : 'поставете токена';
     $('iMetaActive').checked = m.active !== false;
@@ -752,22 +791,51 @@ tr.st-new{background:#fffbeb}
   function openCb(tab) { $('cbModal').hidden = false; cbTab(tab); }
   function closeCb() { $('cbModal').hidden = true; loadIntegrations(); }
   $('iCbOpen').addEventListener('click', function () { openCb('shop'); });
-  $('iMetaOpen').addEventListener('click', function () {
+  $('iMetaOpen').addEventListener('click', openMeta);
+  var lastMeta = null, pickToken = '';
+  function openMeta() {
     if (!$('iMetaFrom').value) $('iMetaFrom').value = sofiaDay(-29);
     if (!$('iMetaTo').value) $('iMetaTo').value = sofiaDay(0);
     $('metaModal').hidden = false;
+  }
+  function renderAccounts(list) {
+    var current = (lastMeta && lastMeta.accountId) || '';
+    $('iMetaPick').innerHTML = !list.length ? '<div class="muted">Този профил няма достъп до рекламни акаунти.</div>' :
+      '<h3 style="margin:0 0 10px">Изберете рекламен акаунт</h3>' + list.map(function (a, i) {
+        return '<label class="acct"><input type="radio" name="metaAcct" value="' + esc(a.id) + '"' + (a.id === current || (!current && i === 0) ? ' checked' : '') + '><span><b>' + esc(a.name || 'Без име') + '</b>' +
+          '<span class="muted">act_' + esc(a.id) + ' · ' + esc(a.currency) + (a.business ? ' · ' + esc(a.business) : '') + (a.active ? '' : ' · неактивен') + '</span></span></label>';
+      }).join('') + '<div class="actions" style="margin-top:12px"><button type="button" class="primary" id="iMetaPickSave">Свържи избрания акаунт</button></div>';
+    $('iMetaPick').hidden = false;
+  }
+  function loadAccounts(token) {
+    pickToken = token || '';
+    $('iMetaInfo').textContent = 'Зареждам рекламните акаунти…';
+    return integ({ action: 'meta_accounts', token: pickToken }).then(function (d) { $('iMetaInfo').textContent = ''; renderAccounts(d.accounts); })
+      .catch(function (e) { showErr('iMetaInfo', e); });
+  }
+  $('iMetaList').addEventListener('click', function () { loadAccounts($('iMetaToken').value.trim()); });
+  $('iMetaPick').addEventListener('click', function (e) {
+    if (e.target.id !== 'iMetaPickSave') return;
+    var r = document.querySelector('input[name="metaAcct"]:checked');
+    if (r) connectMeta(r.value, pickToken, true, e.target);
   });
-  $('iMetaSave').addEventListener('click', function () {
+  $('iMetaSave').addEventListener('click', function () { connectMeta($('iMetaAccount').value, $('iMetaToken').value, $('iMetaActive').checked, $('iMetaSave')); });
+  function connectMeta(accountId, token, active, btn) {
     $('iMetaInfo').textContent = 'Свързване…';
-    busy($('iMetaSave'), integ({ action: 'save_meta', accountId: $('iMetaAccount').value, token: $('iMetaToken').value, active: $('iMetaActive').checked }))
+    busy(btn, integ({ action: 'save_meta', accountId: accountId, token: token, active: active }))
       .then(function (d) {
         $('iMetaToken').value = '';
         if (d.active === false) { $('iMetaInfo').textContent = 'Интеграцията е изключена.'; loadIntegrations(); return; }
         $('iMetaInfo').textContent = 'Свързано ✓ ' + d.accountName + ' (' + d.currency + '). Дърпам разхода за последните 30 дни…';
-        return integ({ action: 'sync_meta', from: sofiaDay(-29), to: sofiaDay(0) }).then(function () { loadIntegrations(); dashLoaded = false; });
+        $('iMetaPick').hidden = true; $('iMetaAccount').value = accountId;
+        return integ({ action: 'sync_meta', from: sofiaDay(-29), to: sofiaDay(0) })
+          .then(function (r) {
+            dashLoaded = false;
+            return loadIntegrations().then(function () { $('iMetaInfo').textContent = 'Свързано ✓ ' + d.accountName + ' — изтеглени ' + r.result.days + ' дни с разход.'; });
+          });
       })
       .catch(function (e) { showErr('iMetaInfo', e); });
-  });
+  }
   $('iMetaTest').addEventListener('click', function () {
     busy($('iMetaTest'), integ({ action: 'test_meta' }))
       .then(function (d) { $('iMetaInfo').textContent = 'Връзката работи ✓ ' + d.accountName + ' (' + d.currency + ')'; })
@@ -792,7 +860,7 @@ tr.st-new{background:#fffbeb}
   document.querySelector('.seg').addEventListener('click', function (e) { var t = e.target.getAttribute('data-tab'); if (t) cbTab(t); });
   function loadIntegrations() {
     if (!$('iCbFrom').value) $('iCbFrom').value = sofiaDay(-30);
-    integ().then(renderIntegrations).catch(function (e) { showErr('iCbInfo', e); });
+    return integ().then(renderIntegrations).catch(function (e) { showErr('iCbInfo', e); });
   }
   $('iCbSave').addEventListener('click', function () {
     $('iCbInfo').textContent = 'Свързване…';

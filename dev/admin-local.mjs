@@ -13,6 +13,21 @@ import adminRouter from '../api/admin/[route].js';
 process.env.ADMIN_PASSWORD = 'local-test';
 process.env.ADMIN_SECRET = 'local-secret';
 process.env.INTEGRATIONS_SECRET = 'local-integrations-secret';
+// local only: pretend a Meta app exists and answer Facebook's Graph API with sample data (no real calls leave this machine)
+process.env.META_APP_ID = 'local-app'; process.env.META_APP_SECRET = 'local-secret';
+const realFetch = globalThis.fetch;
+globalThis.fetch = async (url, init) => {
+  const u = new URL(String(url));
+  if (u.hostname !== 'graph.facebook.com') return realFetch(url, init);
+  const ok = (d) => ({ ok: true, status: 200, json: async () => d });
+  if (u.pathname.endsWith('/me/adaccounts')) return ok({ data: [
+    { account_id: '1234567890', name: 'adhd реклами', currency: 'EUR', account_status: 1, business: { name: 'ProfitBrand' } },
+    { account_id: '9876543210', name: 'Стар рекламен акаунт', currency: 'BGN', account_status: 2 },
+  ] });
+  if (/\/act_\d+$/.test(u.pathname)) return ok({ name: 'adhd реклами', currency: 'EUR', account_status: 1 });
+  if (u.pathname.endsWith('/insights')) return ok({ data: [] });
+  return ok({});
+};
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public');
 const q = await makeTestQuery();
 setQueryForTests(q);
