@@ -6,7 +6,7 @@ import { setQueryForTests } from '../lib/db.js';
 import { insertOrder, updateStatus } from '../lib/orders-repo.js';
 import { getCosts, saveCosts, addExpense, deleteExpense, getProfit } from '../lib/costs.js';
 import { signSession } from '../lib/auth.js';
-import costsApi from '../api/admin/costs.js';
+import costsApi from '../lib/admin/costs.js';
 
 let q;
 beforeEach(async () => { q = await makeTestQuery(); setQueryForTests(q); process.env.ADMIN_SECRET = 'secret'; });

@@ -6,7 +6,7 @@ import { setQueryForTests } from '../lib/db.js';
 import { insertOrder, updateStatus, saveNekorekten } from '../lib/orders-repo.js';
 import { getStats } from '../lib/stats.js';
 import { signSession } from '../lib/auth.js';
-import statsApi from '../api/admin/stats.js';
+import statsApi from '../lib/admin/stats.js';
 
 let q;
 beforeEach(async () => { q = await makeTestQuery(); setQueryForTests(q); });

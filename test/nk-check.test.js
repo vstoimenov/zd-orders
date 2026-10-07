@@ -87,7 +87,7 @@ test('the nekorekten cron retries pending orders and needs the cron secret', asy
 
 test('opening the plain first admin page retries up to 2 unchecked orders, filtered views do not', async () => {
   const { signSession } = await import('../lib/auth.js');
-  const adminOrders = (await import('../api/admin/orders.js')).default;
+  const adminOrders = (await import('../lib/admin/orders.js')).default;
   process.env.ADMIN_SECRET = 'secret';
   for (const id of ['L1', 'L2', 'L3', 'L4']) await insertOrder(q, order({ cbOrderId: id }));
   process.env.NEKOREKTEN_API_KEY = 'KEY';

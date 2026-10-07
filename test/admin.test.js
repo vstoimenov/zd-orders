@@ -7,8 +7,8 @@ import { insertOrder } from '../lib/orders-repo.js';
 import { signSession, verifySession, passwordMatches } from '../lib/auth.js';
 import { waybillText } from '../lib/waybill.js';
 import { ordersToCsv } from '../lib/csv.js';
-import login from '../api/admin/login.js';
-import adminOrders from '../api/admin/orders.js';
+import login from '../lib/admin/login.js';
+import adminOrders from '../lib/admin/orders.js';
 
 process.env.ADMIN_PASSWORD = 'парола-123';
 process.env.ADMIN_SECRET = 'secret';

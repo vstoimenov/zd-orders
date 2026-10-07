@@ -9,7 +9,7 @@ import { getIntegration, saveIntegration, getSecret } from '../lib/integrations-
 import { mapOrder } from '../lib/convertbuilder.js';
 import { signSession } from '../lib/auth.js';
 import webhook from '../api/cb/webhook.js';
-import integrationsApi from '../api/admin/integrations.js';
+import integrationsApi from '../lib/admin/integrations.js';
 
 process.env.INTEGRATIONS_SECRET = 'test-secret';
 process.env.ADMIN_SECRET = 'secret';
