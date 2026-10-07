@@ -104,3 +104,24 @@ test('without a Meta app configured the button is not offered; a pasted token ca
     assert.equal(json(res).accounts.length, 2);
   } finally { process.env.META_APP_ID = id; }
 });
+
+test('with a Facebook Login for Business configuration the dialog uses config_id, and a never-expiring token is kept as such', async () => {
+  process.env.META_CONFIG_ID = '987654';
+  try {
+    const start = await call({ url: '/api/admin/meta?start=1', headers: admin });
+    const to = new URL(start.headers.location);
+    assert.equal(to.searchParams.get('config_id'), '987654');
+    assert.equal(to.searchParams.get('scope'), null, 'Meta recommends not sending scope together with a configuration');
+    const state = to.searchParams.get('state');
+    // a system-user token comes back without expires_in and cannot be exchanged
+    const fb = async (url) => {
+      const u = new URL(String(url));
+      if (u.searchParams.get('code') === 'CODE') return { ok: true, status: 200, json: async () => ({ access_token: 'SYSTEM-USER', token_type: 'bearer' }) };
+      return { ok: false, status: 400, json: async () => ({ error: { message: 'cannot exchange', code: 100 } }) };
+    };
+    const res = await withFetch(fb, () => call({ url: `/api/admin/meta?code=CODE&state=${state}` }));
+    assert.equal(res.headers.location, 'https://kurier.profitbrand.online/admin/?meta=choose#integrations');
+    assert.equal(await getSecret(q, 'meta'), 'SYSTEM-USER');
+    assert.equal((await getIntegration(q, 'meta')).config.tokenExpiresAt, null);
+  } finally { delete process.env.META_CONFIG_ID; }
+});
