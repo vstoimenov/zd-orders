@@ -645,7 +645,9 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   var SOURCE_LABEL = { facebook: 'Facebook', instagram: 'Instagram', google: 'Google', tiktok: 'TikTok', youtube: 'YouTube', bing: 'Bing', direct: 'Директно', '': 'Неизвестен (поръчка без посещение)' };
   function adCards(d) {
     var c = d.cards;
-    var visitCards = card('Посещения', String(c.visits || 0), 'уникални посетители по дни') + card('CR', c.cr == null ? '—' : pct(c.cr), 'поръчки ÷ посещения', 'ok');
+    var since = c.visitsSince ? ' · броят се от ' + when(c.visitsSince) : '';
+    var visitCards = card('Посещения', String(c.visits || 0), 'уникални посетители по дни' + since) +
+      card('CR', c.cr == null ? '—' : pct(c.cr), 'поръчки ÷ посещения (само поръчките след началото на броенето)', 'ok');
     if (!d.ads) return visitCards; // a single store is selected: ad spend belongs to the whole account
     var a = d.ads, p = d.profit || {};
     var eur = (c.revenue || []).filter(function (m) { return m.currency === 'EUR'; })[0];

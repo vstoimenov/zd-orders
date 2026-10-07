@@ -22,7 +22,7 @@ const beacon = (b, { origin = 'https://www.adhdbg.eu', ua = UA, ip = '1.2.3.4' }
 
 test('traffic source: UTM first, then click ids, then the referrer; internal or empty is direct', () => {
   const c = (search, referrer) => classify({ search, referrer, site: 'adhdbg.eu' });
-  assert.deepEqual(c('?utm_source=FB&utm_campaign=Есен', 'https://google.com/'), { source: 'fb', campaign: 'Есен' });
+  assert.deepEqual(c('?utm_source=FB&utm_campaign=Есен', 'https://google.com/'), { source: 'facebook', campaign: 'Есен' });
   assert.deepEqual(c('?fbclid=abc', ''), { source: 'facebook', campaign: '' });
   assert.deepEqual(c('?gclid=x', ''), { source: 'google', campaign: '' });
   assert.deepEqual(c('?ttclid=x', ''), { source: 'tiktok', campaign: '' });
@@ -115,4 +115,10 @@ test('the order is saved even when the traffic source lookup fails', async () =>
       office_text: 'ЕКОНТ – офис (1)', city: 'Х', items: [], total: 20 }) }), res);
     assert.equal(res.statusCode, 200);
   } finally { console.error = err; }
+});
+
+test('Meta ad tags fb / ig count as Facebook / Instagram', () => {
+  assert.equal(classify({ search: '?utm_source=fb', site: 'adhdbg.eu' }).source, 'facebook');
+  assert.equal(classify({ search: '?utm_source=ig', site: 'adhdbg.eu' }).source, 'instagram');
+  assert.equal(classify({ search: '?utm_source=Facebook_Mobile_Feed', site: 'adhdbg.eu' }).source, 'facebook_mobile_feed');
 });

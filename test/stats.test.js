@@ -120,3 +120,16 @@ test('getStats adds visits, conversion, traffic sources and ad spend', async () 
   const empty = await getStats(q, { from: '2000-01-01', to: '2000-01-01' });
   assert.deepEqual([empty.cards.visits, empty.cards.cr, empty.sources], [0, null, []]);
 });
+
+test('CR only counts orders placed after visit tracking began on that site', async () => {
+  const day = today();
+  await add(); // an order placed before tracking began
+  await q(`update zd.orders set created_at = now() - interval '2 hours'`);
+  await q(`insert into zd.visits (day, site, visitor, source, created_at) values ($1::date, 'live.bg', 'a', 'direct', now() - interval '1 hour'), ($1::date, 'live.bg', 'b', 'direct', now() - interval '30 minutes')`, [day]);
+  await add(); // after tracking began
+  const s = await getStats(q, { from: day, to: day, store: 'live.bg' });
+  assert.equal(s.cards.orders, 2);
+  assert.equal(s.cards.visits, 2);
+  assert.equal(s.cards.cr, 0.5, '1 tracked order ÷ 2 visits, not 2 ÷ 2');
+  assert.ok(s.cards.visitsSince, 'the dashboard can say since when visits are counted');
+});
