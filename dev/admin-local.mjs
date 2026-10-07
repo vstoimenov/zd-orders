@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { makeTestQuery } from '../test/helpers/pglite.js';
 import { setQueryForTests } from '../lib/db.js';
 import { insertOrder, saveNekorekten, updateStatus } from '../lib/orders-repo.js';
+import { saveIntegration } from '../lib/integrations-repo.js';
 import adminRouter from '../api/admin/[route].js';
 
 process.env.ADMIN_PASSWORD = 'local-test';
@@ -26,6 +27,8 @@ await saveNekorekten(q, ids.L1, { status: 'flagged', count: 2, reportIds: ['1234
 await saveNekorekten(q, ids.L3, { status: 'clean', count: 0 });
 await updateStatus(q, ids.L2, 'delivered');
 await updateStatus(q, ids.L3, 'returned');
+// a connected ConvertBuilder store (fake key — the local server never calls ConvertBuilder unless you press its buttons)
+await saveIntegration(q, 'convertbuilder', { config: { domain: 'adhdbg.eu', store: 'adhdbg.eu', active: true, currency: 'EUR', webhookId: 'wh_local', webhookSecret: 'local', connectedAt: new Date().toISOString(), lastSyncAt: new Date().toISOString(), lastSyncResult: { fetched: 6, inserted: 6, updated: 0 } }, secret: 'LOCAL-FAKE-KEY' });
 
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8' };
 http.createServer(async (req, res) => {

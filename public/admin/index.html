@@ -100,6 +100,40 @@ tr.st-new{background:#fffbeb}
 .chip.ok{background:#e8f6ec;color:var(--ok)}
 .chip.bad{background:#fdecee;color:var(--bad)}
 .integ button{margin-right:6px}
+/* интеграции: раздели с карти + прозорец */
+.isec{margin-bottom:30px}
+.isec-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.isec-ic{width:34px;height:34px;flex:none;border-radius:10px;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center}
+.isec-ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.isec-head h2{font-size:17px;margin:0;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.igrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.icard{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.tile{width:48px;height:48px;flex:none;border-radius:12px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;font-weight:800;font-size:15px}
+.tile.cb{color:#0b6bcb}.tile.meta{color:#1877f2}.tile.econt{color:#1d4f91}.tile.speedy{color:#d4141c}.tile.nk{color:#c81e1e}
+.ibody{flex:1;min-width:0}
+.ibody b{font-size:15px}
+.ibody .muted{margin-top:2px}
+.icard .primary,.icard .ghost{white-space:nowrap;font-size:13px;padding:8px 14px}
+.ghost{background:#fff;border:1px solid var(--line);font-weight:600}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(10,10,8,.55);display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;overflow-y:auto}
+.dialog{width:100%;max-width:880px;background:#fff;border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.25)}
+.dhead{display:flex;align-items:center;gap:16px;padding:22px 26px;border-bottom:1px solid var(--line)}
+.dhead .tile{width:60px;height:60px;font-size:18px}
+.dhead h2{margin:0;font-size:24px;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dhead .x{margin-left:auto;align-self:flex-start;border:0;background:none;font-size:22px;line-height:1;padding:6px 10px;color:var(--muted)}
+.dbody{padding:22px 26px 26px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:6px;background:var(--bg);border:1px solid var(--line);border-radius:14px;margin-bottom:18px}
+.seg button{border:0;background:none;padding:11px;border-radius:10px;font-weight:700;color:var(--muted)}
+.seg button.on{background:var(--accent);color:#111}
+.tip{background:#fafaf7;border:1px solid var(--line);border-radius:12px;padding:12px 16px;color:var(--muted);margin-bottom:18px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;margin-bottom:20px}
+.fgrid label{display:flex;flex-direction:column;gap:7px;font-weight:700;font-size:14px}
+.fgrid input,.fgrid select{padding:12px 14px;border-radius:12px;font-weight:400;background:#fafaf7}
+.fgrid .check{flex-direction:row;align-items:center;gap:10px;font-weight:600}
+.fgrid .check input{width:18px;height:18px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.syncbox{margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+.syncbox h3{font-size:14px;margin:0 0 10px}
 .cost-in{width:110px}
 
 @media (max-width:900px){
@@ -111,6 +145,10 @@ tr.st-new{background:#fffbeb}
   main{padding:20px 16px 40px}
   .pagehead h1{font-size:24px}
   .grid2{grid-template-columns:1fr}
+  .igrid{grid-template-columns:1fr}
+  .fgrid{grid-template-columns:1fr}
+  .dhead,.dbody{padding-left:18px;padding-right:18px}
+  .icard{flex-wrap:wrap}
 }
 @media (max-width:800px){
   table,thead,tbody,tr,td{display:block}thead{display:none}
@@ -171,38 +209,32 @@ tr.st-new{background:#fffbeb}
       </div>
     </section>
     <section id="integrationsView" hidden>
-      <div class="pagehead"><div><h1>Интеграции</h1><div class="sub">Връзки с магазина и услугите</div></div></div>
-      <div class="panel">
-        <h2>Магазин</h2>
-        <div class="costgrid"><label>Име на магазина (вижда се горе вляво)<input type="text" id="iShopName" maxlength="60" placeholder="напр. adhd"></label></div>
-        <button type="button" class="primary" id="iShopSave">Запази</button> <span class="muted" id="iShopInfo"></span>
-      </div>
-      <div class="panel integ">
-        <h2>ConvertBuilder <span class="chip" id="iCbChip"></span></h2>
-        <p class="muted">Поръчките идват директно от магазина (уебхук) + нощна синхронизация. Ключът е в ConvertBuilder: Website Settings → Applications → API Key.</p>
-        <div class="costgrid">
-          <label>Домейн на магазина (където е чекаутът)<input type="text" id="iCbDomain" placeholder="напр. adhdbg.eu"></label>
-          <label>API ключ<input type="password" id="iCbKey" autocomplete="off" placeholder="поставете ключа"></label>
-          <label class="check"><input type="checkbox" id="iCbActive" checked> Активна интеграция</label>
+      <div class="pagehead"><div><h1>Интеграции</h1><div class="sub">Магазинът, рекламите и куриерите на едно място</div></div></div>
+      <div class="isec">
+        <div class="isec-head"><span class="isec-ic"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><div><h2>Платформи за продажби <span class="chip" id="iShopCount"></span></h2><div class="muted">Един активен магазин на интеграция</div></div></div>
+        <div class="igrid">
+          <div class="icard"><div class="tile cb">CB</div><div class="ibody"><b>ConvertBuilder</b> <span class="chip" id="iCbChip"></span><div class="muted">E-commerce платформа и builder интеграция</div><div class="muted" id="iCbLine"></div></div><button type="button" class="primary" id="iCbOpen">+ Свържи</button></div>
         </div>
-        <button type="button" class="primary" id="iCbSave">Запази и свържи</button>
-        <button type="button" id="iCbTest">Тествай връзката</button>
-        <div class="filters" style="margin-top:12px">
-          <input type="date" id="iCbFrom" title="Синхронизирай от дата">
-          <input type="date" id="iCbTo" title="до дата (по избор)">
-          <button type="button" id="iCbSync">Синхронизирай поръчките</button>
+      </div>
+      <div class="isec">
+        <div class="isec-head"><span class="isec-ic"><svg viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span><div><h2>Реклами</h2><div class="muted">Рекламен разход, ROAS и CPA в таблото</div></div></div>
+        <div class="igrid">
+          <div class="icard"><div class="tile meta">∞</div><div class="ibody"><b>Meta реклами</b> <span class="chip">скоро</span><div class="muted">Facebook и Instagram реклами</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
         </div>
-        <div class="muted" id="iCbInfo"></div>
       </div>
-      <div class="panel integ">
-        <h2>НЕкоректен <span class="chip" id="iNkChip"></span></h2>
-        <p class="muted">Всеки телефон от поръчка се проверява автоматично в nekorekten.com. Услугата се осигурява от платформата — не е нужен ваш ключ.</p>
+      <div class="isec">
+        <div class="isec-head"><span class="isec-ic"><svg viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62L18.3 9.38a1 1 0 0 0-.78-.38H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></span><div><h2>Куриери</h2><div class="muted">Офисите и автоматите се обновяват всяка нощ</div></div></div>
+        <div class="igrid">
+          <div class="icard"><div class="tile econt">E</div><div class="ibody"><b>Еконт</b> <span class="chip ok">активен</span><div class="muted">Куриерски услуги и автомати</div><div class="muted" id="iEcont"></div></div></div>
+          <div class="icard"><div class="tile speedy">S</div><div class="ibody"><b>Спиди</b> <span class="chip ok">активен</span><div class="muted">Експресни куриерски доставки</div><div class="muted" id="iSpeedy"></div></div></div>
+        </div>
       </div>
-      <div class="grid2">
-        <div class="panel integ"><h2>Еконт <span class="chip ok">публични данни</span></h2><div class="muted" id="iEcont"></div></div>
-        <div class="panel integ"><h2>Спиди <span class="chip ok">публични данни</span></h2><div class="muted" id="iSpeedy"></div></div>
+      <div class="isec">
+        <div class="isec-head"><span class="isec-ic"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></span><div><h2>Проверка на клиенти</h2><div class="muted">Защита от некоректни поръчки</div></div></div>
+        <div class="igrid">
+          <div class="icard"><div class="tile nk">НК</div><div class="ibody"><b>НЕкоректен</b> <span class="chip" id="iNkChip"></span><div class="muted">Всеки телефон от поръчка се проверява автоматично в nekorekten.com. Услугата се осигурява от платформата.</div></div></div>
+        </div>
       </div>
-      <div class="panel integ"><h2>Meta реклами <span class="chip">скоро</span></h2><p class="muted">Рекламен разход, ROAS и CPA в таблото.</p></div>
     </section>
     <section id="costsView" hidden>
       <div class="pagehead"><div><h1>Финанси</h1><div class="sub">Себестойност, разходи и печалба</div></div></div>
@@ -252,6 +284,43 @@ tr.st-new{background:#fffbeb}
       <div class="pager"><button id="prev" type="button">‹ Назад</button><span id="pageInfo" class="muted"></span><button id="next" type="button">Напред ›</button></div>
     </section>
     </main>
+  </div>
+  <div class="modal" id="cbModal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="cbTitle">
+      <div class="dhead"><div class="tile cb">CB</div><div><h2 id="cbTitle">ConvertBuilder <span class="chip" id="iCbChip2"></span></h2><div class="muted" style="font-size:15px">E-commerce платформа и builder интеграция</div></div><button type="button" class="x" id="cbClose" aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div class="seg"><button type="button" class="on" data-tab="shop">Данни за магазина</button><button type="button" data-tab="sync">Връзка и синхронизация</button></div>
+        <div id="tabShop">
+          <div class="tip">💡 Тези данни описват магазина в панела. API настройките и синхронизацията са в следващата секция.</div>
+          <div class="fgrid">
+            <label>Име на магазина<input type="text" id="iShopName" maxlength="60" placeholder="напр. adhd"></label>
+            <label>Публичен URL на магазина<input type="url" id="iShopUrl" maxlength="200" placeholder="https://example.com"></label>
+            <label>Имейл на магазина<input type="email" id="iShopEmail" maxlength="160" placeholder="shop@example.com"></label>
+            <label>Телефон на магазина<input type="tel" id="iShopPhone" maxlength="30" placeholder="+359..."></label>
+            <label>Валута на магазина<select id="iShopCurrency"><option value="EUR">Euro (EUR) €</option><option value="BGN">Лев (BGN) лв.</option><option value="USD">US Dollar (USD) $</option></select></label>
+          </div>
+          <div class="actions"><button type="button" class="primary" id="iShopSave">✓ Запази данните</button><span class="muted" id="iShopInfo"></span></div>
+        </div>
+        <div id="tabSync" hidden>
+          <div class="tip">💡 Ключът е в ConvertBuilder: Website Settings → Applications → API Key. Поръчките идват веднага (уебхук) + всяка нощ се дърпат пропуснатите.</div>
+          <div class="fgrid">
+            <label>Домейн на магазина (където е чекаутът)<input type="text" id="iCbDomain" placeholder="напр. adhdbg.eu"></label>
+            <label>API ключ<input type="password" id="iCbKey" autocomplete="off" placeholder="поставете ключа"></label>
+            <label class="check"><input type="checkbox" id="iCbActive" checked> Активна интеграция</label>
+          </div>
+          <div class="actions"><button type="button" class="primary" id="iCbSave">Запази и свържи</button><button type="button" class="ghost" id="iCbTest">Тествай връзката</button></div>
+          <div class="syncbox">
+            <h3>Синхронизация на поръчки</h3>
+            <div class="actions">
+              <input type="date" id="iCbFrom" title="Синхронизирай от дата">
+              <input type="date" id="iCbTo" title="до дата (по избор)">
+              <button type="button" class="ghost" id="iCbSync">Синхронизирай поръчките</button>
+            </div>
+            <div class="muted" id="iCbInfo" style="margin-top:10px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 <script>
@@ -524,11 +593,14 @@ tr.st-new{background:#fffbeb}
     $('shopName').textContent = name;
     $('shopInitial').textContent = name.trim().charAt(0).toUpperCase() || 'М';
     document.title = name + ' – админ';
-    if (shop && document.activeElement !== $('iShopName')) $('iShopName').value = shop.name || '';
+    if (shop && $('cbModal').hidden) {
+      $('iShopName').value = shop.name || ''; $('iShopUrl').value = shop.url || ''; $('iShopEmail').value = shop.email || '';
+      $('iShopPhone').value = shop.phone || ''; $('iShopCurrency').value = shop.currency || 'EUR';
+    }
   }
   function loadShop() { integ().then(function (s) { setShop(s.shop); }).catch(function () {}); }
   $('iShopSave').addEventListener('click', function () {
-    busy($('iShopSave'), integ({ action: 'save_shop', name: $('iShopName').value }))
+    busy($('iShopSave'), integ({ action: 'save_shop', name: $('iShopName').value, url: $('iShopUrl').value, email: $('iShopEmail').value, phone: $('iShopPhone').value, currency: $('iShopCurrency').value }))
       .then(function (d) { setShop(d.shop); $('iShopInfo').textContent = 'Запазено ✓'; setTimeout(function () { $('iShopInfo').textContent = ''; }, 2000); })
       .catch(function (e) { showErr('iShopInfo', e); });
   });
@@ -536,6 +608,11 @@ tr.st-new{background:#fffbeb}
     setShop(s.shop);
     var cb = s.convertbuilder;
     chip('iCbChip', cb.connected, 'Свързан', cb.configured ? 'Неактивен' : 'Не е свързан');
+    chip('iCbChip2', cb.connected, 'Свързан', cb.configured ? 'Неактивен' : 'Не е свързан');
+    $('iShopCount').textContent = (cb.connected ? 1 : 0) + ' свързани';
+    $('iCbOpen').textContent = cb.configured ? 'Настройки' : '+ Свържи';
+    $('iCbOpen').className = cb.configured ? 'ghost' : 'primary';
+    $('iCbLine').textContent = cb.domain ? cb.domain + ' · последна синхронизация ' + when(cb.lastSyncAt) : '';
     if (!$('iCbDomain').value) $('iCbDomain').value = cb.domain || '';
     $('iCbKey').placeholder = cb.configured ? '•••••• запазен (въведете нов, за да го смените)' : 'поставете ключа';
     $('iCbActive').checked = cb.active;
@@ -547,6 +624,18 @@ tr.st-new{background:#fffbeb}
     $('iEcont').textContent = s.econt.offices + ' офиса и автомата · обновено ' + when(s.econt.updatedAt);
     $('iSpeedy').textContent = s.speedy.offices + ' офиса и автомата · обновено ' + when(s.speedy.updatedAt);
   }
+  /* прозорец ConvertBuilder с два раздела */
+  function cbTab(t) {
+    [].forEach.call(document.querySelectorAll('.seg button'), function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === t); });
+    $('tabShop').hidden = t !== 'shop'; $('tabSync').hidden = t !== 'sync';
+  }
+  function openCb(tab) { $('cbModal').hidden = false; cbTab(tab); }
+  function closeCb() { $('cbModal').hidden = true; loadIntegrations(); }
+  $('iCbOpen').addEventListener('click', function () { openCb('shop'); });
+  $('cbClose').addEventListener('click', closeCb);
+  $('cbModal').addEventListener('click', function (e) { if (e.target === $('cbModal')) closeCb(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('cbModal').hidden) closeCb(); });
+  document.querySelector('.seg').addEventListener('click', function (e) { var t = e.target.getAttribute('data-tab'); if (t) cbTab(t); });
   function loadIntegrations() {
     if (!$('iCbFrom').value) $('iCbFrom').value = sofiaDay(-30);
     integ().then(renderIntegrations).catch(function (e) { showErr('iCbInfo', e); });
