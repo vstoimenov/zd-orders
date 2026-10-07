@@ -108,8 +108,9 @@ tr.st-new{background:#fffbeb}
 .isec-head h2{font-size:17px;margin:0;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .igrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .icard{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
-.tile{width:48px;height:48px;flex:none;border-radius:12px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;font-weight:800;font-size:15px}
-.tile.cb{color:#0b6bcb}.tile.shopify{color:#5e8e3e}.tile.woo{color:#7f54b3}.tile.opencart{color:#1f9bd1}.tile.google{color:#1a73e8}.tile.tiktok{color:#111}.tile.meta{color:#1877f2}.tile.econt{color:#1d4f91}.tile.speedy{color:#d4141c}.tile.nk{color:#c81e1e}
+.tile{position:relative;overflow:hidden;width:48px;height:48px;flex:none;border-radius:12px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;font-weight:800;font-size:15px}
+.tile img{position:absolute;inset:9px;width:calc(100% - 18px);height:calc(100% - 18px);object-fit:contain;background:#fff}
+.tile.cb{color:#0b6bcb}.tile.shopify{color:#5e8e3e}.tile.woo{color:#7f54b3}.tile.opencart{color:#1f9bd1}.tile.google{color:#1a73e8}.tile.tiktok{color:#111}.tile.meta{color:#1877f2}.tile.econt{color:#1d4f91}.tile.speedy{color:#d4141c}.tile.nk{color:#c81e1e}.tile.boxnow{color:#44c2a0}.tile.pigeon{color:#e4572e}
 .ibody{flex:1;min-width:0}
 .ibody b{font-size:15px}
 .ibody .muted{margin-top:2px}
@@ -222,31 +223,33 @@ tr.st-new{background:#fffbeb}
       <div class="isec">
         <div class="isec-head"><span class="isec-ic"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><div><h2>Платформи за продажби <span class="chip" id="iShopCount"></span></h2><div class="muted">Един активен магазин на интеграция</div></div></div>
         <div class="igrid">
-          <div class="icard"><div class="tile cb">CB</div><div class="ibody"><b>ConvertBuilder</b> <span class="chip" id="iCbChip"></span><div class="muted">E-commerce платформа и builder интеграция</div><div class="muted" id="iCbLine"></div></div><button type="button" class="primary" id="iCbOpen">+ Свържи</button></div>
-          <div class="icard"><div class="tile shopify">S</div><div class="ibody"><b>Shopify</b> <span class="chip">скоро</span><div class="muted">Онлайн магазин платформа</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
-          <div class="icard"><div class="tile woo">W</div><div class="ibody"><b>WooCommerce</b> <span class="chip">скоро</span><div class="muted">Магазин върху WordPress</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
-          <div class="icard"><div class="tile opencart">OC</div><div class="ibody"><b>OpenCart</b> <span class="chip">скоро</span><div class="muted">Магазин с отворен код</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
+          <div class="icard"><div class="tile cb">CB<img src="https://www.google.com/s2/favicons?domain=convertbuilder.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>ConvertBuilder</b> <span class="chip" id="iCbChip"></span><div class="muted">E-commerce платформа и builder интеграция</div><div class="muted" id="iCbLine"></div></div><button type="button" class="primary" id="iCbOpen">+ Свържи</button></div>
+          <div class="icard"><div class="tile shopify">S<img src="https://www.google.com/s2/favicons?domain=shopify.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Shopify</b> <span class="chip">скоро</span><div class="muted">Онлайн магазин платформа</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
+          <div class="icard"><div class="tile woo">W<img src="https://www.google.com/s2/favicons?domain=woocommerce.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>WooCommerce</b> <span class="chip">скоро</span><div class="muted">Магазин върху WordPress</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
+          <div class="icard"><div class="tile opencart">OC<img src="https://www.google.com/s2/favicons?domain=opencart.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>OpenCart</b> <span class="chip">скоро</span><div class="muted">Магазин с отворен код</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
         </div>
       </div>
       <div class="isec">
         <div class="isec-head"><span class="isec-ic"><svg viewBox="0 0 24 24"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></span><div><h2>Реклами</h2><div class="muted">Рекламен разход, ROAS и CPA в таблото</div></div></div>
         <div class="igrid">
-          <div class="icard"><div class="tile meta">∞</div><div class="ibody"><b>Meta реклами</b> <span class="chip">скоро</span><div class="muted">Facebook и Instagram реклами</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
-          <div class="icard"><div class="tile google">G</div><div class="ibody"><b>Google Ads</b> <span class="chip">скоро</span><div class="muted">Търсене, YouTube и Performance Max</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
-          <div class="icard"><div class="tile tiktok">TT</div><div class="ibody"><b>TikTok Ads</b> <span class="chip">скоро</span><div class="muted">Реклами в TikTok</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
+          <div class="icard"><div class="tile meta">∞<img src="https://www.google.com/s2/favicons?domain=facebook.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Meta реклами</b> <span class="chip">скоро</span><div class="muted">Facebook и Instagram реклами</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
+          <div class="icard"><div class="tile google">G<img src="https://www.google.com/s2/favicons?domain=ads.google.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Google Ads</b> <span class="chip">скоро</span><div class="muted">Търсене, YouTube и Performance Max</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
+          <div class="icard"><div class="tile tiktok">TT<img src="https://www.google.com/s2/favicons?domain=tiktok.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>TikTok Ads</b> <span class="chip">скоро</span><div class="muted">Реклами в TikTok</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
         </div>
       </div>
       <div class="isec">
         <div class="isec-head"><span class="isec-ic"><svg viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62L18.3 9.38a1 1 0 0 0-.78-.38H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></span><div><h2>Куриери</h2><div class="muted">Офисите и автоматите се обновяват всяка нощ</div></div></div>
         <div class="igrid">
-          <div class="icard"><div class="tile econt">E</div><div class="ibody"><b>Еконт</b> <span class="chip ok">активен</span><div class="muted">Куриерски услуги и автомати</div><div class="muted" id="iEcont"></div></div></div>
-          <div class="icard"><div class="tile speedy">S</div><div class="ibody"><b>Спиди</b> <span class="chip ok">активен</span><div class="muted">Експресни куриерски доставки</div><div class="muted" id="iSpeedy"></div></div></div>
+          <div class="icard"><div class="tile econt">E<img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Еконт</b> <span class="chip ok">активен</span><div class="muted">Куриерски услуги и автомати</div><div class="muted" id="iEcont"></div></div></div>
+          <div class="icard"><div class="tile speedy">S<img src="https://www.google.com/s2/favicons?domain=speedy.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Спиди</b> <span class="chip ok">активен</span><div class="muted">Експресни куриерски доставки</div><div class="muted" id="iSpeedy"></div></div></div>
+          <div class="icard"><div class="tile boxnow">BN<img src="https://www.google.com/s2/favicons?domain=boxnow.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>BOX NOW</b> <span class="chip">скоро</span><div class="muted">Автомати за пратки</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
+          <div class="icard"><div class="tile pigeon">PE<img src="https://www.google.com/s2/favicons?domain=pigeonexpress.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Pigeon Express</b> <span class="chip">скоро</span><div class="muted">Куриерски услуги</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
         </div>
       </div>
       <div class="isec">
         <div class="isec-head"><span class="isec-ic"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></span><div><h2>Проверка на клиенти</h2><div class="muted">Защита от некоректни поръчки</div></div></div>
         <div class="igrid">
-          <div class="icard"><div class="tile nk">НК</div><div class="ibody"><b>НЕкоректен</b> <span class="chip" id="iNkChip"></span><div class="muted">Всеки телефон от поръчка се проверява автоматично в nekorekten.com. Услугата се осигурява от платформата.</div></div></div>
+          <div class="icard"><div class="tile nk">НК<img src="https://www.google.com/s2/favicons?domain=nekorekten.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>НЕкоректен</b> <span class="chip" id="iNkChip"></span><div class="muted">Всеки телефон от поръчка се проверява автоматично в nekorekten.com. Услугата се осигурява от платформата.</div></div></div>
         </div>
       </div>
     </section>
@@ -344,7 +347,7 @@ tr.st-new{background:#fffbeb}
   </div>
   <div class="modal" id="cbModal" hidden>
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="cbTitle">
-      <div class="dhead"><div class="tile cb">CB</div><div><h2 id="cbTitle">ConvertBuilder <span class="chip" id="iCbChip2"></span></h2><div class="muted" style="font-size:15px">E-commerce платформа и builder интеграция</div></div><button type="button" class="x" id="cbClose" aria-label="Затвори">×</button></div>
+      <div class="dhead"><div class="tile cb">CB<img src="https://www.google.com/s2/favicons?domain=convertbuilder.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div><h2 id="cbTitle">ConvertBuilder <span class="chip" id="iCbChip2"></span></h2><div class="muted" style="font-size:15px">E-commerce платформа и builder интеграция</div></div><button type="button" class="x" id="cbClose" aria-label="Затвори">×</button></div>
       <div class="dbody">
         <div class="seg"><button type="button" class="on" data-tab="shop">Данни за магазина</button><button type="button" data-tab="sync">Връзка и синхронизация</button></div>
         <div id="tabShop">
