@@ -1,10 +1,12 @@
 import { getQuery } from '../lib/db.js';
 import { isBot, recordVisit } from '../lib/visits.js';
-import { originAllowed, setCors, readJson, send, clientIp } from '../lib/http.js';
+import { setCors, readJson, send, clientIp } from '../lib/http.js';
+import { allowedShopOrigin } from '../lib/shops.js';
 
 /** Anonymous page view from kurier.js (sendBeacon, text/plain JSON {p: path, s: query, r: referrer}). Always quick; never errors to the page. */
 export default async function handler(req, res) {
-  const origin = originAllowed(req);
+  const allowed = await allowedShopOrigin(getQuery(), req).catch(() => null);
+  const origin = allowed?.origin || null;
   setCors(res, origin);
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Methods', 'POST');
@@ -17,7 +19,7 @@ export default async function handler(req, res) {
   if (isBot(ua)) return send(res, 204);
   const b = readJson(req) || {};
   try {
-    await recordVisit(getQuery(), { site: new URL(origin).host.replace(/^www\./, ''), ip: clientIp(req), ua, path: b.p, search: b.s, referrer: b.r });
+    await recordVisit(getQuery(), { site: new URL(origin).host.replace(/^www\./, ''), shopId: allowed.shopId, ip: clientIp(req), ua, path: b.p, search: b.s, referrer: b.r });
   } catch (err) {
     console.error('[visit] store failed', err);
   }

@@ -1,7 +1,8 @@
 import { getQuery } from '../../lib/db.js';
 import { cbConfig, processCbOrder } from '../../lib/cb-sync.js';
 import { verifySignature } from '../../lib/convertbuilder.js';
-import { readRaw, send } from '../../lib/http.js';
+import { readRaw, send, searchParams } from '../../lib/http.js';
+import { DEFAULT_SHOP, getShop } from '../../lib/shops.js';
 
 /** ConvertBuilder webhook (order_created / order_updated), signed with HMAC-SHA512 of the raw body (X-Webhook-Signature). */
 export default async function handler(req, res) {
@@ -10,7 +11,10 @@ export default async function handler(req, res) {
   if (raw == null) return send(res, 400, { error: 'body' });
   try {
     const q = getQuery();
-    const cfg = await cbConfig(q);
+    // each shop's webhook carries ?shop=<id>; without it (the first registered hook) it is the default shop
+    const param = searchParams(req).get('shop');
+    const shop = param ? await getShop(q, param) : { id: DEFAULT_SHOP };
+    const cfg = shop ? await cbConfig(q, shop.id) : null;
     if (!cfg) return send(res, 404, { error: 'not connected' });
     if (!verifySignature(raw, cfg.webhookSecret, req.headers['x-webhook-signature'])) return send(res, 401, { error: 'signature' });
     const topic = String(req.headers['x-webhook-topic'] || '');

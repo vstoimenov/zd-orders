@@ -5,12 +5,14 @@ import { checkOrders } from '../lib/nk-check.js';
 import { nekorektenKey } from '../lib/nekorekten.js';
 import { syncStockSafe } from '../lib/stock.js';
 import { trafficSourceFor } from '../lib/visits.js';
-import { originAllowed, setCors, readJson, send, clientIp } from '../lib/http.js';
+import { setCors, readJson, send, clientIp } from '../lib/http.js';
+import { allowedShopOrigin } from '../lib/shops.js';
 
 const RATE_LIMIT = 20; // orders per IP per 10 minutes (generous: shared mobile IPs / CGNAT)
 
 export default async function handler(req, res) {
-  const origin = originAllowed(req);
+  const allowed = await allowedShopOrigin(getQuery(), req).catch(() => null);
+  const origin = allowed?.origin || null;
   setCors(res, origin);
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Methods', 'POST');
@@ -33,14 +35,14 @@ export default async function handler(req, res) {
     const site = new URL(origin).host.replace(/^www\./, '');
     const userAgent = String(req.headers['user-agent'] || '').slice(0, 400);
     // where this buyer came from today (anonymous visit statistics) — looked up alongside the rate check; never fails the order
-    const [recent, trafficSource] = await Promise.all([countRecentByIp(q, ip), trafficSourceFor(q, { site, ip, ua: userAgent }).catch(() => '')]);
+    const [recent, trafficSource] = await Promise.all([countRecentByIp(q, ip), trafficSourceFor(q, { site, ip, ua: userAgent, shopId: allowed.shopId }).catch(() => '')]);
     if (recent >= RATE_LIMIT) {
       console.warn('[orders] rate-limited', ip, body.cb_order_id);
       return send(res, 429, { error: 'rate' });
     }
     // ConvertBuilder numbers orders per store (each starts at 1): key them by the store's domain
     const cbOrderId = `${site}:${v.order.cbOrderId}`;
-    const r = await insertOrder(q, { ...v.order, cbOrderId, ip, userAgent: userAgent.slice(0, 300), trafficSource });
+    const r = await insertOrder(q, { ...v.order, cbOrderId, ip, userAgent: userAgent.slice(0, 300), trafficSource, shopId: allowed.shopId });
     await syncStockSafe(q, r.id); // takes stock for a new order (never fails the order)
     // check the phone on nekorekten.com now; failures are stored as 'error' and retried later — never fail the order for it
     const nkKey = r.inserted && v.order.phoneNorm ? nekorektenKey() : null;

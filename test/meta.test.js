@@ -95,7 +95,7 @@ test('the nightly job also pulls the last 7 days of Meta spend', async () => {
   const res = fakeRes();
   await withFetch(async (url, init) => (String(url).includes('graph.facebook.com') ? g(url, init) : { ok: false, status: 503, json: async () => ({}) }),
     () => refresh(fakeReq({ headers: { authorization: 'Bearer cron' } }), res));
-  assert.deepEqual(json(res).meta, { days: 1 });
+  assert.deepEqual(json(res).meta, { 'shop.local': { days: 1 } }, 'per shop');
   const range = JSON.parse(g.calls.find((u) => u.pathname.endsWith('/insights')).searchParams.get('time_range'));
   assert.equal(range.until, today());
   assert.equal((Date.parse(range.until) - Date.parse(range.since)) / 864e5, 6);
@@ -124,11 +124,14 @@ test('a broken or partial Meta answer keeps the stored days; errors are Bulgaria
   assert.doesNotMatch(st.meta.lastError, /aborted/);
 });
 
-test('with a store selected, ad figures are not mixed into that store (no subtraction, no ad cards)', async () => {
+test('each shop has its own ad spend: another shop neither sees nor subtracts it', async () => {
   const { getStats } = await import('../lib/stats.js');
+  const { createShop, DEFAULT_SHOP } = await import('../lib/shops.js');
+  const other = await createShop(q, { name: 'Other', domain: 'other.bg' });
   await withFetch(graph(), () => post({ action: 'save_meta', accountId: '123', token: 'GOOD-TOKEN' }));
   await q(`insert into zd.ad_spend (platform, account_id, day, spend, currency) values ('meta', '123', $1::date, 10, 'EUR')`, [today()]);
-  assert.equal((await getProfit(q, { from: today(), to: today(), store: 'other.bg' })).adSpend, 0);
-  assert.equal((await getStats(q, { from: today(), to: today(), store: 'other.bg' })).ads, null);
-  assert.equal((await getStats(q, { from: today(), to: today() })).ads.spend, 10);
+  assert.equal((await getProfit(q, { from: today(), to: today(), shopId: other.id })).adSpend, 0);
+  assert.equal((await getStats(q, { from: today(), to: today(), shopId: other.id })).ads.spend, 0);
+  assert.equal((await getStats(q, { from: today(), to: today(), shopId: DEFAULT_SHOP })).ads.spend, 10);
+  assert.equal((await getStats(q, { from: today(), to: today() })).ads.spend, 10, 'all shops');
 });

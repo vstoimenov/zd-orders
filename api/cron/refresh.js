@@ -5,6 +5,7 @@ import { replaceOffices, replaceCities } from '../../lib/catalog-repo.js';
 import { send, safeEqual } from '../../lib/http.js';
 import { cbConfig, syncOrders } from '../../lib/cb-sync.js';
 import { metaConfig, syncMeta } from '../../lib/meta.js';
+import { listShops } from '../../lib/shops.js';
 
 /** Vercel Cron calls this daily with `Authorization: Bearer $CRON_SECRET`. */
 export default async function handler(req, res) {
@@ -31,11 +32,14 @@ export default async function handler(req, res) {
     econtOk = false;
   }
   // catch up on ConvertBuilder orders a webhook might have missed (last 3 days) — independent of the courier refresh
-  try {
-    if (await cbConfig(q)) result.convertbuilder = await syncOrders(q, { max: 500 });
-  } catch (err) {
-    console.error('[cron] convertbuilder sync failed', err);
-    result.convertbuilder = { error: err.message };
+  const shops = await listShops(q).catch(() => []);
+  for (const shop of shops) {
+    try {
+      if (await cbConfig(q, shop.id)) (result.convertbuilder ??= {})[shop.domain] = await syncOrders(q, { max: 500, shopId: shop.id });
+    } catch (err) {
+      console.error('[cron] convertbuilder sync failed', shop.domain, err);
+      (result.convertbuilder ??= {})[shop.domain] = { error: err.message };
+    }
   }
   // anonymous visit statistics are kept 400 days
   try {
@@ -46,11 +50,13 @@ export default async function handler(req, res) {
     console.error('[cron] visits cleanup failed', err);
   }
   // Meta ad spend of the last 7 days (Meta keeps refining recent days)
-  try {
-    if (await metaConfig(q)) result.meta = await syncMeta(q);
-  } catch (err) {
-    console.error('[cron] meta sync failed', err);
-    result.meta = { error: err.message };
+  for (const shop of shops) {
+    try {
+      if (await metaConfig(q, shop.id)) (result.meta ??= {})[shop.domain] = await syncMeta(q, { shopId: shop.id });
+    } catch (err) {
+      console.error('[cron] meta sync failed', shop.domain, err);
+      (result.meta ??= {})[shop.domain] = { error: err.message };
+    }
   }
   return econtOk ? send(res, 200, result) : send(res, 500, { error: 'server', ...result });
 }

@@ -193,18 +193,15 @@ test('the stored key is never sent to a different domain', async () => {
   assert.equal((await getIntegration(q, 'convertbuilder')).config.domain, 'adhdbg.eu');
 });
 
-test('the shop domain must match the one the checkout widget records orders under', async () => {
-  await insertOrder(q, { cbOrderId: 'adhdbg.eu:81', name: 'А', phone: '', phoneNorm: '', email: '', deliveryType: 'econt_office', courier: 'econt',
-    officeId: 'econt:1', officeText: 'ЕКОНТ – офис', city: 'Х', postCode: '1000', addressText: '', items: [], total: 1, currency: 'EUR', paymentMethod: 'cod', pageUrl: '', ip: '1', userAgent: '' });
-  const f = recording(cbApi([]));
-  let res = fakeRes();
-  await withFetch(f, () => integrationsApi(post({ action: 'save_convertbuilder', domain: 'viktorstoimenov12-70.convertbuilder.com', apiKey: 'API-KEY' }), res));
-  assert.equal(res.statusCode, 400);
-  assert.match(json(res).error, /adhdbg\.eu/);
-  assert.equal(f.calls.length, 0);
-  res = fakeRes();
-  await withFetch(cbApi([]), () => integrationsApi(post({ action: 'save_convertbuilder', domain: 'www.adhdbg.eu', apiKey: 'API-KEY' }), res));
+test('orders from ConvertBuilder are keyed by the shop domain, whatever domain the API is reached on', async () => {
+  const { updateShop, DEFAULT_SHOP } = await import('../lib/shops.js');
+  await q(`update zd.shops set domain = 'adhdbg.eu' where id = $1`, [DEFAULT_SHOP]);
+  await updateShop(q, DEFAULT_SHOP, { name: 'adhd' });
+  const res = fakeRes();
+  await withFetch(cbApi([]), () => integrationsApi(post({ action: 'save_convertbuilder', domain: 'viktorstoimenov12-70.convertbuilder.com', apiKey: 'API-KEY' }), res));
   assert.equal(res.statusCode, 200);
+  const i = await getIntegration(q, 'convertbuilder');
+  assert.deepEqual([i.config.domain, i.config.store], ['viktorstoimenov12-70.convertbuilder.com', 'adhdbg.eu']);
 });
 
 test('nothing is registered at ConvertBuilder while keys cannot be stored', async () => {
@@ -270,7 +267,7 @@ test('the nightly cron still catches up ConvertBuilder orders when Econt is down
   await withFetch(async (url, init) => (String(url).includes('/api/site/') ? cb(url, init) : { ok: false, status: 503, json: async () => ({}) }),
     () => refresh(fakeReq({ headers: { authorization: 'Bearer cron' } }), res));
   assert.equal(res.statusCode, 500, 'the Econt failure is still reported');
-  assert.deepEqual(json(res).convertbuilder, { fetched: 1, inserted: 1, updated: 0 });
+  assert.deepEqual(json(res).convertbuilder, { 'shop.local': { fetched: 1, inserted: 1, updated: 0 } }, 'per shop');
   assert.equal((await listOrders(q)).rows[0].cbOrderId, 'adhdbg.eu:120');
 });
 

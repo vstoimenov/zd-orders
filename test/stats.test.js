@@ -5,6 +5,7 @@ import { fakeReq, fakeRes, json } from './helpers/http.js';
 import { setQueryForTests } from '../lib/db.js';
 import { insertOrder, updateStatus, saveNekorekten } from '../lib/orders-repo.js';
 import { getStats } from '../lib/stats.js';
+import { createShop, DEFAULT_SHOP } from '../lib/shops.js';
 import { signSession } from '../lib/auth.js';
 import statsApi from '../lib/admin/stats.js';
 
@@ -34,13 +35,13 @@ test('getStats sums revenue per currency without cancelled orders and computes A
   assert.deepEqual(s.cards.revenue, [{ currency: 'EUR', amount: 63.64 }, { currency: 'USD', amount: 16.45 }]);
   assert.deepEqual(s.cards.delivered, [{ currency: 'EUR', amount: 41.07 }]);
   assert.deepEqual(s.cards.aov, [{ currency: 'EUR', amount: 31.82 }, { currency: 'USD', amount: 16.45 }]);
-  assert.deepEqual(s.stores, ['live.bg', 'test.com']);
 });
 
-test('getStats filters by store and period', async () => {
+test('getStats filters by shop and period', async () => {
+  const other = await createShop(q, { name: 'Test', domain: 'test.com' });
   await add();
-  await add({ cbOrderId: 'test.com:1', currency: 'USD', total: 16.45 });
-  const s = await getStats(q, { from: today(), to: today(), store: 'test.com' });
+  await add({ cbOrderId: 'test.com:1', currency: 'USD', total: 16.45, shopId: other.id });
+  const s = await getStats(q, { from: today(), to: today(), shopId: other.id });
   assert.equal(s.cards.orders, 1);
   assert.deepEqual(s.cards.revenue, [{ currency: 'USD', amount: 16.45 }]);
   const empty = await getStats(q, { from: '2000-01-01', to: '2000-01-02' });
@@ -103,20 +104,23 @@ test('GET /api/admin/stats rejects impossible dates instead of failing', async (
 
 test('getStats adds visits, conversion, traffic sources and ad spend', async () => {
   const day = today();
-  const visit = (visitor, source, minutes) => q(`insert into zd.visits (day, site, visitor, path, source, created_at) values ($1::date, 'live.bg', $2, '/', $3, now() - ($4 || ' minutes')::interval)`, [day, visitor, source, String(minutes)]);
+  const other = await createShop(q, { name: 'Other', domain: 'other.bg' });
+  const visit = (visitor, source, minutes, shopId = DEFAULT_SHOP) => q(`insert into zd.visits (day, site, visitor, path, source, created_at, shop_id) values ($1::date, 'live.bg', $2, '/', $3, now() - ($4 || ' minutes')::interval, $5::uuid)`, [day, visitor, source, String(minutes), shopId]);
   await visit('a', 'facebook', 30); await visit('b', 'direct', 5); // one row per visitor per day
-  await visit('c', 'google', 5).then(() => q(`update zd.visits set site = 'other.bg' where visitor = 'c'`));
+  await visit('c', 'google', 5, other.id);
   await add({ trafficSource: 'facebook' });
   await add();
   await q(`insert into zd.ad_spend (platform, account_id, day, spend, impressions, clicks, purchases, purchase_value, currency) values ('meta', '1', $1::date, 10, 2000, 40, 1, 22.57, 'EUR')`, [day]);
-  await q(`insert into zd.integrations (provider, config) values ('meta', '{"accountId":"1"}'::jsonb)`); // the connected account
-  const s = await getStats(q, { from: day, to: day, store: 'live.bg' });
+  await q(`insert into zd.integrations (provider, config) values ('meta', '{"accountId":"1"}'::jsonb)`); // the connected account of the default shop
+  const s = await getStats(q, { from: day, to: day, shopId: DEFAULT_SHOP });
   const all = await getStats(q, { from: day, to: day });
   assert.equal(s.cards.visits, 2);
   assert.equal(s.cards.cr, 1);
   assert.deepEqual(s.sources, [{ source: 'facebook', visits: 1, orders: 1 }, { source: 'direct', visits: 1, orders: 0 }, { source: '', visits: 0, orders: 1 }]);
-  assert.equal(s.ads, null, 'ad spend is not split per store');
-  assert.deepEqual([all.ads.spend, all.ads.impressions, all.ads.purchases], [10, 2000, 1]);
+  assert.deepEqual([s.ads.spend, s.ads.impressions, s.ads.purchases], [10, 2000, 1], 'the shop sees its own ad spend');
+  assert.equal(all.cards.visits, 3, 'all shops count every visit');
+  const o = await getStats(q, { from: day, to: day, shopId: other.id });
+  assert.deepEqual([o.cards.visits, o.ads.spend], [1, 0], 'another shop has its own visits and no ad spend');
   const empty = await getStats(q, { from: '2000-01-01', to: '2000-01-01' });
   assert.deepEqual([empty.cards.visits, empty.cards.cr, empty.sources], [0, null, []]);
 });
@@ -127,7 +131,7 @@ test('CR only counts orders placed after visit tracking began on that site', asy
   await q(`update zd.orders set created_at = now() - interval '2 hours'`);
   await q(`insert into zd.visits (day, site, visitor, source, created_at) values ($1::date, 'live.bg', 'a', 'direct', now() - interval '1 hour'), ($1::date, 'live.bg', 'b', 'direct', now() - interval '30 minutes')`, [day]);
   await add(); // after tracking began
-  const s = await getStats(q, { from: day, to: day, store: 'live.bg' });
+  const s = await getStats(q, { from: day, to: day, shopId: DEFAULT_SHOP });
   assert.equal(s.cards.orders, 2);
   assert.equal(s.cards.visits, 2);
   assert.equal(s.cards.cr, 0.5, '1 tracked order ÷ 2 visits, not 2 ÷ 2');
