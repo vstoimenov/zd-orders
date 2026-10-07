@@ -104,3 +104,58 @@ test('inventory cards and list: tracked products, total, low, out, sold in 30 da
   assert.equal(byName['Гривна'].state, 'out');
   assert.deepEqual([byName['Тесте'].stock, byName['Тесте'].state], [null, 'untracked']);
 });
+
+test('switching tracking off and on again never gives back stock taken by older orders', async () => {
+  await saveProduct(q, { name: 'Книга', stock: 10 }, { create: true });
+  const o = await order([{ name: 'Книга', qty: 2, price: 37 }]);
+  await syncOrderStock(q, o.id);
+  await q(`update zd.orders set created_at = now() - interval '1 day' where id = $1`, [o.id]);
+  await saveProduct(q, { name: 'Книга', stock: '' });
+  await saveProduct(q, { name: 'Книга', stock: 20 });
+  await syncOrderStock(q, o.id);
+  assert.equal(await stockOf('Книга'), 20);
+  await updateStatus(q, o.id, 'cancelled'); await syncOrderStock(q, o.id);
+  assert.equal(await stockOf('Книга'), 20, 'that order belongs to the old tracking period');
+});
+
+test('names differing only in capitals are one product (also when saved from Финанси)', async () => {
+  const { saveCosts } = await import('../lib/costs.js');
+  await saveProduct(q, { name: 'Книга', stock: 10 }, { create: true });
+  await saveCosts(q, { products: [{ name: 'КНИГА', unitCost: 3 }, { name: 'книга ', unitCost: 4 }] });
+  const rows = await q(`select name, unit_cost from zd.product_costs`);
+  assert.deepEqual(rows.map((r) => [r.name, Number(r.unit_cost)]), [['Книга', 4]]);
+  await assert.rejects(q(`insert into zd.product_costs (name) values ('КНИГА')`), 'the database refuses a case twin');
+  const o = await order([{ name: 'КНИГА', qty: 1, price: 18.5 }]);
+  await syncOrderStock(q, o.id);
+  assert.equal(await stockOf('Книга'), 9);
+});
+
+test('saving an old form changes stock only by what the admin typed', async () => {
+  await saveProduct(q, { name: 'Книга', stock: 10 }, { create: true });
+  const o = await order([{ name: 'Книга', qty: 2, price: 37 }]);
+  await syncOrderStock(q, o.id); // 8 now, the open form still shows 10
+  await saveProduct(q, { name: 'Книга', sku: 'BK', stock: 10, stockWas: 10 });
+  assert.equal(await stockOf('Книга'), 8, 'only the SKU changed');
+  await saveProduct(q, { name: 'Книга', stock: 15, stockWas: 10 });
+  assert.equal(await stockOf('Книга'), 13, '+5 on top of what orders did meanwhile');
+  await saveProduct(q, { name: 'Гривна' }, { create: true });
+  await saveProduct(q, { name: 'Гривна', stock: 3 });
+  await assert.rejects(saveProduct(q, { name: 'Гривна', stock: 7, stockWas: null }), /презаредете/);
+});
+
+test('deleting an order gives its stock back in the same step; history says why stock moved', async () => {
+  const { deleteOrderRestoringStock } = await import('../lib/stock.js');
+  await saveProduct(q, { name: 'Книга', stock: 10 }, { create: true });
+  const a = await order([{ name: 'Книга', qty: 2, price: 37 }]);
+  await syncOrderStock(q, a.id);
+  await updateStatus(q, a.id, 'returned'); await syncOrderStock(q, a.id);
+  await updateStatus(q, a.id, 'new'); await syncOrderStock(q, a.id);
+  await updateStatus(q, a.id, 'cancelled'); await syncOrderStock(q, a.id);
+  await updateStatus(q, a.id, 'new'); await syncOrderStock(q, a.id);
+  assert.equal(await deleteOrderRestoringStock(q, a.id), true);
+  assert.equal(await stockOf('Книга'), 10);
+  assert.equal((await q(`select count(*)::int as n from zd.orders where id = $1`, [a.id]))[0].n, 0);
+  const notes = (await productHistory(q, 'Книга')).map((m) => `${m.qty} ${m.note}`);
+  assert.deepEqual(notes, ['2 Изтрита поръчка', '-2 Поръчка', '2 Отказана поръчка', '-2 Поръчка', '2 Върната поръчка', '-2 Поръчка', '10 Начална наличност']);
+  assert.equal(await deleteOrderRestoringStock(q, a.id), false);
+});

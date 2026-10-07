@@ -65,3 +65,13 @@ test('status changes and deleting in the admin move stock', async () => {
   const [m] = await q(`select count(*)::int as n from zd.stock_moves where order_id is null and reason <> 'manual'`);
   assert.equal(m.n, 4, 'the history keeps the moves of the deleted order (−2, +2, −2, +2)');
 });
+
+test('an order is still taken when the inventory part fails', async () => {
+  const err = console.error; console.error = () => {};
+  try {
+    await q(`alter table zd.product_costs rename to product_costs_broken`);
+    const res = await checkout(95);
+    assert.equal(res.statusCode, 200);
+    assert.equal((await q(`select count(*)::int as n from zd.orders`))[0].n, 1);
+  } finally { console.error = err; }
+});

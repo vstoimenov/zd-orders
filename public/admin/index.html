@@ -784,7 +784,9 @@ tr.st-new{background:#fffbeb}
   $('invNew').addEventListener('click', function () { openProduct(null); });
   $('pSave').addEventListener('click', function () {
     $('pErr').textContent = '';
-    busy($('pSave'), invCall({ action: 'save', create: !invEditing, name: $('pName').value, sku: $('pSku').value, stock: $('pStock').value, lowStock: $('pLow').value, unitCost: $('pCost').value }))
+    var body = { action: 'save', create: !invEditing, name: $('pName').value, sku: $('pSku').value, stock: $('pStock').value, lowStock: $('pLow').value, unitCost: $('pCost').value };
+    if (invEditing) body.stockWas = invEditing.stock; // only what the admin typed is applied; orders that came in meanwhile stay
+    busy($('pSave'), invCall(body))
       .then(function () { $('prodModal').hidden = true; loadInventory(); })
       .catch(function (e) { if (e.message !== 'auth') $('pErr').textContent = e.message; });
   });
@@ -795,9 +797,8 @@ tr.st-new{background:#fffbeb}
       .catch(function (e) { if (e.message !== 'auth') $('aErr').textContent = e.message; });
   });
   function moveLabel(m) {
-    if (m.reason === 'order') return 'Поръчка ' + esc(m.order || '');
-    if (m.reason === 'order_restore') return 'Върната / отказана / изтрита поръчка ' + esc(m.order || '');
-    return esc(m.note || 'Ръчна корекция');
+    if (m.reason === 'manual') return esc(m.note || 'Ръчна корекция');
+    return esc((m.note || (m.reason === 'order' ? 'Поръчка' : 'Върната поръчка')) + (m.order && m.order !== 'изтрита' ? ' ' + m.order : ''));
   }
   $('invTable').addEventListener('click', function (e) {
     var t = e.target, p;
