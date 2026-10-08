@@ -17,7 +17,10 @@ process.env.PUBLIC_BASE_URL = 'https://kurier.profitbrand.online';
 delete process.env.NEKOREKTEN_API_KEY;
 
 let q;
-beforeEach(async () => { q = await makeTestQuery(); setQueryForTests(q); });
+beforeEach(async () => {
+  q = await makeTestQuery(); setQueryForTests(q);
+  await q(`update zd.shops set domain = 'adhdbg.eu' where id = '00000000-0000-4000-8000-000000000001'`); // the shop's checkout domain is set
+});
 const cookie = () => `zdo_admin=${signSession('secret')}`;
 const cbOrder = (patch = {}) => ({
   id: 82, invoiceNo: 60, created: Math.floor(Date.now() / 1000), customerName: 'Мария', customerEmail: 'm@x.bg',
@@ -267,7 +270,7 @@ test('the nightly cron still catches up ConvertBuilder orders when Econt is down
   await withFetch(async (url, init) => (String(url).includes('/api/site/') ? cb(url, init) : { ok: false, status: 503, json: async () => ({}) }),
     () => refresh(fakeReq({ headers: { authorization: 'Bearer cron' } }), res));
   assert.equal(res.statusCode, 500, 'the Econt failure is still reported');
-  assert.deepEqual(json(res).convertbuilder, { 'shop.local': { fetched: 1, inserted: 1, updated: 0 } }, 'per shop');
+  assert.deepEqual(json(res).convertbuilder, { 'adhdbg.eu': { fetched: 1, inserted: 1, updated: 0 } }, 'per shop');
   assert.equal((await listOrders(q)).rows[0].cbOrderId, 'adhdbg.eu:120');
 });
 

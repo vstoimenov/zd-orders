@@ -1,5 +1,9 @@
+const DEFAULT_SHOP = '00000000-0000-4000-8000-000000000001';
+
+/** Requests name the default shop unless a test sets ?shop= itself (single-shop tests predate shops). */
 export function fakeReq({ method = 'GET', url = '/', headers = {}, body } = {}) {
-  return { method, url, headers, body, socket: { remoteAddress: '127.0.0.1' } };
+  const withShop = /[?&]shop=/.test(url) ? url : `${url}${url.includes('?') ? '&' : '?'}shop=${DEFAULT_SHOP}`;
+  return { method, url: withShop, headers, body, socket: { remoteAddress: '127.0.0.1' } };
 }
 
 export function fakeRes() {

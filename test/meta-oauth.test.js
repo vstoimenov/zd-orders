@@ -59,7 +59,7 @@ test('coming back from Facebook stores a long-lived token and opens the account 
   const state = new URL(start.headers.location).searchParams.get('state');
   const res = await withFetch(facebook(), () => call({ url: `/api/admin/meta?code=CODE&state=${state}` })); // no admin cookie: SameSite=Strict is not sent back from facebook.com
   assert.equal(res.statusCode, 302);
-  assert.equal(res.headers.location, 'https://kurier.profitbrand.online/admin/?meta=choose#integrations');
+  assert.equal(res.headers.location, 'https://kurier.profitbrand.online/admin/?meta=choose&shop=00000000-0000-4000-8000-000000000001#integrations');
   assert.equal(await getSecret(q, 'meta'), 'LONG');
   const i = await getIntegration(q, 'meta');
   assert.equal(i.config.accountId, '');
@@ -120,8 +120,19 @@ test('with a Facebook Login for Business configuration the dialog uses config_id
       return { ok: false, status: 400, json: async () => ({ error: { message: 'cannot exchange', code: 100 } }) };
     };
     const res = await withFetch(fb, () => call({ url: `/api/admin/meta?code=CODE&state=${state}` }));
-    assert.equal(res.headers.location, 'https://kurier.profitbrand.online/admin/?meta=choose#integrations');
+    assert.equal(res.headers.location, 'https://kurier.profitbrand.online/admin/?meta=choose&shop=00000000-0000-4000-8000-000000000001#integrations');
     assert.equal(await getSecret(q, 'meta'), 'SYSTEM-USER');
     assert.equal((await getIntegration(q, 'meta')).config.tokenExpiresAt, null);
   } finally { delete process.env.META_CONFIG_ID; }
+});
+
+test('the Facebook login comes back to the shop it was started for', async () => {
+  const { createShop } = await import('../lib/shops.js');
+  const kids = await createShop(q, { name: 'Деца', domain: 'knigi.bg' });
+  const start = await call({ url: `/api/admin/meta?start=1&shop=${kids.id}`, headers: admin });
+  const state = new URL(start.headers.location).searchParams.get('state');
+  const res = await withFetch(facebook(), () => call({ url: `/api/admin/meta?code=CODE&state=${state}` }));
+  assert.equal(res.headers.location, `https://kurier.profitbrand.online/admin/?meta=choose&shop=${kids.id}#integrations`);
+  assert.equal(await getSecret(q, 'meta', kids.id), 'LONG');
+  assert.equal(await getSecret(q, 'meta'), null, 'the default shop is untouched');
 });

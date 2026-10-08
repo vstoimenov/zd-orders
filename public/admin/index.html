@@ -446,6 +446,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
           <div class="tip">💡 Тези данни описват магазина в панела. API настройките и синхронизацията са в следващата секция.</div>
           <div class="fgrid">
             <label>Име на магазина<input type="text" id="iShopName" maxlength="60" placeholder="напр. adhd"></label>
+            <label>Домейн (където е чекаутът)<input type="text" id="iShopDomain" placeholder="напр. adhdbg.eu"></label>
             <label>Публичен URL на магазина<input type="url" id="iShopUrl" maxlength="200" placeholder="https://example.com"></label>
             <label>Имейл на магазина<input type="email" id="iShopEmail" maxlength="160" placeholder="shop@example.com"></label>
             <label>Телефон на магазина<input type="tel" id="iShopPhone" maxlength="30" placeholder="+359..."></label>
@@ -551,7 +552,12 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
         shown = true;
         $('login').hidden = true; $('app').hidden = false;
         render();
-        if (!booted) { booted = true; loadShops().catch(function () {}).then(function () { showView(viewFromHash()); afterFacebook(); }); }
+        if (!booted) {
+          booted = true;
+          var back = new URLSearchParams(location.search).get('shop'); // back from "Вход с Facebook": the shop it was started for
+          if (back) { currentShop = back; try { localStorage.setItem('zdShop', back); } catch (e) { /* private mode */ } }
+          loadShops().catch(function () {}).then(function () { showView(viewFromHash()); afterFacebook(); });
+        }
       })
       .catch(function () {
         if (id !== reqId) return;
@@ -824,6 +830,9 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   function setShop(shop) {
     if (shop) { shops = shops.map(function (x) { return x.id === shop.id ? shop : x; }); renderShopBtn(); }
     if (shop && $('cbModal').hidden) {
+      var placeholder = shop.domain === 'shop.local';
+      $('iShopDomain').value = placeholder ? '' : (shop.domain || ''); $('iShopDomain').readOnly = !placeholder;
+      $('iShopDomain').title = placeholder ? '' : 'Домейнът не се сменя — поръчките са записани с него';
       $('iShopName').value = shop.name || ''; $('iShopUrl').value = shop.url || ''; $('iShopEmail').value = shop.email || '';
       $('iShopPhone').value = shop.phone || ''; $('iShopCurrency').value = shop.currency || 'EUR';
     }
@@ -885,7 +894,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   });
   $('pickShops').addEventListener('click', function (e) { var b = e.target.closest('[data-pick]'); if (b) chooseShop(b.getAttribute('data-pick')); });
   $('iShopSave').addEventListener('click', function () {
-    busy($('iShopSave'), integ({ action: 'save_shop', name: $('iShopName').value, url: $('iShopUrl').value, email: $('iShopEmail').value, phone: $('iShopPhone').value, currency: $('iShopCurrency').value }))
+    busy($('iShopSave'), integ({ action: 'save_shop', domain: $('iShopDomain').readOnly ? undefined : $('iShopDomain').value, name: $('iShopName').value, url: $('iShopUrl').value, email: $('iShopEmail').value, phone: $('iShopPhone').value, currency: $('iShopCurrency').value }))
       .then(function (d) { setShop(d.shop); $('iShopInfo').textContent = 'Запазено ✓'; setTimeout(function () { $('iShopInfo').textContent = ''; }, 2000); })
       .catch(function (e) { showErr('iShopInfo', e); });
   });

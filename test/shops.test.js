@@ -77,3 +77,57 @@ test('products, costs and pages that need a shop are kept apart', async () => {
   assert.equal(res.statusCode, 400);
   assert.match(json(res).error, /Изберете магазин/);
 });
+
+test('the "same phone" duplicate flag stays inside one shop', async () => {
+  const kids = await createShop(q, { name: 'Деца', domain: 'knigi.bg' });
+  await checkout('https://adhdbg.eu', 11);
+  await checkout('https://www.knigi.bg', 12);
+  const rows = await q(`select cb_order_id, is_duplicate from zd.orders order by cb_order_id`);
+  assert.deepEqual(rows.map((r) => [r.cb_order_id, r.is_duplicate]), [['adhdbg.eu:11', false], ['knigi.bg:12', false]]);
+  assert.ok(kids.id);
+});
+
+test('writes with an unknown shop are refused instead of landing in the default shop', async () => {
+  const unknown = '11111111-1111-4111-8111-111111111111';
+  let res = await call({ method: 'POST', url: `/api/admin/costs?shop=${unknown}`, headers: admin, body: JSON.stringify({ spentOn: '2026-10-01', name: 'Х', amount: 5 }) });
+  assert.equal(res.statusCode, 400);
+  res = await call({ method: 'POST', url: `/api/admin/inventory?shop=${unknown}`, headers: admin, body: JSON.stringify({ action: 'save', create: true, name: 'Х', stock: 1 }) });
+  assert.equal(res.statusCode, 400);
+  res = await call({ method: 'POST', url: '/api/admin/integrations?shop=', headers: admin, body: JSON.stringify({ action: 'save_shop', name: 'Х' }) });
+  assert.equal(res.statusCode, 400, 'empty shop on a write');
+  assert.equal((await q(`select count(*)::int as n from zd.expenses`))[0].n, 0);
+  res = await call({ url: '/api/admin/costs', headers: admin });
+  assert.equal(res.statusCode, 200, 'reading without a shop still opens the default shop');
+});
+
+test('an order can only be changed or deleted through its own shop', async () => {
+  const kids = await createShop(q, { name: 'Деца', domain: 'knigi.bg' });
+  await checkout('https://adhdbg.eu', 21);
+  const [o] = await q(`select id from zd.orders`);
+  let res = await call({ method: 'PATCH', url: `/api/admin/orders?shop=${kids.id}`, headers: admin, body: JSON.stringify({ id: o.id, status: 'shipped' }) });
+  assert.equal(res.statusCode, 404);
+  res = await call({ method: 'DELETE', url: `/api/admin/orders?shop=${kids.id}`, headers: admin, body: JSON.stringify({ id: o.id }) });
+  assert.equal(res.statusCode, 404);
+  res = await call({ method: 'PATCH', url: `/api/admin/orders?shop=${DEFAULT_SHOP}`, headers: admin, body: JSON.stringify({ id: o.id, status: 'shipped' }) });
+  assert.equal(res.statusCode, 200);
+  res = await call({ method: 'PATCH', url: '/api/admin/orders?shop=all', headers: admin, body: JSON.stringify({ id: o.id, status: 'delivered' }) });
+  assert.equal(res.statusCode, 200, '"all shops" can change any order');
+});
+
+test('a fresh install asks for the checkout domain first and never adopts the ConvertBuilder API domain', async () => {
+  let res = await call({ method: 'POST', url: `/api/admin/integrations?shop=${DEFAULT_SHOP}`, headers: admin, body: JSON.stringify({ action: 'save_convertbuilder', domain: 'xyz.convertbuilder.com', apiKey: 'K' }) });
+  assert.equal(res.statusCode, 400);
+  assert.match(json(res).error, /домейна на магазина/);
+  res = await call({ method: 'POST', url: `/api/admin/integrations?shop=${DEFAULT_SHOP}`, headers: admin, body: JSON.stringify({ action: 'save_shop', name: 'adhd', domain: 'https://adhdbg.eu' }) });
+  assert.equal(json(res).shop.domain, 'adhdbg.eu');
+  await createShop(q, { name: 'Деца', domain: 'knigi.bg' });
+  const [s] = await q(`select domain from zd.shops where id = $1`, [DEFAULT_SHOP]);
+  assert.equal(s.domain, 'adhdbg.eu');
+  res = await call({ method: 'POST', url: `/api/admin/integrations?shop=${DEFAULT_SHOP}`, headers: admin, body: JSON.stringify({ action: 'save_shop', name: 'adhd', domain: 'other.bg' }) });
+  assert.equal(json(res).shop.domain, 'adhdbg.eu', 'a set domain is not changed (orders are keyed by it)');
+});
+
+test('the placeholder domain of a fresh install accepts no checkout', async () => {
+  const res = await checkout('https://shop.local', 31);
+  assert.equal(res.statusCode, 403);
+});
