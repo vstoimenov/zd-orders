@@ -132,3 +132,15 @@ test('shipmentStatuses maps each number to our status and Econt\'s text', async 
 test('trackUrl points to Econt\'s tracking page', () => {
   assert.equal(trackUrl('1051604331075'), 'https://www.econt.com/services/track-shipment/1051604331075');
 });
+
+test('buildLabel: a company profile sends the authorised person (упълномощено лице) and requires one', () => {
+  const company = { ...settings, profileCompany: true, senderAgent: 'Иван Кирязов' };
+  assert.deepEqual(buildLabel(order, company, {}).senderAgent, { name: 'Иван Кирязов', phones: ['0888888888'] });
+  assert.throws(() => buildLabel(order, { ...company, senderAgent: '' }, {}), /упълномощено лице/);
+  assert.equal(buildLabel(order, settings, {}).senderAgent, undefined, 'a person sends without one');
+});
+
+test('getProfile tells whether the profile is a company', async () => {
+  const r = recorder(reply(200, { profiles: [{ client: { name: 'ЕТ', phones: [], juridicalEntity: true }, addresses: [] }] }));
+  assert.equal((await getProfile(creds, r.impl)).company, true);
+});

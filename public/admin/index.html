@@ -166,6 +166,14 @@ tr.st-new{background:#fffbeb}
 details.manual{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
 details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
 .warn{color:var(--warn);font-weight:600}
+.wb{display:block;margin-bottom:6px;font-size:13px;line-height:1.5}
+.wb a{font-weight:700}
+.wb .tag{display:inline-block;margin-left:4px;padding:0 7px;border-radius:999px;background:#fff4d6;color:#8a6100;font-size:11px;font-weight:700}
+.wbbtn{display:block;margin-bottom:6px;background:var(--accent);border-color:var(--accent);color:#111;font-weight:700}
+.demo-banner{background:#fff4d6;border:1px solid #f1d58a;color:#8a6100;border-radius:12px;padding:10px 14px;margin-bottom:16px;font-weight:600}
+.wbprice{font-size:15px;margin-top:6px}
+.radios{display:flex;gap:18px;margin-bottom:14px;font-weight:700}
+.radios label{display:flex;align-items:center;gap:8px;cursor:pointer}
 .cost-in{width:110px}
 
 @media (max-width:900px){
@@ -280,7 +288,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       <div class="isec">
         <div class="isec-head"><span class="isec-ic"><svg viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62L18.3 9.38a1 1 0 0 0-.78-.38H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></span><div><h2>Куриери</h2><div class="muted">Офисите и автоматите се обновяват всяка нощ</div></div></div>
         <div class="igrid">
-          <div class="icard"><div class="tile econt">E<img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Еконт</b> <span class="chip ok">активен</span><div class="muted">Куриерски услуги и автомати</div><div class="muted" id="iEcont"></div></div></div>
+          <div class="icard"><div class="tile econt">E<img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Еконт</b> <span class="chip ok">активен</span><div class="muted">Куриерски услуги и автомати</div><div class="muted" id="iEcont"></div><div class="muted" id="iEcontApiLine"></div></div><button type="button" class="primary" id="iEcontOpen">+ Товарителници</button></div>
           <div class="icard"><div class="tile speedy">S<img src="https://www.google.com/s2/favicons?domain=speedy.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Спиди</b> <span class="chip ok">активен</span><div class="muted">Експресни куриерски доставки</div><div class="muted" id="iSpeedy"></div></div></div>
           <div class="icard"><div class="tile boxnow">BN<img src="https://www.google.com/s2/favicons?domain=boxnow.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>BOX NOW</b> <span class="chip">скоро</span><div class="muted">Автомати за пратки</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
           <div class="icard"><div class="tile pigeon">PE<img src="https://www.google.com/s2/favicons?domain=pigeonexpress.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Pigeon Express</b> <span class="chip">скоро</span><div class="muted">Куриерски услуги</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
@@ -437,6 +445,61 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       </div>
     </div>
   </div>
+  <div class="modal" id="econtModal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="econtTitle">
+      <div class="dhead"><div class="tile econt">E<img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></div><div><h2 id="econtTitle">Еконт — товарителници <span class="chip" id="iEcontChip"></span></h2><div class="muted" style="font-size:15px">Създавайте товарителници от поръчките с вашия профил в Еконт</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div class="tip">💡 Нужен е само профил в <b>e-Econt</b> (ee.econt.com) — без договор. Въведете потребителското име и паролата, с които влизате там. Паролата се пази криптирана и не се показва никъде.<br>
+          Товарителниците са <b>истински пратки</b> и се таксуват според условията на вашия профил. За проба включете „Тестов режим“ (тестов акаунт: <b>iasp-dev</b> / <b>1Asp-dev</b>).</div>
+        <div class="fgrid">
+          <label>Потребителско име (e-Econt)<input type="text" id="eUser" autocomplete="off" placeholder="потребителско име"></label>
+          <label>Парола (e-Econt)<input type="password" id="ePass" autocomplete="new-password" placeholder="парола"></label>
+          <label class="check"><input type="checkbox" id="eDemo"> Тестов режим (demo.econt.com — пратките не са истински)</label>
+          <div class="actions" style="margin:0"><button type="button" class="ghost" id="eLoad">Зареди профила</button><span class="muted" id="eProfile"></span></div>
+        </div>
+        <h3 style="margin:0 0 10px">Откъде изпращате</h3>
+        <div class="radios"><label><input type="radio" name="eSenderType" value="office" checked> От офис на Еконт</label><label><input type="radio" name="eSenderType" value="address"> От адрес (идват да вземат пратката)</label></div>
+        <div class="fgrid">
+          <label id="eOfficeWrap">Офис на Еконт<input type="text" id="eOffice" list="eOffices" placeholder="започнете да пишете град или офис"><datalist id="eOffices"></datalist></label>
+          <label id="eAddressWrap" hidden>Адрес от профила<select id="eAddress"><option value="">— натиснете „Зареди профила“ —</option></select></label>
+          <label>Име на подателя<input type="text" id="eSenderName" maxlength="80" placeholder="по подразбиране — от профила"></label>
+          <label>Упълномощено лице<input type="text" id="eSenderAgent" maxlength="80" placeholder="задължително, ако профилът е на фирма"></label>
+          <label>Телефон на подателя<input type="tel" id="eSenderPhone" maxlength="30" placeholder="0888…"></label>
+          <label>Доставката се плаща от<select id="ePayer"><option value="receiver">Получателя</option><option value="sender">Мен (подателя)</option></select></label>
+          <label>Тегло по подразбиране (кг)<input type="text" inputmode="decimal" id="eWeight" value="1"></label>
+          <label>Описание на пратката<input type="text" id="eDesc" maxlength="100" placeholder="по подразбиране — артикулите от поръчката"></label>
+          <label class="check"><input type="checkbox" id="eReview"> Преглед преди плащане</label>
+          <label class="check"><input type="checkbox" id="eActive" checked> Активна интеграция</label>
+        </div>
+        <div class="actions"><button type="button" class="primary" id="eSave">Запази и провери</button></div>
+        <div class="syncbox">
+          <h3>Статуси на пратките</h3>
+          <div class="muted" style="margin-bottom:10px">Всяка нощ изпратените поръчки минават автоматично в „Доставена“ или „Върната“ според Еконт.</div>
+          <div class="actions"><button type="button" class="ghost" id="eSync">Провери статусите сега</button></div>
+          <div class="muted" id="eInfo" style="margin-top:10px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="wbModal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="wbTitle" style="max-width:640px">
+      <div class="dhead"><div class="tile econt">E<img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></div><div><h2 id="wbTitle">Товарителница Еконт</h2><div class="muted" style="font-size:15px" id="wbWho"></div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div class="demo-banner" id="wbDemo" hidden>Тестов режим — пратката не е истинска.</div>
+        <div class="tip" id="wbRoute"></div>
+        <div class="fgrid">
+          <label>Наложен платеж<input type="text" inputmode="decimal" id="wbCod"></label>
+          <label>Тегло (кг)<input type="text" inputmode="decimal" id="wbWeight"></label>
+          <label>Брой пакети<input type="number" min="1" max="10" id="wbPacks"></label>
+          <label>Доставката се плаща от<select id="wbPayer"><option value="receiver">Получателя</option><option value="sender">Мен (подателя)</option></select></label>
+          <label style="grid-column:1/-1">Описание<input type="text" id="wbDesc" maxlength="100"></label>
+          <label class="check"><input type="checkbox" id="wbReview"> Преглед преди плащане</label>
+        </div>
+        <div class="actions"><button type="button" class="ghost" id="wbCalc">Изчисли цена</button><button type="button" class="primary" id="wbCreate">Създай товарителница</button></div>
+        <div class="wbprice" id="wbInfo"></div>
+      </div>
+    </div>
+  </div>
   <div class="modal" id="cbModal" hidden>
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="cbTitle">
       <div class="dhead"><div class="tile cb">CB<img src="https://www.google.com/s2/favicons?domain=convertbuilder.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div><h2 id="cbTitle">ConvertBuilder <span class="chip" id="iCbChip2"></span></h2><div class="muted" style="font-size:15px">E-commerce платформа и builder интеграция</div></div><button type="button" class="x" id="cbClose" aria-label="Затвори">×</button></div>
@@ -569,6 +632,18 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
         loading = false; updatePager();
       });
   }
+  /** Econt waybill of the order: number (tracking), PDF, cancel — or the button that creates it */
+  function shipmentCell(o, i) {
+    var w = o.shipment;
+    if (w) {
+      return '<span class="wb">📦 <a href="' + esc(w.trackUrl || '#') + '" target="_blank" rel="noopener" title="Проследи пратката">' + esc(w.number) + '</a>' + (w.demo ? '<span class="tag">тест</span>' : '') +
+        (w.price != null ? ' · ' + esc(w.price.toFixed(2)) + ' ' + esc(cur(w.currency)) : '') +
+        (w.status ? '<br><span class="muted">' + esc(w.status) + '</span>' : '') +
+        '<br>' + (w.pdf ? '<a href="' + esc(w.pdf) + '" target="_blank" rel="noopener">PDF за печат</a> · ' : '') +
+        '<a href="#" data-wbcancel="' + i + '">Анулирай</a></span>';
+    }
+    return o.courier === 'econt' && ['new', 'confirmed', 'shipped'].indexOf(o.status) >= 0 ? '<button type="button" class="wbbtn" data-wb="' + i + '">Създай товарителница</button>' : '';
+  }
   function render() {
     $('count').textContent = total + (total === 1 ? ' поръчка' : ' поръчки');
     $('rows').innerHTML = orders.map(function (o, i) {
@@ -584,7 +659,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
         '<td data-label="Артикули">' + items + '</td>' +
         '<td data-label="Сума"><b>' + o.total.toFixed(2) + ' ' + esc(o.currency) + '</b></td>' +
         '<td data-label="Статус"><select data-status="' + i + '">' + opts + '</select></td>' +
-        '<td><button type="button" data-copy="' + i + '">Копирай за товарителница</button><button type="button" class="del" data-del="' + i + '" title="Изтрий поръчката от системата">Изтрий</button></td>' +
+        '<td>' + shipmentCell(o, i) + '<button type="button" data-copy="' + i + '">Копирай за товарителница</button><button type="button" class="del" data-del="' + i + '" title="Изтрий поръчката от системата">Изтрий</button></td>' +
         '</tr>';
     }).join('') || '<tr><td colspan="7" class="muted">Няма поръчки.</td></tr>';
     updatePager();
@@ -612,7 +687,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     var i = e.target.getAttribute('data-status');
     if (i == null) return;
     var o = orders[i], prev = o.status, next = e.target.value;
-    fetch('/api/admin/orders', { method: 'PATCH', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: o.id, status: next }) })
+    fetch(withShop('/api/admin/orders'), { method: 'PATCH', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: o.id, status: next }) })
       .then(function (r) {
         if (r.status === 401) { e.target.value = prev; showLogin(); return; }
         if (!r.ok) throw new Error(r.status);
@@ -628,7 +703,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       var o = orders[d];
       if (!window.confirm('Да изтрия ли поръчката на ' + (o.name || 'клиент без име') + ' (' + o.total.toFixed(2) + ' ' + o.currency + ')?\n\nТя ще изчезне само от тази система (не и от ConvertBuilder) и не може да се върне.')) return;
       btn.disabled = true;
-      fetch('/api/admin/orders', { method: 'DELETE', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: o.id }) })
+      fetch(withShop('/api/admin/orders'), { method: 'DELETE', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: o.id }) })
         .then(function (r) {
           if (r.status === 401) { showLogin(); return; }
           if (!r.ok && r.status !== 404) throw new Error(r.status);
@@ -637,6 +712,8 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
         .catch(function () { btn.disabled = false; alert('Поръчката не беше изтрита. Опитайте пак.'); });
       return;
     }
+    if (btn.getAttribute('data-wb') != null) { openWaybill(orders[btn.getAttribute('data-wb')]); return; }
+    if (btn.getAttribute('data-wbcancel') != null) { e.preventDefault(); cancelWaybill(orders[btn.getAttribute('data-wbcancel')], btn); return; }
     var i = btn.getAttribute('data-copy');
     if (i == null) return;
     var text = orders[i].waybill;
@@ -935,8 +1012,148 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     $('iMetaInfo').innerHTML = 'Последна синхронизация: ' + esc(when(m.lastSyncAt)) + (mr ? ' (' + mr.days + ' дни)' : '') +
       (m.lastError ? '<br><span class="err">Последна грешка: ' + esc(m.lastError) + '</span>' : '');
     $('iEcont').textContent = s.econt.offices + ' офиса и автомата · обновено ' + when(s.econt.updatedAt);
+    renderEcont(s.econtApi || {});
     $('iSpeedy').textContent = s.speedy.offices + ' офиса и автомата · обновено ' + when(s.speedy.updatedAt);
   }
+  /* ---- Еконт: настройки за товарителници ---- */
+  var econtOfficesLoaded = false, lastEcont = {};
+  function renderEcont(e) {
+    lastEcont = e;
+    chip('iEcontChip', e.connected, e.demo ? 'Свързан (тест)' : 'Свързан', e.configured ? 'Неактивен' : 'Не е свързан');
+    $('iEcontOpen').textContent = e.configured ? 'Товарителници' : '+ Товарителници';
+    $('iEcontOpen').className = e.configured ? 'ghost' : 'primary';
+    $('iEcontApiLine').textContent = e.connected ? 'Товарителници: ' + (e.profileName || e.username) + (e.demo ? ' (тестов режим)' : '') + ' · от ' + (e.sender ? e.sender.text : '—') : '';
+    var r = e.lastSyncResult;
+    $('eInfo').innerHTML = 'Последна проверка: ' + esc(when(e.lastSyncAt)) + (r ? ' (проверени ' + r.checked + ', доставени ' + r.delivered + ', върнати ' + r.returned + ')' : '') +
+      (e.lastError ? '<br><span class="err">Последна грешка: ' + esc(e.lastError) + '</span>' : '');
+  }
+  function econtSenderType() { var r = document.querySelector('input[name="eSenderType"]:checked'); return r ? r.value : 'office'; }
+  function econtSenderToggle() { var a = econtSenderType() === 'address'; $('eAddressWrap').hidden = !a; $('eOfficeWrap').hidden = a; }
+  function econtOfficeLabel(o) { return o.code + ' · ' + o.name + ', ' + o.city + (o.isAutomat ? ' (автомат)' : ''); }
+  function loadEcontOffices() {
+    if (econtOfficesLoaded) return Promise.resolve();
+    return fetch('/api/offices?courier=econt').then(function (r) { return r.json(); }).then(function (d) {
+      econtOfficesLoaded = true;
+      $('eOffices').innerHTML = (d.offices || []).map(function (o) { return '<option value="' + esc(econtOfficeLabel(o)) + '">'; }).join('');
+    }).catch(function () {});
+  }
+  function openEcont() {
+    var e = lastEcont || {};
+    $('eUser').value = e.username || '';
+    $('ePass').value = '';
+    $('ePass').placeholder = e.configured ? '•••••• запазена (въведете нова, за да я смените)' : 'парола';
+    $('eDemo').checked = Boolean(e.demo);
+    var type = e.sender ? e.sender.type : 'office';
+    [].forEach.call(document.querySelectorAll('input[name="eSenderType"]'), function (r) { r.checked = r.value === type; });
+    $('eOffice').value = e.sender && e.sender.type === 'office' ? e.sender.officeCode + ' · ' + e.sender.text : '';
+    $('eAddress').innerHTML = e.sender && e.sender.type === 'address' ? '<option value="' + esc(e.sender.addressId) + '">' + esc(e.sender.text) + '</option>' : '<option value="">— натиснете „Зареди профила“ —</option>';
+    $('eSenderName').value = e.senderName || '';
+    $('eSenderPhone').value = e.senderPhone || '';
+    $('eSenderAgent').value = e.senderAgent || '';
+    $('ePayer').value = e.payer || 'receiver';
+    $('eWeight').value = String(e.weight == null ? 1 : e.weight).replace('.', ',');
+    $('eDesc').value = e.description || '';
+    $('eReview').checked = Boolean(e.review);
+    $('eActive').checked = e.active !== false;
+    $('eProfile').textContent = e.profileName ? 'Профил: ' + e.profileName : '';
+    econtSenderToggle();
+    $('econtModal').hidden = false;
+    loadEcontOffices();
+  }
+  function econtCreds() { return { username: $('eUser').value.trim(), password: $('ePass').value, demo: $('eDemo').checked }; }
+  $('iEcontOpen').addEventListener('click', openEcont);
+  [].forEach.call(document.querySelectorAll('input[name="eSenderType"]'), function (r) { r.addEventListener('change', econtSenderToggle); });
+  $('eLoad').addEventListener('click', function () {
+    $('eProfile').textContent = 'Зареждам…';
+    var c = econtCreds(); c.action = 'econt_profile';
+    busy($('eLoad'), integ(c)).then(function (d) {
+      var p = d.profile, keep = $('eAddress').value;
+      $('eProfile').textContent = 'Профил: ' + p.name + ' ✓' + (p.company ? ' · фирма — попълнете упълномощено лице' : '');
+      $('eAddress').innerHTML = p.addresses.length ? p.addresses.map(function (a) { return '<option value="' + esc(a.id) + '"' + (a.id === keep ? ' selected' : '') + '>' + esc(a.text) + '</option>'; }).join('') : '<option value="">Профилът няма адреси — добавете в e-Econt или изпращайте от офис</option>';
+      if (!$('eSenderPhone').value && p.phones[0]) $('eSenderPhone').value = p.phones[0];
+    }).catch(function (e) { showErr('eProfile', e); });
+  });
+  $('eSave').addEventListener('click', function () {
+    var b = econtCreds();
+    b.action = 'save_econt'; b.senderType = econtSenderType();
+    b.senderOfficeCode = ($('eOffice').value.match(/^\s*(\d+)/) || [])[1] || '';
+    b.senderAddressId = $('eAddress').value; b.senderName = $('eSenderName').value; b.senderAgent = $('eSenderAgent').value; b.senderPhone = $('eSenderPhone').value;
+    b.payer = $('ePayer').value; b.weight = $('eWeight').value; b.description = $('eDesc').value; b.review = $('eReview').checked; b.active = $('eActive').checked;
+    $('eInfo').textContent = 'Проверявам профила в Еконт…';
+    busy($('eSave'), integ(b)).then(function (d) {
+      $('ePass').value = '';
+      return loadIntegrations().then(function () {
+        $('eInfo').textContent = d.active === false ? 'Интеграцията е изключена.' : 'Свързано ✓ ' + d.profileName + ' · изпращате от ' + d.sender;
+      });
+    }).catch(function (e) { showErr('eInfo', e); });
+  });
+  $('eSync').addEventListener('click', function () {
+    $('eInfo').textContent = 'Проверявам…';
+    busy($('eSync'), integ({ action: 'sync_econt' })).then(function (d) {
+      var r = d.result; load(page);
+      return loadIntegrations().then(function () { $('eInfo').textContent = 'Готово: проверени ' + r.checked + ', доставени ' + r.delivered + ', върнати ' + r.returned + '.'; });
+    }).catch(function (e) { showErr('eInfo', e); });
+  });
+
+  /* ---- товарителница от поръчка ---- */
+  var wbOrder = null;
+  function wb(body) {
+    return fetch(withShop('/api/admin/waybills'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) {
+        if (r.status === 401) { showLogin(); throw new Error('auth'); }
+        return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; });
+      });
+  }
+  function wbInput() {
+    return { id: wbOrder.id, cod: $('wbCod').value, weight: $('wbWeight').value, packCount: $('wbPacks').value, payer: $('wbPayer').value, description: $('wbDesc').value, review: $('wbReview').checked };
+  }
+  function openWaybill(o) {
+    wbOrder = o;
+    $('wbWho').textContent = (o.name || 'Клиент') + ' · ' + o.phone + ' · ' + o.total.toFixed(2) + ' ' + cur(o.currency);
+    $('wbInfo').textContent = 'Зареждам…'; $('wbRoute').textContent = '';
+    $('wbCreate').disabled = true; $('wbCalc').disabled = true; $('wbDemo').hidden = true;
+    $('wbModal').hidden = false;
+    wb({ action: 'defaults', id: o.id }).then(function (d) {
+      if (!d.connected) {
+        $('wbInfo').innerHTML = '<span class="err">Еконт не е свързан за този магазин.</span> <a href="#integrations" id="wbGoInt">Свържете го в Интеграции → Еконт</a>.';
+        return;
+      }
+      $('wbDemo').hidden = !d.demo;
+      $('wbRoute').innerHTML = '<b>От:</b> ' + esc(d.sender) + '<br><b>До:</b> ' + esc(d.officeText);
+      $('wbCod').value = String(d.cod).replace('.', ','); $('wbWeight').value = String(d.weight).replace('.', ',');
+      $('wbPacks').value = d.packCount; $('wbPayer').value = d.payer; $('wbDesc').value = d.description; $('wbReview').checked = d.review;
+      $('wbInfo').textContent = ''; $('wbCreate').disabled = false; $('wbCalc').disabled = false;
+      $('wbCreate').setAttribute('data-demo', d.demo ? '1' : '');
+    }).catch(function (e) { showErr('wbInfo', e); });
+  }
+  $('wbModal').addEventListener('click', function (e) { if (e.target.id === 'wbGoInt') $('wbModal').hidden = true; });
+  function priceText(p) {
+    var who = p.receiverDue > 0 ? 'плаща получателят ' + money(p.receiverDue, p.currency) : 'плащате вие ' + money(p.senderDue || p.price, p.currency);
+    return 'Цена на доставката: <b>' + esc(money(p.price, p.currency)) + '</b> (' + esc(who) + ')';
+  }
+  $('wbCalc').addEventListener('click', function () {
+    $('wbInfo').textContent = 'Изчислявам…';
+    var b = wbInput(); b.action = 'preview';
+    busy($('wbCalc'), wb(b)).then(function (p) { $('wbInfo').innerHTML = priceText(p); }).catch(function (e) { showErr('wbInfo', e); });
+  });
+  $('wbCreate').addEventListener('click', function () {
+    var demo = $('wbCreate').getAttribute('data-demo') === '1';
+    if (!demo && !window.confirm('Да създам ли истинска товарителница в Еконт за ' + (wbOrder.name || 'клиента') + '?\n\nПратката ще се таксува според условията на профила ви. Поръчката ще стане „Изпратена“.')) return;
+    $('wbInfo').textContent = 'Създавам товарителницата…';
+    var b = wbInput(); b.action = 'create';
+    busy($('wbCreate'), wb(b)).then(function (w) {
+      $('wbInfo').innerHTML = '✓ Товарителница <b>' + esc(w.number) + '</b> (' + esc(money(w.price, w.currency)) + ')' + (w.pdf ? ' · <a href="' + esc(w.pdf) + '" target="_blank" rel="noopener">PDF за печат</a>' : '');
+      $('wbCreate').disabled = true; dashLoaded = false; load(page);
+    }).catch(function (e) { showErr('wbInfo', e); });
+  });
+  function cancelWaybill(o, link) {
+    var w = o.shipment;
+    if (!window.confirm('Да анулирам ли товарителница ' + w.number + '?\n\nСтава само преди куриерът да е взел пратката. Поръчката се връща в „Потвърдена“.')) return;
+    link.textContent = 'Анулирам…';
+    wb({ action: 'cancel', id: o.id }).then(function () { dashLoaded = false; load(page); })
+      .catch(function (e) { link.textContent = 'Анулирай'; if (e.message !== 'auth') alert(e.message); });
+  }
+
   /* прозорец ConvertBuilder с два раздела */
   function cbTab(t) {
     [].forEach.call(document.querySelectorAll('.seg button'), function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === t); });

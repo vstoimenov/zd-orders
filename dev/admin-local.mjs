@@ -9,6 +9,7 @@ import { setQueryForTests } from '../lib/db.js';
 import { insertOrder, saveNekorekten, updateStatus } from '../lib/orders-repo.js';
 import { saveIntegration } from '../lib/integrations-repo.js';
 import adminRouter from '../api/admin/[route].js';
+import officesApi from '../api/offices.js';
 
 process.env.ADMIN_PASSWORD = 'local-test';
 process.env.ADMIN_SECRET = 'local-secret';
@@ -59,9 +60,21 @@ await insertOrder(q, { ...base, cbOrderId: 'knigi-deca.bg:1', shopId: kids.id, n
 // a connected ConvertBuilder store (fake key — the local server never calls ConvertBuilder unless you press its buttons)
 await saveIntegration(q, 'convertbuilder', { config: { domain: 'adhdbg.eu', store: 'adhdbg.eu', active: true, currency: 'EUR', webhookId: 'wh_local', webhookSecret: 'local', connectedAt: new Date().toISOString(), lastSyncAt: new Date().toISOString(), lastSyncResult: { fetched: 6, inserted: 6, updated: 0 } }, secret: 'LOCAL-FAKE-KEY' });
 
+// Econt waybills in test mode: Econt's public demo account (demo.econt.com, no real shipments) and a few office codes it knows
+await q(`insert into zd.offices (id, courier, code, name, city, address) values
+  ('econt:1107', 'econt', '1107', 'Офис София Младост', 'София', 'бул. Александър Малинов 1'),
+  ('econt:1127', 'econt', '1127', 'Офис София Лозенец', 'София', 'ул. Златовръх 1')`);
+await insertOrder(q, { ...base, cbOrderId: 'L4', name: 'Георги Димитров', phone: '0888555666', phoneNorm: '+359888555666', officeId: 'econt:1127', officeText: 'ЕКОНТ – офис София Лозенец (1127)', city: 'София', postCode: '1000', items: [{ name: 'Да се заобичаме с думи', qty: 1, price: 18.5 }], total: 22.57 });
+await saveIntegration(q, 'econt', {
+  config: { username: 'iasp-dev', demo: true, profileName: 'ЕТ КОНСУЛТ - ИВАН КИРЯЗОВ', profileCompany: true, senderAgent: 'Иван Кирязов', sender: { type: 'office', officeCode: '1107', addressId: '', address: null, text: 'Офис София Младост, София' },
+    senderName: '', senderPhone: '0888888888', payer: 'receiver', weight: 1, description: '', review: false, active: true, connectedAt: new Date().toISOString() },
+  secret: JSON.stringify({ username: 'iasp-dev', password: '1Asp-dev' }),
+});
+
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8' };
 http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
+  if (url === '/api/offices') return officesApi(Object.assign(req, { query: Object.fromEntries(new URL(req.url, 'http://x').searchParams) }), res);
   if (url.startsWith('/api/admin/')) {
     let body = '';
     for await (const c of req) body += c;

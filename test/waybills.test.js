@@ -260,7 +260,7 @@ test('integrations: econt settings through the admin, status shows them without 
   let res = fakeRes();
   await withFetch(econt().impl, () => integrationsApi(fakeReq({ method: 'POST', url: '/api/admin/integrations', headers: { cookie: cookie() }, body: { action: 'econt_profile', username: 'shop-user', password: 'pa55' } }), res));
   assert.equal(res.statusCode, 200);
-  assert.deepEqual(json(res).profile, { name: 'ЕТ Консулт', phones: ['359883525008'], addresses: [{ id: '77', text: 'София 1000, бул. Гешов 2' }] });
+  assert.deepEqual(json(res).profile, { name: 'ЕТ Консулт', company: false, phones: ['359883525008'], addresses: [{ id: '77', text: 'София 1000, бул. Гешов 2' }] });
   res = fakeRes();
   await withFetch(econt().impl, () => integrationsApi(fakeReq({ method: 'POST', url: '/api/admin/integrations', headers: { cookie: cookie() }, body: { action: 'save_econt', ...settingsBody } }), res));
   assert.equal(res.statusCode, 200);
@@ -297,4 +297,13 @@ test('the nightly cron syncs Econt statuses of every connected shop', async () =
     () => refresh(fakeReq({ headers: { authorization: 'Bearer cron' } }), res));
   assert.deepEqual(json(res).econtWaybills, { 'adhdbg.eu': { checked: 1, delivered: 1, returned: 0 } });
   assert.equal((await orderById(id)).status, 'delivered');
+});
+
+test('saveEcont keeps the authorised person and whether the profile is a company', async () => {
+  const f = econt({ getClientProfiles: () => reply(200, { profiles: [{ ...PROFILE.profiles[0], client: { ...PROFILE.profiles[0].client, juridicalEntity: true } }] }) });
+  await assert.rejects(withFetch(f.impl, () => saveEcont(q, SHOP, settingsBody)), /упълномощено лице/);
+  await withFetch(f.impl, () => saveEcont(q, SHOP, { ...settingsBody, senderAgent: 'Иван Кирязов' }));
+  const s = await econtStatus(q, SHOP);
+  assert.equal(s.senderAgent, 'Иван Кирязов');
+  assert.equal(s.profileCompany, true);
 });
