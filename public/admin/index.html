@@ -37,7 +37,21 @@ form#login{min-height:100vh;display:flex;align-items:center;justify-content:cent
 .app.collapsed{grid-template-columns:minmax(0,1fr)}
 .app.collapsed .side{display:none}
 .side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);color:var(--side-text);display:flex;flex-direction:column}
-.shop{display:flex;align-items:center;gap:12px;padding:22px 20px;border-bottom:1px solid var(--side-line)}
+.shop{display:flex;align-items:center;gap:12px;padding:22px 20px;border-bottom:1px solid var(--side-line);width:100%;background:none;border-top:0;border-left:0;border-right:0;border-radius:0;color:inherit;text-align:left;position:relative}
+.shop:hover{background:var(--side-2)}
+.shop .caret{margin-left:auto;color:var(--side-muted);font-size:12px}
+.shopmenu{position:absolute;left:12px;right:12px;top:76px;z-index:40;background:#141412;border:1px solid var(--side-line);border-radius:12px;padding:6px;box-shadow:0 12px 30px rgba(0,0,0,.4)}
+.shopmenu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;color:var(--side-text);padding:9px 10px;border-radius:8px;text-align:left;font-weight:500}
+.shopmenu button:hover{background:var(--side-2)}
+.shopmenu button.on{color:var(--accent)}
+.shopmenu .mini{width:24px;height:24px;border-radius:50%;background:#2a2a25;color:var(--side-text);display:grid;place-items:center;font-size:12px;font-weight:800;flex:none}
+.shopmenu .on .mini{background:var(--accent);color:#111}
+.shopmenu hr{border:0;border-top:1px solid var(--side-line);margin:6px 4px}
+.shopmenu .add{color:var(--accent)}
+.side{position:sticky}
+.shoptag{display:inline-block;margin-top:4px;padding:1px 8px;border-radius:999px;background:#f1f0ec;color:var(--muted);font-size:11px;font-weight:700}
+.pickshop{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+
 .avatar{width:38px;height:38px;flex:none;border-radius:50%;background:var(--accent);color:#111;font-weight:800;font-size:17px;display:grid;place-items:center}
 .shop b{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nav{padding:8px 12px;flex:1}
@@ -187,7 +201,8 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
 </form>
 <div id="app" class="app" hidden>
   <aside class="side" id="side">
-    <div class="shop"><span class="avatar" id="shopInitial">М</span><b id="shopName">Моят магазин</b></div>
+    <button type="button" class="shop" id="shopBtn" aria-haspopup="true" aria-expanded="false"><span class="avatar" id="shopInitial">М</span><b id="shopName">Моят магазин</b><span class="caret">▾</span></button>
+    <div class="shopmenu" id="shopMenu" hidden></div>
     <nav class="nav">
       <div class="sec">Основни</div>
       <a href="#dash" data-view="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Табло</a>
@@ -213,11 +228,11 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
           </select>
           <input type="date" id="dFrom" title="От дата" hidden>
           <input type="date" id="dTo" title="До дата" hidden>
-          <select id="dStore"><option value="">Всички магазини</option></select>
           <button class="primary">Покажи</button>
         </form>
       </div>
       <div class="cards" id="dCards"></div>
+      <div class="panel" id="dByShopPanel" hidden><h2>По магазини</h2><table id="dByShop"></table></div>
       <div class="panel" id="beCalc">
         <h2>Калкулатор: break-even ROAS</h2>
         <p class="muted" style="margin-top:-4px">Над break-even ROAS рекламите се изплащат. Полетата са попълнени от избрания период — променете ги свободно. <button type="button" class="ghost" id="beFill" style="padding:4px 10px;font-size:12px">Попълни от периода</button></p>
@@ -307,6 +322,10 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
         <table id="cExpenses"></table>
       </div>
     </section>
+    <section id="pickShopView" hidden>
+      <div class="pagehead"><div><h1 id="pickTitle">Изберете магазин</h1><div class="sub">Тази страница е за конкретен магазин — изберете кой.</div></div></div>
+      <div class="pickshop" id="pickShops"></div>
+    </section>
     <section id="inventoryView" hidden>
       <div class="pagehead"><div><h1>Наличности</h1><div class="sub">Намаляват автоматично с всяка поръчка</div></div><button type="button" class="primary" id="invNew">+ Създай продукт</button></div>
       <div class="cards" id="invCards"></div>
@@ -335,6 +354,19 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       <div class="pager"><button id="prev" type="button">‹ Назад</button><span id="pageInfo" class="muted"></span><button id="next" type="button">Напред ›</button></div>
     </section>
     </main>
+  </div>
+  <div class="modal" id="shopModal" hidden>
+    <div class="dialog small" role="dialog" aria-modal="true" aria-labelledby="shopTitle">
+      <div class="dhead"><div><h2 id="shopTitle">Нов магазин</h2><div class="muted">После в „Интеграции“ свързвате неговия ConvertBuilder и Meta акаунт.</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div class="fgrid">
+          <label>Име на магазина<input type="text" id="nsName" maxlength="60" placeholder="напр. Книги за деца"></label>
+          <label>Домейн (където е чекаутът)<input type="text" id="nsDomain" placeholder="напр. knigi.bg"></label>
+        </div>
+        <div class="tip">На сайта на магазина сложете същия ред в „Собствен Body код“: <code>&lt;script src="https://kurier.profitbrand.online/kurier.js" defer&gt;&lt;/script&gt;</code></div>
+        <div class="actions"><button type="button" class="primary" id="nsSave">Създай магазина</button><span class="err" id="nsErr"></span></div>
+      </div>
+    </div>
   </div>
   <div class="modal" id="prodModal" hidden>
     <div class="dialog small" role="dialog" aria-modal="true" aria-labelledby="prodTitle">
@@ -505,7 +537,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     var p = filters(); p.set('page', target);
     var id = ++reqId;
     loading = true; updatePager();
-    fetch('/api/admin/orders?' + p, { credentials: 'same-origin' })
+    fetch(withShop('/api/admin/orders?' + p), { credentials: 'same-origin' })
       .then(function (r) {
         if (r.status === 401) return null;
         if (!r.ok) throw new Error(r.status);
@@ -519,7 +551,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
         shown = true;
         $('login').hidden = true; $('app').hidden = false;
         render();
-        if (!booted) { booted = true; showView(viewFromHash()); loadShop(); afterFacebook(); }
+        if (!booted) { booted = true; loadShops().catch(function () {}).then(function () { showView(viewFromHash()); afterFacebook(); }); }
       })
       .catch(function () {
         if (id !== reqId) return;
@@ -541,7 +573,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
         '<td data-label="Дата">' + esc(date) + '</td>' +
         '<td data-label="Клиент"><b>' + esc(o.name || '—') + '</b>' + (o.isDuplicate ? '<span class="dup" title="Същият телефон в последните 24 ч">дубликат?</span>' : '') +
           '<br><a href="tel:' + esc(o.phone) + '">' + esc(o.phone) + '</a>' + (o.email ? '<br><span class="muted">' + esc(o.email) + '</span>' : '') +
-          '<br>' + nkBadge(o) + '</td>' +
+          '<br>' + nkBadge(o) + (currentShop === 'all' && shopById(o.shopId) ? '<br><span class="shoptag">' + esc(shopById(o.shopId).display) + '</span>' : '') + '</td>' +
         '<td data-label="Доставка">' + esc(o.officeText) + '<br><span class="muted">' + esc(o.city) + (o.postCode ? ' ' + esc(o.postCode) : '') + '</span></td>' +
         '<td data-label="Артикули">' + items + '</td>' +
         '<td data-label="Сума"><b>' + o.total.toFixed(2) + ' ' + esc(o.currency) + '</b></td>' +
@@ -567,7 +599,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       .then(function () { btn.disabled = false; });
   });
   $('filters').addEventListener('submit', function (e) { e.preventDefault(); snapshot(); load(1); });
-  $('csv').addEventListener('click', function () { location.href = '/api/admin/orders?' + filters() + '&format=csv'; });
+  $('csv').addEventListener('click', function () { location.href = withShop('/api/admin/orders?' + filters() + '&format=csv'); });
   $('prev').addEventListener('click', function () { load(page - 1); });
   $('next').addEventListener('click', function () { load(page + 1); });
   $('rows').addEventListener('change', function (e) {
@@ -706,10 +738,13 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   function renderDash(d) {
     dashLoaded = true;
     beData = d;
-    var sel = $('dStore'), chosen = sel.value;
-    sel.innerHTML = '<option value="">Всички магазини</option>' + d.stores.map(function (st) {
-      return '<option value="' + esc(st) + '"' + (st === chosen ? ' selected' : '') + '>' + esc(st) + '</option>';
-    }).join('');
+    $('dByShopPanel').hidden = !d.byShop;
+    if (d.byShop) {
+      $('dByShop').innerHTML = table(['Магазин', 'Поръчки', 'Оборот', 'Печалба', 'Рекламен разход', 'ROAS'], d.byShop.map(function (x) {
+        return ['<b>' + esc(x.name) + '</b>', String(x.orders), esc(money(x.revenue, 'EUR')), '<span class="' + (x.profit < 0 ? 'minus' : '') + '">' + esc(money(x.profit, 'EUR')) + '</span>',
+          esc(money(x.adSpend, 'EUR')), x.roas == null ? '—' : esc(String(x.roas).replace('.', ','))];
+      }));
+    }
     var c = d.cards, period = d.period.from === d.period.to ? d.period.from : d.period.from + ' – ' + d.period.to;
     $('dCards').innerHTML = card('Оборот', moneyList(c.revenue), 'без отказаните') + card('Реален приход', moneyList(c.delivered), 'само доставените', 'ok') +
       card('Поръчки', String(c.orders), period) + card('Средна поръчка (AOV)', moneyList(c.aov)) +
@@ -733,9 +768,8 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   }
   function loadDash() {
     var r = periodRange($('dPeriod').value), p = new URLSearchParams({ from: r[0], to: r[1] });
-    if ($('dStore').value) p.set('store', $('dStore').value);
     $('dCards').innerHTML = '<div class="muted">Зареждане…</div>';
-    fetch('/api/admin/stats?' + p, { credentials: 'same-origin' })
+    fetch(withShop('/api/admin/stats?' + p), { credentials: 'same-origin' })
       .then(function (res) { if (res.status === 401) { showLogin(); return null; } if (!res.ok) throw new Error(res.status); return res.json(); })
       .then(function (d) { if (d) renderDash(d); })
       .catch(function () { $('dCards').innerHTML = '<div class="err">Грешка при зареждане на таблото. Опитайте пак.</div>'; });
@@ -745,9 +779,16 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   function viewFromHash() { var v = location.hash.slice(1); return Object.prototype.hasOwnProperty.call(VIEWS, v) ? v : 'orders'; }
   function showView(view) {
     [].forEach.call(document.querySelectorAll('.nav a[data-view]'), function (a) { a.classList.toggle('on', a.getAttribute('data-view') === view); });
-    Object.keys(VIEWS).forEach(function (v) { $(v + 'View').hidden = v !== view; });
     $('where').textContent = VIEWS[view];
     $('app').classList.remove('open');
+    var pick = currentShop === 'all' && NEEDS_SHOP[view];
+    Object.keys(VIEWS).forEach(function (v) { $(v + 'View').hidden = pick || v !== view; });
+    $('pickShopView').hidden = !pick;
+    if (pick) {
+      $('pickTitle').textContent = VIEWS[view] + ': изберете магазин';
+      $('pickShops').innerHTML = shops.filter(function (x) { return !x.hidden; }).map(function (x) { return '<button type="button" class="ghost" data-pick="' + esc(x.id) + '">' + esc(x.display) + '</button>'; }).join('');
+      return;
+    }
     if (view === 'dash') loadDash();
     if (view === 'costs') loadCosts();
     if (view === 'integrations') loadIntegrations();
@@ -756,7 +797,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
 
   /* ---- Интеграции ---- */
   function integ(body) {
-    return fetch('/api/admin/integrations', { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+    return fetch(withShop('/api/admin/integrations'), { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
       .then(function (r) {
         if (r.status === 401) { showLogin(); throw new Error('auth'); }
         return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; });
@@ -781,16 +822,68 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
 
   /* ---- магазин: име и буква в лявата лента ---- */
   function setShop(shop) {
-    var name = (shop && shop.display) || 'Моят магазин';
-    $('shopName').textContent = name;
-    $('shopInitial').textContent = name.trim().charAt(0).toUpperCase() || 'М';
-    document.title = name + ' – админ';
+    if (shop) { shops = shops.map(function (x) { return x.id === shop.id ? shop : x; }); renderShopBtn(); }
     if (shop && $('cbModal').hidden) {
       $('iShopName').value = shop.name || ''; $('iShopUrl').value = shop.url || ''; $('iShopEmail').value = shop.email || '';
       $('iShopPhone').value = shop.phone || ''; $('iShopCurrency').value = shop.currency || 'EUR';
     }
   }
-  function loadShop() { integ().then(function (s) { setShop(s.shop); }).catch(function () {}); }
+  /* ---- магазини: падащо меню горе вляво ---- */
+  var shops = [], currentShop = '';
+  try { currentShop = localStorage.getItem('zdShop') || ''; } catch (e) { /* private mode */ }
+  var NEEDS_SHOP = { costs: 1, inventory: 1, integrations: 1 };
+  function withShop(url) { return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'shop=' + encodeURIComponent(currentShop || ''); }
+  function shopById(id) { return shops.filter(function (x) { return x.id === id; })[0]; }
+  function renderShopBtn() {
+    var s = currentShop === 'all' ? null : shopById(currentShop);
+    var name = currentShop === 'all' ? 'Всички магазини' : (s ? s.display : 'Моят магазин');
+    $('shopName').textContent = name;
+    $('shopInitial').textContent = currentShop === 'all' ? '∑' : (name.trim().charAt(0).toUpperCase() || 'М');
+    document.title = name + ' – админ';
+    $('iMetaFb').setAttribute('href', withShop('/api/admin/meta?start=1'));
+    $('shopMenu').innerHTML = shops.filter(function (x) { return !x.hidden; }).map(function (x) {
+      return '<button type="button" data-shop="' + esc(x.id) + '" class="' + (x.id === currentShop ? 'on' : '') + '"><span class="mini">' + esc(x.display.charAt(0).toUpperCase()) + '</span>' + esc(x.display) + '</button>';
+    }).join('') + '<button type="button" data-shop="all" class="' + (currentShop === 'all' ? 'on' : '') + '"><span class="mini">∑</span>Всички магазини</button>' +
+      '<hr><button type="button" class="add" data-add-shop="1"><span class="mini">+</span>Добави магазин</button>';
+  }
+  function loadShops() {
+    return fetch('/api/admin/shops', { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); })
+      .then(function (d) {
+        shops = d.shops || [];
+        if (currentShop !== 'all' && !shopById(currentShop)) currentShop = (shops[0] || {}).id || '';
+        renderShopBtn();
+      });
+  }
+  function chooseShop(id) {
+    currentShop = id;
+    try { localStorage.setItem('zdShop', id); } catch (e) { /* private mode */ }
+    $('shopMenu').hidden = true; $('shopBtn').setAttribute('aria-expanded', 'false');
+    dashLoaded = false; costsData = null; inv = null;
+    renderShopBtn();
+    showView(viewFromHash());
+    load(1);
+  }
+  function loadShop() { loadShops().catch(function () {}); }
+  $('shopBtn').addEventListener('click', function (e) {
+    e.stopPropagation();
+    $('shopMenu').hidden = !$('shopMenu').hidden;
+    $('shopBtn').setAttribute('aria-expanded', String(!$('shopMenu').hidden));
+  });
+  document.addEventListener('click', function (e) { if (!$('shopMenu').hidden && !$('shopMenu').contains(e.target)) $('shopMenu').hidden = true; });
+  $('shopMenu').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    if (b.hasAttribute('data-add-shop')) { $('shopMenu').hidden = true; $('nsName').value = ''; $('nsDomain').value = ''; $('nsErr').textContent = ''; $('shopModal').hidden = false; $('nsName').focus(); return; }
+    chooseShop(b.getAttribute('data-shop'));
+  });
+  $('nsSave').addEventListener('click', function () {
+    $('nsErr').textContent = '';
+    busy($('nsSave'), fetch('/api/admin/shops', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: $('nsName').value, domain: $('nsDomain').value }) })
+      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
+      .then(function (d) { $('shopModal').hidden = true; return loadShops().then(function () { location.hash = '#integrations'; chooseShop(d.shop.id); }); })
+      .catch(function (e) { $('nsErr').textContent = e.message; });
+  });
+  $('pickShops').addEventListener('click', function (e) { var b = e.target.closest('[data-pick]'); if (b) chooseShop(b.getAttribute('data-pick')); });
   $('iShopSave').addEventListener('click', function () {
     busy($('iShopSave'), integ({ action: 'save_shop', name: $('iShopName').value, url: $('iShopUrl').value, email: $('iShopEmail').value, phone: $('iShopPhone').value, currency: $('iShopCurrency').value }))
       .then(function (d) { setShop(d.shop); $('iShopInfo').textContent = 'Запазено ✓'; setTimeout(function () { $('iShopInfo').textContent = ''; }, 2000); })
@@ -939,7 +1032,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   var inv = null, invFilter = 'all', invEditing = null, invAdjusting = null;
   var STATE_LABEL = { ok: 'в наличност', low: 'ниска наличност', out: 'изчерпан', untracked: 'не се следи' };
   function invCall(body, query) {
-    return fetch('/api/admin/inventory' + (query || ''), { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+    return fetch(withShop('/api/admin/inventory' + (query || '')), { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
       .then(function (r) {
         if (r.status === 401) { showLogin(); throw new Error('auth'); }
         return r.json().then(function (d) { if (!r.ok) throw new Error(d.error === 'server' ? 'Грешка на сървъра. Опитайте пак.' : d.error || ('HTTP ' + r.status)); return d; });
@@ -1029,7 +1122,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   /* ---- Разходи ---- */
   var costsData = null;
   function costsFetch(method, body) {
-    return fetch('/api/admin/costs', { method: method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+    return fetch(withShop('/api/admin/costs'), { method: method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
       .then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } if (!r.ok) throw new Error(r.status); return r.json(); });
   }
   function num(v) { return v == null ? '' : String(v); }
@@ -1081,7 +1174,6 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       .then(function () { booted = false; shown = false; showLogin(); });
   });
   $('dPeriod').addEventListener('change', function () { var custom = $('dPeriod').value === 'custom'; $('dFrom').hidden = !custom; $('dTo').hidden = !custom; if (!custom) loadDash(); });
-  $('dStore').addEventListener('change', loadDash);
   $('dFilters').addEventListener('submit', function (e) { e.preventDefault(); loadDash(); });
 
   load(1);
