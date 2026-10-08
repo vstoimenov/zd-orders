@@ -173,7 +173,3 @@ test('a server error from Econt is unclear even with a message (the waybill may 
   const e517 = await econtCall(creds, 'A/B.c', {}, async () => reply(517, { message: 'Невалиден офис' })).catch((e) => e);
   assert.equal(e517.rejected, true);
 });
-
-test('buildLabel finds an Econt office written only in the delivery text, e.g. "(5803)"', () => {
-  assert.equal(buildLabel({ ...order, officeId: '', officeText: 'ЕКОНТ – офис Плевен (5803), ул. Х' }, settings, {}).receiverOfficeCode, '5803');
-});

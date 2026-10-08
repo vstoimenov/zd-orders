@@ -273,3 +273,45 @@ test('a waybill without a price from Speedy is stored without one', async () => 
   await withFetch(speedyApi({ shipment: () => reply(200, { id: '77' }) }).impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} }));
   assert.equal((await orderById(id)).shipment.price, null);
 });
+
+test('an order with only the widget text finds its office; a typed text or an unknown code does not', async () => {
+  await connect();
+  await q(`insert into zd.offices (id, courier, code, name, city) values ('speedy:66', 'speedy', '66', 'ПЛЕВЕН - ЦЕНТЪР', 'Плевен')`);
+  const widget = await addOrder({ officeId: '', officeText: 'СПИДИ – офис ПЛЕВЕН - ЦЕНТЪР (66), ул. Х (12)' });
+  const d = await waybillDefaults(q, { orderId: widget, scopeShopId: SHOP });
+  assert.equal(d.officeText, 'ПЛЕВЕН - ЦЕНТЪР, Плевен (66)');
+  const f = speedyApi();
+  await withFetch(f.impl, () => createWaybill(q, { orderId: widget, scopeShopId: SHOP, input: {} }));
+  assert.equal(f.calls.find((c) => c.path === 'shipment').body.recipient.pickupOfficeId, 66);
+  const typed = await addOrder({ officeId: '', officeText: 'СПИДИ – офис: до офиса до гарата (12)' });
+  await assert.rejects(withFetch(speedyApi().impl, () => createWaybill(q, { orderId: typed, scopeShopId: SHOP, input: {} })), /няма офис на Спиди/i);
+  const unknown = await addOrder({ officeId: '', officeText: 'СПИДИ – офис Някъде (4242)' });
+  await assert.rejects(withFetch(speedyApi().impl, () => createWaybill(q, { orderId: unknown, scopeShopId: SHOP, input: {} })), /няма офис на Спиди/i);
+});
+
+test('a cancelled waybill leaves no parcel ids behind; a failed save keeps the new ones', async () => {
+  await connect();
+  const id = await addOrder();
+  await withFetch(speedyApi({ shipment: () => reply(200, { id: 'A1', parcels: [{ id: 'A1' }, { id: 'A2' }], price: { total: 6, currency: 'EUR' } }) }).impl,
+    () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: { packCount: 2 } }));
+  await withFetch(speedyApi().impl, () => cancelWaybill(q, { orderId: id, scopeShopId: SHOP }));
+  const [row] = await q(`select waybill_parcels from zd.orders where id = $1`, [id]);
+  assert.equal(row.waybill_parcels, '');
+  const real = q;
+  let failed = false;
+  const flaky = async (text, params) => {
+    if (!failed && /waybill_prev_status = status/.test(text)) { failed = true; throw new Error('reset'); }
+    return real(text, params);
+  };
+  await assert.rejects(withFetch(speedyApi({ shipment: () => reply(200, { id: 'B1', parcels: [{ id: 'B1' }], price: { total: 6, currency: 'EUR' } }) }).impl,
+    () => createWaybill(flaky, { orderId: id, scopeShopId: SHOP, input: {} })), /B1/);
+  const [after] = await q(`select waybill_number, waybill_parcels from zd.orders where id = $1`, [id]);
+  assert.deepEqual([after.waybill_number, after.waybill_parcels], ['B1', 'B1']);
+});
+
+test('a courier that could not be ordered is remembered on the order', async () => {
+  await connect({ senderType: 'client' });
+  const id = await addOrder();
+  await withFetch(speedyApi({ pickup: () => reply(200, { error: { message: 'Няма вземане днес' } }) }).impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} }));
+  assert.match((await orderById(id)).shipment.status, /Куриер не е поръчан/);
+});

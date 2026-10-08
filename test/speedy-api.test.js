@@ -176,10 +176,6 @@ test('recipient phone: a usable Speedy number or a Bulgarian refusal', () => {
   assert.throws(() => buildShipment({ ...officeOrder, phone: '', phoneNorm: '' }, settings, {}), /телефон на получателя/);
 });
 
-test('an office written only in the delivery text, e.g. "(66)", is still found', () => {
-  assert.equal(buildShipment({ ...officeOrder, officeId: '', officeText: 'СПИДИ – офис Плевен (66), ул. Х' }, settings, {}).recipient.pickupOfficeId, 66);
-});
-
 test('createShipment keeps every parcel id; a missing price stays unknown', async () => {
   const w = await createShipment(creds, {}, async () => reply(200, { id: '61', parcels: [{ seqNo: 1, id: '61' }, { seqNo: 2, id: '62' }] }));
   assert.deepEqual(w.parcels, ['61', '62']);
