@@ -6,7 +6,8 @@ import { setQueryForTests } from '../lib/db.js';
 import { insertOrder, listOrders } from '../lib/orders-repo.js';
 import { getIntegration, getSecret, saveIntegration } from '../lib/integrations-repo.js';
 import { signSession } from '../lib/auth.js';
-import { saveEcont, econtStatus, createWaybill, cancelWaybill, previewWaybill, syncEcontStatuses, waybillDefaults } from '../lib/waybills.js';
+import { saveEcont, econtStatus, createWaybill, cancelWaybill, previewWaybill, syncEcontStatuses, waybillDefaults, releaseWaybill, econtProfile } from '../lib/waybills.js';
+import ordersApi from '../lib/admin/orders.js';
 import waybillsApi from '../lib/admin/waybills.js';
 import integrationsApi from '../lib/admin/integrations.js';
 
@@ -190,7 +191,7 @@ test('cancelWaybill deletes it at Econt and frees the order', async () => {
   assert.deepEqual(f.calls[0].body, { shipmentNumbers: ['1051604331075'] });
   const o = await orderById(id);
   assert.equal(o.shipment, null);
-  assert.equal(o.status, 'confirmed');
+  assert.equal(o.status, 'new', 'back to the status it had before the waybill');
   await withFetch(econt().impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} }));
   const refused = econt({ deleteLabels: () => reply(200, { results: [{ shipmentNum: '1051604331075', error: { message: 'Пратката вече е изпратена' } }] }) });
   await assert.rejects(withFetch(refused.impl, () => cancelWaybill(q, { orderId: id, scopeShopId: SHOP })), /вече е изпратена/);
@@ -306,4 +307,135 @@ test('saveEcont keeps the authorised person and whether the profile is a company
   const s = await econtStatus(q, SHOP);
   assert.equal(s.senderAgent, 'Иван Кирязов');
   assert.equal(s.profileCompany, true);
+});
+
+test('an unclear Econt answer blocks the order until someone checks e-Econt and releases it', async () => {
+  await connect();
+  const id = await addOrder();
+  const lost = econt({ createLabel: () => { throw new TypeError('fetch failed'); } });
+  await assert.rejects(withFetch(lost.impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} })), /проверете в e-Econt/);
+  let o = await orderById(id);
+  assert.equal(o.shipment, null);
+  assert.equal(o.waybillState, 'unknown');
+  const f = econt();
+  await assert.rejects(withFetch(f.impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} })), /проверете в e-Econt/);
+  assert.equal(f.calls.length, 0, 'no second waybill while unclear');
+  await releaseWaybill(q, { orderId: id, scopeShopId: SHOP });
+  o = await orderById(id);
+  assert.equal(o.waybillState, '');
+  assert.equal((await withFetch(f.impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} }))).number, '1051604331075');
+});
+
+test('a claim being created is never taken over automatically; an old one can only be released by hand', async () => {
+  await connect();
+  const id = await addOrder();
+  await q(`update zd.orders set waybill_number = 'creating', waybill_created_at = now() where id = $1`, [id]);
+  await assert.rejects(releaseWaybill(q, { orderId: id, scopeShopId: SHOP }), /още се създава/);
+  assert.equal((await orderById(id)).waybillState, 'creating');
+  await q(`update zd.orders set waybill_created_at = now() - interval '10 minutes' where id = $1`, [id]);
+  assert.equal((await orderById(id)).waybillState, 'unknown');
+  const f = econt();
+  await assert.rejects(withFetch(f.impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} })), /проверете в e-Econt/);
+  assert.equal(f.calls.length, 0);
+  await releaseWaybill(q, { orderId: id, scopeShopId: SHOP });
+  assert.equal((await orderById(id)).waybillState, '');
+});
+
+test('when saving the created waybill fails, its number is still kept on the order', async () => {
+  await connect();
+  const id = await addOrder();
+  const real = q;
+  let failed = false;
+  const flaky = async (text, params) => {
+    if (!failed && /waybill_courier = 'econt'/.test(text)) { failed = true; throw new Error('connection reset'); }
+    return real(text, params);
+  };
+  await assert.rejects(withFetch(econt().impl, () => createWaybill(flaky, { orderId: id, scopeShopId: SHOP, input: {} })), /1051604331075/);
+  const o = await orderById(id);
+  assert.equal(o.shipment.number, '1051604331075', 'never free for a second waybill');
+});
+
+test('test mode: the waybill is recorded but the order status and stock stay as they are', async () => {
+  await connect({ demo: true });
+  const id = await addOrder();
+  await withFetch(econt().impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} }));
+  let o = await orderById(id);
+  assert.equal(o.shipment.demo, true);
+  assert.equal(o.status, 'new');
+  await withFetch(econt().impl, () => cancelWaybill(q, { orderId: id, scopeShopId: SHOP }));
+  o = await orderById(id);
+  assert.equal(o.shipment, null);
+  assert.equal(o.status, 'new');
+});
+
+test('a shop in test mode never syncs statuses', async () => {
+  await connect({ demo: true });
+  const f = econt({ getShipmentStatuses: () => { throw new Error('must not be called'); } });
+  assert.deepEqual(await withFetch(f.impl, () => syncEcontStatuses(q, SHOP)), { checked: 0, delivered: 0, returned: 0 });
+});
+
+test('create refuses when the window was opened in another mode (real vs test)', async () => {
+  await connect();
+  const id = await addOrder();
+  const f = econt();
+  await assert.rejects(withFetch(f.impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: { expectDemo: true } })), /режимът/i);
+  assert.equal(f.calls.length, 0);
+  assert.equal((await withFetch(f.impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: { expectDemo: false } }))).number, '1051604331075');
+});
+
+test('a real waybill is cancelled only in real mode; a test one is just removed in real mode', async () => {
+  await connect();
+  const live = await addOrder();
+  await withFetch(econt().impl, () => createWaybill(q, { orderId: live, scopeShopId: SHOP, input: {} }));
+  await connect({ demo: true });
+  const test = await addOrder();
+  await withFetch(econt().impl, () => createWaybill(q, { orderId: test, scopeShopId: SHOP, input: {} }));
+  await assert.rejects(withFetch(econt().impl, () => cancelWaybill(q, { orderId: live, scopeShopId: SHOP })), /реален режим/);
+  await connect({ demo: false });
+  const f = econt();
+  await withFetch(f.impl, () => cancelWaybill(q, { orderId: test, scopeShopId: SHOP }));
+  assert.equal(f.calls.length, 0, 'the live login never goes to the demo server');
+  assert.equal((await orderById(test)).shipment, null);
+});
+
+test('waybills only for orders still to be sent; cancelling restores the status the order had', async () => {
+  await connect();
+  const done = await addOrder();
+  await q(`update zd.orders set status = 'delivered' where id = $1`, [done]);
+  await assert.rejects(withFetch(econt().impl, () => createWaybill(q, { orderId: done, scopeShopId: SHOP, input: {} })), /доставена/);
+  const sent = await addOrder();
+  await q(`update zd.orders set status = 'shipped' where id = $1`, [sent]);
+  await withFetch(econt().impl, () => createWaybill(q, { orderId: sent, scopeShopId: SHOP, input: {} }));
+  await withFetch(econt().impl, () => cancelWaybill(q, { orderId: sent, scopeShopId: SHOP }));
+  assert.equal((await orderById(sent)).status, 'shipped');
+});
+
+test('the stored password is reused only in the mode it was saved for', async () => {
+  await connect();
+  await assert.rejects(withFetch(econt().impl, () => econtProfile(q, SHOP, { username: 'shop-user', password: '', demo: true })), /паролата/);
+});
+
+test('admin route: a shop never reaches another shop\'s order', async () => {
+  await connect();
+  const id = await addOrder();
+  await withFetch(econt().impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} }));
+  const [other] = await q(`insert into zd.shops (name, domain) values ('Друг', 'other.bg') returning id`);
+  for (const action of ['defaults', 'preview', 'cancel', 'release']) {
+    const res = fakeRes();
+    await withFetch(econt().impl, () => waybillsApi(fakeReq({ method: 'POST', url: `/api/admin/waybills?shop=${other.id}`, headers: { cookie: cookie() }, body: { action, id } }), res));
+    assert.equal(res.statusCode, 400, action);
+    assert.match(json(res).error, /Няма такава поръчка/, action);
+  }
+  assert.equal((await orderById(id)).shipment.number, '1051604331075');
+});
+
+test('an order with a real waybill cannot be deleted before the waybill is cancelled', async () => {
+  await connect();
+  const id = await addOrder();
+  await withFetch(econt().impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} }));
+  const res = fakeRes();
+  await ordersApi(fakeReq({ method: 'DELETE', url: '/api/admin/orders', headers: { cookie: cookie() }, body: { id } }), res);
+  assert.equal(res.statusCode, 400);
+  assert.match(json(res).error, /товарителница/);
+  assert.ok(await orderById(id));
 });

@@ -91,11 +91,11 @@ test('buildLabel refuses what Econt would refuse, in Bulgarian', () => {
 });
 
 test('createLabel calculates or creates and returns the waybill', async () => {
-  const r = recorder(reply(200, { label: { shipmentNumber: '1051604331075', totalPrice: 3.78, currency: 'EUR', receiverDueAmount: 3.78, senderDueAmount: 0, pdfURL: 'http://demo/x.pdf' } }));
+  const r = recorder(reply(200, { label: { shipmentNumber: '1051604331075', totalPrice: 3.78, currency: 'EUR', receiverDueAmount: 3.78, senderDueAmount: 0, pdfURL: 'http://demo.econt.com/x.pdf' } }));
   const w = await createLabel(creds, { a: 1 }, 'create', r.impl);
   assert.deepEqual(r.calls[0].body, { label: { a: 1 }, mode: 'create' });
   assert.match(r.calls[0].url, /Shipments\/LabelService\.createLabel\.json$/);
-  assert.deepEqual(w, { number: '1051604331075', price: 3.78, currency: 'EUR', receiverDue: 3.78, senderDue: 0, pdf: 'http://demo/x.pdf' });
+  assert.deepEqual(w, { number: '1051604331075', price: 3.78, currency: 'EUR', receiverDue: 3.78, senderDue: 0, pdf: 'http://demo.econt.com/x.pdf' });
   await assert.rejects(createLabel(creds, {}, 'create', async () => reply(200, { label: { totalPrice: 1 } })), /не върна номер/);
   await assert.rejects(createLabel(creds, {}, 'delete', r.impl), /mode/);
 });
@@ -143,4 +143,26 @@ test('buildLabel: a company profile sends the authorised person (упълном�
 test('getProfile tells whether the profile is a company', async () => {
   const r = recorder(reply(200, { profiles: [{ client: { name: 'ЕТ', phones: [], juridicalEntity: true }, addresses: [] }] }));
   assert.equal((await getProfile(creds, r.impl)).company, true);
+});
+
+test('only a clear Econt answer counts as a rejection: timeouts, lost connections and odd answers are unknown', async () => {
+  const rejected = await econtCall(creds, 'A/B.c', {}, async () => reply(517, { message: 'Невалиден офис', innerErrors: [] })).catch((e) => e);
+  assert.equal(rejected.rejected, true);
+  const lost = await econtCall(creds, 'A/B.c', {}, async () => { throw new TypeError('fetch failed'); }).catch((e) => e);
+  assert.equal(lost.rejected, false);
+  const gateway = await econtCall(creds, 'A/B.c', {}, async () => ({ ok: false, status: 502, json: async () => { throw new SyntaxError('x'); } })).catch((e) => e);
+  assert.equal(gateway.rejected, false);
+  const odd = await econtCall(creds, 'A/B.c', {}, async () => ({ ok: true, status: 200, json: async () => { throw new SyntaxError('x'); } })).catch((e) => e);
+  assert.equal(odd.rejected, false, 'a 200 that is not JSON may still have created something');
+  const noNumber = await createLabel(creds, {}, 'create', async () => reply(200, { label: { totalPrice: 1 } })).catch((e) => e);
+  assert.equal(noNumber.rejected, false);
+});
+
+test('createLabel keeps the PDF only when it is an Econt address', async () => {
+  const w = (pdfURL) => createLabel(creds, {}, 'create', async () => reply(200, { label: { shipmentNumber: '1', totalPrice: 1, pdfURL } }));
+  assert.equal((await w('http://demo.econt.com/ee/api_export.php?x=1')).pdf, 'http://demo.econt.com/ee/api_export.php?x=1');
+  assert.equal((await w('https://ee.econt.com/x.pdf')).pdf, 'https://ee.econt.com/x.pdf');
+  assert.equal((await w('javascript:alert(1)')).pdf, null);
+  assert.equal((await w('https://evil.com/econt.com')).pdf, null);
+  assert.equal((await w('https://econt.com.evil.com/x')).pdf, null);
 });

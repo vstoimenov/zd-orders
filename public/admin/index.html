@@ -485,7 +485,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="wbTitle" style="max-width:640px">
       <div class="dhead"><div class="tile econt">E<img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></div><div><h2 id="wbTitle">Товарителница Еконт</h2><div class="muted" style="font-size:15px" id="wbWho"></div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
       <div class="dbody">
-        <div class="demo-banner" id="wbDemo" hidden>Тестов режим — пратката не е истинска.</div>
+        <div class="demo-banner" id="wbDemo" hidden>Тестов режим — пратката не е истинска и поръчката не сменя статуса си.</div>
         <div class="tip" id="wbRoute"></div>
         <div class="fgrid">
           <label>Наложен платеж<input type="text" inputmode="decimal" id="wbCod"></label>
@@ -642,6 +642,10 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
         '<br>' + (w.pdf ? '<a href="' + esc(w.pdf) + '" target="_blank" rel="noopener">PDF за печат</a> · ' : '') +
         '<a href="#" data-wbcancel="' + i + '">Анулирай</a></span>';
     }
+    if (o.waybillState === 'unknown') {
+      return '<span class="wb warn">⚠️ Не е ясно дали товарителницата е създадена — проверете в <a href="https://ee.econt.com" target="_blank" rel="noopener">e-Econt</a>.<br><a href="#" data-wbrelease="' + i + '">Освободи (няма товарителница)</a></span>';
+    }
+    if (o.waybillState === 'creating') return '<span class="wb muted">Товарителницата се създава…</span>';
     return o.courier === 'econt' && ['new', 'confirmed', 'shipped'].indexOf(o.status) >= 0 ? '<button type="button" class="wbbtn" data-wb="' + i + '">Създай товарителница</button>' : '';
   }
   function render() {
@@ -706,6 +710,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       fetch(withShop('/api/admin/orders'), { method: 'DELETE', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: o.id }) })
         .then(function (r) {
           if (r.status === 401) { showLogin(); return; }
+          if (r.status === 400) return r.json().then(function (d) { btn.disabled = false; alert(d.error); });
           if (!r.ok && r.status !== 404) throw new Error(r.status);
           orders = orders.filter(function (x) { return x.id !== o.id; }); total = Math.max(0, total - 1); render();
         })
@@ -713,6 +718,12 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       return;
     }
     if (btn.getAttribute('data-wb') != null) { openWaybill(orders[btn.getAttribute('data-wb')]); return; }
+    if (btn.getAttribute('data-wbrelease') != null) {
+      e.preventDefault();
+      if (!window.confirm('Проверихте ли в e-Econt, че за тази поръчка НЯМА създадена товарителница?\n\nАко има — не освобождавайте, а я анулирайте в e-Econt.')) return;
+      wb({ action: 'release', id: orders[btn.getAttribute('data-wbrelease')].id }).then(function () { load(page); }).catch(function (err) { if (err.message !== 'auth') alert(err.message); });
+      return;
+    }
     if (btn.getAttribute('data-wbcancel') != null) { e.preventDefault(); cancelWaybill(orders[btn.getAttribute('data-wbcancel')], btn); return; }
     var i = btn.getAttribute('data-copy');
     if (i == null) return;
@@ -1101,7 +1112,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     return fetch(withShop('/api/admin/waybills'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       .then(function (r) {
         if (r.status === 401) { showLogin(); throw new Error('auth'); }
-        return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; });
+        return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('Сървърът не отговори (' + r.status + ') — обновете страницата и проверете поръчката')); return d; });
       });
   }
   function wbInput() {
@@ -1140,7 +1151,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     var demo = $('wbCreate').getAttribute('data-demo') === '1';
     if (!demo && !window.confirm('Да създам ли истинска товарителница в Еконт за ' + (wbOrder.name || 'клиента') + '?\n\nПратката ще се таксува според условията на профила ви. Поръчката ще стане „Изпратена“.')) return;
     $('wbInfo').textContent = 'Създавам товарителницата…';
-    var b = wbInput(); b.action = 'create';
+    var b = wbInput(); b.action = 'create'; b.expectDemo = demo;
     busy($('wbCreate'), wb(b)).then(function (w) {
       $('wbInfo').innerHTML = '✓ Товарителница <b>' + esc(w.number) + '</b> (' + esc(money(w.price, w.currency)) + ')' + (w.pdf ? ' · <a href="' + esc(w.pdf) + '" target="_blank" rel="noopener">PDF за печат</a>' : '');
       $('wbCreate').disabled = true; dashLoaded = false; load(page);
