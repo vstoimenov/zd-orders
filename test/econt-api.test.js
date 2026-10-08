@@ -166,3 +166,10 @@ test('createLabel keeps the PDF only when it is an Econt address', async () => {
   assert.equal((await w('https://evil.com/econt.com')).pdf, null);
   assert.equal((await w('https://econt.com.evil.com/x')).pdf, null);
 });
+
+test('a server error from Econt is unclear even with a message (the waybill may exist); 517 is a clear refusal', async () => {
+  const e500 = await econtCall(creds, 'A/B.c', {}, async () => reply(500, { message: 'Internal error' })).catch((e) => e);
+  assert.equal(e500.rejected, false);
+  const e517 = await econtCall(creds, 'A/B.c', {}, async () => reply(517, { message: 'Невалиден офис' })).catch((e) => e);
+  assert.equal(e517.rejected, true);
+});
