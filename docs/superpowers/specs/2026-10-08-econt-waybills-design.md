@@ -1,0 +1,31 @@
+# Econt waybills — design (approved 2026-10-08)
+
+Goal: create real Econt waybills (товарителници) from an order in the admin, with only an e-Econt profile (no contract).
+
+## Verified against demo.econt.com (iasp-dev / 1Asp-dev)
+- Auth: HTTP Basic with the e-Econt username/password; POST JSON. Errors: HTTP 517 `{type, message, innerErrors[]}` (Bulgarian messages, nested).
+- `Profile/ProfileService.getClientProfiles` → `profiles[].client {name, phones}`, `profiles[].addresses[] {id, city{name, postCode}, quarter, street, num, other}`.
+- `Shipments/LabelService.createLabel` `{label, mode: calculate|create}` → `label {shipmentNumber, totalPrice, currency, receiverDueAmount, senderDueAmount, pdfURL}`.
+  - office → office (`senderOfficeCode`, `receiverOfficeCode`), address → office (`senderAddress`), COD `services {cdAmount, cdType: 'get', cdCurrency}`, review `services.payAfterAccept`.
+  - receiver pays: `paymentReceiverMethod: 'cash'`; omitted → sender pays. `shipmentDescription` is required.
+- `Shipments/LabelService.deleteLabels {shipmentNumbers}` → `results[] {shipmentNum, error}`.
+- `Shipments/ShipmentService.getShipmentStatuses {shipmentNumbers}` → `shipmentStatuses[] {status {deliveryTime, shortDeliveryStatus, trackingEvents[] {destinationType, isReceipt}}, error}`.
+  - returned: a non-receipt event `return | is_returning_to_sender | returned_to_sender`; delivered: `deliveryTime` or a `client` event.
+- Tracking page: `https://www.econt.com/services/track-shipment/<number>`.
+
+## Pieces
+- `db/migrations/011_waybills.sql` — waybill columns on `zd.orders` (number, courier, pdf, price, currency, created/checked time, courier status text, demo flag).
+- `lib/econt-api.js` — HTTP client, error flattening, profile, `buildLabel(order, settings, input)`, create/calculate, delete, statuses, `statusFromEcont`.
+- `lib/waybills.js` — per-shop settings (`provider = 'econt'`, secret = sealed `{username, password}`), preview / create (atomic claim, no double waybills) / cancel, nightly status sync.
+- `lib/admin/waybills.js` — admin route `/api/admin/waybills` (no new Vercel function): `defaults | preview | create | cancel`.
+- `lib/admin/integrations.js` — `econt_profile`, `save_econt`, `sync_econt`; status `econtLabels`.
+- `api/cron/refresh.js` — nightly status sync per shop.
+- Admin UI — Econt card → settings modal (credentials, test mode, sender office/address, payer, weight, description, review); orders → „Товарителница“ modal (calculate → confirm → create), number with tracking link, PDF, cancel.
+
+## Rules
+- Credentials never return to the browser; the username is shown.
+- Test mode uses demo.econt.com; waybills made there are marked „тест“ and are never synced as real.
+- Creating moves the order new/confirmed → shipped; cancelling moves shipped → confirmed. Stock follows status (existing `syncStockSafe`).
+- Nightly sync moves shipped → delivered / returned (returned gives stock back).
+- Production creates real shipments charged to the profile: the UI asks for confirmation.
+- Later (not now): bulk creation, Speedy.
