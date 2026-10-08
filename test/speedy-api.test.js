@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  speedyCall, getProfile, buildShipment, calculateShipment, createShipment, cancelShipment, printWaybill, shipmentStatuses, statusFromSpeedy, trackUrl,
+  speedyCall, getProfile, buildShipment, calculateShipment, createShipment, cancelShipment, printWaybill, shipmentStatuses, statusFromSpeedy, trackUrl, orderPickup,
 } from '../lib/speedy-api.js';
 
 const creds = { username: '999111', password: 'secret' };
@@ -70,11 +70,14 @@ test('buildShipment: to an office, COD = total, receiver pays, phone cleaned, re
 
 test('buildShipment: to an address, pickup from the contract address, sender pays, review, company contact', () => {
   const s = buildShipment(addressOrder, { ...settings, clientCompany: true, senderContact: 'Иван Петров', sender: { type: 'client', text: 'Склад' }, payer: 'sender', review: 'TEST' },
-    { weight: '2,5', packCount: 2, cod: '0', description: 'книги' });
+    { weight: '2,5', packCount: 2, cod: '10', description: 'книги' });
   assert.deepEqual(s.sender, { clientId: 77001, phone1: { number: '0888888888' }, contactName: 'Иван Петров' });
   assert.deepEqual(s.recipient.address, { countryId: 100, siteName: 'Варна', postCode: '9000', addressNote: 'ул. Роза 5, ет. 2' });
   assert.equal(s.recipient.pickupOfficeId, undefined);
-  assert.deepEqual(s.service.additionalServices, { obpd: { option: 'TEST', returnShipmentServiceId: 505, returnShipmentPayer: 'SENDER' } });
+  assert.deepEqual(s.service.additionalServices, {
+    cod: { amount: 10, currencyCode: 'EUR', processingType: 'CASH' },
+    obpd: { option: 'TEST', returnShipmentServiceId: 505, returnShipmentPayer: 'SENDER' },
+  });
   assert.deepEqual(s.content, { parcelsCount: 2, totalWeight: 2.5, contents: 'книги', package: 'BOX' });
   assert.deepEqual(s.payment, { courierServicePayer: 'SENDER' });
 });
@@ -109,7 +112,7 @@ test('calculateShipment asks /calculate for the same route and returns the total
 
 test('createShipment returns the number; no number is an unclear answer', async () => {
   const r = recorder(reply(200, { id: '61234567890', parcels: [{ seqNo: 1, id: '61234567890' }], price: { total: 6.1, currency: 'EUR' } }));
-  assert.deepEqual(await createShipment(creds, { a: 1 }, r.impl), { number: '61234567890', price: 6.1, currency: 'EUR', pdf: null });
+  assert.deepEqual(await createShipment(creds, { a: 1 }, r.impl), { number: '61234567890', parcels: ['61234567890'], price: 6.1, currency: 'EUR', pdf: null });
   assert.match(r.calls[0].url, /\/v1\/shipment$/);
   assert.equal(r.calls[0].body.a, 1);
   const none = await createShipment(creds, {}, async () => reply(200, {})).catch((e) => e);
@@ -155,4 +158,55 @@ test('shipmentStatuses tracks 10 at a time and keeps the last description', asyn
 
 test('trackUrl points to Speedy\'s tracking page', () => {
   assert.equal(trackUrl('61234567890'), 'https://www.speedy.bg/bg/track-shipment?shipmentNumber=61234567890');
+});
+
+test('contactName goes only with a company sender (Speedy forbids it for private persons)', () => {
+  assert.equal(buildShipment(officeOrder, { ...settings, clientCompany: false, senderContact: 'Иван' }, {}).sender.contactName, undefined);
+  assert.equal(buildShipment(officeOrder, { ...settings, clientCompany: true, senderContact: 'Иван' }, {}).sender.contactName, 'Иван');
+});
+
+test('review (OBPD) only with cash on delivery', () => {
+  const s = buildShipment(officeOrder, { ...settings, review: 'OPEN' }, { cod: '0' });
+  assert.equal(s.service.additionalServices, undefined);
+});
+
+test('recipient phone: a usable Speedy number or a Bulgarian refusal', () => {
+  assert.equal(buildShipment({ ...officeOrder, phone: '888 123 456', phoneNorm: '+359888123456' }, settings, {}).recipient.phone1.number, '+359888123456');
+  assert.equal(buildShipment({ ...officeOrder, phone: '359888123456' }, settings, {}).recipient.phone1.number, '+359888123456');
+  assert.throws(() => buildShipment({ ...officeOrder, phone: '', phoneNorm: '' }, settings, {}), /телефон на получателя/);
+});
+
+test('an office written only in the delivery text, e.g. "(66)", is still found', () => {
+  assert.equal(buildShipment({ ...officeOrder, officeId: '', officeText: 'СПИДИ – офис Плевен (66), ул. Х' }, settings, {}).recipient.pickupOfficeId, 66);
+});
+
+test('createShipment keeps every parcel id; a missing price stays unknown', async () => {
+  const w = await createShipment(creds, {}, async () => reply(200, { id: '61', parcels: [{ seqNo: 1, id: '61' }, { seqNo: 2, id: '62' }] }));
+  assert.deepEqual(w.parcels, ['61', '62']);
+  assert.equal(w.price, null);
+});
+
+test('a "general error" (code 1) on create is unclear, a login error is a clear refusal', async () => {
+  const general = await createShipment(creds, {}, async () => reply(200, { error: { message: 'Възникна грешка', code: 1 } })).catch((e) => e);
+  assert.equal(general.rejected, false);
+  const login = await createShipment(creds, {}, async () => reply(200, { error: { message: 'bg.error.invalid.credentials (X)', code: 1 } })).catch((e) => e);
+  assert.equal(login.rejected, true);
+  const office = await createShipment(creds, {}, async () => reply(200, { error: { message: 'Невалиден офис', code: 180 } })).catch((e) => e);
+  assert.equal(office.rejected, true);
+});
+
+test('printWaybill prints every parcel of the shipment', async () => {
+  const r = recorder({ ok: true, status: 200, headers: new Map([['content-type', 'application/pdf']]), arrayBuffer: async () => new ArrayBuffer(4) });
+  await printWaybill(creds, '61', 'A4', r.impl, ['61', '62']);
+  assert.deepEqual(r.calls[0].body.parcels, [{ parcel: { id: '61' } }, { parcel: { id: '62' } }]);
+});
+
+test('orderPickup asks Speedy to send a courier for the shipment', async () => {
+  const r = recorder(reply(200, { orders: [{ id: 5 }] }));
+  await orderPickup(creds, '61', { contactName: 'Иван', phone: '0888888888' }, r.impl);
+  assert.match(r.calls[0].url, /\/v1\/pickup$/);
+  assert.deepEqual(r.calls[0].body.explicitShipmentIdList, ['61']);
+  assert.equal(r.calls[0].body.autoAdjustPickupDate, true);
+  assert.ok(r.calls[0].body.visitEndTime);
+  assert.deepEqual(r.calls[0].body.phoneNumber, { number: '0888888888' });
 });

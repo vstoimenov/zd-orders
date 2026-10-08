@@ -207,3 +207,69 @@ test('the nightly cron also syncs Speedy statuses', async () => {
   assert.deepEqual(json(res).speedyWaybills, { 'adhdbg.eu': { checked: 1, delivered: 1, returned: 0 } });
   assert.equal((await orderById(id)).status, 'delivered');
 });
+
+test('a shipment with several parcels prints a label for each', async () => {
+  await connect();
+  const id = await addOrder();
+  await withFetch(speedyApi({ shipment: () => reply(200, { id: '61', parcels: [{ seqNo: 1, id: '61' }, { seqNo: 2, id: '62' }], price: { total: 6, currency: 'EUR' } }) }).impl,
+    () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: { packCount: 2 } }));
+  const pr = speedyApi();
+  const res = fakeRes();
+  await withFetch(pr.impl, () => waybillsApi(fakeReq({ method: 'GET', url: `/api/admin/waybills?pdf=${id}&shop=${SHOP}`, headers: { cookie: cookie() } }), res));
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(pr.calls[0].body.parcels, [{ parcel: { id: '61' } }, { parcel: { id: '62' } }]);
+});
+
+test('sending from the contract address orders a courier; if that fails the waybill stays and the admin is told', async () => {
+  await connect({ senderType: 'client' });
+  const a = await addOrder();
+  const f = speedyApi({ pickup: () => reply(200, { orders: [{ id: 1 }] }) });
+  const w = await withFetch(f.impl, () => createWaybill(q, { orderId: a, scopeShopId: SHOP, input: {} }));
+  assert.equal(w.pickup, 'ordered');
+  assert.deepEqual(f.calls.find((c) => c.path === 'pickup').body.explicitShipmentIdList, ['61234567890']);
+  const b = await addOrder();
+  const bad = speedyApi({ pickup: () => reply(200, { error: { message: 'Няма възможност за вземане днес' } }), shipment: () => reply(200, { id: '999', price: { total: 6, currency: 'EUR' } }) });
+  const w2 = await withFetch(bad.impl, () => createWaybill(q, { orderId: b, scopeShopId: SHOP, input: {} }));
+  assert.equal(w2.number, '999');
+  assert.match(w2.pickupError, /MySpeedy/);
+  assert.equal((await orderById(b)).shipment.number, '999');
+  // from an office: no courier is ordered
+  await connect({ senderType: 'office' });
+  const c = await addOrder();
+  const off = speedyApi();
+  await withFetch(off.impl, () => createWaybill(q, { orderId: c, scopeShopId: SHOP, input: {} }));
+  assert.equal(off.calls.some((x) => x.path === 'pickup'), false);
+});
+
+test('a private-person contract saves no contact person', async () => {
+  const person = speedyApi({ 'client/contract': () => reply(200, { clients: [{ clientId: 5, clientName: 'Иван Иванов', privatePerson: true }] }) });
+  await withFetch(person.impl, () => saveSpeedy(q, SHOP, { ...body, senderClientId: '5', senderContact: 'Някой' }));
+  assert.equal((await speedyStatus(q, SHOP)).senderContact, '');
+});
+
+test('a Speedy cancel that times out keeps the waybill on the order', async () => {
+  await connect();
+  const id = await addOrder();
+  await withFetch(speedyApi().impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} }));
+  const lost = speedyApi({ 'shipment/cancel': () => { throw new TypeError('fetch failed'); } });
+  await assert.rejects(withFetch(lost.impl, () => cancelWaybill(q, { orderId: id, scopeShopId: SHOP })), /Няма връзка със Спиди/);
+  assert.equal((await orderById(id)).shipment.number, '61234567890');
+});
+
+test('the PDF needs Speedy to be connected', async () => {
+  await connect();
+  const id = await addOrder();
+  await withFetch(speedyApi().impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} }));
+  await withFetch(speedyApi().impl, () => saveSpeedy(q, SHOP, { active: false }));
+  const res = fakeRes();
+  await waybillsApi(fakeReq({ method: 'GET', url: `/api/admin/waybills?pdf=${id}&shop=${SHOP}`, headers: { cookie: cookie() } }), res);
+  assert.equal(res.statusCode, 400);
+  assert.match(json(res).error, /свържете Спиди/);
+});
+
+test('a waybill without a price from Speedy is stored without one', async () => {
+  await connect();
+  const id = await addOrder();
+  await withFetch(speedyApi({ shipment: () => reply(200, { id: '77' }) }).impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} }));
+  assert.equal((await orderById(id)).shipment.price, null);
+});

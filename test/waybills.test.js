@@ -117,7 +117,7 @@ test('createWaybill makes the waybill, stores it on the order and marks it shipp
   assert.equal(o.status, 'shipped');
   assert.deepEqual(o.shipment, {
     number: '1051604331075', courier: 'econt', pdf: 'https://ee.econt.com/x.pdf', price: 3.78, currency: 'EUR', demo: false,
-    status: '', createdAt: o.shipment.createdAt, trackUrl: 'https://www.econt.com/services/track-shipment/1051604331075',
+    status: '', parcels: [], createdAt: o.shipment.createdAt, trackUrl: 'https://www.econt.com/services/track-shipment/1051604331075',
   });
   await assert.rejects(withFetch(f.impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} })), /вече има товарителница/);
   assert.equal(f.calls.filter((c) => c.path.includes('createLabel')).length, 1, 'never a second waybill');

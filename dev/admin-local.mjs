@@ -40,6 +40,7 @@ function fakeSpeedy(p, b) {
   if (p === 'calculate') return json({ calculations: [{ serviceId: 505, price: { total: 6.12, currency: 'EUR' } }] });
   if (p === 'shipment') return json({ id: String(++speedyNo), price: { total: 6.12, currency: 'EUR' } });
   if (p === 'shipment/cancel') return json({});
+  if (p === 'pickup') return json({ orders: [{ id: 1 }] });
   if (p === 'track') return json({ parcels: b.parcels.map((x) => ({ parcelId: x.id, operations: [{ operationCode: 12, description: 'Предадена на куриер за доставка' }] })) });
   if (p === 'print') return { ok: true, status: 200, headers: new Map([['content-type', 'application/pdf']]), arrayBuffer: async () => new TextEncoder().encode('%PDF-1.4\n% local Speedy waybill\n%%EOF').buffer };
   return json({ error: { message: 'unknown', code: 1 } });
