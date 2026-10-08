@@ -6,7 +6,7 @@ import { send, safeEqual } from '../../lib/http.js';
 import { cbConfig, syncOrders } from '../../lib/cb-sync.js';
 import { metaConfig, syncMeta } from '../../lib/meta.js';
 import { listShops } from '../../lib/shops.js';
-import { econtStatus, syncEcontStatuses } from '../../lib/waybills.js';
+import { econtStatus, syncEcontStatuses, speedyStatus, syncSpeedyStatuses } from '../../lib/waybills.js';
 
 /** Vercel Cron calls this daily with `Authorization: Bearer $CRON_SECRET`. */
 export default async function handler(req, res) {
@@ -66,6 +66,14 @@ export default async function handler(req, res) {
     } catch (err) {
       console.error('[cron] econt waybill sync failed', shop.domain, err);
       (result.econtWaybills ??= {})[shop.domain] = { error: err.message };
+    }
+  }
+  for (const shop of shops) {
+    try {
+      if ((await speedyStatus(q, shop.id)).connected) (result.speedyWaybills ??= {})[shop.domain] = await syncSpeedyStatuses(q, shop.id);
+    } catch (err) {
+      console.error('[cron] speedy waybill sync failed', shop.domain, err);
+      (result.speedyWaybills ??= {})[shop.domain] = { error: err.message };
     }
   }
   return econtOk ? send(res, 200, result) : send(res, 500, { error: 'server', ...result });

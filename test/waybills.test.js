@@ -177,7 +177,7 @@ test('waybillDefaults fills the window from the order and the settings', async (
   assert.equal((await waybillDefaults(q, { orderId: id, scopeShopId: SHOP })).connected, false);
   await connect({ weight: '0,5', review: true });
   assert.deepEqual(await waybillDefaults(q, { orderId: id, scopeShopId: SHOP }), {
-    connected: true, demo: false, officeText: 'Офис Плевен', sender: 'Офис Младост, София',
+    connected: true, courier: 'econt', courierName: 'Еконт', demo: false, officeText: 'Офис Плевен', sender: 'Офис Младост, София',
     cod: 22.57, weight: 0.5, packCount: 1, description: '1 × Книга', payer: 'receiver', review: true,
   });
 });
@@ -347,7 +347,7 @@ test('when saving the created waybill fails, its number is still kept on the ord
   const real = q;
   let failed = false;
   const flaky = async (text, params) => {
-    if (!failed && /waybill_courier = 'econt'/.test(text)) { failed = true; throw new Error('connection reset'); }
+    if (!failed && /waybill_prev_status = status/.test(text)) { failed = true; throw new Error('connection reset'); }
     return real(text, params);
   };
   await assert.rejects(withFetch(econt().impl, () => createWaybill(flaky, { orderId: id, scopeShopId: SHOP, input: {} })), /1051604331075/);
