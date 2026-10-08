@@ -19,6 +19,7 @@ process.env.META_APP_ID = 'local-app'; process.env.META_APP_SECRET = 'local-secr
 const realFetch = globalThis.fetch;
 globalThis.fetch = async (url, init) => {
   const u = new URL(String(url));
+  if (u.hostname === 'api.speedy.bg') return fakeSpeedy(u.pathname.replace('/v1/', ''), JSON.parse(init.body));
   if (u.hostname !== 'graph.facebook.com') return realFetch(url, init);
   const ok = (d) => ({ ok: true, status: 200, json: async () => d });
   if (u.pathname.endsWith('/me/adaccounts')) return ok({ data: [
@@ -29,6 +30,20 @@ globalThis.fetch = async (url, init) => {
   if (u.pathname.endsWith('/insights')) return ok({ data: [] });
   return ok({});
 };
+// local only: a fake Speedy API (Speedy has no public test server) — sample contract, prices and waybills
+let speedyNo = 61000000000;
+function fakeSpeedy(p, b) {
+  const json = (d) => ({ ok: true, status: 200, headers: new Map([['content-type', 'application/json']]), json: async () => d });
+  if (b.password !== 'local-speedy') return json({ error: { message: 'bg.error.invalid.credentials (LOCAL)', code: 1 } });
+  if (p === 'client/contract') return json({ clients: [{ clientId: 77001, clientName: 'ЕТ Книги', objectName: 'Склад', privatePerson: false, address: { fullAddressString: 'гр. София, ул. Пиротска 5' } }] });
+  if (p === 'services') return json({ services: [{ id: 505, name: 'СТАНДАРТ 24 ЧАСА', cargoType: 'PARCEL' }, { id: 412, name: 'ПАЛЕТНА', cargoType: 'PALLET' }] });
+  if (p === 'calculate') return json({ calculations: [{ serviceId: 505, price: { total: 6.12, currency: 'EUR' } }] });
+  if (p === 'shipment') return json({ id: String(++speedyNo), price: { total: 6.12, currency: 'EUR' } });
+  if (p === 'shipment/cancel') return json({});
+  if (p === 'track') return json({ parcels: b.parcels.map((x) => ({ parcelId: x.id, operations: [{ operationCode: 12, description: 'Предадена на куриер за доставка' }] })) });
+  if (p === 'print') return { ok: true, status: 200, headers: new Map([['content-type', 'application/pdf']]), arrayBuffer: async () => new TextEncoder().encode('%PDF-1.4\n% local Speedy waybill\n%%EOF').buffer };
+  return json({ error: { message: 'unknown', code: 1 } });
+}
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'public');
 const q = await makeTestQuery();
 setQueryForTests(q);
@@ -69,6 +84,14 @@ await saveIntegration(q, 'econt', {
   config: { username: 'iasp-dev', demo: true, profileName: 'ЕТ КОНСУЛТ - ИВАН КИРЯЗОВ', profileCompany: true, senderAgent: 'Иван Кирязов', sender: { type: 'office', officeCode: '1107', addressId: '', address: null, text: 'Офис София Младост, София' },
     senderName: '', senderPhone: '0888888888', payer: 'receiver', weight: 1, description: '', review: false, active: true, connectedAt: new Date().toISOString() },
   secret: JSON.stringify({ username: 'iasp-dev', password: '1Asp-dev' }),
+});
+
+await q(`insert into zd.offices (id, courier, code, name, city) values ('speedy:12', 'speedy', '12', 'СОФИЯ - ЦЕНТЪР', 'София'), ('speedy:66', 'speedy', '66', 'ПЛЕВЕН - ЦЕНТЪР', 'Плевен')`);
+await insertOrder(q, { ...base, cbOrderId: 'L5', name: 'Елена Стоянова', phone: '0877123123', phoneNorm: '+359877123123', courier: 'speedy', deliveryType: 'speedy_office', officeId: 'speedy:66', officeText: 'СПИДИ – офис Плевен Център', city: 'Плевен', postCode: '5800', items: [{ name: 'Да се заобичаме с думи', qty: 1, price: 18.5 }], total: 22.57 });
+await saveIntegration(q, 'speedy', {
+  config: { username: '999111', clientId: 77001, clientName: 'ЕТ Книги', clientCompany: true, sender: { type: 'office', officeId: 12, text: 'СОФИЯ - ЦЕНТЪР' },
+    senderPhone: '0888888888', senderContact: 'Иван Петров', payer: 'receiver', weight: 1, description: '', review: 'OPEN', serviceId: 505, serviceName: 'СТАНДАРТ 24 ЧАСА', paperSize: 'A4', active: true, connectedAt: new Date().toISOString() },
+  secret: JSON.stringify({ username: '999111', password: 'local-speedy' }),
 });
 
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8' };

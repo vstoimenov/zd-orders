@@ -289,7 +289,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
         <div class="isec-head"><span class="isec-ic"><svg viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62L18.3 9.38a1 1 0 0 0-.78-.38H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></span><div><h2>Куриери</h2><div class="muted">Офисите и автоматите се обновяват всяка нощ</div></div></div>
         <div class="igrid">
           <div class="icard"><div class="tile econt">E<img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Еконт</b> <span class="chip ok">активен</span><div class="muted">Куриерски услуги и автомати</div><div class="muted" id="iEcont"></div><div class="muted" id="iEcontApiLine"></div></div><button type="button" class="primary" id="iEcontOpen">+ Товарителници</button></div>
-          <div class="icard"><div class="tile speedy">S<img src="https://www.google.com/s2/favicons?domain=speedy.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Спиди</b> <span class="chip ok">активен</span><div class="muted">Експресни куриерски доставки</div><div class="muted" id="iSpeedy"></div></div></div>
+          <div class="icard"><div class="tile speedy">S<img src="https://www.google.com/s2/favicons?domain=speedy.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Спиди</b> <span class="chip ok">активен</span><div class="muted">Експресни куриерски доставки</div><div class="muted" id="iSpeedy"></div><div class="muted" id="iSpeedyApiLine"></div></div><button type="button" class="primary" id="iSpeedyOpen">+ Товарителници</button></div>
           <div class="icard"><div class="tile boxnow">BN<img src="https://www.google.com/s2/favicons?domain=boxnow.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>BOX NOW</b> <span class="chip">скоро</span><div class="muted">Автомати за пратки</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
           <div class="icard"><div class="tile pigeon">PE<img src="https://www.google.com/s2/favicons?domain=pigeonexpress.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Pigeon Express</b> <span class="chip">скоро</span><div class="muted">Куриерски услуги</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
         </div>
@@ -481,9 +481,45 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       </div>
     </div>
   </div>
+  <div class="modal" id="speedyModal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="speedyTitle">
+      <div class="dhead"><div class="tile speedy">S<img src="https://www.google.com/s2/favicons?domain=speedy.bg&amp;sz=128" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></div><div><h2 id="speedyTitle">Спиди — товарителници <span class="chip" id="iSpeedyChip"></span></h2><div class="muted" style="font-size:15px">Създавайте товарителници от поръчките по вашия договор със Спиди</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div class="tip">💡 Нужен е <b>договор със Спиди</b>. Поискайте от търговския си представител в Спиди <b>API потребител и парола</b> (не са данните за MySpeedy). Паролата се пази криптирана и не се показва никъде.<br>
+          Товарителниците са <b>истински пратки</b> по вашия договор; наложеният платеж се изплаща според договора ви.</div>
+        <div class="fgrid">
+          <label>API потребител (Спиди)<input type="text" id="sUser" autocomplete="off" placeholder="напр. 999123"></label>
+          <label>API парола (Спиди)<input type="password" id="sPass" autocomplete="new-password" placeholder="парола"></label>
+          <div class="actions" style="margin:0;grid-column:1/-1"><button type="button" class="ghost" id="sLoad">Зареди договора</button><span class="muted" id="sProfile"></span></div>
+          <label>Подател по договора<select id="sClient"><option value="">— натиснете „Зареди договора“ —</option></select></label>
+          <label>Услуга<select id="sService"><option value="">— натиснете „Зареди договора“ —</option></select></label>
+        </div>
+        <h3 style="margin:0 0 10px">Откъде изпращате</h3>
+        <div class="radios"><label><input type="radio" name="sSenderType" value="office" checked> От офис на Спиди</label><label><input type="radio" name="sSenderType" value="client"> От адреса по договора (идват да вземат пратката)</label></div>
+        <div class="fgrid">
+          <label id="sOfficeWrap">Офис на Спиди<input type="text" id="sOffice" list="sOffices" placeholder="започнете да пишете град или офис"><datalist id="sOffices"></datalist></label>
+          <label>Телефон на подателя<input type="tel" id="sPhone" maxlength="30" placeholder="0888…"></label>
+          <label>Лице за контакт<input type="text" id="sContact" maxlength="60" placeholder="задължително, ако подателят е фирма"></label>
+          <label>Доставката се плаща от<select id="sPayer"><option value="receiver">Получателя</option><option value="sender">Мен (подателя)</option></select></label>
+          <label>Тегло по подразбиране (кг)<input type="text" inputmode="decimal" id="sWeight" value="1"></label>
+          <label>Описание на пратката<input type="text" id="sDesc" maxlength="100" placeholder="по подразбиране — артикулите от поръчката"></label>
+          <label>Преглед преди плащане<select id="sReview"><option value="">Без преглед</option><option value="OPEN">Отваряне (преглед)</option><option value="TEST">Отваряне и тест</option></select></label>
+          <label>Печат<select id="sPaper"><option value="A4">Товарителница A4</option><option value="A6">Етикет A6</option></select></label>
+          <label class="check"><input type="checkbox" id="sActive" checked> Активна интеграция</label>
+        </div>
+        <div class="actions"><button type="button" class="primary" id="sSave">Запази и провери</button></div>
+        <div class="syncbox">
+          <h3>Статуси на пратките</h3>
+          <div class="muted" style="margin-bottom:10px">Всяка нощ изпратените поръчки минават автоматично в „Доставена“ или „Върната“ според Спиди.</div>
+          <div class="actions"><button type="button" class="ghost" id="sSync">Провери статусите сега</button></div>
+          <div class="muted" id="sInfo" style="margin-top:10px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="modal" id="wbModal" hidden>
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="wbTitle" style="max-width:640px">
-      <div class="dhead"><div class="tile econt">E<img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></div><div><h2 id="wbTitle">Товарителница Еконт</h2><div class="muted" style="font-size:15px" id="wbWho"></div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dhead"><div class="tile econt" id="wbTile">E<img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></div><div><h2 id="wbTitle">Товарителница</h2><div class="muted" style="font-size:15px" id="wbWho"></div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
       <div class="dbody">
         <div class="demo-banner" id="wbDemo" hidden>Тестов режим — пратката не е истинска и поръчката не сменя статуса си.</div>
         <div class="tip" id="wbRoute"></div>
@@ -643,10 +679,11 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
         '<a href="#" data-wbcancel="' + i + '">Анулирай</a></span>';
     }
     if (o.waybillState === 'unknown') {
-      return '<span class="wb warn">⚠️ Не е ясно дали товарителницата е създадена — проверете в <a href="https://ee.econt.com" target="_blank" rel="noopener">e-Econt</a>.<br><a href="#" data-wbrelease="' + i + '">Освободи (няма товарителница)</a></span>';
+      var site = o.courier === 'speedy' ? ['https://www.myspeedy.bg', 'MySpeedy'] : ['https://ee.econt.com', 'e-Econt'];
+      return '<span class="wb warn">⚠️ Не е ясно дали товарителницата е създадена — проверете в <a href="' + site[0] + '" target="_blank" rel="noopener">' + site[1] + '</a>.<br><a href="#" data-wbrelease="' + i + '">Освободи (няма товарителница)</a></span>';
     }
     if (o.waybillState === 'creating') return '<span class="wb muted">Товарителницата се създава…</span>';
-    return o.courier === 'econt' && ['new', 'confirmed', 'shipped'].indexOf(o.status) >= 0 ? '<button type="button" class="wbbtn" data-wb="' + i + '">Създай товарителница</button>' : '';
+    return (o.courier === 'econt' || o.courier === 'speedy') && ['new', 'confirmed', 'shipped'].indexOf(o.status) >= 0 ? '<button type="button" class="wbbtn" data-wb="' + i + '">Създай товарителница</button>' : '';
   }
   function render() {
     $('count').textContent = total + (total === 1 ? ' поръчка' : ' поръчки');
@@ -720,7 +757,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     if (btn.getAttribute('data-wb') != null) { openWaybill(orders[btn.getAttribute('data-wb')]); return; }
     if (btn.getAttribute('data-wbrelease') != null) {
       e.preventDefault();
-      if (!window.confirm('Проверихте ли в e-Econt, че за тази поръчка НЯМА създадена товарителница?\n\nАко има — не освобождавайте, а я анулирайте в e-Econt.')) return;
+      if (!window.confirm('Проверихте ли в сайта на куриера (e-Econt / MySpeedy), че за тази поръчка НЯМА създадена товарителница?\n\nАко има — не освобождавайте, а я анулирайте там.')) return;
       wb({ action: 'release', id: orders[btn.getAttribute('data-wbrelease')].id }).then(function () { load(page); }).catch(function (err) { if (err.message !== 'auth') alert(err.message); });
       return;
     }
@@ -1024,6 +1061,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       (m.lastError ? '<br><span class="err">Последна грешка: ' + esc(m.lastError) + '</span>' : '');
     $('iEcont').textContent = s.econt.offices + ' офиса и автомата · обновено ' + when(s.econt.updatedAt);
     renderEcont(s.econtApi || {});
+    renderSpeedy(s.speedyApi || {});
     $('iSpeedy').textContent = s.speedy.offices + ' офиса и автомата · обновено ' + when(s.speedy.updatedAt);
   }
   /* ---- Еконт: настройки за товарителници ---- */
@@ -1106,6 +1144,80 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     }).catch(function (e) { showErr('eInfo', e); });
   });
 
+  /* ---- Спиди: настройки за товарителници ---- */
+  var speedyOfficesLoaded = false, lastSpeedy = {};
+  function renderSpeedy(e) {
+    lastSpeedy = e;
+    chip('iSpeedyChip', e.connected, 'Свързан', e.configured ? 'Неактивен' : 'Не е свързан');
+    $('iSpeedyOpen').textContent = e.configured ? 'Товарителници' : '+ Товарителници';
+    $('iSpeedyOpen').className = e.configured ? 'ghost' : 'primary';
+    $('iSpeedyApiLine').textContent = e.connected ? 'Товарителници: ' + (e.profileName || e.username) + ' · ' + (e.sender ? e.sender.text : '—') : '';
+    var r = e.lastSyncResult;
+    $('sInfo').innerHTML = 'Последна проверка: ' + esc(when(e.lastSyncAt)) + (r ? ' (проверени ' + r.checked + ', доставени ' + r.delivered + ', върнати ' + r.returned + ')' : '') +
+      (e.lastError ? '<br><span class="err">Последна грешка: ' + esc(e.lastError) + '</span>' : '');
+  }
+  function speedySenderType() { var r = document.querySelector('input[name="sSenderType"]:checked'); return r ? r.value : 'office'; }
+  function speedySenderToggle() { $('sOfficeWrap').hidden = speedySenderType() !== 'office'; }
+  function loadSpeedyOffices() {
+    if (speedyOfficesLoaded) return Promise.resolve();
+    return fetch('/api/offices?courier=speedy').then(function (r) { return r.json(); }).then(function (d) {
+      speedyOfficesLoaded = true;
+      $('sOffices').innerHTML = (d.offices || []).map(function (o) { return '<option value="' + esc(o.code + ' · ' + o.name + (o.isAutomat ? ' (автомат)' : '')) + '">'; }).join('');
+    }).catch(function () {});
+  }
+  function openSpeedy() {
+    var e = lastSpeedy || {};
+    $('sUser').value = e.username || '';
+    $('sPass').value = '';
+    $('sPass').placeholder = e.configured ? '•••••• запазена (въведете нова, за да я смените)' : 'парола';
+    $('sClient').innerHTML = e.clientId ? '<option value="' + esc(e.clientId) + '">' + esc(e.profileName) + '</option>' : '<option value="">— натиснете „Зареди договора“ —</option>';
+    $('sService').innerHTML = e.serviceId ? '<option value="' + esc(e.serviceId) + '">' + esc(e.serviceName || e.serviceId) + '</option>' : '<option value="">— натиснете „Зареди договора“ —</option>';
+    var type = e.sender ? e.sender.type : 'office';
+    [].forEach.call(document.querySelectorAll('input[name="sSenderType"]'), function (r) { r.checked = r.value === type; });
+    $('sOffice').value = e.sender && e.sender.type === 'office' ? e.sender.officeId + ' · ' + e.sender.text : '';
+    $('sPhone').value = e.senderPhone || '';
+    $('sContact').value = e.senderContact || '';
+    $('sPayer').value = e.payer || 'receiver';
+    $('sWeight').value = String(e.weight == null ? 1 : e.weight).replace('.', ',');
+    $('sDesc').value = e.description || '';
+    $('sReview').value = e.review || '';
+    $('sPaper').value = e.paperSize || 'A4';
+    $('sActive').checked = e.active !== false;
+    $('sProfile').textContent = e.profileName ? 'Договор: ' + e.profileName : '';
+    speedySenderToggle();
+    $('speedyModal').hidden = false;
+    loadSpeedyOffices();
+  }
+  $('iSpeedyOpen').addEventListener('click', openSpeedy);
+  [].forEach.call(document.querySelectorAll('input[name="sSenderType"]'), function (r) { r.addEventListener('change', speedySenderToggle); });
+  $('sLoad').addEventListener('click', function () {
+    $('sProfile').textContent = 'Зареждам…';
+    busy($('sLoad'), integ({ action: 'speedy_profile', username: $('sUser').value.trim(), password: $('sPass').value })).then(function (d) {
+      var p = d.profile, keepC = $('sClient').value, keepS = $('sService').value;
+      $('sClient').innerHTML = p.clients.map(function (c) { return '<option value="' + esc(c.id) + '"' + (String(c.id) === keepC ? ' selected' : '') + '>' + esc(c.text) + (c.company ? ' (фирма)' : '') + '</option>'; }).join('');
+      $('sService').innerHTML = p.services.map(function (x) { return '<option value="' + esc(x.id) + '"' + (String(x.id) === keepS || (!keepS && x.id === 505) ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('');
+      $('sProfile').textContent = 'Договорът е зареден ✓ (' + p.clients.length + (p.clients.length === 1 ? ' подател' : ' подателя') + ')';
+    }).catch(function (e) { showErr('sProfile', e); });
+  });
+  $('sSave').addEventListener('click', function () {
+    var b = { action: 'save_speedy', username: $('sUser').value.trim(), password: $('sPass').value, senderType: speedySenderType(),
+      senderOfficeId: ($('sOffice').value.match(/^\s*(\d+)/) || [])[1] || '', senderClientId: $('sClient').value, serviceId: $('sService').value,
+      senderPhone: $('sPhone').value, senderContact: $('sContact').value, payer: $('sPayer').value, weight: $('sWeight').value, description: $('sDesc').value,
+      review: $('sReview').value, paperSize: $('sPaper').value, active: $('sActive').checked };
+    $('sInfo').textContent = 'Проверявам договора в Спиди…';
+    busy($('sSave'), integ(b)).then(function (d) {
+      $('sPass').value = '';
+      return loadIntegrations().then(function () { $('sInfo').textContent = d.active === false ? 'Интеграцията е изключена.' : 'Свързано ✓ ' + d.profileName + ' · ' + d.sender; });
+    }).catch(function (e) { showErr('sInfo', e); });
+  });
+  $('sSync').addEventListener('click', function () {
+    $('sInfo').textContent = 'Проверявам…';
+    busy($('sSync'), integ({ action: 'sync_speedy' })).then(function (d) {
+      var r = d.result; load(page);
+      return loadIntegrations().then(function () { $('sInfo').textContent = 'Готово: проверени ' + r.checked + ', доставени ' + r.delivered + ', върнати ' + r.returned + '.'; });
+    }).catch(function (e) { showErr('sInfo', e); });
+  });
+
   /* ---- товарителница от поръчка ---- */
   var wbOrder = null;
   function wb(body) {
@@ -1118,15 +1230,21 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   function wbInput() {
     return { id: wbOrder.id, cod: $('wbCod').value, weight: $('wbWeight').value, packCount: $('wbPacks').value, payer: $('wbPayer').value, description: $('wbDesc').value, review: $('wbReview').checked };
   }
+  var wbCourierName = 'Еконт';
   function openWaybill(o) {
     wbOrder = o;
+    var sp = o.courier === 'speedy';
+    wbCourierName = sp ? 'Спиди' : 'Еконт';
+    $('wbTitle').textContent = 'Товарителница ' + wbCourierName;
+    $('wbTile').className = 'tile ' + (sp ? 'speedy' : 'econt');
+    $('wbTile').innerHTML = (sp ? 'S' : 'E') + '<img src="https://www.google.com/s2/favicons?domain=' + (sp ? 'speedy.bg' : 'econt.com') + '&amp;sz=128" alt="" referrerpolicy="no-referrer" onerror="this.remove()">';
     $('wbWho').textContent = (o.name || 'Клиент') + ' · ' + o.phone + ' · ' + o.total.toFixed(2) + ' ' + cur(o.currency);
     $('wbInfo').textContent = 'Зареждам…'; $('wbRoute').textContent = '';
     $('wbCreate').disabled = true; $('wbCalc').disabled = true; $('wbDemo').hidden = true;
     $('wbModal').hidden = false;
     wb({ action: 'defaults', id: o.id }).then(function (d) {
       if (!d.connected) {
-        $('wbInfo').innerHTML = '<span class="err">Еконт не е свързан за този магазин.</span> <a href="#integrations" id="wbGoInt">Свържете го в Интеграции → Еконт</a>.';
+        $('wbInfo').innerHTML = '<span class="err">' + esc(wbCourierName) + ' не е свързан за този магазин.</span> <a href="#integrations" id="wbGoInt">Свържете го в Интеграции → ' + esc(wbCourierName) + '</a>.';
         return;
       }
       $('wbDemo').hidden = !d.demo;
@@ -1149,7 +1267,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   });
   $('wbCreate').addEventListener('click', function () {
     var demo = $('wbCreate').getAttribute('data-demo') === '1';
-    if (!demo && !window.confirm('Да създам ли истинска товарителница в Еконт за ' + (wbOrder.name || 'клиента') + '?\n\nПратката ще се таксува според условията на профила ви. Поръчката ще стане „Изпратена“.')) return;
+    if (!demo && !window.confirm('Да създам ли истинска товарителница в ' + wbCourierName + ' за ' + (wbOrder.name || 'клиента') + '?\n\nПратката ще се таксува според условията ви при куриера. Поръчката ще стане „Изпратена“.')) return;
     $('wbInfo').textContent = 'Създавам товарителницата…';
     var b = wbInput(); b.action = 'create'; b.expectDemo = demo;
     busy($('wbCreate'), wb(b)).then(function (w) {
