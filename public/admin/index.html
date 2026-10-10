@@ -704,13 +704,15 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       });
   }
   /** Econt waybill of the order: number (tracking), PDF, cancel — or the button that creates it */
+  /** the Speedy PDF is printed by our server: through the demo's API in the demo */
+  function pdfHref(u) { return String(u || '').replace(/^\/api\/admin\//, API); }
   function shipmentCell(o, i) {
     var w = o.shipment;
     if (w) {
       return '<span class="wb">📦 <a href="' + esc(w.trackUrl || '#') + '" target="_blank" rel="noopener" title="Проследи пратката">' + esc(w.number) + '</a>' + (w.demo ? '<span class="tag">тест</span>' : '') +
         (w.price != null ? ' · ' + esc(w.price.toFixed(2)) + ' ' + esc(cur(w.currency)) : '') +
         (w.status ? '<br><span class="muted">' + esc(w.status) + '</span>' : '') +
-        '<br>' + (w.pdf ? '<a href="' + esc(w.pdf) + '" target="_blank" rel="noopener">PDF за печат</a> · ' : '') +
+        '<br>' + (w.pdf ? '<a href="' + esc(pdfHref(w.pdf)) + '" target="_blank" rel="noopener">PDF за печат</a> · ' : '') +
         '<a href="#" data-wbcancel="' + i + '">Анулирай</a></span>';
     }
     if (o.waybillState === 'unknown') {
@@ -1404,7 +1406,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     var b = wbInput(); b.action = 'create'; b.expectDemo = demo;
     busy($('wbCreate'), wb(b)).then(function (w) {
       $('wbInfo').innerHTML = '✓ Товарителница <b>' + esc(w.number) + '</b>' + (w.price != null ? ' (' + esc(money(w.price, w.currency)) + ')' : '') +
-        (w.pdf ? ' · <a href="' + esc(w.pdf) + '" target="_blank" rel="noopener">PDF за печат</a>' : '') +
+        (w.pdf ? ' · <a href="' + esc(pdfHref(w.pdf)) + '" target="_blank" rel="noopener">PDF за печат</a>' : '') +
         (w.pickup === 'ordered' ? '<br>✓ Поръчан е куриер да вземе пратката.' : '') + (w.pickupError ? '<br><span class="err">' + esc(w.pickupError) + '</span>' : '');
       $('wbCreate').disabled = true; dashLoaded = false; load(page);
     }).catch(function (e) { showErr('wbInfo', e); });

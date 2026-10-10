@@ -10,14 +10,28 @@ process.env.META_APP_ID = '1136036008845539';
 process.env.META_APP_SECRET = 'real-meta-secret';
 process.env.VAPID_PUBLIC_KEY = 'BDemoPublic';
 process.env.VAPID_PRIVATE_KEY = 'demo-private';
+process.env.ZD_APP_PASSWORD = 'real-db-role-password';
+process.env.VERCEL_OIDC_TOKEN = 'real-oidc';
 
 let demo, push;
-const call = async (method, url, body) => {
-  const res = fakeRes();
-  await demo(fakeReq({ method, url, body: body && JSON.stringify(body) }), res);
-  return res;
-};
+const econtCalls = [];
+// Econt's test server is the only real outside call of the demo: the tests answer for it
+globalThis.fetch = async (url, init) => { econtCalls.push({ url: String(url), auth: init?.headers?.Authorization }); return { ok: true, status: 200, json: async () => ({ profiles: [{ client: { name: 'ЕТ КОНСУЛТ', phones: [] }, addresses: [] }] }) }; };
+
+/** a visitor: keeps the demo cookie it was given, like a browser */
+function visitor() {
+  let cookie = '';
+  return async (method, url, body) => {
+    const res = fakeRes();
+    await demo(fakeReq({ method, url, body: body && JSON.stringify(body), headers: cookie ? { cookie } : {} }), res);
+    const set = res.headers['set-cookie'];
+    if (set) cookie = String(set).split(';')[0];
+    return res;
+  };
+}
+let call;
 before(async () => {
+  call = visitor();
   ({ default: demo } = await import('../api/demo/[route].js'));
   push = await import('../lib/push.js');
 });
@@ -44,6 +58,9 @@ test('the demo opens without a password and is full of sample data', async () =>
 
 test('the demo never uses the real database, admin secret or platform keys', async () => {
   assert.equal(process.env.DATABASE_URL, undefined);
+  assert.equal(process.env.ZD_APP_PASSWORD, undefined, 'only allowed variables stay');
+  assert.equal(process.env.VERCEL_OIDC_TOKEN, undefined);
+  assert.notEqual(process.env.VAPID_PRIVATE_KEY, 'demo-private', 'its own push keys');
   assert.notEqual(process.env.ADMIN_SECRET, 'real-admin-secret');
   assert.equal(process.env.NEKOREKTEN_API_KEY, undefined);
   assert.equal(process.env.META_APP_SECRET, undefined);
@@ -51,11 +68,42 @@ test('the demo never uses the real database, admin secret or platform keys', asy
   assert.equal(res.statusCode, 404, 'no Facebook login route');
 });
 
-test('Econt in the demo works only in test mode', async () => {
+test('Econt in the demo always uses its public test account on the test server, whatever a visitor types', async () => {
   const shops = json(await call('GET', '/api/demo/shops')).shops;
-  const res = await call('POST', `/api/demo/integrations?shop=${shops[0].id}`, { action: 'econt_profile', username: 'real-user', password: 'real-pass', demo: false });
-  assert.equal(res.statusCode, 400);
-  assert.match(json(res).error, /тестов режим/);
+  econtCalls.length = 0;
+  for (const demoFlag of [false, 0, '', null]) {
+    const res = await call('POST', `/api/demo/integrations?shop=${shops[0].id}`, { action: 'econt_profile', username: 'real-user', password: 'real-pass', demo: demoFlag });
+    assert.equal(res.statusCode, 200);
+  }
+  assert.ok(econtCalls.length >= 4);
+  for (const c of econtCalls) {
+    assert.match(c.url, /^https:\/\/demo\.econt\.com\//);
+    assert.equal(c.auth, `Basic ${Buffer.from('iasp-dev:1Asp-dev').toString('base64')}`, 'the typed login never leaves the demo');
+  }
+});
+
+test('every visitor gets their own demo: changes and notifications stay with them', async () => {
+  const a = visitor(), b = visitor();
+  const shopA = json(await a('GET', '/api/demo/shops')).shops[0].id;
+  const shopB = json(await b('GET', '/api/demo/shops')).shops[0].id;
+  const sent = [];
+  push.setPushSenderForTests(async (sub, payload) => { sent.push(sub.endpoint); return { statusCode: 201 }; });
+  await b('POST', `/api/demo/push?shop=${shopB}`, { action: 'subscribe', subscription: { endpoint: 'https://fcm.googleapis.com/fcm/send/visitor-b', keys: { p256dh: 'p', auth: 'a' } } });
+  await a('POST', `/api/demo/integrations?shop=${shopA}`, { action: 'save_shop', name: 'ХАКНАТО', url: '', email: '', phone: '', currency: 'EUR' });
+  const before = json(await b('GET', `/api/demo/orders?shop=${shopB}`)).total;
+  await new Promise((r) => setTimeout(r, 10));
+  assert.equal((await a('POST', `/api/demo/simulate?shop=${shopA}`, {})).statusCode, 200);
+  assert.equal(json(await b('GET', `/api/demo/orders?shop=${shopB}`)).total, before, 'B does not see A\'s order');
+  assert.equal(json(await b('GET', '/api/demo/shops')).shops[0].name, 'Демо магазин', 'B does not see A\'s rename');
+  assert.deepEqual(sent, [], 'A\'s order never notifies B');
+});
+
+test('a demo has limits: too many shops are refused', async () => {
+  const v = visitor();
+  let last;
+  for (let i = 0; i < 8; i++) last = await v('POST', '/api/demo/shops', { name: `Магазин ${i}`, domain: `m${i}-demo.bg` });
+  assert.equal(last.statusCode, 429);
+  assert.match(json(last).error, /лимит/);
 });
 
 test('"Симулирай нова поръчка" adds an order and sends the new-order notification', async () => {

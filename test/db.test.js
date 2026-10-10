@@ -12,3 +12,14 @@ test('never more queries in flight than connections (the Supabase pooler hangs o
   await assert.rejects(run(() => Promise.reject(new Error('boom'))), /boom/);
   assert.equal(await run(() => slow(99)), 99, 'a failed query frees its slot');
 });
+
+test('the real admin never loads demo code, and the demo can never open the real database', async () => {
+  const { readFileSync } = await import('node:fs');
+  const admin = readFileSync(new URL('../api/admin/[route].js', import.meta.url), 'utf8');
+  assert.ok(!/lib\/demo/.test(admin));
+  const { getQuery, setQueryForTests } = await import('../lib/db.js');
+  setQueryForTests(null);
+  process.env.ZD_DEMO = '1';
+  process.env.DATABASE_URL = 'postgres://x:y@real.invalid/db';
+  try { assert.throws(() => getQuery(), /demo/); } finally { delete process.env.ZD_DEMO; delete process.env.DATABASE_URL; }
+});

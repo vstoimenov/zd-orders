@@ -90,11 +90,59 @@
       "destination": "/admin/index.html"
     },
     {
+      "source": "/demo/manifest.webmanifest",
+      "destination": "/admin/manifest-demo.webmanifest"
+    },
+    {
       "source": "/demo/:path*",
       "destination": "/admin/:path*"
     }
   ],
   "redirects": [
+    {
+      "source": "/demo",
+      "has": [
+        {
+          "type": "host",
+          "value": "kurier.profitbrand.online"
+        }
+      ],
+      "destination": "https://zd-orders.vercel.app/demo/",
+      "permanent": false
+    },
+    {
+      "source": "/demo/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "kurier.profitbrand.online"
+        }
+      ],
+      "destination": "https://zd-orders.vercel.app/demo/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/admin",
+      "has": [
+        {
+          "type": "host",
+          "value": "zd-orders.vercel.app"
+        }
+      ],
+      "destination": "https://kurier.profitbrand.online/admin/",
+      "permanent": false
+    },
+    {
+      "source": "/admin/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "zd-orders.vercel.app"
+        }
+      ],
+      "destination": "https://kurier.profitbrand.online/admin/:path*",
+      "permanent": false
+    },
     {
       "source": "/demo",
       "destination": "/demo/",
