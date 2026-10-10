@@ -14,6 +14,8 @@ import officesApi from '../api/offices.js';
 process.env.ADMIN_PASSWORD = 'local-test';
 process.env.ADMIN_SECRET = 'local-secret';
 process.env.INTEGRATIONS_SECRET = 'local-integrations-secret';
+// local only: throwaway push keys, so "Известия" can be tried here
+{ const { default: webpush } = await import('web-push'); const k = webpush.generateVAPIDKeys(); process.env.VAPID_PUBLIC_KEY = k.publicKey; process.env.VAPID_PRIVATE_KEY = k.privateKey; }
 // local only: pretend a Meta app exists and answer Facebook's Graph API with sample data (no real calls leave this machine)
 process.env.META_APP_ID = 'local-app'; process.env.META_APP_SECRET = 'local-secret';
 const realFetch = globalThis.fetch;
@@ -95,7 +97,7 @@ await saveIntegration(q, 'speedy', {
   secret: JSON.stringify({ username: '999111', password: 'local-speedy' }),
 });
 
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8' };
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
 http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
   if (url === '/api/offices') return officesApi(Object.assign(req, { query: Object.fromEntries(new URL(req.url, 'http://x').searchParams) }), res);

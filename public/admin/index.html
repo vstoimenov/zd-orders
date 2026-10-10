@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Админ</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b0b0a">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Поръчки">
 <style>
 :root{
   --bg:#f4f4f1;--card:#fff;--line:#e6e4dc;--ink:#14140f;--muted:#6d6c66;
@@ -221,6 +227,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       <div class="sec">Система</div>
       <a href="#integrations" data-view="integrations"><svg viewBox="0 0 24 24"><path d="M9 2v6M15 2v6"/><path d="M6 8h12v4a6 6 0 0 1-12 0z"/><path d="M12 18v4"/></svg>Интеграции</a>
     </nav>
+    <button type="button" class="logout" id="notifBtn"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Известия</button>
     <button type="button" class="logout" id="logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>Изход</button>
   </aside>
   <div class="scrim" id="scrim"></div>
@@ -478,6 +485,18 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
           <div class="actions"><button type="button" class="ghost" id="eSync">Провери статусите сега</button></div>
           <div class="muted" id="eInfo" style="margin-top:10px"></div>
         </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="notifModal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="notifTitle" style="max-width:560px">
+      <div class="dhead"><div class="tile" style="color:#111;background:var(--accent)">🔔</div><div><h2 id="notifTitle">Известия за нови поръчки</h2><div class="muted" style="font-size:15px">На този телефон или компютър</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div class="tip" id="nIos" hidden>📱 <b>На iPhone:</b> натиснете <b>Сподели</b> (квадратчето със стрелка) → <b>„Добави към началния екран“</b>, после отворете админа <b>от новата иконка „Поръчки“</b> и включете известията оттам. В Safari директно iPhone не позволява известия.</div>
+        <div class="tip" id="nInstall" hidden>💡 За удобство добавете админа на началния екран: в менюто на браузъра → <b>„Инсталиране на приложението“</b> / <b>„Добави към началния екран“</b>.</div>
+        <p id="nState" style="font-size:15px;margin:0 0 14px"></p>
+        <div class="actions"><button type="button" class="primary" id="nOn">🔔 Включи известия</button><button type="button" class="ghost" id="nTest" hidden>Пробно известие</button><button type="button" class="ghost" id="nOff" hidden>Изключи</button></div>
+        <div class="muted" id="nInfo" style="margin-top:10px"></div>
       </div>
     </div>
   </div>
@@ -1142,6 +1161,80 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       var r = d.result; load(page);
       return loadIntegrations().then(function () { $('eInfo').textContent = 'Готово: проверени ' + r.checked + ', доставени ' + r.delivered + ', върнати ' + r.returned + '.'; });
     }).catch(function (e) { showErr('eInfo', e); });
+  });
+
+  /* ---- известия за нови поръчки (Web Push; на iPhone само от иконката на началния екран) ---- */
+  var swReg = null;
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { scope: './' }).then(function (r) { swReg = r; }).catch(function () {});
+  var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  function pushApi(body) {
+    return fetch(withShop('/api/admin/push'), { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+      .then(function (r) {
+        if (r.status === 401) { showLogin(); throw new Error('auth'); }
+        return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; });
+      });
+  }
+  function keyBytes(b64) {
+    var s = (b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+    var raw = atob(s), out = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+  function readyReg() { return swReg ? Promise.resolve(swReg) : navigator.serviceWorker.ready; }
+  function shopLabel(id) { return !id ? 'всички магазини' : (shopById(id) ? 'магазин „' + shopById(id).display + '“' : 'един магазин'); }
+  function notifState(text, on) {
+    $('nState').innerHTML = text;
+    $('nOn').hidden = on; $('nOff').hidden = !on; $('nTest').hidden = !on;
+  }
+  function refreshNotif() {
+    $('nInfo').textContent = '';
+    $('nIos').hidden = !(isIos && !standalone);
+    $('nInstall').hidden = isIos || standalone;
+    var supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    if (!supported) {
+      notifState(isIos && !standalone ? 'Първо добавете админа на началния екран (вижте горе).' : 'Този браузър не поддържа известия.', false);
+      $('nOn').disabled = true; return;
+    }
+    $('nOn').disabled = false;
+    if (Notification.permission === 'denied') { notifState('⛔ Известията са забранени за този сайт — разрешете ги от настройките на браузъра/телефона.', false); $('nOn').disabled = true; return; }
+    readyReg().then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (s) {
+      if (!s) { notifState('Известията са <b>изключени</b> на това устройство. Ще идват за ' + esc(shopLabel(currentShop === 'all' ? null : currentShop)) + ' (според избора горе вляво).', false); return; }
+      return pushApi({ action: 'status', endpoint: s.endpoint }).then(function (d) {
+        if (d.subscribed) notifState('✓ Известията са <b>включени</b> за ' + esc(shopLabel(d.shopId)) + '.', true);
+        else notifState('Известията са <b>изключени</b> на това устройство.', false);
+      });
+    }).catch(function (e) { showErr('nInfo', e); });
+  }
+  $('notifBtn').addEventListener('click', function () { $('notifModal').hidden = false; refreshNotif(); });
+  $('nOn').addEventListener('click', function () {
+    $('nInfo').textContent = 'Включвам…';
+    var key;
+    busy($('nOn'), pushApi().then(function (d) {
+      if (!d.enabled || !d.publicKey) throw new Error('Известията още не са настроени на сървъра.');
+      key = d.publicKey;
+      return Notification.requestPermission();
+    }).then(function (perm) {
+      if (perm !== 'granted') throw new Error('Не разрешихте известията.');
+      return readyReg();
+    }).then(function (reg) {
+      return reg.pushManager.getSubscription().then(function (old) { return old || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(key) }); });
+    }).then(function (s) {
+      return pushApi({ action: 'subscribe', subscription: s.toJSON() }).then(function () { return pushApi({ action: 'test', endpoint: s.endpoint }); });
+    })).then(function () { refreshNotif(); $('nInfo').textContent = 'Готово — изпратих пробно известие.'; })
+      .catch(function (e) { showErr('nInfo', e); });
+  });
+  $('nTest').addEventListener('click', function () {
+    busy($('nTest'), readyReg().then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (s) {
+      if (!s) throw new Error('Известията не са включени.');
+      return pushApi({ action: 'test', endpoint: s.endpoint });
+    })).then(function () { $('nInfo').textContent = 'Изпратено ✓ — трябва да се появи до няколко секунди.'; }).catch(function (e) { showErr('nInfo', e); });
+  });
+  $('nOff').addEventListener('click', function () {
+    busy($('nOff'), readyReg().then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (s) {
+      if (!s) return;
+      return pushApi({ action: 'unsubscribe', endpoint: s.endpoint }).then(function () { return s.unsubscribe(); });
+    })).then(function () { refreshNotif(); $('nInfo').textContent = 'Изключено.'; }).catch(function (e) { showErr('nInfo', e); });
   });
 
   /* ---- Спиди: настройки за товарителници ---- */

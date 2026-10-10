@@ -9,7 +9,8 @@
     "test": "node --test \"test/**/*.test.js\""
   },
   "dependencies": {
-    "postgres": "^3.4.9"
+    "postgres": "^3.4.9",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8"

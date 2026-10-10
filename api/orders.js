@@ -7,6 +7,7 @@ import { syncStockSafe } from '../lib/stock.js';
 import { trafficSourceFor } from '../lib/visits.js';
 import { setCors, readJson, send, clientIp } from '../lib/http.js';
 import { allowedShopOrigin } from '../lib/shops.js';
+import { notifyNewOrder } from '../lib/push.js';
 
 const RATE_LIMIT = 20; // orders per IP per 10 minutes (generous: shared mobile IPs / CGNAT)
 
@@ -49,6 +50,7 @@ export default async function handler(req, res) {
     if (nkKey) {
       try { await checkOrders(q, [{ id: r.id, phoneNorm: v.order.phoneNorm }], nkKey); } catch (err) { console.error('[orders] nekorekten', err); }
     }
+    if (r.inserted) await notifyNewOrder(q, r.id); // the owner's phone (never fails the order, waits at most a few seconds)
     return send(res, 200, { ok: true, inserted: r.inserted, duplicate: r.duplicate });
   } catch (err) {
     console.error('[orders] store failed', v.order.cbOrderId, err);

@@ -8,9 +8,10 @@ import inventory from '../../lib/admin/inventory.js';
 import meta from '../../lib/admin/meta-oauth.js';
 import shops from '../../lib/admin/shops.js';
 import waybills from '../../lib/admin/waybills.js';
+import push from '../../lib/admin/push.js';
 import { send } from '../../lib/http.js';
 
-const ROUTES = { login, orders, stats, costs, integrations, inventory, meta, shops, waybills };
+const ROUTES = { login, orders, stats, costs, integrations, inventory, meta, shops, waybills, push };
 const pick = (name) => (typeof name === 'string' && Object.hasOwn(ROUTES, name) ? ROUTES[name] : null);
 
 export default function handler(req, res) {
