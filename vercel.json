@@ -100,6 +100,28 @@
   ],
   "redirects": [
     {
+      "source": "/demo/",
+      "has": [
+        {
+          "type": "host",
+          "value": "kurier.profitbrand.online"
+        }
+      ],
+      "destination": "https://zd-orders.vercel.app/demo/",
+      "permanent": false
+    },
+    {
+      "source": "/admin/",
+      "has": [
+        {
+          "type": "host",
+          "value": "zd-orders.vercel.app"
+        }
+      ],
+      "destination": "https://kurier.profitbrand.online/admin/",
+      "permanent": false
+    },
+    {
       "source": "/demo",
       "has": [
         {
