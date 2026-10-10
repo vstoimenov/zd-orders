@@ -172,6 +172,8 @@ tr.st-new{background:#fffbeb}
 details.manual{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
 details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
 .warn{color:var(--warn);font-weight:600}
+.demobar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent-ink);border-radius:var(--radius);padding:12px 16px;margin-bottom:18px}
+.demobar>div{flex:1 1 320px}
 .wb{display:block;margin-bottom:6px;font-size:13px;line-height:1.5}
 .wb a{font-weight:700}
 .wb .tag{display:inline-block;margin-left:4px;padding:0 7px;border-radius:999px;background:#fff4d6;color:#8a6100;font-size:11px;font-weight:700}
@@ -234,6 +236,11 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   <div>
     <div class="topbar"><button type="button" class="iconbtn" id="menuBtn" aria-label="Меню"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button><span class="where" id="where"></span></div>
     <main>
+      <div class="demobar" id="demoBar" hidden>
+        <div><b>Демо версия</b> — магазините и поръчките са измислени и се нулират. Пробвайте всичко: товарителници (Еконт работи на тестовия си сървър), финанси, наличности, интеграции. За известия: <b>🔔 Известия</b> вляво → включете → после натиснете бутона.</div>
+        <button type="button" class="primary" id="demoSim">🛒 Симулирай нова поръчка</button>
+        <span id="demoInfo"></span>
+      </div>
     <section id="dashView" hidden>
       <div class="pagehead"><h1>Табло</h1>
         <form class="filters" id="dFilters" style="margin:0">
@@ -597,6 +604,9 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
 <script src="roas.js"></script>
 <script>
 (function () {
+  // the same page is the public demo at /demo/ (sample data, no password) — then it talks to /api/demo/
+  var DEMO = location.pathname.indexOf('/demo') === 0;
+  var API = DEMO ? '/api/demo/' : '/api/admin/';
   var STATUSES = [['new', 'Нова'], ['confirmed', 'Потвърдена'], ['shipped', 'Изпратена'], ['delivered', 'Доставена'], ['returned', 'Върната'], ['cancelled', 'Отказана']];
   var page = 1, pageSize = 50, total = 0, orders = [];
   var current = { status: '', from: '', to: '', q: '' };
@@ -656,7 +666,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     var p = filters(); p.set('page', target);
     var id = ++reqId;
     loading = true; updatePager();
-    fetch(withShop('/api/admin/orders?' + p), { credentials: 'same-origin' })
+    fetch(withShop(API + 'orders?' + p), { credentials: 'same-origin' })
       .then(function (r) {
         if (r.status === 401) return null;
         if (!r.ok) throw new Error(r.status);
@@ -736,7 +746,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     var btn = $('login').querySelector('button');
     $('loginErr').textContent = '';
     btn.disabled = true;
-    fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: $('pw').value }) })
+    fetch(API + 'login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: $('pw').value }) })
       .then(function (r) {
         if (r.ok) { $('pw').value = ''; load(page); }
         else if (r.status === 401) $('loginErr').textContent = 'Грешна парола.';
@@ -746,14 +756,14 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       .then(function () { btn.disabled = false; });
   });
   $('filters').addEventListener('submit', function (e) { e.preventDefault(); snapshot(); load(1); });
-  $('csv').addEventListener('click', function () { location.href = withShop('/api/admin/orders?' + filters() + '&format=csv'); });
+  $('csv').addEventListener('click', function () { location.href = withShop(API + 'orders?' + filters() + '&format=csv'); });
   $('prev').addEventListener('click', function () { load(page - 1); });
   $('next').addEventListener('click', function () { load(page + 1); });
   $('rows').addEventListener('change', function (e) {
     var i = e.target.getAttribute('data-status');
     if (i == null) return;
     var o = orders[i], prev = o.status, next = e.target.value;
-    fetch(withShop('/api/admin/orders'), { method: 'PATCH', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: o.id, status: next }) })
+    fetch(withShop(API + 'orders'), { method: 'PATCH', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: o.id, status: next }) })
       .then(function (r) {
         if (r.status === 401) { e.target.value = prev; showLogin(); return; }
         if (!r.ok) throw new Error(r.status);
@@ -769,7 +779,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       var o = orders[d];
       if (!window.confirm('Да изтрия ли поръчката на ' + (o.name || 'клиент без име') + ' (' + o.total.toFixed(2) + ' ' + o.currency + ')?\n\nТя ще изчезне само от тази система (не и от ConvertBuilder) и не може да се върне.')) return;
       btn.disabled = true;
-      fetch(withShop('/api/admin/orders'), { method: 'DELETE', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: o.id }) })
+      fetch(withShop(API + 'orders'), { method: 'DELETE', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: o.id }) })
         .then(function (r) {
           if (r.status === 401) { showLogin(); return; }
           if (r.status === 400) return r.json().then(function (d) { btn.disabled = false; alert(d.error); });
@@ -925,7 +935,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   function loadDash() {
     var r = periodRange($('dPeriod').value), p = new URLSearchParams({ from: r[0], to: r[1] });
     $('dCards').innerHTML = '<div class="muted">Зареждане…</div>';
-    fetch(withShop('/api/admin/stats?' + p), { credentials: 'same-origin' })
+    fetch(withShop(API + 'stats?' + p), { credentials: 'same-origin' })
       .then(function (res) { if (res.status === 401) { showLogin(); return null; } if (!res.ok) throw new Error(res.status); return res.json(); })
       .then(function (d) { if (d) renderDash(d); })
       .catch(function () { $('dCards').innerHTML = '<div class="err">Грешка при зареждане на таблото. Опитайте пак.</div>'; });
@@ -953,7 +963,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
 
   /* ---- Интеграции ---- */
   function integ(body) {
-    return fetch(withShop('/api/admin/integrations'), { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+    return fetch(withShop(API + 'integrations'), { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
       .then(function (r) {
         if (r.status === 401) { showLogin(); throw new Error('auth'); }
         return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; });
@@ -998,15 +1008,15 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     var name = currentShop === 'all' ? 'Всички магазини' : (s ? s.display : 'Моят магазин');
     $('shopName').textContent = name;
     $('shopInitial').textContent = currentShop === 'all' ? '∑' : (name.trim().charAt(0).toUpperCase() || 'М');
-    document.title = name + ' – админ';
-    $('iMetaFb').setAttribute('href', withShop('/api/admin/meta?start=1'));
+    document.title = name + (DEMO ? ' – демо' : ' – админ');
+    $('iMetaFb').setAttribute('href', withShop(API + 'meta?start=1'));
     $('shopMenu').innerHTML = shops.filter(function (x) { return !x.hidden; }).map(function (x) {
       return '<button type="button" data-shop="' + esc(x.id) + '" class="' + (x.id === currentShop ? 'on' : '') + '"><span class="mini">' + esc(x.display.charAt(0).toUpperCase()) + '</span>' + esc(x.display) + '</button>';
     }).join('') + '<button type="button" data-shop="all" class="' + (currentShop === 'all' ? 'on' : '') + '"><span class="mini">∑</span>Всички магазини</button>' +
       '<hr><button type="button" class="add" data-add-shop="1"><span class="mini">+</span>Добави магазин</button>';
   }
   function loadShops() {
-    return fetch('/api/admin/shops', { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); })
+    return fetch(API + 'shops', { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); })
       .then(function (d) {
         shops = d.shops || [];
         if (currentShop !== 'all' && !shopById(currentShop)) currentShop = (shops[0] || {}).id || '';
@@ -1037,7 +1047,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   });
   $('nsSave').addEventListener('click', function () {
     $('nsErr').textContent = '';
-    busy($('nsSave'), fetch('/api/admin/shops', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: $('nsName').value, domain: $('nsDomain').value }) })
+    busy($('nsSave'), fetch(API + 'shops', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: $('nsName').value, domain: $('nsDomain').value }) })
       .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
       .then(function (d) { $('shopModal').hidden = true; return loadShops().then(function () { location.hash = '#integrations'; chooseShop(d.shop.id); }); })
       .catch(function (e) { $('nsErr').textContent = e.message; });
@@ -1169,6 +1179,19 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     }).catch(function (e) { showErr('eInfo', e); });
   });
 
+  /* ---- демо: лента и „Симулирай нова поръчка“ ---- */
+  if (DEMO) {
+    $('demoBar').hidden = false;
+    $('logout').hidden = true;
+    $('demoSim').addEventListener('click', function () {
+      $('demoInfo').textContent = 'Създавам поръчка…';
+      busy($('demoSim'), fetch(withShop(API + 'simulate'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
+        .then(function () { $('demoInfo').textContent = '✓ Нова поръчка — виж я най-отгоре (и известието, ако си ги включил).'; dashLoaded = false; location.hash = '#orders'; load(1); })
+        .catch(function (e) { $('demoInfo').textContent = e.message; });
+    });
+  }
+
   /* ---- известия за нови поръчки (Web Push; на iPhone само от иконката на началния екран) ---- */
   var swReady = 'serviceWorker' in navigator ? navigator.serviceWorker.register('sw.js', { scope: './' }) : Promise.reject(new Error('Този браузър не поддържа известия.'));
   swReady.catch(function () {});
@@ -1176,7 +1199,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   var standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   function pushApi(body) {
-    return fetch(withShop('/api/admin/push'), { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+    return fetch(withShop(API + 'push'), { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
       .then(function (r) {
         if (r.status === 401) { showLogin(); throw new Error('auth'); }
         return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; });
@@ -1330,7 +1353,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   /* ---- товарителница от поръчка ---- */
   var wbOrder = null;
   function wb(body) {
-    return fetch(withShop('/api/admin/waybills'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    return fetch(withShop(API + 'waybills'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       .then(function (r) {
         if (r.status === 401) { showLogin(); throw new Error('auth'); }
         return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('Сървърът не отговори (' + r.status + ') — обновете страницата и проверете поръчката')); return d; });
@@ -1498,7 +1521,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   var inv = null, invFilter = 'all', invEditing = null, invAdjusting = null;
   var STATE_LABEL = { ok: 'в наличност', low: 'ниска наличност', out: 'изчерпан', untracked: 'не се следи' };
   function invCall(body, query) {
-    return fetch(withShop('/api/admin/inventory' + (query || '')), { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+    return fetch(withShop(API + 'inventory' + (query || '')), { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
       .then(function (r) {
         if (r.status === 401) { showLogin(); throw new Error('auth'); }
         return r.json().then(function (d) { if (!r.ok) throw new Error(d.error === 'server' ? 'Грешка на сървъра. Опитайте пак.' : d.error || ('HTTP ' + r.status)); return d; });
@@ -1588,7 +1611,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   /* ---- Разходи ---- */
   var costsData = null;
   function costsFetch(method, body) {
-    return fetch(withShop('/api/admin/costs'), { method: method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+    return fetch(withShop(API + 'costs'), { method: method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
       .then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } if (!r.ok) throw new Error(r.status); return r.json(); });
   }
   function num(v) { return v == null ? '' : String(v); }
@@ -1636,7 +1659,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   });
   $('scrim').addEventListener('click', function () { $('app').classList.remove('open'); });
   $('logout').addEventListener('click', function () {
-    fetch('/api/admin/login', { method: 'DELETE', credentials: 'same-origin' }).catch(function () {})
+    fetch(API + 'login', { method: 'DELETE', credentials: 'same-origin' }).catch(function () {})
       .then(function () { booted = false; shown = false; showLogin(); });
   });
   $('dPeriod').addEventListener('change', function () { var custom = $('dPeriod').value === 'custom'; $('dFrom').hidden = !custom; $('dTo').hidden = !custom; if (!custom) loadDash(); });

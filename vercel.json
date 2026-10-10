@@ -25,6 +25,10 @@
     },
     "api/admin/[route].js": {
       "maxDuration": 60
+    },
+    "api/demo/[route].js": {
+      "maxDuration": 30,
+      "includeFiles": "db/migrations/**"
     }
   },
   "headers": [
@@ -57,12 +61,44 @@
           "value": "no-store"
         }
       ]
+    },
+    {
+      "source": "/demo(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
     }
   ],
   "rewrites": [
     {
       "source": "/kurier.js",
       "destination": "/checkout.js"
+    },
+    {
+      "source": "/demo/",
+      "destination": "/admin/index.html"
+    },
+    {
+      "source": "/demo/:path*",
+      "destination": "/admin/:path*"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/demo",
+      "destination": "/demo/",
+      "permanent": false
     }
   ]
 }
