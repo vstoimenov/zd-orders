@@ -14,9 +14,10 @@ self.addEventListener('push', (e) => {
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
   const url = new URL((e.notification.data && e.notification.data.url) || '/admin/#orders', self.location.origin).href;
-  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+  // focus first (while the tap still allows it), then move the open admin to the order list; anything odd → a new window
+  e.waitUntil(self.clients.matchAll({ type: 'window' }).then((list) => {
     const open = list.find((c) => c.url.startsWith(self.location.origin + '/admin'));
-    if (open) return open.navigate(url).then((c) => (c || open).focus());
-    return self.clients.openWindow(url);
+    if (!open) return self.clients.openWindow(url);
+    return open.focus().then((c) => (c || open).navigate(url)).catch(() => self.clients.openWindow(url));
   }));
 });

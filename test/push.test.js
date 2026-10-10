@@ -5,7 +5,7 @@ import { fakeReq, fakeRes, json } from './helpers/http.js';
 import { setQueryForTests } from '../lib/db.js';
 import { insertOrder } from '../lib/orders-repo.js';
 import { signSession } from '../lib/auth.js';
-import { saveSubscription, removeSubscription, notifyNewOrder, setPushSenderForTests } from '../lib/push.js';
+import { saveSubscription, removeSubscription, notifyNewOrder, setPushSenderForTests, testPush } from '../lib/push.js';
 import { processCbOrder } from '../lib/cb-sync.js';
 import pushApi from '../lib/admin/push.js';
 import orders from '../api/orders.js';
@@ -141,5 +141,55 @@ test('old orders found by a sync never notify (only orders from the last hours d
   const id = await addOrder();
   await q(`update zd.orders set created_at = now() - interval '3 days' where id = $1`, [id]);
   await notifyNewOrder(q, id);
+  assert.equal(sent.length, 0);
+});
+
+test('a failing test notification is reported, not "done"', async () => {
+  await saveSubscription(q, { subscription: sub(1), shopId: null });
+  answer = () => ({ statusCode: 403 });
+  const err = console.error; console.error = () => {};
+  try { await assert.rejects(testPush(q, sub(1).endpoint), /не стигна/); } finally { console.error = err; }
+});
+
+test('a device that keeps failing (e.g. an old key) is dropped after 5 failures', async () => {
+  await saveSubscription(q, { subscription: sub(1), shopId: null });
+  answer = () => ({ statusCode: 403 });
+  const err = console.error; console.error = () => {};
+  try { for (let i = 0; i < 5; i++) await notifyNewOrder(q, await addOrder()); } finally { console.error = err; }
+  assert.equal((await q(`select count(*)::int as n from zd.push_subscriptions`))[0].n, 0);
+});
+
+test('a push service that never answers does not hold the order longer than the limit', async () => {
+  await saveSubscription(q, { subscription: sub(1), shopId: null });
+  setPushSenderForTests(() => new Promise(() => {}));
+  const err = console.error; console.error = () => {};
+  const t = Date.now();
+  try { await notifyNewOrder(q, await addOrder(), { maxWaitMs: 200 }); } finally { console.error = err; }
+  assert.ok(Date.now() - t < 1500);
+});
+
+test('"all shops" devices open the orders without switching the shop; a shop device opens its shop', async () => {
+  await saveSubscription(q, { subscription: sub(1), shopId: null });
+  await saveSubscription(q, { subscription: sub(2), shopId: SHOP });
+  await notifyNewOrder(q, await addOrder());
+  const byEndpoint = Object.fromEntries(sent.map((s) => [s.endpoint, s.payload.url]));
+  assert.equal(byEndpoint[sub(1).endpoint], '/admin/#orders');
+  assert.equal(byEndpoint[sub(2).endpoint], `/admin/?shop=${SHOP}#orders`);
+});
+
+test('subscribing needs a real shop or "all"; an unknown shop is refused', async () => {
+  const res = fakeRes();
+  await pushApi(fakeReq({ method: 'POST', url: '/api/admin/push?shop=nonsense', headers: { cookie: cookie() }, body: { action: 'subscribe', subscription: sub(1) } }), res);
+  assert.equal(res.statusCode, 400);
+});
+
+test('a ConvertBuilder sync of old orders sends nothing', async () => {
+  await saveSubscription(q, { subscription: sub(1), shopId: null });
+  const { upsertCbOrder } = await import('../lib/orders-repo.js');
+  const { mapOrder } = await import('../lib/convertbuilder.js');
+  const old = { id: 7, invoiceNo: 1, created: Math.floor(Date.now() / 1000) - 5 * 86400, customerName: 'Стара Поръчка', customerEmail: '', shippingAddress: { phone: '0888123456', city: 'Плевен', address: 'x' }, total: 10, shippingName: 'Еконт', paymentMethod: 'cod', status: 'pending', items: [] };
+  const r = await upsertCbOrder(q, { ...mapOrder(old, { store: 'adhdbg.eu', currency: 'EUR' }), shopId: SHOP });
+  assert.equal(r.inserted, true);
+  await notifyNewOrder(q, r.id);
   assert.equal(sent.length, 0);
 });

@@ -673,7 +673,13 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
         if (!booted) {
           booted = true;
           var back = new URLSearchParams(location.search).get('shop'); // back from "Вход с Facebook": the shop it was started for
-          if (back) { currentShop = back; try { localStorage.setItem('zdShop', back); } catch (e) { /* private mode */ } }
+          if (back) {
+            currentShop = back;
+            try { localStorage.setItem('zdShop', back); } catch (e) { /* private mode */ }
+            // used once: a reload or the home-screen app must not keep forcing this shop over the switcher
+            var rest = new URLSearchParams(location.search); rest.delete('shop');
+            try { history.replaceState(null, '', location.pathname + (rest.toString() ? '?' + rest : '') + location.hash); } catch (e) { /* old browser */ }
+          }
           loadShops().catch(function () {}).then(function () { showView(viewFromHash()); afterFacebook(); });
         }
       })
@@ -1164,8 +1170,9 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   });
 
   /* ---- известия за нови поръчки (Web Push; на iPhone само от иконката на началния екран) ---- */
-  var swReg = null;
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { scope: './' }).then(function (r) { swReg = r; }).catch(function () {});
+  var swReady = 'serviceWorker' in navigator ? navigator.serviceWorker.register('sw.js', { scope: './' }) : Promise.reject(new Error('Този браузър не поддържа известия.'));
+  swReady.catch(function () {});
+  var pushKey = '';
   var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   var standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   function pushApi(body) {
@@ -1181,7 +1188,13 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
     return out;
   }
-  function readyReg() { return swReg ? Promise.resolve(swReg) : navigator.serviceWorker.ready; }
+  function readyReg() { return swReady.catch(function () { throw new Error('Приложението не успя да се инсталира — презаредете страницата.'); }); }
+  function sameKey(sub, key) {
+    var a = sub.options && sub.options.applicationServerKey;
+    if (!a) return true; // the browser does not tell: keep it
+    var b = keyBytes(key), u = new Uint8Array(a);
+    return u.length === b.length && u.every(function (x, i) { return x === b[i]; });
+  }
   function shopLabel(id) { return !id ? 'всички магазини' : (shopById(id) ? 'магазин „' + shopById(id).display + '“' : 'един магазин'); }
   function notifState(text, on) {
     $('nState').innerHTML = text;
@@ -1189,6 +1202,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   }
   function refreshNotif() {
     $('nInfo').textContent = '';
+    pushApi().then(function (d) { pushKey = d.enabled ? d.publicKey : ''; }).catch(function () {}); // ready before the tap (iPhone wants the permission request right in the tap)
     $('nIos').hidden = !(isIos && !standalone);
     $('nInstall').hidden = isIos || standalone;
     var supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
@@ -1208,17 +1222,19 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   }
   $('notifBtn').addEventListener('click', function () { $('notifModal').hidden = false; refreshNotif(); });
   $('nOn').addEventListener('click', function () {
+    var key = pushKey;
+    if (!key) { $('nInfo').innerHTML = '<span class="err">Известията още не са настроени на сървъра (или зареждат) — опитайте след секунда.</span>'; return; }
     $('nInfo').textContent = 'Включвам…';
-    var key;
-    busy($('nOn'), pushApi().then(function (d) {
-      if (!d.enabled || !d.publicKey) throw new Error('Известията още не са настроени на сървъра.');
-      key = d.publicKey;
-      return Notification.requestPermission();
-    }).then(function (perm) {
+    // asked straight in the tap: iPhone shows the question only then
+    busy($('nOn'), Promise.resolve(Notification.requestPermission()).then(function (perm) {
       if (perm !== 'granted') throw new Error('Не разрешихте известията.');
       return readyReg();
     }).then(function (reg) {
-      return reg.pushManager.getSubscription().then(function (old) { return old || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(key) }); });
+      return reg.pushManager.getSubscription().then(function (old) {
+        if (old && sameKey(old, key)) return old;
+        // subscribed with an old key (or none yet): a new subscription
+        return (old ? old.unsubscribe() : Promise.resolve()).then(function () { return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(key) }); });
+      });
     }).then(function (s) {
       return pushApi({ action: 'subscribe', subscription: s.toJSON() }).then(function () { return pushApi({ action: 'test', endpoint: s.endpoint }); });
     })).then(function () { refreshNotif(); $('nInfo').textContent = 'Готово — изпратих пробно известие.'; })
