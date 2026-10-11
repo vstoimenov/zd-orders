@@ -159,6 +159,9 @@ tr.st-new{background:#fffbeb}
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:6px;background:var(--bg);border:1px solid var(--line);border-radius:14px;margin-bottom:18px}
 .seg button{border:0;background:none;padding:11px;border-radius:10px;font-weight:700;color:var(--muted)}
 .seg button.on{background:var(--accent);color:#111}
+.kseg{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:6px;background:#fff;border:1px solid var(--line);border-radius:14px;margin-bottom:18px;max-width:520px}
+.kseg button{border:0;background:none;padding:11px;border-radius:10px;font-weight:700;color:var(--muted)}
+.kseg button.on{background:var(--accent);color:#111}
 .tip{background:#fafaf7;border:1px solid var(--line);border-radius:12px;padding:12px 16px;color:var(--muted);margin-bottom:18px}
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;margin-bottom:20px}
 .fgrid label{display:flex;flex-direction:column;gap:7px;font-weight:700;font-size:14px}
@@ -434,8 +437,10 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
       <div class="pickshop" id="pickShops"></div>
     </section>
     <section id="campaignsView" hidden>
-      <div class="pagehead"><div><h1>Кампании</h1><div class="sub">SMS и WhatsApp съобщения до клиентите ви от поръчките</div></div><button type="button" class="primary" id="kNew">+ Нова кампания</button></div>
-      <div class="tip">💡 Изпращането директно оттук идва със свързването на SMS доставчик / WhatsApp Business (Интеграции → Съобщения). Дотогава: готова кампания → <b>„Експорт CSV“</b> → качете файла във вашата SMS услуга (там са телефон, име и вече попълненото съобщение за всеки клиент).</div>
+      <div class="pagehead"><div><h1>Кампании</h1><div class="sub">SMS и WhatsApp съобщения до клиентите ви от поръчките</div></div><button type="button" class="primary" id="kNew">+ Нова SMS кампания</button></div>
+      <div class="kseg" id="kTabs"><button type="button" class="on" data-ktab="sms">📱 SMS кампании</button><button type="button" data-ktab="whatsapp">💬 WhatsApp кампании</button></div>
+      <div class="tip" id="kTipSms">📱 <b>SMS</b> стига до всеки телефон. Цената е на SMS: на кирилица едно SMS е до <b>70 знака</b> (на латиница — 160), по-дългите съобщения стават 2–3 SMS. Изпращането директно оттук идва със свързването на SMS доставчик (Интеграции → Съобщения). Дотогава: готова кампания → <b>„Експорт CSV“</b> → качете файла във вашата SMS услуга (там са телефон, име и попълненото съобщение за всеки клиент).</div>
+      <div class="tip" id="kTipWa" hidden>💬 <b>WhatsApp</b>: по-евтин и с картинки/бутони, но само за клиенти с WhatsApp. През WhatsApp Business (Meta) се плаща на съобщение: <b>рекламни ~0,09 €</b>, <b>за поръчки ~0,02 €</b>, отговори до 24 ч след писмо от клиента — безплатно (ориентировъчни цени за България). Рекламните съобщения минават през одобрен от Meta шаблон. Автоматичното изпращане идва със свързването на WhatsApp Business; дотогава — „Експорт CSV“, а за единични съобщения — бутонът <b>„💬 Потвърди“</b> при поръчката (безплатно, от вашия телефон).</div>
       <div class="panel" id="kListPanel"><table id="kTable"></table></div>
       <div class="panel" id="kEditor" hidden>
         <h2 style="margin-top:0" id="kTitle">Нова кампания</h2>
@@ -443,7 +448,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
           <div>
             <div class="fgrid">
               <label>Име на кампанията<input type="text" id="kName" maxlength="80" placeholder="напр. Благодарност за поръчката"></label>
-              <label>Канал<select id="kChannel"><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option></select></label>
+              <label hidden>Канал<select id="kChannel"><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option></select></label>
             </div>
             <h3 style="margin:0 0 4px">Кои клиенти</h3>
             <div class="muted">Един човек = един телефон, от поръчките на този магазин.</div>
@@ -485,8 +490,8 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
           <textarea id="kOptText" style="min-height:80px" placeholder="0888 123 456"></textarea>
           <div class="actions"><button type="button" class="ghost" id="kOptAdd">Добави</button><span class="muted" id="kOptInfo"></span></div>
           <div id="kOptList" class="muted" style="margin-top:8px;max-height:200px;overflow:auto"></div>
-          <h3 style="margin:16px 0 4px">Цена на SMS</h3>
-          <div class="actions"><input type="text" inputmode="decimal" id="kPrice" style="width:110px"> €/SMS <button type="button" class="ghost" id="kPriceSave">Запази</button></div>
+          <div id="kPriceBox"><h3 style="margin:16px 0 4px">Цена на SMS</h3>
+          <div class="actions"><input type="text" inputmode="decimal" id="kPrice" style="width:110px"> €/SMS <button type="button" class="ghost" id="kPriceSave">Запази</button></div></div>
         </div>
       </div>
     </section>
@@ -1445,7 +1450,16 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     ['Върни клиента', 'Здравейте, {име}! Отдавна не сте ни посещавали — новите продукти в {магазин} ви чакат: {линк} За отказ: STOP'],
   ];
   var VARS = ['{име}', '{пълно_име}', '{продукт}', '{магазин}', '{линк}'];
-  var kEditing = null, kTimer = null, kList = [];
+  var kEditing = null, kTimer = null, kList = [], kTab = 'sms';
+  function setKTab(tab) {
+    kTab = tab === 'whatsapp' ? 'whatsapp' : 'sms';
+    [].forEach.call(document.querySelectorAll('#kTabs button'), function (b) { b.classList.toggle('on', b.getAttribute('data-ktab') === kTab); });
+    $('kTipSms').hidden = kTab !== 'sms'; $('kTipWa').hidden = kTab !== 'whatsapp'; $('kPriceBox').hidden = kTab !== 'sms';
+    $('kNew').textContent = kTab === 'sms' ? '+ Нова SMS кампания' : '+ Нова WhatsApp кампания';
+    if (kEditing && kEditing.channel !== kTab) $('kEditor').hidden = true;
+    if (!kEditing && !$('kEditor').hidden) { $('kChannel').value = kTab; kPreview(); }
+    renderKList();
+  }
   $('kPresets').innerHTML = PRESETS.map(function (p, i) { return '<button type="button" class="ghost" data-preset="' + i + '">' + esc(p[0]) + '</button>'; }).join('');
   $('kVars').innerHTML = VARS.map(function (v) { return '<button type="button" class="ghost" data-var="' + v + '">' + v + '</button>'; }).join('');
   $('kStatuses').innerHTML = STATUSES.map(function (s) { return '<label><input type="checkbox" value="' + s[0] + '"' + (s[0] === 'delivered' ? ' checked' : '') + '> ' + s[1] + '</label>'; }).join('');
@@ -1466,7 +1480,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
         $('kKpis').innerHTML = '<div><b>' + p.count + '</b><div class="muted">получатели</div></div>' +
           (sms ? '<div><b>' + p.sms.parts + '</b><div class="muted">SMS на човек · ' + p.sms.chars + ' знака' + (p.sms.encoding === 'UCS2' ? ' (кирилица: 70/SMS)' : '') + '</div></div>' +
             '<div><b>' + money(p.cost, 'EUR') + '</b><div class="muted">приблизителна цена (' + String(p.smsPrice).replace('.', ',') + ' €/SMS)</div></div>' :
-            '<div><b>по тарифа на Meta</b><div class="muted">WhatsApp се таксува на разговор</div></div>');
+            '<div><b>~' + money(p.count * 0.09, 'EUR') + '</b><div class="muted">ориентир за рекламни съобщения (~0,09 € на съобщение по тарифата на Meta)</div></div>');
         $('kSample').innerHTML = p.sample.length ? p.sample.map(function (x) { return '<div class="bubble' + (sms ? ' sms' : '') + '"><small>' + esc(x.name) + ' · ' + esc(x.phone) + '</small>' + esc(x.text) + '</div>'; }).join('') +
           (p.count > p.sample.length ? '<div class="muted">… и още ' + (p.count - p.sample.length) + '</div>' : '') : '<div class="muted">Няма клиенти по тези условия.</div>';
       }).catch(function (e) { if (e.message !== 'auth') $('kSample').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; });
@@ -1475,7 +1489,8 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
   function openCampaign(c) {
     kEditing = c || null;
     $('kTitle').textContent = c ? 'Кампания: ' + c.name : 'Нова кампания';
-    $('kName').value = c ? c.name : ''; $('kChannel').value = c ? c.channel : 'sms'; $('kMsg').value = c ? c.message : PRESETS[0][1];
+    $('kName').value = c ? c.name : ''; $('kChannel').value = c ? c.channel : kTab; $('kMsg').value = c ? c.message : PRESETS[0][1];
+    $('kTitle').textContent = (c ? 'Кампания: ' + c.name : 'Нова ' + (kTab === 'sms' ? 'SMS' : 'WhatsApp') + ' кампания');
     var sg = (c && c.segment) || {};
     [].forEach.call(document.querySelectorAll('#kStatuses input'), function (x) { x.checked = (sg.statuses || ['delivered']).indexOf(x.value) >= 0; });
     $('kFrom').value = sg.from || ''; $('kTo').value = sg.to || ''; $('kProduct').value = sg.product || ''; $('kMin').value = sg.minOrders || 1; $('kNoFlag').checked = sg.excludeFlagged !== false;
@@ -1495,11 +1510,19 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     return fetch(withShop(API + 'campaigns'), { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); }).then(function (d) {
       kList = d.campaigns || [];
       $('kPrice').value = String(d.smsPrice).replace('.', ',');
-      $('kTable').innerHTML = table(['Кампания', 'Канал', 'Получатели', 'Състояние', 'Обновена', ''], kList.map(function (c, i) {
-        return ['<b>' + esc(c.name) + '</b>', c.channel === 'sms' ? 'SMS' : 'WhatsApp', String(c.recipients), c.status === 'ready' ? '<span class="badge ok">готова</span>' : '<span class="badge">чернова</span>', esc(when(c.updatedAt)),
-          '<button type="button" class="ghost" data-kopen="' + i + '">Отвори</button>' + (c.consent ? ' <button type="button" class="ghost" data-kexport="' + esc(c.id) + '">Експорт CSV</button>' : '') + ' <button type="button" class="del" data-kdel="' + i + '">Изтрий</button>'];
-      }));
+      renderKList();
     }).catch(function () {});
+  }
+  /** only the campaigns of the open tab (SMS or WhatsApp) */
+  function renderKList() {
+    var name = kTab === 'sms' ? 'SMS' : 'WhatsApp';
+    var rows = [];
+    kList.forEach(function (c, i) {
+      if (c.channel !== kTab) return;
+      rows.push(['<b>' + esc(c.name) + '</b>', String(c.recipients), c.status === 'ready' ? '<span class="badge ok">готова</span>' : '<span class="badge">чернова</span>', esc(when(c.updatedAt)),
+        '<button type="button" class="ghost" data-kopen="' + i + '">Отвори</button>' + (c.consent ? ' <button type="button" class="ghost" data-kexport="' + esc(c.id) + '">Експорт CSV</button>' : '') + ' <button type="button" class="del" data-kdel="' + i + '">Изтрий</button>']);
+    });
+    $('kTable').innerHTML = rows.length ? table([name + ' кампания', 'Получатели', 'Състояние', 'Обновена', ''], rows) : '<tr><td class="muted">Още няма ' + name + ' кампании. Натиснете „+ Нова ' + name + ' кампания“.</td></tr>';
   }
   function loadCampaigns() {
     loadCampaignList();
@@ -1507,6 +1530,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     kApi({ action: 'optouts' }).then(function (d) { $('kOptList').innerHTML = d.optouts.length ? d.optouts.map(function (o) { return esc(o.phone) + ' <a href="#" data-kunopt="' + esc(o.phone) + '">махни</a>'; }).join('<br>') : 'Няма.'; }).catch(function () {});
   }
   $('kNew').addEventListener('click', function () { openCampaign(null); });
+  $('kTabs').addEventListener('click', function (e) { var t = e.target.getAttribute('data-ktab'); if (t) setKTab(t); });
   $('kClose').addEventListener('click', function () { $('kEditor').hidden = true; });
   ['kChannel', 'kFrom', 'kTo', 'kProduct', 'kMin', 'kNoFlag'].forEach(function (id) { $(id).addEventListener('change', kPreview); });
   $('kMsg').addEventListener('input', kPreview); $('kProduct').addEventListener('input', kPreview);
