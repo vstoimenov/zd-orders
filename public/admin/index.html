@@ -32,6 +32,9 @@ button:disabled{opacity:.55;cursor:default}
 .err{color:var(--bad);min-height:1.2em}
 
 /* вход */
+form#signupForm{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--side);padding:16px}
+.logincard a{color:var(--accent)}
+.trap{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 form#inviteForm{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--side);padding:16px}
 .logincard p{margin:0;color:var(--side-muted)}
 .whoami{margin:0 12px 8px;padding:8px 12px;border-radius:10px;background:var(--side-2);color:var(--side-muted);font-size:12px;line-height:1.4;word-break:break-all}
@@ -236,6 +239,21 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
 </style>
 </head>
 <body>
+<form id="signupForm" hidden>
+  <div class="logincard">
+    <div class="mark">✓</div>
+    <h1>Регистрация</h1>
+    <p>Офиси на Еконт и Спиди в чекаута, поръчките на едно място, товарителници и известия.</p>
+    <input type="text" id="suName" placeholder="Име и фамилия" autocomplete="name" maxlength="80" required>
+    <input type="email" id="suEmail" placeholder="Имейл" autocomplete="email" maxlength="160" required>
+    <input type="password" id="suPw" placeholder="Парола (поне 8 знака)" autocomplete="new-password" minlength="8" required>
+    <input type="password" id="suPw2" placeholder="Повторете паролата" autocomplete="new-password" minlength="8" required>
+    <div class="trap" aria-hidden="true"><label>Уебсайт<input type="text" id="suWebsite" tabindex="-1" autocomplete="off"></label></div>
+    <button class="primary" id="suBtn">Създай акаунт</button>
+    <div class="err" id="suErr"></div>
+    <p style="font-size:13px">Вече имате акаунт? <a href="/admin/">Вход</a></p>
+  </div>
+</form>
 <form id="inviteForm" hidden>
   <div class="logincard">
     <div class="mark">✓</div>
@@ -427,6 +445,12 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     </section>
     <section id="clientsView" hidden>
       <div class="pagehead"><div><h1>Клиенти</h1><div class="sub">Клиентите влизат с имейл и парола и виждат само своите магазини</div></div><button type="button" class="primary" id="cNew">+ Нов клиент</button></div>
+      <div class="panel" id="suPanel">
+        <h2 style="margin-top:0">Линк за регистрация</h2>
+        <div class="muted" style="margin-bottom:10px">Пратете го на хора, които искат да ползват системата — регистрират се сами и попадат в „Първи стъпки“. Магазините им чакат вашето „Одобри“, преди чекаутът им да праща поръчки. Нов линк спира стария.</div>
+        <div class="linkbox" id="suLinkBox" hidden><input type="text" id="suLink" readonly><button type="button" class="ghost" id="suCopy">Копирай</button></div>
+        <div class="actions"><button type="button" class="primary" id="suNew">Създай линк</button><button type="button" class="ghost" id="suOff" hidden>Изключи регистрацията</button><span class="muted" id="suInfo"></span></div>
+      </div>
       <div class="panel"><table id="cTable"></table></div>
     </section>
     <section id="inventoryView" hidden>
@@ -1410,6 +1434,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     $('cTable').innerHTML = '<tr><td class="muted">Зареждам…</td></tr>';
     return fetch(API + 'users', { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); }).then(function (d) {
       clientsData = d.users || [];
+      renderSignup(d.signup);
       $('cTable').innerHTML = table(['Клиент', 'Магазини', 'Състояние', 'Последен вход', ''], clientsData.map(function (u, i) {
         var state = !u.active ? '<span class="badge bad">спрян</span>' : u.hasPassword ? '<span class="badge ok">активен</span>' : '<span class="badge">чака парола</span>';
         var pending = (u.pendingShops || []).map(function (sh) {
@@ -1426,6 +1451,25 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     return fetch(API + 'users', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); });
   }
+  function renderSignup(su) {
+    $('suLinkBox').hidden = !su; $('suOff').hidden = !su;
+    $('suNew').textContent = su ? 'Нов линк' : 'Създай линк';
+    $('suLink').value = su ? su.link : '';
+    $('suInfo').textContent = su ? 'активен от ' + when(su.createdAt) : 'Регистрацията е изключена.';
+  }
+  $('suNew').addEventListener('click', function () {
+    if ($('suLink').value && !window.confirm('Нов линк? Старият спира да работи веднага.')) return;
+    busy($('suNew'), usersApi({ action: 'signup_link' })).then(loadClients).catch(function (e) { alert(e.message); });
+  });
+  $('suOff').addEventListener('click', function () {
+    if (!window.confirm('Да изключа ли регистрацията? Линкът спира да работи.')) return;
+    busy($('suOff'), usersApi({ action: 'signup_off' })).then(loadClients).catch(function (e) { alert(e.message); });
+  });
+  $('suCopy').addEventListener('click', function () {
+    var t = $('suLink').value;
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { $('suCopy').textContent = 'Копирано ✓'; setTimeout(function () { $('suCopy').textContent = 'Копирай'; }, 1500); }, function () { $('suLink').select(); });
+    else $('suLink').select();
+  });
   var cmEditing = null;
   function openClientModal(u) {
     cmEditing = u || null;
@@ -1966,8 +2010,28 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
 
   /* ---- линк от собственика: клиентът си задава парола ---- */
   var inviteToken = new URLSearchParams(location.search).get('invite');
+  var signupCode = new URLSearchParams(location.search).get('signup');
   function dropInvite() { var p = new URLSearchParams(location.search); p.delete('invite'); try { history.replaceState(null, '', location.pathname + (p.toString() ? '?' + p : '') + location.hash); } catch (e) { /* old browser */ } }
-  if (inviteToken && !DEMO) {
+  if (signupCode && !inviteToken && !DEMO) {
+    $('signupForm').hidden = false;
+    fetch(API + 'signup?code=' + encodeURIComponent(signupCode)).then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Невалиден линк'); }); })
+      .catch(function (e) { $('suErr').textContent = e.message; $('suBtn').disabled = true; });
+    $('signupForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      $('suErr').textContent = '';
+      if ($('suPw').value !== $('suPw2').value) { $('suErr').textContent = 'Паролите не съвпадат.'; return; }
+      busy($('suBtn'), fetch(API + 'signup', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: signupCode, name: $('suName').value, email: $('suEmail').value, password: $('suPw').value, website: $('suWebsite').value }) })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
+        .then(function () {
+          $('signupForm').hidden = true;
+          var p = new URLSearchParams(location.search); p.delete('signup');
+          try { history.replaceState(null, '', location.pathname + (p.toString() ? '?' + p : '') + '#start'); } catch (e2) { location.hash = '#start'; }
+          load(1);
+        })
+        .catch(function (e2) { $('suErr').textContent = e2.message; });
+    });
+  } else if (inviteToken && !DEMO) {
     $('inviteForm').hidden = false;
     fetch(API + 'invite?token=' + encodeURIComponent(inviteToken)).then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Невалиден линк'); return d; }); })
       .then(function (d) { $('invWho').textContent = (d.name ? d.name + ' · ' : '') + d.email; })
