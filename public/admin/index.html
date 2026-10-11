@@ -32,6 +32,16 @@ button:disabled{opacity:.55;cursor:default}
 .err{color:var(--bad);min-height:1.2em}
 
 /* вход */
+form#inviteForm{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--side);padding:16px}
+.logincard p{margin:0;color:var(--side-muted)}
+.whoami{margin:0 12px 8px;padding:8px 12px;border-radius:10px;background:var(--side-2);color:var(--side-muted);font-size:12px;line-height:1.4;word-break:break-all}
+.whoami b{color:var(--side-text);display:block;font-size:13px}
+.linkbox{display:flex;gap:8px;align-items:center;margin:12px 0}
+.linkbox input{flex:1;font-size:12px}
+.shopchecks{display:flex;flex-direction:column;gap:8px;margin:6px 0 16px}
+.shopchecks label{display:flex;gap:10px;align-items:center;font-weight:600}
+.badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;background:#f1f0ec;color:var(--muted)}
+.badge.ok{background:#e8f6ec;color:var(--ok)}.badge.bad{background:#fdecee;color:var(--bad)}
 form#login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--side);padding:16px}
 .logincard{width:100%;max-width:360px;background:#141412;border:1px solid var(--side-line);border-radius:18px;padding:30px 28px;display:flex;flex-direction:column;gap:12px;color:var(--side-text)}
 .logincard .mark{width:44px;height:44px;border-radius:50%;background:var(--accent);color:#111;display:grid;place-items:center;font-weight:800;font-size:20px}
@@ -206,10 +216,22 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
 </style>
 </head>
 <body>
+<form id="inviteForm" hidden>
+  <div class="logincard">
+    <div class="mark">✓</div>
+    <h1>Задайте парола</h1>
+    <p id="invWho"></p>
+    <input type="password" id="invPw" placeholder="Нова парола (поне 8 знака)" autocomplete="new-password" minlength="8" required>
+    <input type="password" id="invPw2" placeholder="Повторете паролата" autocomplete="new-password" minlength="8" required>
+    <button class="primary" id="invBtn">Запази и влез</button>
+    <div class="err" id="invErr"></div>
+  </div>
+</form>
 <form id="login" hidden>
   <div class="logincard">
     <div class="mark">✓</div>
     <h1>Вход в админа</h1>
+    <input type="email" id="loginEmail" placeholder="Имейл (клиенти)" autocomplete="username">
     <input type="password" id="pw" placeholder="Парола" autocomplete="current-password" required>
     <button class="primary">Вход</button>
     <div class="err" id="loginErr"></div>
@@ -227,8 +249,10 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       <div class="sec">Отчети</div>
       <a href="#inventory" data-view="inventory"><svg viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/></svg>Наличности</a>
       <div class="sec">Система</div>
+      <a href="#clients" data-view="clients" id="navClients" hidden><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Клиенти</a>
       <a href="#integrations" data-view="integrations"><svg viewBox="0 0 24 24"><path d="M9 2v6M15 2v6"/><path d="M6 8h12v4a6 6 0 0 1-12 0z"/><path d="M12 18v4"/></svg>Интеграции</a>
     </nav>
+    <div class="whoami" id="whoami" hidden></div>
     <button type="button" class="logout" id="notifBtn"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Известия</button>
     <button type="button" class="logout" id="logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>Изход</button>
   </aside>
@@ -347,6 +371,10 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     <section id="pickShopView" hidden>
       <div class="pagehead"><div><h1 id="pickTitle">Изберете магазин</h1><div class="sub">Тази страница е за конкретен магазин — изберете кой.</div></div></div>
       <div class="pickshop" id="pickShops"></div>
+    </section>
+    <section id="clientsView" hidden>
+      <div class="pagehead"><div><h1>Клиенти</h1><div class="sub">Клиентите влизат с имейл и парола и виждат само своите магазини</div></div><button type="button" class="primary" id="cNew">+ Нов клиент</button></div>
+      <div class="panel"><table id="cTable"></table></div>
     </section>
     <section id="inventoryView" hidden>
       <div class="pagehead"><div><h1>Наличности</h1><div class="sub">Намаляват автоматично с всяка поръчка</div></div><button type="button" class="primary" id="invNew">+ Създай продукт</button></div>
@@ -492,6 +520,26 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
           <div class="actions"><button type="button" class="ghost" id="eSync">Провери статусите сега</button></div>
           <div class="muted" id="eInfo" style="margin-top:10px"></div>
         </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="clientModal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="cmTitle" style="max-width:560px">
+      <div class="dhead"><div class="tile" style="color:#111;background:var(--accent)">👤</div><div><h2 id="cmTitle">Нов клиент</h2><div class="muted" style="font-size:15px">Получава линк, с който си задава парола</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div class="fgrid">
+          <label>Имейл<input type="email" id="cmEmail" maxlength="160" placeholder="client@example.com"></label>
+          <label>Име<input type="text" id="cmName" maxlength="80" placeholder="напр. Мария, магазин Х"></label>
+        </div>
+        <h3 style="margin:0 0 6px">Магазини, които вижда</h3>
+        <div class="muted" style="margin-bottom:6px">Клиентът може и сам да добавя нови магазини — те стават негови.</div>
+        <div class="shopchecks" id="cmShops"></div>
+        <div class="actions"><button type="button" class="primary" id="cmSave">Създай клиента</button></div>
+        <div id="cmLink" hidden>
+          <div class="tip" style="margin:14px 0 0">✓ Изпратете този линк на клиента (важи 7 дни, еднократен). С него си задава парола.</div>
+          <div class="linkbox"><input type="text" id="cmLinkInput" readonly><button type="button" class="ghost" id="cmCopy">Копирай</button></div>
+        </div>
+        <div class="err" id="cmErr"></div>
       </div>
     </div>
   </div>
@@ -690,7 +738,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
             var rest = new URLSearchParams(location.search); rest.delete('shop');
             try { history.replaceState(null, '', location.pathname + (rest.toString() ? '?' + rest : '') + location.hash); } catch (e) { /* old browser */ }
           }
-          loadShops().catch(function () {}).then(function () { showView(viewFromHash()); afterFacebook(); });
+          loadShops().catch(function () {}).then(loadMe).then(function () { showView(viewFromHash()); afterFacebook(); });
         }
       })
       .catch(function () {
@@ -748,10 +796,11 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     var btn = $('login').querySelector('button');
     $('loginErr').textContent = '';
     btn.disabled = true;
-    fetch(API + 'login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: $('pw').value }) })
+    fetch(API + 'login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: $('loginEmail').value.trim(), password: $('pw').value }) })
       .then(function (r) {
         if (r.ok) { $('pw').value = ''; load(page); }
-        else if (r.status === 401) $('loginErr').textContent = 'Грешна парола.';
+        else if (r.status === 401) $('loginErr').textContent = $('loginEmail').value.trim() ? 'Грешен имейл или парола.' : 'Грешна парола.';
+        else if (r.status === 429) return r.json().then(function (d) { $('loginErr').textContent = d.error; });
         else $('loginErr').textContent = 'Грешка на сървъра. Опитайте пак.';
       })
       .catch(function () { $('loginErr').textContent = 'Няма връзка със сървъра. Опитайте пак.'; })
@@ -943,9 +992,10 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       .catch(function () { $('dCards').innerHTML = '<div class="err">Грешка при зареждане на таблото. Опитайте пак.</div>'; });
   }
   /* ---- навигация: страницата е в адреса (#orders, #dash, …) ---- */
-  var VIEWS = { orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции' };
+  var VIEWS = { orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции', clients: 'Клиенти' };
   function viewFromHash() { var v = location.hash.slice(1); return Object.prototype.hasOwnProperty.call(VIEWS, v) ? v : 'orders'; }
   function showView(view) {
+    if (view === 'clients' && role !== 'owner') view = 'orders'; // only the owner manages clients
     [].forEach.call(document.querySelectorAll('.nav a[data-view]'), function (a) { a.classList.toggle('on', a.getAttribute('data-view') === view); });
     $('where').textContent = VIEWS[view];
     $('app').classList.remove('open');
@@ -958,6 +1008,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       return;
     }
     if (view === 'dash') loadDash();
+    if (view === 'clients') loadClients();
     if (view === 'costs') loadCosts();
     if (view === 'integrations') loadIntegrations();
     if (view === 'inventory') loadInventory();
@@ -1179,6 +1230,82 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       var r = d.result; load(page);
       return loadIntegrations().then(function () { $('eInfo').textContent = 'Готово: проверени ' + r.checked + ', доставени ' + r.delivered + ', върнати ' + r.returned + '.'; });
     }).catch(function (e) { showErr('eInfo', e); });
+  });
+
+  /* ---- кой е влязъл; „Клиенти“ (само собственикът) ---- */
+  var role = null, clientsData = [];
+  function loadMe() {
+    if (DEMO) { role = 'owner'; return Promise.resolve(); }
+    return fetch(API + 'me', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+      role = d ? d.role : null;
+      $('navClients').hidden = role !== 'owner';
+      $('whoami').hidden = role !== 'client';
+      if (role === 'client') $('whoami').innerHTML = '<b>' + esc(d.name || 'Клиент') + '</b>' + esc(d.email);
+    }).catch(function () {});
+  }
+  function shopName(id) { var s = shopById(id); return s ? s.display : '—'; }
+  function loadClients() {
+    $('cTable').innerHTML = '<tr><td class="muted">Зареждам…</td></tr>';
+    return fetch(API + 'users', { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); }).then(function (d) {
+      clientsData = d.users || [];
+      $('cTable').innerHTML = table(['Клиент', 'Магазини', 'Състояние', 'Последен вход', ''], clientsData.map(function (u, i) {
+        var state = !u.active ? '<span class="badge bad">спрян</span>' : u.hasPassword ? '<span class="badge ok">активен</span>' : '<span class="badge">чака парола</span>';
+        return ['<b>' + esc(u.name || '—') + '</b><br><span class="muted">' + esc(u.email) + '</span>',
+          esc(u.shopIds.map(shopName).join(', ') || '—'), state, esc(when(u.lastLoginAt)),
+          '<button type="button" class="ghost" data-cedit="' + i + '">Магазини</button> <button type="button" class="ghost" data-clink="' + i + '">Нов линк</button> ' +
+          '<button type="button" class="ghost" data-cactive="' + i + '">' + (u.active ? 'Спри достъп' : 'Пусни достъп') + '</button>'];
+      }));
+    }).catch(function (e) { if (e.message !== 'auth') $('cTable').innerHTML = '<tr><td class="err">' + esc(e.message) + '</td></tr>'; });
+  }
+  function usersApi(body) {
+    return fetch(API + 'users', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); });
+  }
+  var cmEditing = null;
+  function openClientModal(u) {
+    cmEditing = u || null;
+    $('cmTitle').textContent = u ? 'Магазини на ' + (u.name || u.email) : 'Нов клиент';
+    $('cmEmail').value = u ? u.email : ''; $('cmEmail').disabled = Boolean(u);
+    $('cmName').value = u ? u.name : '';
+    $('cmShops').innerHTML = shops.map(function (s) {
+      return '<label><input type="checkbox" value="' + esc(s.id) + '"' + (u && u.shopIds.indexOf(s.id) >= 0 ? ' checked' : '') + '> ' + esc(s.display) + ' <span class="muted">' + esc(s.domain) + '</span></label>';
+    }).join('') || '<div class="muted">Няма магазини.</div>';
+    $('cmSave').textContent = u ? 'Запази' : 'Създай клиента';
+    $('cmLink').hidden = true; $('cmErr').textContent = ''; $('cmSave').hidden = false;
+    $('clientModal').hidden = false;
+  }
+  function showLink(link) { $('cmLinkInput').value = link; $('cmLink').hidden = false; }
+  $('cNew').addEventListener('click', function () { openClientModal(null); });
+  $('cmSave').addEventListener('click', function () {
+    var ids = [].map.call(document.querySelectorAll('#cmShops input:checked'), function (x) { return x.value; });
+    $('cmErr').textContent = '';
+    var p = cmEditing ? usersApi({ action: 'update', id: cmEditing.id, name: $('cmName').value, shopIds: ids })
+      : usersApi({ action: 'create', email: $('cmEmail').value, name: $('cmName').value, shopIds: ids });
+    busy($('cmSave'), p).then(function (d) {
+      loadClients();
+      if (cmEditing) { $('clientModal').hidden = true; return; }
+      $('cmSave').hidden = true; showLink(d.link);
+    }).catch(function (e) { $('cmErr').textContent = e.message; });
+  });
+  $('cmCopy').addEventListener('click', function () {
+    var t = $('cmLinkInput').value;
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { $('cmCopy').textContent = 'Копирано ✓'; setTimeout(function () { $('cmCopy').textContent = 'Копирай'; }, 1500); }, function () { $('cmLinkInput').select(); });
+    else $('cmLinkInput').select();
+  });
+  $('cTable').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    var u = clientsData[b.getAttribute('data-cedit') || b.getAttribute('data-clink') || b.getAttribute('data-cactive')];
+    if (!u) return;
+    if (b.hasAttribute('data-cedit')) { openClientModal(u); return; }
+    if (b.hasAttribute('data-clink')) {
+      if (!window.confirm('Нов линк за ' + u.email + '? Старият линк спира да работи. С новия клиентът задава нова парола.')) return;
+      busy(b, usersApi({ action: 'invite', id: u.id })).then(function (d) {
+        openClientModal(u); $('cmTitle').textContent = 'Нов линк за ' + (u.name || u.email); $('cmSave').hidden = true; showLink(d.link);
+      }).catch(function (err) { alert(err.message); });
+      return;
+    }
+    if (u.active && !window.confirm('Да спра ли достъпа на ' + u.email + '? Излиза веднага от всички устройства.')) return;
+    busy(b, usersApi({ action: 'update', id: u.id, active: !u.active })).then(loadClients).catch(function (err) { alert(err.message); });
   });
 
   /* ---- демо: лента и „Симулирай нова поръчка“ ---- */
@@ -1662,12 +1789,31 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   $('scrim').addEventListener('click', function () { $('app').classList.remove('open'); });
   $('logout').addEventListener('click', function () {
     fetch(API + 'login', { method: 'DELETE', credentials: 'same-origin' }).catch(function () {})
-      .then(function () { booted = false; shown = false; showLogin(); });
+      .then(function () { booted = false; shown = false; role = null; showLogin(); });
   });
   $('dPeriod').addEventListener('change', function () { var custom = $('dPeriod').value === 'custom'; $('dFrom').hidden = !custom; $('dTo').hidden = !custom; if (!custom) loadDash(); });
   $('dFilters').addEventListener('submit', function (e) { e.preventDefault(); loadDash(); });
 
-  load(1);
+  /* ---- линк от собственика: клиентът си задава парола ---- */
+  var inviteToken = new URLSearchParams(location.search).get('invite');
+  function dropInvite() { var p = new URLSearchParams(location.search); p.delete('invite'); try { history.replaceState(null, '', location.pathname + (p.toString() ? '?' + p : '') + location.hash); } catch (e) { /* old browser */ } }
+  if (inviteToken && !DEMO) {
+    $('inviteForm').hidden = false;
+    fetch(API + 'invite?token=' + encodeURIComponent(inviteToken)).then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Невалиден линк'); return d; }); })
+      .then(function (d) { $('invWho').textContent = (d.name ? d.name + ' · ' : '') + d.email; })
+      .catch(function (e) { $('invErr').textContent = e.message; $('invBtn').disabled = true; });
+    $('inviteForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      $('invErr').textContent = '';
+      if ($('invPw').value !== $('invPw2').value) { $('invErr').textContent = 'Паролите не съвпадат.'; return; }
+      busy($('invBtn'), fetch(API + 'invite', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: inviteToken, password: $('invPw').value }) })
+        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
+        .then(function () { $('inviteForm').hidden = true; dropInvite(); load(1); })
+        .catch(function (e2) { $('invErr').textContent = e2.message; });
+    });
+  } else {
+    load(1);
+  }
 })();
 </script>
 </body>

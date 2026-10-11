@@ -97,6 +97,9 @@ await saveIntegration(q, 'speedy', {
   secret: JSON.stringify({ username: '999111', password: 'local-speedy' }),
 });
 
+// a sample client who sees only "Книги за деца" (local only): local-client@example.com / client-pass-1
+{ const { createClient, acceptInvite } = await import('../lib/users.js'); const c = await createClient(q, { email: 'local-client@example.com', name: 'Клиент Книги', shopIds: [kids.id] }); await acceptInvite(q, c.token, 'client-pass-1'); }
+
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
 http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
