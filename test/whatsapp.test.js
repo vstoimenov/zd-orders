@@ -37,6 +37,7 @@ function graph(handlers = {}) {
     if (path === '/102290129340398') return ok({ id: '102290129340398', name: 'Магазин А WhatsApp' });
     if (path === '/106540352242922') return ok({ id: '106540352242922', display_phone_number: '+359 88 800 1234', verified_name: 'Магазин А' });
     if (path === '/102290129340398/subscribed_apps') return ok({ success: true });
+    if (path === '/102290129340398/phone_numbers') return ok({ data: [{ id: '106540352242922' }] });
     if (path === '/106540352242922/register') return ok({ success: true });
     if (path === '/102290129340398/message_templates' && init.method === 'POST') return ok({ id: 'TPL1', status: 'PENDING', category: 'UTILITY' });
     if (path === '/102290129340398/message_templates') return ok({ data: [{ name: 'potvarzhdenie_porachka_v1', status: 'APPROVED', language: 'bg' }] });
@@ -65,9 +66,9 @@ function hook({ method = 'POST', url = '/api/wa/webhook', body, signature }) {
   req.on = (ev, cb) => { if (ev === 'data' && raw) cb(Buffer.from(raw)); if (ev === 'end') cb(); return req; };
   return req;
 }
-const tap = (payload, from = '359888123456') => ({ object: 'whatsapp_business_account', entry: [{ id: '102290129340398', changes: [{ field: 'messages', value: {
+const tap = (payload, from = '359888123456', id = `wamid.${Math.random()}`) => ({ object: 'whatsapp_business_account', entry: [{ id: '102290129340398', changes: [{ field: 'messages', value: {
   messaging_product: 'whatsapp', metadata: { phone_number_id: '106540352242922' }, contacts: [{ wa_id: from }],
-  messages: [{ from, id: 'wamid.in', timestamp: '1', type: 'button', button: { payload, text: payload.startsWith('yes') ? 'Потвърждавам' : 'Отказвам' } }] } }] }] });
+  messages: [{ from, id, timestamp: '1', type: 'button', button: { payload, text: payload.startsWith('yes') ? 'Потвърждавам' : 'Отказвам' } }] } }] }] });
 
 beforeEach(async () => {
   q = await makeTestQuery(); setQueryForTests(q);
@@ -82,14 +83,14 @@ test('the admin gets what the "Свържи WhatsApp" button needs (app id, conf
 test('connecting: the code becomes a business token, the account is checked, webhooks subscribed, the number registered; the token is sealed', async () => {
   await connect();
   const paths = calls.map((c) => `${c.method} ${c.path}`);
-  assert.deepEqual(paths, ['GET /oauth/access_token', 'GET /102290129340398', 'GET /106540352242922', 'POST /102290129340398/subscribed_apps', 'POST /106540352242922/register']);
+  assert.deepEqual(paths, ['GET /oauth/access_token', 'GET /102290129340398', 'GET /106540352242922', 'GET /102290129340398/phone_numbers', 'POST /102290129340398/subscribed_apps', 'POST /106540352242922/register']);
   assert.deepEqual(calls[0].query, { client_id: '1136036008845539', client_secret: 'app-secret', code: 'CODE' });
-  assert.equal(calls[3].auth, 'Bearer BUSINESS-TOKEN');
-  assert.equal(calls[4].body.messaging_product, 'whatsapp');
-  assert.match(calls[4].body.pin, /^\d{6}$/);
+  assert.equal(calls[4].auth, 'Bearer BUSINESS-TOKEN');
+  assert.equal(calls[5].body.messaging_product, 'whatsapp');
+  assert.match(calls[5].body.pin, /^\d{6}$/);
   const secret = JSON.parse(await getSecret(q, 'whatsapp', SHOP));
   assert.equal(secret.token, 'BUSINESS-TOKEN');
-  assert.equal(secret.pin, calls[4].body.pin);
+  assert.equal(secret.pin, calls[5].body.pin);
   const st = json(await (async () => { const res = fakeRes(); await integrationsApi(fakeReq({ url: `/api/admin/integrations?shop=${SHOP}`, headers: { cookie } }), res); return res; })());
   assert.deepEqual({ ...st.whatsapp, connectedAt: undefined }, {
     connected: true, phone: '+359 88 800 1234', name: 'Магазин А', wabaId: '102290129340398', templateStatus: '', autoConfirm: false, lastError: null, connectedAt: undefined, ready: true,
@@ -213,4 +214,83 @@ test('the test message goes only to the number the admin types, never to a custo
   assert.equal(send.body.to, '359899111222');
   assert.equal(send.body.template.components.find((c) => c.type === 'button').parameters[0].payload, 'test');
   assert.equal((await withFetch(graph(), () => post({ action: 'wa_test', phone: '' }))).statusCode, 400);
+});
+
+/* ---- review fixes ---- */
+import { saveSubscription, setPushSenderForTests } from '../lib/push.js';
+async function readyToSend() {
+  await connect();
+  await withFetch(graph(), () => post({ action: 'wa_template' }));
+  await withFetch(graph(), () => post({ action: 'wa_refresh' }));
+  await post({ action: 'wa_settings', autoConfirm: true });
+}
+
+test('old orders and orders not "new" never get the confirmation message', async () => {
+  await readyToSend();
+  const old = await addOrder();
+  await q(`update zd.orders set created_at = now() - interval '3 days' where id = $1`, [old]);
+  const shipped = await addOrder();
+  await q(`update zd.orders set status = 'shipped' where id = $1`, [shipped]);
+  await withFetch(graph(), async () => { await sendOrderConfirmation(q, old); await sendOrderConfirmation(q, shipped); });
+  assert.equal(calls.filter((c) => c.path === '/106540352242922/messages').length, 0);
+});
+
+test('a number already connected to another shop is refused', async () => {
+  await connect();
+  const [{ id: other }] = await q(`insert into zd.shops (name, domain) values ('Б', 'b-shop.bg') returning id`);
+  const res = await withFetch(graph(), () => post({ action: 'wa_connect', code: 'CODE2', wabaId: '102290129340398', phoneNumberId: '106540352242922' }, `/api/admin/integrations?shop=${other}`));
+  assert.equal(res.statusCode, 400);
+  assert.match(json(res).error, /друг магазин/);
+});
+
+test('a number that is not in the chosen WhatsApp account is refused', async () => {
+  const res = await withFetch(graph({ '/102290129340398/phone_numbers': () => ok({ data: [{ id: '555000555000555' }] }) }),
+    () => post({ action: 'wa_connect', code: 'CODE', wabaId: '102290129340398', phoneNumberId: '106540352242922' }));
+  assert.equal(res.statusCode, 400);
+});
+
+test('a customer\'s own text reaches the shop as a notification; the cancel reply names how to reach the shop', async () => {
+  await readyToSend();
+  await q(`update zd.shops set phone = '0888 000 111' where id = $1`, [SHOP]);
+  process.env.VAPID_PUBLIC_KEY = 'B'; process.env.VAPID_PRIVATE_KEY = 'p';
+  const pushed = [];
+  setPushSenderForTests(async (s, p) => { pushed.push(JSON.parse(p)); return { statusCode: 201 }; });
+  await saveSubscription(q, { subscription: { endpoint: 'https://fcm.googleapis.com/fcm/send/o', keys: { p256dh: 'p', auth: 'a' } }, shopId: null });
+  const body = { object: 'whatsapp_business_account', entry: [{ id: 'x', changes: [{ field: 'messages', value: {
+    metadata: { phone_number_id: '106540352242922' }, contacts: [{ profile: { name: 'Мария' }, wa_id: '359888123456' }],
+    messages: [{ from: '359888123456', id: 'wamid.txt1', timestamp: '1', type: 'text', text: { body: 'Може ли да сменя офиса?' } }] } }] }] };
+  await withFetch(graph(), () => webhook(hook({ body }), fakeRes()));
+  assert.match(pushed.at(-1).title, /WhatsApp/);
+  assert.match(pushed.at(-1).body, /Мария.*Може ли да сменя офиса\?/);
+  const id = await addOrder();
+  await withFetch(graph(), () => sendOrderConfirmation(q, id));
+  const noPayload = calls.find((c) => c.path === '/106540352242922/messages').body.template.components.filter((c) => c.type === 'button')[1].parameters[0].payload;
+  await withFetch(graph(), () => webhook(hook({ body: tap(noPayload) }), fakeRes()));
+  const reply = calls.find((c) => c.body?.type === 'text');
+  assert.match(reply.body.text.body, /0888 000 111/);
+});
+
+test('Meta retries of the same message are handled once', async () => {
+  await readyToSend();
+  const id = await addOrder();
+  await withFetch(graph(), () => sendOrderConfirmation(q, id));
+  const payload = calls.find((c) => c.path === '/106540352242922/messages').body.template.components.filter((c) => c.type === 'button')[0].parameters[0].payload;
+  const again = tap(payload, '359888123456', 'wamid.retry');
+  await withFetch(graph(), async () => { await webhook(hook({ body: again }), fakeRes()); await webhook(hook({ body: again }), fakeRes()); });
+  assert.equal(calls.filter((c) => c.body?.type === 'text').length, 1);
+});
+
+test('a failed send is shown to the shop; Meta\'s user message is used', async () => {
+  await readyToSend();
+  const id = await addOrder();
+  await withFetch(graph({ '/106540352242922/messages': () => ({ ok: false, status: 400, json: async () => ({ error: { message: 'Invalid parameter', code: 131042, error_user_msg: 'Няма добавен метод за плащане' } }) }) }),
+    () => sendOrderConfirmation(q, id));
+  assert.match((await getIntegration(q, 'whatsapp', SHOP)).config.lastError, /метод за плащане/);
+});
+
+test('disconnecting forgets the token and unsubscribes our app', async () => {
+  await connect();
+  await withFetch(graph({ '/102290129340398/subscribed_apps': () => ok({ success: true }) }), () => post({ action: 'wa_disconnect' }));
+  assert.ok(calls.some((c) => c.method === 'DELETE' && c.path === '/102290129340398/subscribed_apps'));
+  assert.equal((await getIntegration(q, 'whatsapp', SHOP)).hasSecret, false);
 });

@@ -1476,13 +1476,23 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     if (!/(^|\.)facebook\.com$/.test(host)) return;
     try { var d = JSON.parse(e.data); if (d.type === 'WA_EMBEDDED_SIGNUP') waSignup = d; } catch (err) { /* other messages */ }
   });
-  $('iWaOpen').addEventListener('click', function () { $('waModal').hidden = false; });
-  $('waConnect').addEventListener('click', function () {
-    $('waConnectInfo').textContent = 'Отварям Facebook…';
-    waSignup = null;
+  var waCfg = null, waFB = null;
+  // Facebook is loaded when the window opens: the login popup must open right in the tap (browsers block it later)
+  $('iWaOpen').addEventListener('click', function () {
+    $('waModal').hidden = false;
+    if (lastWa.connected || waFB) return;
+    $('waConnect').disabled = true; $('waConnectInfo').textContent = 'Зареждам Facebook…';
     integ({ action: 'wa_config' }).then(function (c) {
       if (!c.ready) throw new Error('WhatsApp още не е настроен на платформата.');
-      return loadFb(c.appId).then(function (FB) {
+      waCfg = c;
+      return loadFb(c.appId).then(function (FB) { waFB = FB; $('waConnect').disabled = false; $('waConnectInfo').textContent = ''; });
+    }).catch(function (err) { showErr('waConnectInfo', err); });
+  });
+  $('waConnect').addEventListener('click', function () {
+    if (!waFB || !waCfg) { $('waConnectInfo').textContent = 'Още зареждам Facebook — опитайте след секунда.'; return; }
+    $('waConnectInfo').textContent = 'Отварям Facebook…';
+    waSignup = null;
+    (function (c, FB) {
         FB.login(function (resp) {
           var code = resp && resp.authResponse && resp.authResponse.code;
           if (!code) { $('waConnectInfo').textContent = 'Свързването беше прекъснато.'; return; }
@@ -1498,8 +1508,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
               .catch(function (err) { showErr('waConnectInfo', err); });
           })();
         }, { config_id: c.configId, response_type: 'code', override_default_response_type: true, extras: { setup: {} } });
-      });
-    }).catch(function (err) { showErr('waConnectInfo', err); });
+    })(waCfg, waFB);
   });
   function waAct(body, btn, okText) {
     $('waInfo').textContent = '';
