@@ -393,7 +393,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
         <div class="isec-head"><span class="isec-ic"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><div><h2>Съобщения</h2><div class="muted">SMS и WhatsApp кампании и потвърждение на поръчки</div></div></div>
         <div class="igrid">
           <div class="icard"><div class="tile" style="color:#0b6bcb">SMS</div><div class="ibody"><b>SMS доставчик</b> <span class="chip">скоро</span><div class="muted">Изпращане на кампании директно оттук. Дотогава — „Експорт CSV“ от Кампании за всяка SMS услуга.</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
-          <div class="icard"><div class="tile" style="color:#25d366">WA<img src="https://www.google.com/s2/favicons?domain=whatsapp.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>WhatsApp Business</b> <span class="chip">скоро</span><div class="muted">Автоматично съобщение „потвърдете поръчката“ при всяка нова поръчка (изисква одобрение от Meta). Сега: бутон „💬 Потвърди“ при всяка поръчка.</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
+          <div class="icard"><div class="tile" style="color:#25d366">WA<img src="https://www.google.com/s2/favicons?domain=whatsapp.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>WhatsApp Business</b> <span class="chip" id="iWaChip">скоро</span><div class="muted">Автоматично „потвърдете поръчката“ с бутони при всяка нова поръчка — от вашия WhatsApp номер, плащате директно на Meta (~0,02 € на съобщение).</div><div class="muted" id="iWaLine"></div></div><button type="button" class="ghost" id="iWaOpen" disabled>Скоро</button></div>
         </div>
       </div>
       <div class="isec">
@@ -681,6 +681,29 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
           <div class="actions"><button type="button" class="ghost" id="eSync">Провери статусите сега</button></div>
           <div class="muted" id="eInfo" style="margin-top:10px"></div>
         </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="waModal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="waTitle" style="max-width:600px">
+      <div class="dhead"><div class="tile" style="color:#25d366">WA</div><div><h2 id="waTitle">WhatsApp Business <span class="chip" id="iWaChip2"></span></h2><div class="muted" style="font-size:15px" id="waSub"></div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div id="waConnectBox">
+          <div class="tip">💡 Натиснете бутона, влезте с Facebook профила, който управлява бизнеса ви, и следвайте стъпките на Meta: изберете или създайте WhatsApp Business акаунт и добавете номер (<b>номер, който не се ползва в обикновения WhatsApp</b>), потвърдете го с код. Накрая в WhatsApp Manager добавете карта за плащане — Meta таксува директно вас (~0,02 € на съобщение за поръчка).</div>
+          <div class="actions"><button type="button" class="primary" id="waConnect">Свържи WhatsApp</button><span class="muted" id="waConnectInfo"></span></div>
+        </div>
+        <div id="waManageBox" hidden>
+          <h3 style="margin:0 0 6px">1. Шаблон „Потвърдете поръчката“</h3>
+          <div class="muted" style="margin-bottom:8px">Meta одобрява всяко автоматично съобщение (обикновено до ден). Текст: „Здравейте, Мария! Получихме поръчката Ви от …: 1 × Книга — 22,57 €. Доставка: … Моля, потвърдете поръчката с бутона по-долу.“ + бутони [Потвърждавам] [Отказвам].</div>
+          <div class="actions"><button type="button" class="primary" id="waTpl">Изпрати шаблона за одобрение</button><button type="button" class="ghost" id="waRefresh">Провери одобрението</button><span class="muted" id="waTplInfo"></span></div>
+          <h3 style="margin:16px 0 6px">2. Автоматично при всяка нова поръчка</h3>
+          <label class="check" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="waAuto"> Изпращай „потвърдете поръчката“ на клиента веднага при нова поръчка</label>
+          <div class="muted">Когато клиентът натисне бутон, поръчката става „Потвърдена“ или „Отказана“ сама и получавате известие. Отговорът ни след натискането е безплатен.</div>
+          <h3 style="margin:16px 0 6px">3. Проба на вашия телефон</h3>
+          <div class="actions"><input type="tel" id="waTestPhone" placeholder="вашият телефон, напр. 0888…" style="width:220px"><button type="button" class="ghost" id="waTest">Изпрати проба</button></div>
+          <div class="actions" style="margin-top:18px"><button type="button" class="del" id="waDisconnect">Изключи WhatsApp</button></div>
+        </div>
+        <div class="muted" id="waInfo" style="margin-top:10px"></div>
       </div>
     </div>
   </div>
@@ -1338,6 +1361,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     $('iEcont').textContent = s.econt.offices + ' офиса и автомата · обновено ' + when(s.econt.updatedAt);
     renderEcont(s.econtApi || {});
     renderSpeedy(s.speedyApi || {});
+    renderWa(s.whatsapp || {});
     $('iSpeedy').textContent = s.speedy.offices + ' офиса и автомата · обновено ' + when(s.speedy.updatedAt);
   }
   /* ---- Еконт: настройки за товарителници ---- */
@@ -1419,6 +1443,73 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
       return loadIntegrations().then(function () { $('eInfo').textContent = 'Готово: проверени ' + r.checked + ', доставени ' + r.delivered + ', върнати ' + r.returned + '.'; });
     }).catch(function (e) { showErr('eInfo', e); });
   });
+
+  /* ---- WhatsApp Business (Embedded Signup на Meta) ---- */
+  var lastWa = {}, fbReady = null, waSignup = null;
+  function renderWa(w) {
+    lastWa = w;
+    var label = w.connected ? (w.templateStatus === 'APPROVED' ? (w.autoConfirm ? 'Автоматично ✓' : 'Свързан') : 'Чака шаблон') : (w.ready ? 'Не е свързан' : 'скоро');
+    chip('iWaChip', w.connected, label, label); chip('iWaChip2', w.connected, label, label);
+    $('iWaOpen').disabled = !w.ready && !w.connected;
+    $('iWaOpen').textContent = w.connected ? 'Настройки' : w.ready ? '+ Свържи' : 'Скоро';
+    $('iWaOpen').className = w.connected || !w.ready ? 'ghost' : 'primary';
+    $('iWaLine').textContent = w.connected ? (w.name ? w.name + ' · ' : '') + w.phone + (w.templateStatus ? ' · шаблон: ' + ({ APPROVED: 'одобрен', PENDING: 'чака одобрение', REJECTED: 'отхвърлен' }[w.templateStatus] || w.templateStatus) : '') : '';
+    $('waSub').textContent = w.connected ? (w.name || '') + ' · ' + w.phone : 'Свържете вашия WhatsApp Business номер';
+    $('waConnectBox').hidden = Boolean(w.connected); $('waManageBox').hidden = !w.connected;
+    $('waAuto').checked = Boolean(w.autoConfirm); $('waAuto').disabled = w.templateStatus !== 'APPROVED';
+    $('waTplInfo').textContent = w.templateStatus ? 'Състояние: ' + ({ APPROVED: 'одобрен ✓', PENDING: 'чака одобрение от Meta', REJECTED: 'отхвърлен — пишете на платформата' }[w.templateStatus] || w.templateStatus) : 'Още не е изпратен.';
+    $('waInfo').innerHTML = w.lastError ? '<span class="err">' + esc(w.lastError) + '</span>' : '';
+  }
+  function loadFb(appId) {
+    if (fbReady) return fbReady;
+    fbReady = new Promise(function (resolve, reject) {
+      window.fbAsyncInit = function () { window.FB.init({ appId: appId, autoLogAppEvents: true, xfbml: false, version: 'v25.0' }); resolve(window.FB); };
+      var sc = document.createElement('script'); sc.async = true; sc.defer = true; sc.crossOrigin = 'anonymous'; sc.src = 'https://connect.facebook.net/en_US/sdk.js';
+      sc.onerror = function () { fbReady = null; reject(new Error('Не успях да заредя Facebook — проверете блокерите за реклами')); };
+      document.head.appendChild(sc);
+    });
+    return fbReady;
+  }
+  // Meta reports the chosen WhatsApp account and number through a window message
+  window.addEventListener('message', function (e) {
+    var host = ''; try { host = new URL(e.origin).hostname; } catch (err) { return; }
+    if (!/(^|\.)facebook\.com$/.test(host)) return;
+    try { var d = JSON.parse(e.data); if (d.type === 'WA_EMBEDDED_SIGNUP') waSignup = d; } catch (err) { /* other messages */ }
+  });
+  $('iWaOpen').addEventListener('click', function () { $('waModal').hidden = false; });
+  $('waConnect').addEventListener('click', function () {
+    $('waConnectInfo').textContent = 'Отварям Facebook…';
+    waSignup = null;
+    integ({ action: 'wa_config' }).then(function (c) {
+      if (!c.ready) throw new Error('WhatsApp още не е настроен на платформата.');
+      return loadFb(c.appId).then(function (FB) {
+        FB.login(function (resp) {
+          var code = resp && resp.authResponse && resp.authResponse.code;
+          if (!code) { $('waConnectInfo').textContent = 'Свързването беше прекъснато.'; return; }
+          // the account/number message can arrive a moment after the login callback
+          var tries = 0;
+          (function wait() {
+            if (!waSignup && tries++ < 20) { setTimeout(wait, 250); return; }
+            var d = waSignup && waSignup.data;
+            if (!d || !d.phone_number_id || !d.waba_id) { $('waConnectInfo').textContent = 'Не завършихте стъпките на Meta — опитайте отново.'; return; }
+            $('waConnectInfo').textContent = 'Свързвам…';
+            busy($('waConnect'), integ({ action: 'wa_connect', code: code, wabaId: d.waba_id, phoneNumberId: d.phone_number_id }))
+              .then(function (r) { $('waConnectInfo').textContent = 'Свързано ✓ ' + r.phone; return loadIntegrations(); })
+              .catch(function (err) { showErr('waConnectInfo', err); });
+          })();
+        }, { config_id: c.configId, response_type: 'code', override_default_response_type: true, extras: { setup: {} } });
+      });
+    }).catch(function (err) { showErr('waConnectInfo', err); });
+  });
+  function waAct(body, btn, okText) {
+    $('waInfo').textContent = '';
+    return busy(btn, integ(body)).then(function (d) { if (okText) $('waInfo').textContent = okText; return loadIntegrations().then(function () { return d; }); }).catch(function (err) { showErr('waInfo', err); });
+  }
+  $('waTpl').addEventListener('click', function () { waAct({ action: 'wa_template' }, $('waTpl'), 'Изпратено ✓ — Meta обикновено одобрява до ден. Натиснете „Провери одобрението“ по-късно.'); });
+  $('waRefresh').addEventListener('click', function () { waAct({ action: 'wa_refresh' }, $('waRefresh')); });
+  $('waAuto').addEventListener('change', function () { waAct({ action: 'wa_settings', autoConfirm: $('waAuto').checked }, $('waAuto'), $('waAuto').checked ? 'Включено ✓ — всяка нова поръчка получава съобщение.' : 'Изключено.'); });
+  $('waTest').addEventListener('click', function () { waAct({ action: 'wa_test', phone: $('waTestPhone').value }, $('waTest'), 'Изпратено ✓ — проверете WhatsApp на телефона си.'); });
+  $('waDisconnect').addEventListener('click', function () { if (window.confirm('Да изключа ли WhatsApp? Автоматичните съобщения спират.')) waAct({ action: 'wa_disconnect' }, $('waDisconnect'), 'Изключено.'); });
 
   /* ---- потвърждение на поръчка от клиента (WhatsApp/SMS от вашия телефон + личен линк) ---- */
   function openConfirm(o) {

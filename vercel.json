@@ -29,6 +29,9 @@
     "api/demo/[route].js": {
       "maxDuration": 30,
       "includeFiles": "db/migrations/**"
+    },
+    "api/wa/webhook.js": {
+      "maxDuration": 30
     }
   },
   "headers": [
