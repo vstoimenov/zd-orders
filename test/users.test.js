@@ -9,6 +9,7 @@ import { signSession } from '../lib/auth.js';
 import { createClient, acceptInvite, updateClient } from '../lib/users.js';
 import { saveSubscription, notifyNewOrder, setPushSenderForTests } from '../lib/push.js';
 import router from '../api/admin/[route].js';
+import { resetLoginLimitForTests } from '../lib/admin/login.js';
 
 process.env.ADMIN_SECRET = 'secret';
 process.env.ADMIN_PASSWORD = 'owner-pass';
@@ -41,6 +42,7 @@ async function clientWith(shopIds, email = 'a@client.bg') {
 }
 
 beforeEach(async () => {
+  resetLoginLimitForTests();
   q = await makeTestQuery(); setQueryForTests(q);
   await q(`update zd.shops set domain = 'a-shop.bg', name = 'Магазин А' where id = $1`, [SHOP_A]);
   [{ id: SHOP_B }] = await q(`insert into zd.shops (name, domain) values ('Магазин Б', 'b-shop.bg') returning id`);
@@ -257,6 +259,7 @@ test('parallel wrong passwords still lock the account; unknown and locked logins
   globalThis.setTimeout = (fn) => realSet(fn, 0);
   try {
     await Promise.all(Array.from({ length: 25 }, () => call({ method: 'POST', url: '/api/admin/login', body: { email: 'a@client.bg', password: 'nope' } })));
+    resetLoginLimitForTests(); // the account lock is checked here, not the per-address limit
     const locked = await call({ method: 'POST', url: '/api/admin/login', body: { email: 'a@client.bg', password: 'client-pass-1' } });
     const unknown = await call({ method: 'POST', url: '/api/admin/login', body: { email: 'nobody@x.bg', password: 'whatever1' } });
     assert.equal(locked.statusCode, 401);
@@ -286,4 +289,14 @@ test('a client may own at most 10 shops', async () => {
   for (let i = 0; i < 11; i++) last = await call({ method: 'POST', url: '/api/admin/shops', cookie: c, body: { name: `М${i}`, domain: `cap${i}-shop.bg` } });
   assert.equal(last.statusCode, 400);
   assert.match(json(last).error, /10/);
+});
+
+test('one address cannot hammer the client login (a few attempts a minute)', async () => {
+  const realSet = globalThis.setTimeout;
+  globalThis.setTimeout = (fn) => realSet(fn, 0);
+  try {
+    let last;
+    for (let i = 0; i < 25; i++) last = await call({ method: 'POST', url: '/api/admin/login', body: { email: `x${i}@nobody.bg`, password: 'whatever1' } });
+    assert.equal(last.statusCode, 429);
+  } finally { globalThis.setTimeout = realSet; }
 });
