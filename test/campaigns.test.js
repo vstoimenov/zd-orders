@@ -99,7 +99,7 @@ test('save a campaign, list it, export the personalised list; ready/export need 
   assert.equal(csv.statusCode, 200);
   assert.match(csv.headers['content-type'], /text\/csv/);
   assert.match(csv.body, /phone,name,message/);
-  assert.match(csv.body, /\+359888111111,Мария Иванова,"?Благодарим, Мария!"?/);
+  assert.match(csv.body, /^\+359888111111,Мария Иванова,"Благодарим, Мария!"$/m, 'phones exactly as +359…, ready for any SMS tool');
   assert.equal((await call({ method: 'POST', url: `/api/admin/campaigns?shop=${SHOP}`, body: { action: 'delete', id: draft.id } })).statusCode, 200);
   assert.equal(json(await call({ url: `/api/admin/campaigns?shop=${SHOP}` })).campaigns.length, 0);
 });
@@ -122,4 +122,9 @@ test('a client works only with their own shop\'s customers and campaigns', async
   const aId = json(own).campaign.id;
   assert.equal((await call({ method: 'POST', url: `/api/admin/campaigns?shop=${SHOP_B}`, cookie: c, body: { action: 'delete', id: aId } })).statusCode, 404);
   assert.equal((await call({ url: `/api/admin/campaigns?shop=all` })).statusCode, 400, 'one shop at a time');
+});
+
+test('impossible dates are ignored, not an error; the demo-style write limits', async () => {
+  const res = await call({ method: 'POST', url: `/api/admin/campaigns?shop=${SHOP}`, body: { action: 'preview', channel: 'sms', message: 'х', segment: { from: '2026-02-31' } } });
+  assert.equal(res.statusCode, 200);
 });

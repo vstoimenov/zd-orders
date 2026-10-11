@@ -41,7 +41,10 @@ button:disabled{opacity:.6;cursor:default}
   }
   fetch(API + '?t=' + encodeURIComponent(t), { credentials: 'same-origin' }).then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Линкът не е валиден'); return d; }); })
     .then(function (d) {
-      if (d.answer && !d.canAnswer) { done(d.answer, d.shop); return; }
+      if (!d.canAnswer) {
+        if (d.answer) { done(d.answer, d.shop); return; }
+        card.innerHTML = '<h1>Поръчката вече е изпратена</h1><p class="muted">За промени се свържете с ' + esc(d.shop) + '.</p>'; return;
+      }
       card.innerHTML = '<h1>' + (d.name ? 'Здравейте, ' + esc(d.name) + '!' : 'Здравейте!') + '</h1><div class="muted">Поръчка от ' + esc(d.shop) + '</div>' +
         '<ul>' + d.items.map(function (it) { return '<li><span>' + esc(it.name) + '</span><span>× ' + esc(it.qty) + '</span></li>'; }).join('') + '</ul>' +
         '<div class="total"><span>Общо (с наложен платеж)</span><span>' + esc(money(d.total, d.currency)) + '</span></div>' +

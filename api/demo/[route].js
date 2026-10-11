@@ -56,7 +56,7 @@ setQueryForTests((text, params) => {
   return box.q(text, params);
 });
 
-const LIMITS = { shops: 6, orders: 400, product_costs: 60, expenses: 60, push_subscriptions: 3 };
+const LIMITS = { shops: 6, orders: 400, product_costs: 60, expenses: 60, push_subscriptions: 3, campaigns: 30, campaign_optouts: 200 };
 const ECONT_CALLS_MAX = 40; // calls to Econt's public test server per sandbox
 const SIMULATE_GAP_MS = 5000;
 
@@ -126,7 +126,8 @@ export default async function handler(req, res) {
       if (!route) return send(res, 404, { error: 'not found' });
       if (req.method === 'POST' || req.method === 'PATCH') {
         const b = readJson(req) || {};
-        const creates = (segment === 'shops' && req.method === 'POST') || segment === 'inventory' || segment === 'costs' || (segment === 'push' && b.action === 'subscribe');
+        const creates = (segment === 'shops' && req.method === 'POST') || segment === 'inventory' || segment === 'costs' || (segment === 'push' && b.action === 'subscribe')
+          || (segment === 'campaigns' && ['save', 'optout_add'].includes(b.action));
         if (creates && await overLimit(box)) return send(res, 429, { error: 'Демото достигна лимита си — отворете го в нов прозорец (private) за ново' });
         const econt = (segment === 'integrations' && ['econt_profile', 'save_econt', 'sync_econt'].includes(b.action)) || segment === 'waybills';
         if (econt && ++box.econtCalls > ECONT_CALLS_MAX) return send(res, 429, { error: 'Достигнахте лимита на демото за товарителници' });

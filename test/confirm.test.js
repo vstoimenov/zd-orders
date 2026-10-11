@@ -56,7 +56,7 @@ test('the customer opens the link, sees the order and confirms it: the order is 
   const page = json(await call({ url: `/api/admin/confirm?t=${t}` }));
   assert.deepEqual(page, {
     ok: true, shop: 'Магазин А', name: 'Мария', items: [{ name: 'Книга', qty: 2 }], total: 22.57, currency: 'EUR',
-    delivery: 'ЕКОНТ – офис Плевен (5803), ул. Х', answer: '', canAnswer: true,
+    delivery: 'ЕКОНТ – офис Плевен (5803)', answer: '', canAnswer: true,
   });
   assert.ok(!JSON.stringify(page).includes('888'), 'no phone on the public page');
   const res = await call({ method: 'POST', url: '/api/admin/confirm', body: { t, answer: 'yes' } });
@@ -103,4 +103,77 @@ test('the shop sets its own confirmation text', async () => {
   const got = json(await call({ url: `/api/admin/confirmadmin?shop=${SHOP}`, cookie: owner }));
   assert.equal(got.template, 'Здрасти {име}, потвърди: {линк_потвърждение}');
   assert.equal((await call({ method: 'POST', url: `/api/admin/confirmadmin?shop=${SHOP}`, cookie: owner, body: { action: 'template', text: 'без линк' } })).statusCode, 400);
+});
+
+/* ---- review fixes ---- */
+import { answerConfirm } from '../lib/confirm.js';
+import { createWaybill } from '../lib/waybills.js';
+
+test('if the order is sent meanwhile, the customer\'s answer is refused and nobody is told it was cancelled', async () => {
+  const t = tokenOf(json(await linkFor(orderId)).link);
+  const real = q;
+  let ships = true;
+  const racing = async (text, params) => {
+    if (ships && /set confirm_answer/.test(text)) { ships = false; await real(`update zd.orders set status = 'shipped' where id = $1`, [orderId]); }
+    return real(text, params);
+  };
+  const before = sent.length;
+  await assert.rejects(answerConfirm(racing, t, 'no'), /изпратена/);
+  assert.equal(sent.length, before);
+  const [o] = (await listOrders(q)).rows;
+  assert.equal(o.status, 'shipped');
+});
+
+test('the public page shows no street address and, once closed, no order details', async () => {
+  const addr = (await insertOrder(q, {
+    cbOrderId: 'a-shop.bg:8', name: 'Петър Петров', phone: '0888222222', phoneNorm: '+359888222222', email: '', deliveryType: 'speedy_address', courier: 'speedy',
+    officeId: '', officeText: 'СПИДИ – адрес: ул. Тайна 5, ап. 3', city: 'Варна', postCode: '9000', addressText: 'ул. Тайна 5, ап. 3', items: [{ name: 'Книга', qty: 1, price: 10 }],
+    total: 10, currency: 'EUR', paymentMethod: 'cod', pageUrl: '', ip: '1', shopId: SHOP,
+  })).id;
+  const t = tokenOf(json(await linkFor(addr)).link);
+  const page = json(await call({ url: `/api/admin/confirm?t=${t}` }));
+  assert.equal(page.delivery, 'до адрес във Варна');
+  assert.ok(!JSON.stringify(page).includes('Тайна'));
+  const office = json(await call({ url: `/api/admin/confirm?t=${tokenOf(json(await linkFor(orderId)).link)}` }));
+  assert.equal(office.delivery, 'ЕКОНТ – офис Плевен (5803)');
+  await call({ method: 'POST', url: '/api/admin/confirm', body: { t, answer: 'yes' } });
+  await q(`update zd.orders set status = 'shipped' where id = $1`, [addr]);
+  const closed = json(await call({ url: `/api/admin/confirm?t=${t}` }));
+  assert.deepEqual(closed, { ok: true, shop: 'Магазин А', answer: 'yes', canAnswer: false });
+});
+
+test('answering the same again does not notify again', async () => {
+  const t = tokenOf(json(await linkFor(orderId)).link);
+  await call({ method: 'POST', url: '/api/admin/confirm', body: { t, answer: 'yes' } });
+  const n = sent.length;
+  await call({ method: 'POST', url: '/api/admin/confirm', body: { t, answer: 'yes' } });
+  assert.equal(sent.length, n);
+});
+
+test('a customer name with $ signs stays as written in the message', async () => {
+  await q(`update zd.orders set name = 'Ана $& $$ Бойс' where id = $1`, [orderId]);
+  assert.match(json(await linkFor(orderId)).message, /^Здравейте, Ана!/);
+  await call({ method: 'POST', url: `/api/admin/confirmadmin?shop=${SHOP}`, cookie: owner, body: { action: 'template', text: '{пълно_име}: {линк_потвърждение}' } });
+  assert.match(json(await linkFor(orderId)).message, /^Ана \$& \$\$ Бойс: /);
+});
+
+test('the confirmation text cannot be saved for "all shops"', async () => {
+  const res = await call({ method: 'POST', url: '/api/admin/confirmadmin?shop=all', cookie: owner, body: { action: 'template', text: 'х {линк_потвърждение}' } });
+  assert.equal(res.statusCode, 400);
+});
+
+test('a waybill is never made for an order the customer cancelled a moment ago', async () => {
+  const real = q;
+  let cancels = true;
+  const racing = async (text, params) => {
+    if (cancels && /waybill_number = 'creating'/.test(text)) { cancels = false; await real(`update zd.orders set status = 'cancelled' where id = $1`, [orderId]); }
+    return real(text, params);
+  };
+  await q(`insert into zd.offices (id, courier, code, name, city) values ('econt:1', 'econt', '1', 'О', 'С') on conflict do nothing`);
+  const { saveIntegration } = await import('../lib/integrations-repo.js');
+  process.env.INTEGRATIONS_SECRET = 'x';
+  await saveIntegration(q, 'econt', { config: { sender: { type: 'office', officeCode: '1', text: 'О' }, senderPhone: '0888', active: true }, secret: JSON.stringify({ username: 'u', password: 'p' }) });
+  await assert.rejects(createWaybill(racing, { orderId, scopeShopId: SHOP, input: {} }), /вече се създава|отказана|за изпращане/);
+  const [o] = (await listOrders(q)).rows;
+  assert.equal(o.shipment, null);
 });
