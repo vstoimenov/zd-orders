@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Потвърждение на поръчка</title>
+<style>
+:root{--ink:#14140f;--muted:#6d6c66;--line:#e6e4dc;--accent:#facc15;--ok:#15803d;--bad:#b91c1c}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;background:#f4f4f1;color:var(--ink);font:15px/1.5 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.card{width:100%;max-width:420px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:26px 22px;box-shadow:0 10px 30px rgba(0,0,0,.06)}
+h1{font-size:21px;margin:0 0 4px}
+.muted{color:var(--muted);font-size:13px}
+ul{margin:14px 0;padding:0;list-style:none;border-top:1px solid var(--line)}
+li{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.total{font-weight:800;font-size:17px;display:flex;justify-content:space-between;margin:6px 0 4px}
+.where{background:#fafaf7;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:12px 0 18px;font-size:14px}
+button{width:100%;padding:14px;border-radius:12px;border:1px solid transparent;font:inherit;font-weight:800;cursor:pointer}
+.yes{background:var(--accent);color:#111;margin-bottom:10px}
+.no{background:#fff;border-color:#f3c6cb;color:var(--bad)}
+button:disabled{opacity:.6;cursor:default}
+.done{text-align:center;padding:10px 0}
+.done .big{font-size:44px}
+.err{color:var(--bad);margin-top:10px}
+</style>
+</head>
+<body>
+<div class="card" id="card"><div class="muted">Зареждам…</div></div>
+<script>
+(function () {
+  var p = new URLSearchParams(location.search);
+  var t = p.get('t') || '';
+  var API = p.get('demo') ? '/api/demo/confirm' : '/api/admin/confirm';
+  var card = document.getElementById('card');
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function money(v, c) { return Number(v).toFixed(2).replace('.', ',') + ' ' + (c === 'EUR' ? '€' : c); }
+  function done(answer, shop) {
+    card.innerHTML = '<div class="done"><div class="big">' + (answer === 'yes' ? '✅' : '👋') + '</div><h1>' + (answer === 'yes' ? 'Благодарим! Поръчката е потвърдена.' : 'Поръчката е отказана.') + '</h1>' +
+      '<p class="muted">' + (answer === 'yes' ? esc(shop) + ' ще я изпрати скоро.' : 'Ако е грешка — свържете се с ' + esc(shop) + '.') + '</p></div>';
+  }
+  fetch(API + '?t=' + encodeURIComponent(t), { credentials: 'same-origin' }).then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Линкът не е валиден'); return d; }); })
+    .then(function (d) {
+      if (d.answer && !d.canAnswer) { done(d.answer, d.shop); return; }
+      card.innerHTML = '<h1>' + (d.name ? 'Здравейте, ' + esc(d.name) + '!' : 'Здравейте!') + '</h1><div class="muted">Поръчка от ' + esc(d.shop) + '</div>' +
+        '<ul>' + d.items.map(function (it) { return '<li><span>' + esc(it.name) + '</span><span>× ' + esc(it.qty) + '</span></li>'; }).join('') + '</ul>' +
+        '<div class="total"><span>Общо (с наложен платеж)</span><span>' + esc(money(d.total, d.currency)) + '</span></div>' +
+        '<div class="where">📦 Доставка: ' + esc(d.delivery) + '</div>' +
+        (d.canAnswer ? '<button class="yes" data-a="yes">✓ Потвърждавам поръчката</button><button class="no" data-a="no">Отказвам поръчката</button>' :
+          '<p class="muted">Поръчката вече е изпратена или затворена. За промени се свържете с магазина.</p>') +
+        '<div class="err" id="err"></div>';
+      card.addEventListener('click', function (e) {
+        var a = e.target.getAttribute('data-a'); if (!a) return;
+        if (a === 'no' && !window.confirm('Сигурни ли сте, че отказвате поръчката?')) return;
+        [].forEach.call(card.querySelectorAll('button'), function (b) { b.disabled = true; });
+        fetch(API, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: t, answer: a }) })
+          .then(function (r) { return r.json().then(function (x) { if (!r.ok) throw new Error(x.error || 'Грешка'); return x; }); })
+          .then(function () { done(a, d.shop); })
+          .catch(function (err) { document.getElementById('err').textContent = err.message; [].forEach.call(card.querySelectorAll('button'), function (b) { b.disabled = false; }); });
+      });
+    })
+    .catch(function (e) { card.innerHTML = '<h1>Линкът не е валиден</h1><p class="muted">' + esc(e.message) + '. Свържете се с магазина.</p>'; });
+})();
+</script>
+</body>
+</html>

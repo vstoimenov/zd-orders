@@ -11,6 +11,7 @@ process.env.ZD_DEMO = '1'; // lib/db.js refuses the real database
 process.env.ADMIN_SECRET = `demo-${randomBytes(16).toString('hex')}`;
 process.env.INTEGRATIONS_SECRET = `demo-${randomBytes(16).toString('hex')}`;
 process.env.PUSH_ADMIN_PATH = '/demo/'; // a tapped notification opens the demo, not the real admin
+process.env.PUBLIC_BASE_URL = 'https://zd-orders.vercel.app'; // links made in the demo (order confirmation) open on the demo's origin
 { // own push keys: the demo never signs with the real admin's key
   const { default: webpush } = await import('web-push');
   const k = webpush.generateVAPIDKeys();
@@ -39,6 +40,9 @@ const ROUTES = {
   waybills: (await import('../../lib/admin/waybills.js')).default,
   push: (await import('../../lib/admin/push.js')).default,
   onboarding: (await import('../../lib/admin/onboarding.js')).default,
+  campaigns: (await import('../../lib/admin/campaigns.js')).default,
+  confirm: (await import('../../lib/admin/confirm.js')).default,
+  confirmadmin: (await import('../../lib/admin/confirm-admin.js')).default,
 };
 
 /* ---- one sandbox per visitor (a cookie), at most MAX_BOXES per instance: the least recently used one is reset ---- */

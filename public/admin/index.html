@@ -185,6 +185,20 @@ tr.st-new{background:#fffbeb}
 details.manual{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
 details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
 .warn{color:var(--warn);font-weight:600}
+.cgrid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:18px}
+@media (max-width:900px){.cgrid{grid-template-columns:1fr}}
+.chk{display:flex;flex-wrap:wrap;gap:6px 14px;margin:4px 0 10px}
+.chk label{display:flex;gap:6px;align-items:center;font-weight:600;font-size:13px}
+.vars{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.vars button{padding:4px 10px;font-size:12px;border-radius:999px}
+.bubble{background:#dcf8c6;border-radius:12px 12px 12px 2px;padding:10px 12px;margin:8px 0;white-space:pre-wrap;font-size:14px;max-width:420px}
+.bubble.sms{background:#e9e9eb}
+.bubble small{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}
+.kpis{display:flex;flex-wrap:wrap;gap:8px 18px;margin:8px 0}
+.kpis b{font-size:18px}
+textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:12px;width:100%;min-height:120px;background:#fafaf7;resize:vertical}
+.cbadge{display:inline-block;margin-top:4px;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700}
+.cbadge.yes{background:#e8f6ec;color:var(--ok)}.cbadge.no{background:#fdecee;color:var(--bad)}.cbadge.wait{background:#fff4d6;color:#8a6100}
 .steps{display:flex;flex-direction:column;gap:14px}
 .step{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
 .step.done{border-color:#bfe3c9}
@@ -286,6 +300,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       <a href="#orders" data-view="orders"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Поръчки</a>
       <a href="#costs" data-view="costs"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>Финанси</a>
       <div class="sec">Отчети</div>
+      <a href="#campaigns" data-view="campaigns"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Кампании</a>
       <a href="#inventory" data-view="inventory"><svg viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/></svg>Наличности</a>
       <div class="sec">Система</div>
       <a href="#clients" data-view="clients" id="navClients" hidden><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Клиенти</a>
@@ -372,6 +387,13 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
         </div>
       </div>
       <div class="isec">
+        <div class="isec-head"><span class="isec-ic"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><div><h2>Съобщения</h2><div class="muted">SMS и WhatsApp кампании и потвърждение на поръчки</div></div></div>
+        <div class="igrid">
+          <div class="icard"><div class="tile" style="color:#0b6bcb">SMS</div><div class="ibody"><b>SMS доставчик</b> <span class="chip">скоро</span><div class="muted">Изпращане на кампании директно оттук. Дотогава — „Експорт CSV“ от Кампании за всяка SMS услуга.</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
+          <div class="icard"><div class="tile" style="color:#25d366">WA<img src="https://www.google.com/s2/favicons?domain=whatsapp.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>WhatsApp Business</b> <span class="chip">скоро</span><div class="muted">Автоматично съобщение „потвърдете поръчката“ при всяка нова поръчка (изисква одобрение от Meta). Сега: бутон „💬 Потвърди“ при всяка поръчка.</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
+        </div>
+      </div>
+      <div class="isec">
         <div class="isec-head"><span class="isec-ic"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></span><div><h2>Проверка на клиенти</h2><div class="muted">Защита от некоректни поръчки</div></div></div>
         <div class="igrid">
           <div class="icard"><div class="tile nk">НК<img src="https://www.google.com/s2/favicons?domain=nekorekten.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>НЕкоректен</b> <span class="chip" id="iNkChip"></span><div class="muted">Всеки телефон от поръчка се проверява автоматично в nekorekten.com. Услугата се осигурява от платформата.</div></div></div>
@@ -410,6 +432,63 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     <section id="pickShopView" hidden>
       <div class="pagehead"><div><h1 id="pickTitle">Изберете магазин</h1><div class="sub">Тази страница е за конкретен магазин — изберете кой.</div></div></div>
       <div class="pickshop" id="pickShops"></div>
+    </section>
+    <section id="campaignsView" hidden>
+      <div class="pagehead"><div><h1>Кампании</h1><div class="sub">SMS и WhatsApp съобщения до клиентите ви от поръчките</div></div><button type="button" class="primary" id="kNew">+ Нова кампания</button></div>
+      <div class="tip">💡 Изпращането директно оттук идва със свързването на SMS доставчик / WhatsApp Business (Интеграции → Съобщения). Дотогава: готова кампания → <b>„Експорт CSV“</b> → качете файла във вашата SMS услуга (там са телефон, име и вече попълненото съобщение за всеки клиент).</div>
+      <div class="panel" id="kListPanel"><table id="kTable"></table></div>
+      <div class="panel" id="kEditor" hidden>
+        <h2 style="margin-top:0" id="kTitle">Нова кампания</h2>
+        <div class="cgrid">
+          <div>
+            <div class="fgrid">
+              <label>Име на кампанията<input type="text" id="kName" maxlength="80" placeholder="напр. Благодарност за поръчката"></label>
+              <label>Канал<select id="kChannel"><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option></select></label>
+            </div>
+            <h3 style="margin:0 0 4px">Кои клиенти</h3>
+            <div class="muted">Един човек = един телефон, от поръчките на този магазин.</div>
+            <div class="chk" id="kStatuses"></div>
+            <div class="fgrid">
+              <label>Поръчали от<input type="date" id="kFrom"></label>
+              <label>до<input type="date" id="kTo"></label>
+              <label>Купили продукт (съдържа)<input type="text" id="kProduct" maxlength="100" placeholder="по избор"></label>
+              <label>Поне брой поръчки<input type="number" id="kMin" min="1" max="100" value="1"></label>
+              <label class="check"><input type="checkbox" id="kNoFlag" checked> Без клиенти със сигнали в НЕкоректен</label>
+            </div>
+            <h3 style="margin:0 0 4px">Съобщение</h3>
+            <div class="vars" id="kPresets"></div>
+            <textarea id="kMsg" maxlength="1000" placeholder="Здравейте, {име}! …"></textarea>
+            <div class="vars" id="kVars"></div>
+            <label class="check" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="kConsent"> Имам съгласието на тези клиенти да получават такива съобщения</label>
+            <div class="muted">Маркетингови SMS/WhatsApp съобщения изискват съгласие на клиента (GDPR / ЗЕС). Добавяйте „За отказ отговорете STOP“ и вписвайте отказалите в списъка „Не изпращай“ по-долу.</div>
+            <div class="actions" style="margin-top:12px"><button type="button" class="ghost" id="kSave">Запази чернова</button><button type="button" class="primary" id="kReady">Готова кампания</button><button type="button" class="ghost" id="kExport" hidden>Експорт CSV</button><button type="button" class="ghost" id="kSend" disabled title="Свържете SMS доставчик / WhatsApp Business (скоро)">Изпрати (скоро)</button><button type="button" class="ghost" id="kClose">Затвори</button></div>
+            <div class="err" id="kErr"></div>
+          </div>
+          <div>
+            <h3 style="margin:0 0 4px">Преглед</h3>
+            <div class="kpis" id="kKpis"></div>
+            <div id="kSample"></div>
+          </div>
+        </div>
+      </div>
+      <div class="cgrid">
+        <div class="panel">
+          <h2 style="margin-top:0">Съобщение за потвърждение на поръчка</h2>
+          <div class="muted" style="margin-bottom:8px">Изпраща се с бутона <b>„💬 Потвърди“</b> при всяка поръчка (WhatsApp или SMS от вашия телефон). Клиентът натиска личния си линк → „Потвърждавам“ / „Отказвам“ → статусът се сменя сам и получавате известие. Задължително съдържа {линк_потвърждение}.</div>
+          <textarea id="kConfirmMsg" maxlength="700"></textarea>
+          <div class="vars"><button type="button" class="ghost" data-cvar="{име}">{име}</button><button type="button" class="ghost" data-cvar="{продукт}">{продукт}</button><button type="button" class="ghost" data-cvar="{сума}">{сума}</button><button type="button" class="ghost" data-cvar="{доставка}">{доставка}</button><button type="button" class="ghost" data-cvar="{магазин}">{магазин}</button><button type="button" class="ghost" data-cvar="{линк_потвърждение}">{линк_потвърждение}</button></div>
+          <div class="actions"><button type="button" class="primary" id="kConfirmSave">Запази</button><span class="muted" id="kConfirmInfo"></span></div>
+        </div>
+        <div class="panel">
+          <h2 style="margin-top:0">Не изпращай (STOP)</h2>
+          <div class="muted" style="margin-bottom:8px">Тези номера никога не получават кампания. Поставете по един на ред.</div>
+          <textarea id="kOptText" style="min-height:80px" placeholder="0888 123 456"></textarea>
+          <div class="actions"><button type="button" class="ghost" id="kOptAdd">Добави</button><span class="muted" id="kOptInfo"></span></div>
+          <div id="kOptList" class="muted" style="margin-top:8px;max-height:200px;overflow:auto"></div>
+          <h3 style="margin:16px 0 4px">Цена на SMS</h3>
+          <div class="actions"><input type="text" inputmode="decimal" id="kPrice" style="width:110px"> €/SMS <button type="button" class="ghost" id="kPriceSave">Запази</button></div>
+        </div>
+      </div>
     </section>
     <section id="startView" hidden>
       <div class="pagehead"><div><h1>Първи стъпки</h1><div class="sub">Свържете магазина си сами — стъпка по стъпка. Отметките светват сами, когато нещо заработи.</div></div></div>
@@ -597,6 +676,16 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
           <div class="actions"><button type="button" class="ghost" id="eSync">Провери статусите сега</button></div>
           <div class="muted" id="eInfo" style="margin-top:10px"></div>
         </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="confirmModal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="cfTitle" style="max-width:520px">
+      <div class="dhead"><div class="tile" style="color:#25d366">💬</div><div><h2 id="cfTitle">Потвърждение от клиента</h2><div class="muted" style="font-size:15px" id="cfWho"></div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div class="bubble" id="cfMsg">Зареждам…</div>
+        <div class="actions" style="margin-top:12px"><a class="primary" id="cfWa" target="_blank" rel="noopener" style="text-decoration:none;padding:10px 16px;border-radius:12px">Отвори WhatsApp</a><a class="ghost" id="cfSms" style="text-decoration:none;padding:10px 16px;border-radius:12px;border:1px solid var(--line)">Изпрати SMS</a><button type="button" class="ghost" id="cfCopy">Копирай текста</button></div>
+        <div class="muted" style="margin-top:10px">Отваря WhatsApp/SMS на вашето устройство с готовото съобщение — натиснете „Изпрати“ там. Когато клиентът отговори през линка, статусът се сменя сам.</div>
       </div>
     </div>
   </div>
@@ -834,6 +923,12 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   /** Econt waybill of the order: number (tracking), PDF, cancel — or the button that creates it */
   /** the Speedy PDF is printed by our server: through the demo's API in the demo */
   function pdfHref(u) { return String(u || '').replace(/^\/api\/admin\//, API); }
+  function confirmBadge(o) {
+    var c = o.confirmation || {};
+    if (c.answer === 'yes') return '<span class="cbadge yes">✓ потвърдена от клиента</span>';
+    if (c.answer === 'no') return '<span class="cbadge no">✕ отказана от клиента</span>';
+    return c.sent ? '<span class="cbadge wait">⏳ чака потвърждение</span>' : '';
+  }
   function shipmentCell(o, i) {
     var w = o.shipment;
     if (w) {
@@ -865,7 +960,8 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
         '<td data-label="Артикули">' + items + '</td>' +
         '<td data-label="Сума"><b>' + o.total.toFixed(2) + ' ' + esc(o.currency) + '</b></td>' +
         '<td data-label="Статус"><select data-status="' + i + '">' + opts + '</select></td>' +
-        '<td>' + shipmentCell(o, i) + '<button type="button" data-copy="' + i + '">Копирай за товарителница</button><button type="button" class="del" data-del="' + i + '" title="Изтрий поръчката от системата">Изтрий</button></td>' +
+        '<td>' + (['new', 'confirmed'].indexOf(o.status) >= 0 && o.phone ? '<button type="button" data-confirm="' + i + '">💬 Потвърди</button>' : '') + confirmBadge(o) +
+          shipmentCell(o, i) + '<button type="button" data-copy="' + i + '">Копирай за товарителница</button><button type="button" class="del" data-del="' + i + '" title="Изтрий поръчката от системата">Изтрий</button></td>' +
         '</tr>';
     }).join('') || '<tr><td colspan="7" class="muted">Няма поръчки.</td></tr>';
     updatePager();
@@ -920,6 +1016,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
         .catch(function () { btn.disabled = false; alert('Поръчката не беше изтрита. Опитайте пак.'); });
       return;
     }
+    if (btn.getAttribute('data-confirm') != null) { openConfirm(orders[btn.getAttribute('data-confirm')]); return; }
     if (btn.getAttribute('data-wb') != null) { openWaybill(orders[btn.getAttribute('data-wb')]); return; }
     if (btn.getAttribute('data-wbrelease') != null) {
       e.preventDefault();
@@ -1072,7 +1169,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       .catch(function () { $('dCards').innerHTML = '<div class="err">Грешка при зареждане на таблото. Опитайте пак.</div>'; });
   }
   /* ---- навигация: страницата е в адреса (#orders, #dash, …) ---- */
-  var VIEWS = { orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции', clients: 'Клиенти', start: 'Първи стъпки' };
+  var VIEWS = { orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции', clients: 'Клиенти', start: 'Първи стъпки', campaigns: 'Кампании' };
   function viewFromHash() { var v = location.hash.slice(1); return Object.prototype.hasOwnProperty.call(VIEWS, v) ? v : 'orders'; }
   function showView(view) {
     if (view === 'clients' && role !== 'owner') view = 'orders'; // only the owner manages clients
@@ -1090,6 +1187,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     if (view === 'dash') loadDash();
     if (view === 'clients') loadClients();
     if (view === 'start') loadStart();
+    if (view === 'campaigns') loadCampaigns();
     if (view === 'costs') loadCosts();
     if (view === 'integrations') loadIntegrations();
     if (view === 'inventory') loadInventory();
@@ -1134,7 +1232,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   /* ---- магазини: падащо меню горе вляво ---- */
   var shops = [], currentShop = '';
   try { currentShop = localStorage.getItem('zdShop') || ''; } catch (e) { /* private mode */ }
-  var NEEDS_SHOP = { costs: 1, inventory: 1, integrations: 1, start: 1 };
+  var NEEDS_SHOP = { costs: 1, inventory: 1, integrations: 1, start: 1, campaigns: 1 };
   function withShop(url) { return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'shop=' + encodeURIComponent(currentShop || ''); }
   function shopById(id) { return shops.filter(function (x) { return x.id === id; })[0]; }
   function renderShopBtn() {
@@ -1315,6 +1413,135 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       var r = d.result; load(page);
       return loadIntegrations().then(function () { $('eInfo').textContent = 'Готово: проверени ' + r.checked + ', доставени ' + r.delivered + ', върнати ' + r.returned + '.'; });
     }).catch(function (e) { showErr('eInfo', e); });
+  });
+
+  /* ---- потвърждение на поръчка от клиента (WhatsApp/SMS от вашия телефон + личен линк) ---- */
+  function openConfirm(o) {
+    $('cfWho').textContent = (o.name || 'Клиент') + ' · ' + o.phone;
+    $('cfMsg').textContent = 'Зареждам…';
+    $('cfWa').removeAttribute('href'); $('cfSms').removeAttribute('href');
+    $('confirmModal').hidden = false;
+    fetch(withShop(API + 'confirmadmin'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'link', id: o.id }) })
+      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); })
+      .then(function (d) {
+        $('cfMsg').textContent = d.message;
+        if (d.whatsapp) $('cfWa').setAttribute('href', d.whatsapp);
+        if (d.sms) $('cfSms').setAttribute('href', d.sms);
+        o.confirmation = o.confirmation || {}; if (!o.confirmation.sent) { o.confirmation.sent = true; render(); }
+      })
+      .catch(function (e) { $('cfMsg').textContent = e.message; });
+  }
+  $('cfCopy').addEventListener('click', function () {
+    var t = $('cfMsg').textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { $('cfCopy').textContent = 'Копирано ✓'; setTimeout(function () { $('cfCopy').textContent = 'Копирай текста'; }, 1500); });
+    else window.prompt('Копирайте:', t);
+  });
+
+  /* ---- кампании ---- */
+  var PRESETS = [
+    ['Благодарност', 'Здравейте, {име}! Благодарим за поръчката на {продукт} от {магазин}. Ако имате въпроси — пишете ни. За отказ от съобщения: STOP'],
+    ['Отзив', 'Здравейте, {име}! Как ви се струва {продукт}? Ще се радваме на кратък отзив: {линк} За отказ: STOP'],
+    ['Промоция', '{име}, само за вас: -15% на всичко в {магазин} до неделя с код ОТНОВО15 → {линк} За отказ: STOP'],
+    ['Върни клиента', 'Здравейте, {име}! Отдавна не сте ни посещавали — новите продукти в {магазин} ви чакат: {линк} За отказ: STOP'],
+  ];
+  var VARS = ['{име}', '{пълно_име}', '{продукт}', '{магазин}', '{линк}'];
+  var kEditing = null, kTimer = null, kList = [];
+  $('kPresets').innerHTML = PRESETS.map(function (p, i) { return '<button type="button" class="ghost" data-preset="' + i + '">' + esc(p[0]) + '</button>'; }).join('');
+  $('kVars').innerHTML = VARS.map(function (v) { return '<button type="button" class="ghost" data-var="' + v + '">' + v + '</button>'; }).join('');
+  $('kStatuses').innerHTML = STATUSES.map(function (s) { return '<label><input type="checkbox" value="' + s[0] + '"' + (s[0] === 'delivered' ? ' checked' : '') + '> ' + s[1] + '</label>'; }).join('');
+  function insertAt(el, text) { var a = el.selectionStart || el.value.length, b = el.selectionEnd || a; el.value = el.value.slice(0, a) + text + el.value.slice(b); el.focus(); el.selectionStart = el.selectionEnd = a + text.length; }
+  function kSegment() {
+    return { statuses: [].map.call(document.querySelectorAll('#kStatuses input:checked'), function (x) { return x.value; }), from: $('kFrom').value, to: $('kTo').value,
+      product: $('kProduct').value, minOrders: $('kMin').value, excludeFlagged: $('kNoFlag').checked };
+  }
+  function kApi(body) {
+    return fetch(withShop(API + 'campaigns'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); });
+  }
+  function kPreview() {
+    clearTimeout(kTimer);
+    kTimer = setTimeout(function () {
+      kApi({ action: 'preview', channel: $('kChannel').value, message: $('kMsg').value, segment: kSegment() }).then(function (p) {
+        var sms = $('kChannel').value === 'sms';
+        $('kKpis').innerHTML = '<div><b>' + p.count + '</b><div class="muted">получатели</div></div>' +
+          (sms ? '<div><b>' + p.sms.parts + '</b><div class="muted">SMS на човек · ' + p.sms.chars + ' знака' + (p.sms.encoding === 'UCS2' ? ' (кирилица: 70/SMS)' : '') + '</div></div>' +
+            '<div><b>' + money(p.cost, 'EUR') + '</b><div class="muted">приблизителна цена (' + String(p.smsPrice).replace('.', ',') + ' €/SMS)</div></div>' :
+            '<div><b>по тарифа на Meta</b><div class="muted">WhatsApp се таксува на разговор</div></div>');
+        $('kSample').innerHTML = p.sample.length ? p.sample.map(function (x) { return '<div class="bubble' + (sms ? ' sms' : '') + '"><small>' + esc(x.name) + ' · ' + esc(x.phone) + '</small>' + esc(x.text) + '</div>'; }).join('') +
+          (p.count > p.sample.length ? '<div class="muted">… и още ' + (p.count - p.sample.length) + '</div>' : '') : '<div class="muted">Няма клиенти по тези условия.</div>';
+      }).catch(function (e) { if (e.message !== 'auth') $('kSample').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; });
+    }, 300);
+  }
+  function openCampaign(c) {
+    kEditing = c || null;
+    $('kTitle').textContent = c ? 'Кампания: ' + c.name : 'Нова кампания';
+    $('kName').value = c ? c.name : ''; $('kChannel').value = c ? c.channel : 'sms'; $('kMsg').value = c ? c.message : PRESETS[0][1];
+    var sg = (c && c.segment) || {};
+    [].forEach.call(document.querySelectorAll('#kStatuses input'), function (x) { x.checked = (sg.statuses || ['delivered']).indexOf(x.value) >= 0; });
+    $('kFrom').value = sg.from || ''; $('kTo').value = sg.to || ''; $('kProduct').value = sg.product || ''; $('kMin').value = sg.minOrders || 1; $('kNoFlag').checked = sg.excludeFlagged !== false;
+    $('kConsent').checked = Boolean(c && c.consent);
+    $('kExport').hidden = !(c && c.consent);
+    $('kErr').textContent = '';
+    $('kEditor').hidden = false; $('kEditor').scrollIntoView({ behavior: 'smooth' });
+    kPreview();
+  }
+  function kSaveAs(status, btn) {
+    $('kErr').textContent = '';
+    busy(btn, kApi({ action: 'save', id: kEditing ? kEditing.id : undefined, name: $('kName').value, channel: $('kChannel').value, message: $('kMsg').value, segment: kSegment(), consent: $('kConsent').checked, status: status }))
+      .then(function (d) { kEditing = d.campaign; $('kTitle').textContent = 'Кампания: ' + d.campaign.name; $('kExport').hidden = !d.campaign.consent; loadCampaignList(); $('kErr').innerHTML = '<span style="color:var(--ok)">Запазено ✓ (' + d.campaign.recipients + ' получатели)</span>'; })
+      .catch(function (e) { $('kErr').textContent = e.message; });
+  }
+  function loadCampaignList() {
+    return fetch(withShop(API + 'campaigns'), { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); }).then(function (d) {
+      kList = d.campaigns || [];
+      $('kPrice').value = String(d.smsPrice).replace('.', ',');
+      $('kTable').innerHTML = table(['Кампания', 'Канал', 'Получатели', 'Състояние', 'Обновена', ''], kList.map(function (c, i) {
+        return ['<b>' + esc(c.name) + '</b>', c.channel === 'sms' ? 'SMS' : 'WhatsApp', String(c.recipients), c.status === 'ready' ? '<span class="badge ok">готова</span>' : '<span class="badge">чернова</span>', esc(when(c.updatedAt)),
+          '<button type="button" class="ghost" data-kopen="' + i + '">Отвори</button>' + (c.consent ? ' <button type="button" class="ghost" data-kexport="' + esc(c.id) + '">Експорт CSV</button>' : '') + ' <button type="button" class="del" data-kdel="' + i + '">Изтрий</button>'];
+      }));
+    }).catch(function () {});
+  }
+  function loadCampaigns() {
+    loadCampaignList();
+    fetch(withShop(API + 'confirmadmin'), { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (d) { $('kConfirmMsg').value = d.template || ''; }).catch(function () {});
+    kApi({ action: 'optouts' }).then(function (d) { $('kOptList').innerHTML = d.optouts.length ? d.optouts.map(function (o) { return esc(o.phone) + ' <a href="#" data-kunopt="' + esc(o.phone) + '">махни</a>'; }).join('<br>') : 'Няма.'; }).catch(function () {});
+  }
+  $('kNew').addEventListener('click', function () { openCampaign(null); });
+  $('kClose').addEventListener('click', function () { $('kEditor').hidden = true; });
+  ['kChannel', 'kFrom', 'kTo', 'kProduct', 'kMin', 'kNoFlag'].forEach(function (id) { $(id).addEventListener('change', kPreview); });
+  $('kMsg').addEventListener('input', kPreview); $('kProduct').addEventListener('input', kPreview);
+  $('kStatuses').addEventListener('change', kPreview);
+  $('kPresets').addEventListener('click', function (e) { var i = e.target.getAttribute('data-preset'); if (i != null) { $('kMsg').value = PRESETS[i][1]; kPreview(); } });
+  $('kVars').addEventListener('click', function (e) { var v = e.target.getAttribute('data-var'); if (v) { insertAt($('kMsg'), v); kPreview(); } });
+  $('kSave').addEventListener('click', function () { kSaveAs('draft', $('kSave')); });
+  $('kReady').addEventListener('click', function () { kSaveAs('ready', $('kReady')); });
+  $('kExport').addEventListener('click', function () { if (kEditing) location.href = withShop(API + 'campaigns?export=' + encodeURIComponent(kEditing.id)); });
+  $('kTable').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.hasAttribute('data-kopen')) openCampaign(kList[b.getAttribute('data-kopen')]);
+    if (b.hasAttribute('data-kexport')) location.href = withShop(API + 'campaigns?export=' + encodeURIComponent(b.getAttribute('data-kexport')));
+    if (b.hasAttribute('data-kdel')) {
+      var c = kList[b.getAttribute('data-kdel')];
+      if (!window.confirm('Да изтрия ли кампанията „' + c.name + '“?')) return;
+      busy(b, kApi({ action: 'delete', id: c.id })).then(function () { if (kEditing && kEditing.id === c.id) $('kEditor').hidden = true; loadCampaignList(); }).catch(function (err) { alert(err.message); });
+    }
+  });
+  document.querySelector('#campaignsView').addEventListener('click', function (e) {
+    var v = e.target.getAttribute('data-cvar'); if (v) insertAt($('kConfirmMsg'), v);
+    var un = e.target.getAttribute('data-kunopt');
+    if (un) { e.preventDefault(); kApi({ action: 'optout_remove', phone: un }).then(loadCampaigns); }
+  });
+  $('kConfirmSave').addEventListener('click', function () {
+    busy($('kConfirmSave'), fetch(withShop(API + 'confirmadmin'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'template', text: $('kConfirmMsg').value }) })
+      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
+      .then(function () { $('kConfirmInfo').textContent = 'Запазено ✓'; setTimeout(function () { $('kConfirmInfo').textContent = ''; }, 2000); })
+      .catch(function (e) { $('kConfirmInfo').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; });
+  });
+  $('kOptAdd').addEventListener('click', function () {
+    busy($('kOptAdd'), kApi({ action: 'optout_add', phones: $('kOptText').value })).then(function (d) { $('kOptText').value = ''; $('kOptInfo').textContent = 'Добавени: ' + d.added; loadCampaigns(); kPreview(); }).catch(function (e) { $('kOptInfo').textContent = e.message; });
+  });
+  $('kPriceSave').addEventListener('click', function () {
+    busy($('kPriceSave'), kApi({ action: 'price', smsPrice: $('kPrice').value })).then(function () { kPreview(); }).catch(function (e) { alert(e.message); });
   });
 
   /* ---- Първи стъпки: подробен водач, отметките идват от реалните данни ---- */
