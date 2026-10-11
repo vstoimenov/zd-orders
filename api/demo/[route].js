@@ -38,6 +38,7 @@ const ROUTES = {
   shops: (await import('../../lib/admin/shops.js')).default,
   waybills: (await import('../../lib/admin/waybills.js')).default,
   push: (await import('../../lib/admin/push.js')).default,
+  onboarding: (await import('../../lib/admin/onboarding.js')).default,
 };
 
 /* ---- one sandbox per visitor (a cookie), at most MAX_BOXES per instance: the least recently used one is reset ---- */

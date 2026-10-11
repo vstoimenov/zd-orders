@@ -182,6 +182,26 @@ tr.st-new{background:#fffbeb}
 details.manual{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
 details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
 .warn{color:var(--warn);font-weight:600}
+.steps{display:flex;flex-direction:column;gap:14px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
+.step.done{border-color:#bfe3c9}
+.step h3{margin:0;font-size:16px;display:flex;gap:10px;align-items:center}
+.step .num{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#f1f0ec;font-weight:800;font-size:13px}
+.step.done .num{background:#e8f6ec;color:var(--ok)}
+.step .state{margin:6px 0 0 38px;font-weight:600;font-size:13px}
+.step .state.ok{color:var(--ok)}.step .state.wait{color:var(--warn)}
+.step details{margin:10px 0 0 38px}
+.step summary{cursor:pointer;font-weight:700;color:var(--accent-ink)}
+.step ol,.step ul{margin:8px 0;padding-left:20px;line-height:1.6}
+.step .actions{margin:10px 0 0 38px}
+.step .note{margin:8px 0;padding:10px 12px;border-radius:10px;background:#fff7ed;color:#7c2d12;font-size:13px}
+.codebox{display:flex;gap:8px;align-items:center;margin:8px 0}
+.codebox code{flex:1;padding:10px 12px;border-radius:10px;background:#0b0b0a;color:#facc15;font-size:12px;overflow-x:auto;white-space:nowrap}
+.progress{height:10px;border-radius:999px;background:#ecebe5;overflow:hidden;margin:8px 0 4px}
+.progress>div{height:100%;background:var(--accent-strong)}
+.faq details{border-top:1px solid var(--line);padding:10px 0}
+.faq summary{cursor:pointer;font-weight:700}
+.faq p,.faq ul{margin:8px 0 0;line-height:1.6}
 .demobar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent-ink);border-radius:var(--radius);padding:12px 16px;margin-bottom:18px}
 .demobar>div{flex:1 1 320px}
 .wb{display:block;margin-bottom:6px;font-size:13px;line-height:1.5}
@@ -243,6 +263,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     <div class="shopmenu" id="shopMenu" hidden></div>
     <nav class="nav">
       <div class="sec">Основни</div>
+      <a href="#start" data-view="start"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>Първи стъпки</a>
       <a href="#dash" data-view="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Табло</a>
       <a href="#orders" data-view="orders"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Поръчки</a>
       <a href="#costs" data-view="costs"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>Финанси</a>
@@ -372,6 +393,38 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       <div class="pagehead"><div><h1 id="pickTitle">Изберете магазин</h1><div class="sub">Тази страница е за конкретен магазин — изберете кой.</div></div></div>
       <div class="pickshop" id="pickShops"></div>
     </section>
+    <section id="startView" hidden>
+      <div class="pagehead"><div><h1>Първи стъпки</h1><div class="sub">Свържете магазина си сами — стъпка по стъпка. Отметките светват сами, когато нещо заработи.</div></div></div>
+      <div class="panel" id="stProgressBox"><b id="stProgressText"></b><div class="progress"><div id="stProgress" style="width:0"></div></div><div class="muted" id="stShopLine"></div></div>
+      <div class="steps" id="stSteps"></div>
+      <div class="panel faq" style="margin-top:18px">
+        <h2 style="margin-top:0">Чести въпроси и проблеми</h2>
+        <details><summary>В чекаута не виждам избора на офис на Еконт/Спиди</summary>
+          <ul>
+            <li>Кодът трябва да е в <b>„Код за целия сайт“ → Body</b> в ConvertBuilder, не в кода на отделна страница — и след това натиснете <b>„Публикувай“</b>.</li>
+            <li>Домейнът в „Първи стъпки“ (горе) трябва да е <b>точно</b> домейнът, на който е чекаутът (напр. <code>moyat-magazin.bg</code> или <code>shop.convertbuilder.com</code>).</li>
+            <li>Нов магазин работи <b>след одобрение</b> от платформата (стъпка 2).</li>
+            <li>Презаредете чекаута с изчистен кеш (на телефона — отворете го в нов раздел).</li>
+          </ul></details>
+        <details><summary>Поръчките не идват в „Поръчки“</summary>
+          <ul>
+            <li>Отворете <b>Интеграции → ConvertBuilder → „Връзка и синхронизация“</b> и натиснете <b>„Тествай връзката“</b>. Ако пише „Ключът е отхвърлен“ — създайте нов API ключ в ConvertBuilder и го въведете отново.</li>
+            <li>Натиснете <b>„Синхронизирай поръчките“</b> — системата дърпа и пропуснатите поръчки (освен това го прави сама всяка нощ).</li>
+          </ul></details>
+        <details><summary>Една поръчка се вижда два пъти</summary>
+          <p>Домейнът в ConvertBuilder интеграцията трябва да е <b>същият</b> като домейна на магазина. Ако не е — поправете го в Интеграции → ConvertBuilder.</p></details>
+        <details><summary>Забравих паролата</summary>
+          <p>Пишете на платформата — ще получите нов линк, с който задавате нова парола. Старата спира да работи.</p></details>
+        <details><summary>Еконт: трябва ли договор? Как се изплаща наложеният платеж?</summary>
+          <p>Не — стига профил в e-Econt (ee.econt.com). Товарителниците са истински пратки и се таксуват според условията на профила ви. Наложеният платеж без договор се изплаща по общите условия на Еконт (на каса или по сметката в профила). Пробвайте първо с „Тестов режим“.</p></details>
+        <details><summary>Спиди: защо не става с данните от MySpeedy?</summary>
+          <p>Спиди дава <b>отделен API потребител и парола</b> само към договор. Поискайте ги от търговския си представител в Спиди — с данните за MySpeedy не работи.</p></details>
+        <details><summary>Как да спра модула в чекаута?</summary>
+          <p>Махнете реда с <code>kurier.js</code> от „Код за целия сайт“ в ConvertBuilder и публикувайте — чекаутът се връща както е бил.</p></details>
+        <details><summary>Какви данни на клиентите се пазят?</summary>
+          <p>Само поръчките (име, телефон, имейл, адрес/офис, артикули) — видими само за вас. Посещенията се броят анонимно, без бисквитки и без IP. Телефонът от поръчката се проверява в nekorekten.com за некоректни клиенти. Споменете това в политиката си за поверителност.</p></details>
+      </div>
+    </section>
     <section id="clientsView" hidden>
       <div class="pagehead"><div><h1>Клиенти</h1><div class="sub">Клиентите влизат с имейл и парола и виждат само своите магазини</div></div><button type="button" class="primary" id="cNew">+ Нов клиент</button></div>
       <div class="panel"><table id="cTable"></table></div>
@@ -413,7 +466,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
           <label>Име на магазина<input type="text" id="nsName" maxlength="60" placeholder="напр. Книги за деца"></label>
           <label>Домейн (където е чекаутът)<input type="text" id="nsDomain" placeholder="напр. knigi.bg"></label>
         </div>
-        <div class="tip">На сайта на магазина сложете същия ред в „Собствен Body код“: <code>&lt;script src="https://kurier.profitbrand.online/kurier.js" defer&gt;&lt;/script&gt;</code></div>
+        <div class="tip">Домейнът е <b>точно</b> този, на който е чекаутът (без https:// и без /), напр. <code>moyat-magazin.bg</code>. След това следвайте <b>„Първи стъпки“</b> — там е кодът и всичко останало стъпка по стъпка.</div>
         <div class="actions"><button type="button" class="primary" id="nsSave">Създай магазина</button><span class="err" id="nsErr"></span></div>
       </div>
     </div>
@@ -738,7 +791,10 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
             var rest = new URLSearchParams(location.search); rest.delete('shop');
             try { history.replaceState(null, '', location.pathname + (rest.toString() ? '?' + rest : '') + location.hash); } catch (e) { /* old browser */ }
           }
-          loadShops().catch(function () {}).then(loadMe).then(function () { showView(viewFromHash()); afterFacebook(); });
+          loadShops().catch(function () {}).then(loadMe).then(function () {
+            if (role === 'client' && !location.hash && !shops.length) location.hash = '#start'; // a new client starts with the guide
+            showView(viewFromHash()); afterFacebook();
+          });
         }
       })
       .catch(function () {
@@ -992,7 +1048,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       .catch(function () { $('dCards').innerHTML = '<div class="err">Грешка при зареждане на таблото. Опитайте пак.</div>'; });
   }
   /* ---- навигация: страницата е в адреса (#orders, #dash, …) ---- */
-  var VIEWS = { orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции', clients: 'Клиенти' };
+  var VIEWS = { orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции', clients: 'Клиенти', start: 'Първи стъпки' };
   function viewFromHash() { var v = location.hash.slice(1); return Object.prototype.hasOwnProperty.call(VIEWS, v) ? v : 'orders'; }
   function showView(view) {
     if (view === 'clients' && role !== 'owner') view = 'orders'; // only the owner manages clients
@@ -1009,6 +1065,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     }
     if (view === 'dash') loadDash();
     if (view === 'clients') loadClients();
+    if (view === 'start') loadStart();
     if (view === 'costs') loadCosts();
     if (view === 'integrations') loadIntegrations();
     if (view === 'inventory') loadInventory();
@@ -1053,7 +1110,7 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   /* ---- магазини: падащо меню горе вляво ---- */
   var shops = [], currentShop = '';
   try { currentShop = localStorage.getItem('zdShop') || ''; } catch (e) { /* private mode */ }
-  var NEEDS_SHOP = { costs: 1, inventory: 1, integrations: 1 };
+  var NEEDS_SHOP = { costs: 1, inventory: 1, integrations: 1, start: 1 };
   function withShop(url) { return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'shop=' + encodeURIComponent(currentShop || ''); }
   function shopById(id) { return shops.filter(function (x) { return x.id === id; })[0]; }
   function renderShopBtn() {
@@ -1234,6 +1291,107 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       var r = d.result; load(page);
       return loadIntegrations().then(function () { $('eInfo').textContent = 'Готово: проверени ' + r.checked + ', доставени ' + r.delivered + ', върнати ' + r.returned + '.'; });
     }).catch(function (e) { showErr('eInfo', e); });
+  });
+
+  /* ---- Първи стъпки: подробен водач, отметките идват от реалните данни ---- */
+  function go(hash) { location.hash = hash; }
+  function stepHtml(n, st) {
+    var body = st.body ? '<details' + (st.done ? '' : ' open') + '><summary>' + (st.done ? 'Виж как (готово)' : 'Как се прави') + '</summary>' + st.body + '</details>' : '';
+    var acts = (st.actions || []).map(function (a) { return '<button type="button" class="' + (a.primary ? 'primary' : 'ghost') + '" data-st="' + a.id + '">' + esc(a.label) + '</button>'; }).join(' ');
+    return '<div class="step' + (st.done ? ' done' : '') + '"><h3><span class="num">' + (st.done ? '✓' : n) + '</span>' + esc(st.title) + (st.optional ? ' <span class="badge">по желание</span>' : '') + '</h3>' +
+      (st.state ? '<div class="state ' + (st.done ? 'ok' : st.wait ? 'wait' : '') + '">' + esc(st.state) + '</div>' : '') + body + (acts ? '<div class="actions">' + acts + '</div>' : '') + '</div>';
+  }
+  function codeBox(snippet) { return '<div class="codebox"><code>' + esc(snippet) + '</code><button type="button" class="ghost" data-st="copy">Копирай кода</button></div>'; }
+  var stData = null;
+  function renderStart(d) {
+    stData = d;
+    var sh = d.shop, w = d.widget || {}, cb = d.convertbuilder || {};
+    var hasShop = Boolean(sh && !sh.placeholder);
+    var widgetOk = Boolean(w.visits || w.orders);
+    var steps = [
+      { title: 'Добавете магазина си', done: hasShop,
+        state: hasShop ? 'Магазин: ' + sh.name + ' · ' + sh.domain : 'Още нямате магазин.',
+        body: '<ol><li>Горе вляво натиснете името на магазина → <b>„+ Добави магазин“</b>.</li><li><b>Име</b> — както искате да го виждате тук.</li>' +
+          '<li><b>Домейн</b> — точно адресът, на който е чекаутът ви, <b>без</b> https:// и без наклонена черта: напр. <code>moyat-magazin.bg</code>. Ако чекаутът ви е на адрес като <code>moyat-magazin.convertbuilder.com</code> — въведете него.</li>' +
+          '<li>Натиснете <b>„Създай магазина“</b>.</li></ol>',
+        actions: hasShop ? [] : [{ id: 'addshop', label: '+ Добави магазин', primary: true }] },
+      { title: 'Одобрение от платформата', done: hasShop && sh.approved, wait: hasShop && !sh.approved,
+        state: !hasShop ? '' : sh.approved ? 'Одобрен ✓' : 'Чака одобрение — междувременно продължете със следващите стъпки.',
+        body: '<p>За сигурност проверяваме, че домейнът е ваш, преди чекаутът му да започне да праща поръчки. Не е нужно да правите нищо — отметката светва сама.</p>' },
+      { title: 'Сложете кода в сайта си (ConvertBuilder)', done: widgetOk,
+        state: widgetOk ? 'Кодът работи ✓ — последно видяхме сайта ви ' + when(w.lastVisitAt || w.lastOrderAt) : 'Още не сме видели посещение от сайта ви.',
+        body: '<p>Този ред добавя в чекаута избор на <b>офис или автомат на Еконт/Спиди</b> (и адрес за Спиди) и праща всяка поръчка тук:</p>' + codeBox(d.snippet) +
+          '<ol><li>Влезте в ConvertBuilder и отворете сайта на магазина.</li><li>Отидете в <b>Настройки на сайта → „Собствен код“</b> (Custom code).</li>' +
+          '<li>В <b>„Код за целия сайт“</b> намерете полето <b>„Body“</b> и поставете реда най-отдолу.</li><li>Натиснете <b>„Запази“</b>, после <b>„Публикувай“</b> сайта.</li>' +
+          '<li>Отворете чекаута си — трябва да видите „До офис или автомат на Еконт“ и „Спиди“.</li></ol>' +
+          '<div class="note">⚠️ Не поставяйте кода в „Код за текущата страница“ — там ConvertBuilder понякога трие кода при запазване. Само в „Код за целия сайт“.</div>' +
+          '<p class="muted">Отметката светва след първото посещение на сайта ви (за нов магазин — след одобрението).</p>' },
+      { title: 'Свържете ConvertBuilder (поръчките идват веднага)', done: Boolean(cb.connected),
+        state: cb.connected ? 'Свързан ✓' + (cb.webhook ? ' · поръчките идват веднага' : '') + (cb.lastSyncAt ? ' · синхронизация ' + when(cb.lastSyncAt) : '') : (cb.lastError ? 'Грешка: ' + cb.lastError : 'Не е свързан.'),
+        body: '<ol><li>В ConvertBuilder отворете <b>Website Settings → Applications</b> и копирайте <b>API Key</b> (ако няма — създайте).</li>' +
+          '<li>Тук отворете <b>Интеграции → ConvertBuilder → „Свържи“</b> → раздел <b>„Връзка и синхронизация“</b>.</li>' +
+          '<li>Въведете <b>домейна на магазина</b> (същия като в стъпка 1) и поставете ключа.</li><li>Натиснете <b>„Запази и свържи“</b>. Системата сама регистрира връзката и всяка нощ дърпа пропуснатите поръчки.</li>' +
+          '<li>За старите поръчки: изберете дата и натиснете <b>„Синхронизирай поръчките“</b>.</li></ol>',
+        actions: [{ id: 'integrations', label: 'Отвори Интеграции' }] },
+      { title: 'Направете пробна поръчка', done: d.orders > 0,
+        state: d.orders > 0 ? 'Имате ' + d.orders + (d.orders === 1 ? ' поръчка' : ' поръчки') + ' ✓' : 'Още няма поръчки.',
+        body: '<ol><li>Отворете чекаута си като клиент, изберете продукт и <b>офис на Еконт или Спиди</b>.</li><li>Завършете поръчката.</li>' +
+          '<li>До секунди тя трябва да се появи в <b>„Поръчки“</b> с офиса. После я изтрийте оттам с „Изтрий“ (в ConvertBuilder остава — изтрийте я и там).</li></ol>',
+        actions: [{ id: 'orders', label: 'Отвори Поръчки' }] },
+      { title: 'Товарителници с Еконт', optional: true, done: Boolean(d.econt),
+        state: d.econt ? 'Свързан ✓' : 'Не е свързан.',
+        body: '<p>Създавате товарителници от поръчката с един бутон — нужен е само <b>профил в e-Econt</b> (ee.econt.com), без договор.</p>' +
+          '<ol><li><b>Интеграции → Еконт → „+ Товарителници“</b>.</li><li>Въведете потребителското име и паролата от e-Econt → <b>„Зареди профила“</b>.</li>' +
+          '<li>Изберете <b>откъде изпращате</b> (офис или адрес), телефон, кой плаща доставката. Ако профилът е на фирма — попълнете <b>упълномощено лице</b>.</li>' +
+          '<li>За проба включете <b>„Тестов режим“</b> (тестов акаунт: iasp-dev / 1Asp-dev) — пратките не са истински.</li>' +
+          '<li>После при всяка поръчка с Еконт натискайте <b>„Създай товарителница“</b> → „Изчисли цена“ → „Създай“. Получавате номер, PDF за печат и проследяване.</li></ol>',
+        actions: [{ id: 'integrations', label: 'Отвори Интеграции' }] },
+      { title: 'Товарителници със Спиди', optional: true, done: Boolean(d.speedy),
+        state: d.speedy ? 'Свързан ✓' : 'Не е свързан.',
+        body: '<p>Нужен е <b>договор със Спиди</b> и <b>API потребител и парола</b> — поискайте ги от търговския си представител (данните за MySpeedy не стават).</p>' +
+          '<ol><li><b>Интеграции → Спиди → „+ Товарителници“</b> → въведете API данните → <b>„Зареди договора“</b>.</li>' +
+          '<li>Изберете подател, услуга, откъде изпращате (офис или адресът по договора — тогава куриерът се поръчва автоматично), лице за контакт, печат A4 или A6.</li>' +
+          '<li>При всяка поръчка със Спиди — <b>„Създай товарителница“</b>.</li></ol>',
+        actions: [{ id: 'integrations', label: 'Отвори Интеграции' }] },
+      { title: 'Рекламите от Meta (ROAS, CPA)', optional: true, done: Boolean(d.meta),
+        state: d.meta ? 'Свързан ✓' : 'Не е свързан.',
+        body: '<ol><li><b>Интеграции → Meta реклами → „+ Свържи“ → „Вход с Facebook“</b>.</li><li>Влезте с профила, който управлява рекламите, и изберете бизнес портфолиото и рекламния акаунт.</li>' +
+          '<li>Изберете акаунта от списъка → <b>„Свържи избрания акаунт“</b>. Разходът за последните 30 дни се изтегля веднага, после всяка нощ.</li></ol>',
+        actions: [{ id: 'integrations', label: 'Отвори Интеграции' }] },
+      { title: 'Известия на телефона за всяка нова поръчка', optional: true, done: false,
+        body: '<ol><li>Отворете този админ на телефона и влезте.</li><li><b>iPhone:</b> бутон Сподели (квадратчето със стрелка) → <b>„Добави към началния екран“</b>, после отворете от новата иконка „Поръчки“. <b>Android (Chrome):</b> менюто ⋮ → <b>„Инсталиране на приложението“</b>.</li>' +
+          '<li>Вляво <b>„🔔 Известия“ → „Включи известия“</b> → разрешете. Идва пробно известие.</li></ol>',
+        actions: [{ id: 'notif', label: '🔔 Известия' }] },
+      { title: 'Себестойност и наличности (печалба в таблото)', optional: true, done: false,
+        body: '<ol><li><b>Финанси</b> — въведете себестойността на всеки продукт, опаковката, % наложен платеж, кога плащате доставката. Таблото показва печалба и break-even ROAS.</li>' +
+          '<li><b>Наличности</b> — въведете бройките; при всяка поръчка намаляват сами, при отказ/връщане се връщат.</li></ol>',
+        actions: [{ id: 'costs', label: 'Отвори Финанси' }, { id: 'inventory', label: 'Отвори Наличности' }] },
+    ];
+    var req = steps.filter(function (x) { return !x.optional; });
+    var done = req.filter(function (x) { return x.done; }).length;
+    $('stProgress').style.width = Math.round(done / req.length * 100) + '%';
+    $('stProgressText').textContent = done === req.length ? '🎉 Магазинът е свързан — поръчките идват тук.' : 'Готови ' + done + ' от ' + req.length + ' задължителни стъпки';
+    $('stShopLine').textContent = hasShop ? 'Магазин: ' + sh.name + ' (' + sh.domain + ')' + (shops.length > 1 ? ' — за друг магазин го изберете горе вляво' : '') : '';
+    $('stSteps').innerHTML = steps.map(function (x, i) { return stepHtml(i + 1, x); }).join('');
+  }
+  function loadStart() {
+    $('stSteps').innerHTML = '<div class="muted">Зареждам…</div>';
+    return fetch(withShop(API + 'onboarding'), { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); })
+      .then(renderStart).catch(function (e) { if (e.message !== 'auth') $('stSteps').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; });
+  }
+  $('stSteps').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-st]'); if (!b) return;
+    var a = b.getAttribute('data-st');
+    if (a === 'copy') {
+      var t = stData ? stData.snippet : '';
+      var ok = function () { b.textContent = 'Копирано ✓'; setTimeout(function () { b.textContent = 'Копирай кода'; }, 1500); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, function () { window.prompt('Копирайте кода:', t); });
+      else window.prompt('Копирайте кода:', t);
+      return;
+    }
+    if (a === 'addshop') { $('nsName').value = ''; $('nsDomain').value = ''; $('nsErr').textContent = ''; $('shopModal').hidden = false; $('nsName').focus(); return; }
+    if (a === 'notif') { $('notifBtn').click(); return; }
+    go('#' + a);
   });
 
   /* ---- кой е влязъл; „Клиенти“ (само собственикът) ---- */
