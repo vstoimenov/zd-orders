@@ -175,7 +175,7 @@ test('10 wrong passwords lock the account for a while', async () => {
   try {
     for (let i = 0; i < 10; i++) await call({ method: 'POST', url: '/api/admin/login', body: { email: 'a@client.bg', password: 'nope' } });
     const res = await call({ method: 'POST', url: '/api/admin/login', body: { email: 'a@client.bg', password: 'client-pass-1' } });
-    assert.equal(res.statusCode, 429);
+    assert.equal(res.statusCode, 401, 'the same answer as a wrong password: no hint that the account exists');
     assert.match(json(res).error, /минути/);
   } finally { globalThis.setTimeout = realSet; }
 });
@@ -187,4 +187,103 @@ test('a client cannot be created for an unknown shop or with a used email', asyn
   res = await call({ method: 'POST', url: '/api/admin/users', cookie: owner, body: { action: 'create', email: 'X@Y.bg', shopIds: [SHOP_A] } });
   assert.equal(res.statusCode, 400);
   assert.match(json(res).error, /имейл/);
+});
+
+/* ---- security review fixes ---- */
+import { allowedShopOrigin } from '../lib/shops.js';
+import { upsertCbOrder } from '../lib/orders-repo.js';
+import { mapOrder } from '../lib/convertbuilder.js';
+
+test('a client cannot take a domain that is already in use anywhere (listed checkout, old orders, visits, the placeholder)', async () => {
+  const c = await clientWith([SHOP_A]);
+  process.env.ALLOWED_ORIGINS = 'https://listed-shop.bg, https://www.listed-shop.bg';
+  await q(`insert into zd.orders (cb_order_id, name, phone, phone_norm, delivery_type, courier, shop_id) values ('old-site.bg:5', 'X', '1', '1', 'econt_office', 'econt', $1)`, [SHOP_A]);
+  await q(`insert into zd.visits (day, site, visitor, shop_id) values (current_date, 'visited-site.bg', 'v1', $1)`, [SHOP_A]);
+  for (const domain of ['listed-shop.bg', 'old-site.bg', 'visited-site.bg', 'shop.local']) {
+    const res = await call({ method: 'POST', url: '/api/admin/shops', cookie: c, body: { name: 'Мой', domain } });
+    assert.equal(res.statusCode, 400, domain);
+  }
+  delete process.env.ALLOWED_ORIGINS;
+});
+
+test('a client\'s new shop takes no checkout orders until the owner approves it', async () => {
+  const c = await clientWith([SHOP_A]);
+  const shop = json(await call({ method: 'POST', url: '/api/admin/shops', cookie: c, body: { name: 'Нов', domain: 'fresh-shop.bg' } })).shop;
+  assert.equal(shop.approved, false);
+  const origin = { headers: { origin: 'https://fresh-shop.bg' } };
+  assert.equal(await allowedShopOrigin(q, origin), null, 'not yet');
+  const list = json(await call({ url: '/api/admin/users', cookie: owner })).users;
+  assert.deepEqual(list[0].pendingShops.map((s) => s.domain), ['fresh-shop.bg']);
+  assert.equal((await call({ method: 'POST', url: '/api/admin/users', cookie: c, body: { action: 'approve_shop', shopId: shop.id } })).statusCode, 403);
+  assert.equal((await call({ method: 'POST', url: '/api/admin/users', cookie: owner, body: { action: 'approve_shop', shopId: shop.id } })).statusCode, 200);
+  assert.equal((await allowedShopOrigin(q, origin)).shopId, shop.id);
+});
+
+test('a client shop can never rename itself onto a free domain (only a fresh install claims its domain once)', async () => {
+  const c = await clientWith([SHOP_A]);
+  const res = await call({ method: 'POST', url: `/api/admin/integrations?shop=${SHOP_A}`, cookie: c, body: { action: 'save_shop', name: 'А', domain: 'stolen.bg' } });
+  assert.equal(res.statusCode, 200);
+  const [s] = await q(`select domain from zd.shops where id = $1`, [SHOP_A]);
+  assert.equal(s.domain, 'a-shop.bg');
+});
+
+test('an order number of another shop is never overwritten (checkout widget or ConvertBuilder)', async () => {
+  const [{ cb_order_id: key }] = await q(`select cb_order_id from zd.orders where id = $1`, [orderA]);
+  const r = await insertOrder(q, { cbOrderId: key, name: 'Нападател', phone: '1', phoneNorm: '1', email: '', deliveryType: 'speedy_address', courier: 'speedy', officeId: 'speedy:9', officeText: 'Друго', city: 'Х', postCode: '', addressText: 'Друг адрес', items: [], total: 1, currency: 'EUR', paymentMethod: 'cod', pageUrl: '', ip: '1', shopId: SHOP_B });
+  assert.equal(r.id, null);
+  await q(`update zd.orders set source = 'convertbuilder', office_id = '' where id = $1`, [orderA]);
+  const cb = mapOrder({ id: 1, invoiceNo: 1, created: Math.floor(Date.now() / 1000), customerName: 'Нападател', customerEmail: '', shippingAddress: { phone: '1', city: 'Х', address: 'х' }, total: 999, shippingName: 'x', paymentMethod: 'cod', status: 'completed', items: [] }, { store: 'x' });
+  const u = await upsertCbOrder(q, { ...cb, cbOrderId: key, shopId: SHOP_B });
+  assert.equal(u.id, null);
+  const [a] = await q(`select name, total, office_text, shop_id from zd.orders where id = $1`, [orderA]);
+  assert.deepEqual([a.name, Number(a.total), a.office_text, a.shop_id], ['Купувач А', 10, 'Офис', SHOP_A]);
+});
+
+test('Facebook login comes back only to the browser that started it', async () => {
+  process.env.META_APP_ID = 'app'; process.env.META_APP_SECRET = 'sec';
+  try {
+    const start = await call({ url: `/api/admin/meta?start=1&shop=${SHOP_A}`, cookie: owner });
+    const state = new URL(start.headers.location).searchParams.get('state');
+    const cookie = String(start.headers['set-cookie']).split(';')[0];
+    assert.match(cookie, /^zdo_meta=/);
+    const stranger = await call({ url: `/api/admin/meta?code=x&state=${state}` });
+    assert.match(stranger.headers.location, /meta_error=/, 'another browser cannot finish it');
+  } finally { delete process.env.META_APP_ID; delete process.env.META_APP_SECRET; }
+});
+
+test('parallel wrong passwords still lock the account; unknown and locked logins look the same', async () => {
+  await clientWith([SHOP_A]);
+  const realSet = globalThis.setTimeout;
+  globalThis.setTimeout = (fn) => realSet(fn, 0);
+  try {
+    await Promise.all(Array.from({ length: 25 }, () => call({ method: 'POST', url: '/api/admin/login', body: { email: 'a@client.bg', password: 'nope' } })));
+    const locked = await call({ method: 'POST', url: '/api/admin/login', body: { email: 'a@client.bg', password: 'client-pass-1' } });
+    const unknown = await call({ method: 'POST', url: '/api/admin/login', body: { email: 'nobody@x.bg', password: 'whatever1' } });
+    assert.equal(locked.statusCode, 401);
+    assert.equal(unknown.statusCode, 401);
+    assert.equal(json(locked).error, json(unknown).error);
+    const [u] = await q(`select locked_until > now() as locked from zd.users`);
+    assert.equal(u.locked, true);
+  } finally { globalThis.setTimeout = realSet; }
+});
+
+test('admin changes from another website are refused', async () => {
+  const res = fakeRes();
+  await router({ ...req({ method: 'POST', url: '/api/admin/users', cookie: owner, body: { action: 'create', email: 'z@z.bg', shopIds: [] } }), headers: { cookie: owner, origin: 'https://evil.example', host: 'kurier.profitbrand.online' } }, res);
+  assert.equal(res.statusCode, 403);
+});
+
+test('a new link from the owner ends the client\'s current sessions', async () => {
+  const c = await clientWith([SHOP_A]);
+  const [u] = await q(`select id from zd.users`);
+  await call({ method: 'POST', url: '/api/admin/users', cookie: owner, body: { action: 'invite', id: u.id } });
+  assert.equal((await call({ url: '/api/admin/orders?shop=all', cookie: c })).statusCode, 401);
+});
+
+test('a client may own at most 10 shops', async () => {
+  const c = await clientWith([SHOP_A]);
+  let last;
+  for (let i = 0; i < 11; i++) last = await call({ method: 'POST', url: '/api/admin/shops', cookie: c, body: { name: `М${i}`, domain: `cap${i}-shop.bg` } });
+  assert.equal(last.statusCode, 400);
+  assert.match(json(last).error, /10/);
 });

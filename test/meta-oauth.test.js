@@ -57,23 +57,23 @@ test('"Вход с Facebook" starts only for the admin and sends them to Faceboo
 test('coming back from Facebook stores a long-lived token and opens the account picker; the state works once', async () => {
   const start = await call({ url: '/api/admin/meta?start=1', headers: admin });
   const state = new URL(start.headers.location).searchParams.get('state');
-  const res = await withFetch(facebook(), () => call({ url: `/api/admin/meta?code=CODE&state=${state}` })); // no admin cookie: SameSite=Strict is not sent back from facebook.com
+  const res = await withFetch(facebook(), () => call({ url: `/api/admin/meta?code=CODE&state=${state}`, headers: { cookie: `zdo_meta=${state}` } })); // no admin cookie: SameSite=Strict is not sent back from facebook.com
   assert.equal(res.statusCode, 302);
   assert.equal(res.headers.location, 'https://kurier.profitbrand.online/admin/?meta=choose&shop=00000000-0000-4000-8000-000000000001#integrations');
   assert.equal(await getSecret(q, 'meta'), 'LONG');
   const i = await getIntegration(q, 'meta');
   assert.equal(i.config.accountId, '');
   assert.ok(Date.parse(i.config.tokenExpiresAt) > Date.now() + 50 * 864e5);
-  const again = await withFetch(facebook(), () => call({ url: `/api/admin/meta?code=CODE&state=${state}` }));
+  const again = await withFetch(facebook(), () => call({ url: `/api/admin/meta?code=CODE&state=${state}`, headers: { cookie: `zdo_meta=${state}` } }));
   assert.match(again.headers.location, /meta_error=/, 'a used state is refused');
 });
 
 test('a forged, expired or cancelled login stores nothing', async () => {
   let res = await withFetch(facebook(), () => call({ url: '/api/admin/meta?code=CODE&state=' + 'a'.repeat(64) }));
-  assert.match(decodeURIComponent(res.headers.location), /meta_error=Входът изтече или е невалиден/);
+  assert.match(decodeURIComponent(res.headers.location), /meta_error=Входът изтече или е започнат от друг браузър/);
   const start = await call({ url: '/api/admin/meta?start=1', headers: admin });
   const state = new URL(start.headers.location).searchParams.get('state');
-  res = await call({ url: `/api/admin/meta?error=access_denied&state=${state}` });
+  res = await call({ url: `/api/admin/meta?error=access_denied&state=${state}`, headers: { cookie: `zdo_meta=${state}` } });
   assert.match(decodeURIComponent(res.headers.location), /meta_error=Входът беше отказан/);
   assert.equal((await getIntegration(q, 'meta')).hasSecret, false);
 });
@@ -81,7 +81,7 @@ test('a forged, expired or cancelled login stores nothing', async () => {
 test('the admin picks an ad account from the list and it is connected', async () => {
   const start = await call({ url: '/api/admin/meta?start=1', headers: admin });
   const state = new URL(start.headers.location).searchParams.get('state');
-  await withFetch(facebook(), () => call({ url: `/api/admin/meta?code=CODE&state=${state}` }));
+  await withFetch(facebook(), () => call({ url: `/api/admin/meta?code=CODE&state=${state}`, headers: { cookie: `zdo_meta=${state}` } }));
   const post = (body) => call({ method: 'POST', url: '/api/admin/integrations', headers: admin, body: JSON.stringify(body) });
   let res = await withFetch(facebook(), () => post({ action: 'meta_accounts' }));
   assert.deepEqual(json(res).accounts, [
@@ -119,7 +119,7 @@ test('with a Facebook Login for Business configuration the dialog uses config_id
       if (u.searchParams.get('code') === 'CODE') return { ok: true, status: 200, json: async () => ({ access_token: 'SYSTEM-USER', token_type: 'bearer' }) };
       return { ok: false, status: 400, json: async () => ({ error: { message: 'cannot exchange', code: 100 } }) };
     };
-    const res = await withFetch(fb, () => call({ url: `/api/admin/meta?code=CODE&state=${state}` }));
+    const res = await withFetch(fb, () => call({ url: `/api/admin/meta?code=CODE&state=${state}`, headers: { cookie: `zdo_meta=${state}` } }));
     assert.equal(res.headers.location, 'https://kurier.profitbrand.online/admin/?meta=choose&shop=00000000-0000-4000-8000-000000000001#integrations');
     assert.equal(await getSecret(q, 'meta'), 'SYSTEM-USER');
     assert.equal((await getIntegration(q, 'meta')).config.tokenExpiresAt, null);
@@ -131,7 +131,7 @@ test('the Facebook login comes back to the shop it was started for', async () =>
   const kids = await createShop(q, { name: 'Деца', domain: 'knigi.bg' });
   const start = await call({ url: `/api/admin/meta?start=1&shop=${kids.id}`, headers: admin });
   const state = new URL(start.headers.location).searchParams.get('state');
-  const res = await withFetch(facebook(), () => call({ url: `/api/admin/meta?code=CODE&state=${state}` }));
+  const res = await withFetch(facebook(), () => call({ url: `/api/admin/meta?code=CODE&state=${state}`, headers: { cookie: `zdo_meta=${state}` } }));
   assert.equal(res.headers.location, `https://kurier.profitbrand.online/admin/?meta=choose&shop=${kids.id}#integrations`);
   assert.equal(await getSecret(q, 'meta', kids.id), 'LONG');
   assert.equal(await getSecret(q, 'meta'), null, 'the default shop is untouched');

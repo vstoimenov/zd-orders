@@ -799,8 +799,8 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     fetch(API + 'login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: $('loginEmail').value.trim(), password: $('pw').value }) })
       .then(function (r) {
         if (r.ok) { $('pw').value = ''; load(page); }
-        else if (r.status === 401) $('loginErr').textContent = $('loginEmail').value.trim() ? 'Грешен имейл или парола.' : 'Грешна парола.';
-        else if (r.status === 429) return r.json().then(function (d) { $('loginErr').textContent = d.error; });
+        else if (r.status === 401 && $('loginEmail').value.trim()) return r.json().catch(function () { return {}; }).then(function (d) { $('loginErr').textContent = d.error || 'Грешен имейл или парола.'; });
+        else if (r.status === 401) $('loginErr').textContent = 'Грешна парола.';
         else $('loginErr').textContent = 'Грешка на сървъра. Опитайте пак.';
       })
       .catch(function () { $('loginErr').textContent = 'Няма връзка със сървъра. Опитайте пак.'; })
@@ -1102,7 +1102,11 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
     $('nsErr').textContent = '';
     busy($('nsSave'), fetch(API + 'shops', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: $('nsName').value, domain: $('nsDomain').value }) })
       .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
-      .then(function (d) { $('shopModal').hidden = true; return loadShops().then(function () { location.hash = '#integrations'; chooseShop(d.shop.id); }); })
+      .then(function (d) {
+        $('shopModal').hidden = true;
+        if (d.shop && d.shop.approved === false) alert('Магазинът е добавен ✓\n\nПоръчките от чекаута на ' + d.shop.domain + ' ще започнат да влизат, след като собственикът на платформата го одобри.');
+        return loadShops().then(function () { location.hash = '#integrations'; chooseShop(d.shop.id); });
+      })
       .catch(function (e) { $('nsErr').textContent = e.message; });
   });
   $('pickShops').addEventListener('click', function (e) { var b = e.target.closest('[data-pick]'); if (b) chooseShop(b.getAttribute('data-pick')); });
@@ -1250,8 +1254,11 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
       clientsData = d.users || [];
       $('cTable').innerHTML = table(['Клиент', 'Магазини', 'Състояние', 'Последен вход', ''], clientsData.map(function (u, i) {
         var state = !u.active ? '<span class="badge bad">спрян</span>' : u.hasPassword ? '<span class="badge ok">активен</span>' : '<span class="badge">чака парола</span>';
+        var pending = (u.pendingShops || []).map(function (sh) {
+          return '<br><span class="badge">чака одобрение</span> ' + esc(sh.name || sh.domain) + ' <span class="muted">' + esc(sh.domain) + '</span> <button type="button" class="ghost" data-approve="' + esc(sh.id) + '">Одобри</button>';
+        }).join('');
         return ['<b>' + esc(u.name || '—') + '</b><br><span class="muted">' + esc(u.email) + '</span>',
-          esc(u.shopIds.map(shopName).join(', ') || '—'), state, esc(when(u.lastLoginAt)),
+          esc(u.shopIds.map(shopName).join(', ') || '—') + pending, state, esc(when(u.lastLoginAt)),
           '<button type="button" class="ghost" data-cedit="' + i + '">Магазини</button> <button type="button" class="ghost" data-clink="' + i + '">Нов линк</button> ' +
           '<button type="button" class="ghost" data-cactive="' + i + '">' + (u.active ? 'Спри достъп' : 'Пусни достъп') + '</button>'];
       }));
@@ -1294,6 +1301,11 @@ details.manual summary{cursor:pointer;font-weight:700;margin-bottom:12px}
   });
   $('cTable').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
+    if (b.hasAttribute('data-approve')) {
+      if (!window.confirm('Одобрявате ли този магазин? След това поръчките от чекаута на неговия домейн ще влизат при клиента. Проверете, че домейнът наистина е негов.')) return;
+      busy(b, usersApi({ action: 'approve_shop', shopId: b.getAttribute('data-approve') })).then(function () { loadShops().catch(function () {}); loadClients(); }).catch(function (err) { alert(err.message); });
+      return;
+    }
     var u = clientsData[b.getAttribute('data-cedit') || b.getAttribute('data-clink') || b.getAttribute('data-cactive')];
     if (!u) return;
     if (b.hasAttribute('data-cedit')) { openClientModal(u); return; }

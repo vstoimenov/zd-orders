@@ -21,6 +21,8 @@ create table if not exists zd.user_shops (
   primary key (user_id, shop_id)
 );
 create index if not exists user_shops_shop_idx on zd.user_shops (shop_id);
+-- a shop a client added takes checkout orders/visits by its domain only after the owner approves it (owner-made shops: approved)
+alter table zd.shops add column if not exists approved boolean not null default true;
 -- a client's device: its "all shops" means only that client's shops
 alter table zd.push_subscriptions add column if not exists user_id uuid references zd.users(id) on delete cascade;
 -- production (Supabase): grant select, insert, update, delete on zd.users, zd.user_shops to zd_app (+ RLS policy for zd_app, like zd.integrations)
