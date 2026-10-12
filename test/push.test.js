@@ -193,3 +193,16 @@ test('a ConvertBuilder sync of old orders sends nothing', async () => {
   await notifyNewOrder(q, r.id);
   assert.equal(sent.length, 0);
 });
+
+test('a checkout without any shipping method alerts the shop once every few hours', async () => {
+  const { default: visit } = await import('../api/visit.js');
+  process.env.ALLOWED_ORIGINS = 'https://adhdbg.eu';
+  await saveSubscription(q, { subscription: sub(1), shopId: null });
+  const call = async () => { const res = fakeRes(); await visit(fakeReq({ method: 'POST', url: '/api/visit', headers: { origin: 'https://adhdbg.eu', 'user-agent': 'Mozilla/5.0 (iPhone)' }, body: JSON.stringify({ e: 'no_shipping', p: '/store/checkout' }) }), res); return res; };
+  assert.equal((await call()).statusCode, 204);
+  await call();
+  assert.equal(sent.length, 1, 'once, not on every visit');
+  assert.match(sent[0].payload.title, /доставка/i);
+  assert.match(sent[0].payload.body, /adhdbg\.eu/);
+  assert.equal((await q(`select count(*)::int as n from zd.visits`))[0].n, 0, 'the alert is not a visit');
+});

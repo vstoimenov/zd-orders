@@ -135,3 +135,16 @@ test('visitPayload sends only page, query and referrer, trimmed', () => {
   const long = JSON.parse(core.visitPayload({ pathname: '/' + 'x'.repeat(500), search: '' }, { referrer: '' }));
   assert.equal(long.p.length, 200);
 });
+
+test('a free shipping method shows as "Безплатна"', () => {
+  assert.equal(core.optionPrice('Доставка до офис на Еконт €0.00'), 'Безплатна');
+  assert.equal(core.optionPrice('Доставка до офис на Спиди 0,00 лв.'), 'Безплатна');
+  assert.equal(core.optionPrice('Доставка до офис на Спиди €3.50'), '€3.50');
+});
+
+test('shippingView: only what ConvertBuilder offers; none at all = a clear message, not three made-up choices', () => {
+  const v = plain(core.shippingView(['Доставка до офис на Спиди €2.48', 'Доставка до офис на Еконт €3.55']));
+  assert.deepEqual(v, { mode: 'normal', available: { econt_office: true, speedy_office: true, speedy_address: false } });
+  assert.equal(plain(core.shippingView([])).mode, 'none');
+  assert.deepEqual(plain(core.shippingView(['Куриер до врата €5.00'])), { mode: 'all', available: { econt_office: true, speedy_office: true, speedy_address: true } }, 'unknown names: all choices, the shop prices them');
+});

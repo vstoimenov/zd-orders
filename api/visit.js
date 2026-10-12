@@ -2,6 +2,7 @@ import { getQuery } from '../lib/db.js';
 import { isBot, recordVisit } from '../lib/visits.js';
 import { setCors, readJson, send, clientIp } from '../lib/http.js';
 import { allowedShopOrigin } from '../lib/shops.js';
+import { alertNoShipping } from '../lib/push.js';
 
 /** Anonymous page view from kurier.js (sendBeacon, text/plain JSON {p: path, s: query, r: referrer}). Always quick; never errors to the page. */
 export default async function handler(req, res) {
@@ -18,6 +19,10 @@ export default async function handler(req, res) {
   const ua = String(req.headers['user-agent'] || '').slice(0, 400);
   if (isBot(ua)) return send(res, 204);
   const b = readJson(req) || {};
+  if (b.e === 'no_shipping') { // not a visit: the checkout found no shipping method for the cart
+    await alertNoShipping(getQuery(), allowed.shopId, new URL(origin).host.replace(/^www\./, ''));
+    return send(res, 204);
+  }
   try {
     await recordVisit(getQuery(), { site: new URL(origin).host.replace(/^www\./, ''), shopId: allowed.shopId, ip: clientIp(req), ua, path: b.p, search: b.s, referrer: b.r });
   } catch (err) {

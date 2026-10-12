@@ -98,7 +98,21 @@
   function optionPrice(label) {
     var m = String(label).match(/([$€£])\s*(\d+[.,]\d{2})|(\d+[.,]\d{2})\s*(€|лв\.?)/i);
     if (!m) return '';
+    if (Number((m[2] || m[3]).replace(',', '.')) === 0) return 'Безплатна';
     return m[1] ? m[1] + m[2].replace(',', '.') : m[3].replace(',', '.') + ' ' + m[4];
+  }
+
+  var TYPES = ['econt_office', 'speedy_office', 'speedy_address'];
+  /**
+   * Which of our choices to show from ConvertBuilder's shipping labels: the ones it offers (normal); none offered at all → 'none'
+   * (the cart has no shipping method — a message, never made-up choices); only unknown names → 'all' (the shop prices them).
+   */
+  function shippingView(labels) {
+    var available = {}, any = false;
+    TYPES.forEach(function (t) { available[t] = pickOptionIndex(labels, t) >= 0; any = any || available[t]; });
+    if (any) return { mode: 'normal', available: available };
+    if (!labels.length) return { mode: 'none', available: { econt_office: false, speedy_office: false, speedy_address: false } };
+    return { mode: 'all', available: { econt_office: true, speedy_office: true, speedy_address: true } };
   }
 
   /** List label: Speedy names already start with the city ("АЙТОС - …") and may say "(АВТОМАТ)" — don't repeat either. */
@@ -144,7 +158,7 @@
   var core = {
     TOKEN: TOKEN, norm: norm, searchOffices: searchOffices, searchCities: searchCities, formatSelection: formatSelection,
     validateSelection: validateSelection, pickOptionIndex: pickOptionIndex, optionPrice: optionPrice, officeLabel: officeLabel,
-    buildOrderPayload: buildOrderPayload, visitPayload: visitPayload
+    buildOrderPayload: buildOrderPayload, visitPayload: visitPayload, shippingView: shippingView
   };
   if (typeof window !== 'undefined' && window.__ZDO_TEST__) { window.__zdoCore = core; return; }
 
@@ -175,6 +189,7 @@
     '.zdo-picked:not(:empty){padding:10px 12px;margin:0 0 8px;border-radius:8px;background:#f3faf4;border:1px solid #bfe0c6;font-size:14px;line-height:1.4}',
     '.zdo-picked button{border:0;background:none;color:#b0426b;text-decoration:underline;padding:0;margin-left:6px;cursor:pointer;font-size:14px}',
     '.zdo-link{display:inline-block;font-size:13px;color:#7a6a6f!important;text-decoration:underline;margin:0 0 8px}',
+    '.zdo-none{margin:4px 0 10px;padding:12px 14px;border-radius:10px;background:#fff7ed;color:#7c2d12;font-size:14px;line-height:1.4}',
     '.zdo-error:not(:empty){margin:4px 0 10px;padding:10px 12px;border-radius:8px;background:#fdecee;color:#a1122f;font-size:14px;font-weight:600}'
   ].join('');
 
@@ -191,6 +206,7 @@
 
   var TEMPLATE =
     '<div class="zdo-title">Доставка</div>' +
+    '<div class="zdo-none" hidden></div>' +
     officePanel('econt', 'econt_office', 'Еконт') +
     officePanel('speedy', 'speedy_office', 'Спиди') +
     '<label class="zdo-opt"><input type="radio" name="zdo-type" value="speedy_address"><span>До адрес със <b>Спиди</b></span><span class="zdo-price" data-price="speedy_address"></span></label>' +
@@ -308,16 +324,30 @@
 
   function officesFailed(courier) { state[courier + 'Fallback'] = true; render(); sync(); loadCities().then(sync, function () {}); }
 
+  var mountedAt = 0, noShippingSent = false;
+  var NO_SHIPPING_GRACE_MS = 3000; // ConvertBuilder may still be loading its methods (slow phones)
   function fillPrices() {
-    var o = shippingOptions(), anyAvailable = false, available = {};
-    ['econt_office', 'speedy_office', 'speedy_address'].forEach(function (t) {
+    var o = shippingOptions(), view = shippingView(o.labels);
+    TYPES.forEach(function (t) {
       var i = pickOptionIndex(o.labels, t);
-      available[t] = i >= 0;
-      anyAvailable = anyAvailable || i >= 0;
       root.querySelector('[data-price="' + t + '"]').textContent = i >= 0 ? optionPrice(o.labels[i]) : '';
     });
-    // hide only choices ConvertBuilder can't price; if it offers none, keep all (its own error will show)
-    if (anyAvailable) [].forEach.call(root.querySelectorAll('.zdo-opt input'), function (r) { r.closest('.zdo-opt').hidden = !available[r.value]; });
+    var waiting = view.mode === 'none' && Date.now() - mountedAt < NO_SHIPPING_GRACE_MS;
+    var none = view.mode === 'none' && !waiting;
+    [].forEach.call(root.querySelectorAll('.zdo-opt input'), function (r) { r.closest('.zdo-opt').hidden = view.mode === 'none' || !view.available[r.value]; });
+    if (view.mode === 'none') [].forEach.call(root.querySelectorAll('.zdo-panel'), function (p) { p.classList.remove('is-on'); });
+    var msg = root.querySelector('.zdo-none');
+    msg.hidden = view.mode !== 'none';
+    msg.textContent = waiting ? 'Зареждаме начините на доставка…' : 'За тази поръчка в момента няма настроена доставка. Моля, свържете се с магазина — ще я изпратим веднага.';
+    if (none && !noShippingSent) { noShippingSent = true; alertNoShipping(); }
+  }
+
+  /** The shop hears that a customer reached the checkout but ConvertBuilder offers no shipping for this cart. */
+  function alertNoShipping() {
+    try {
+      var body = JSON.stringify({ e: 'no_shipping', p: String(location.pathname || '/').slice(0, 200) }), url = API + '/api/visit';
+      if (!(navigator.sendBeacon && navigator.sendBeacon(url, new Blob([body], { type: 'text/plain' })))) fetch(url, { method: 'POST', body: body, keepalive: true }).catch(function () {});
+    } catch (e) { /* never disturb the checkout */ }
   }
 
   function bind() {
@@ -476,7 +506,9 @@
     root.className = 'zdo';
     root.innerHTML = TEMPLATE;
     part.parentNode.insertBefore(root, part);
+    mountedAt = Date.now();
     fillPrices();
+    setTimeout(fillPrices, NO_SHIPPING_GRACE_MS + 100); // decide "no shipping" only after ConvertBuilder had time to load
     bind();
     render();
     installInterceptor();
