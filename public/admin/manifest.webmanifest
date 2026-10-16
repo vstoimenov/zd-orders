@@ -1,6 +1,6 @@
 {
-  "name": "Поръчки – админ",
-  "short_name": "Поръчки",
+  "name": "Ordyx",
+  "short_name": "Ordyx",
   "description": "Поръчки, товарителници и известия за нови поръчки",
   "lang": "bg",
   "start_url": "./#orders",

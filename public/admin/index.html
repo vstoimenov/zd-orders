@@ -4,17 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Админ</title>
+<title>Ordyx</title>
+<link rel="icon" href="icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0b0b0a">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Поръчки">
+<meta name="apple-mobile-web-app-title" content="Ordyx">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600&amp;text=ORDYX&amp;display=swap">
 <style>
 :root{
   --bg:#f4f4f1;--card:#fff;--line:#e6e4dc;--ink:#14140f;--muted:#6d6c66;
-  --accent:#facc15;--accent-strong:#eab308;--accent-soft:#fef9c3;--accent-ink:#713f12;
+  --accent:#ffd21f;--accent-strong:#eab308;--accent-soft:#fef9c3;--accent-ink:#713f12;
   --side:#0b0b0a;--side-2:#161614;--side-line:#24241f;--side-text:#e9e8e3;--side-muted:#7a7972;
   --ok:#15803d;--warn:#c2410c;--bad:#b91c1c;--radius:14px
 }
@@ -47,7 +50,10 @@ form#inviteForm{min-height:100vh;display:flex;align-items:center;justify-content
 .badge.ok{background:#e8f6ec;color:var(--ok)}.badge.bad{background:#fdecee;color:var(--bad)}
 form#login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--side);padding:16px}
 .logincard{width:100%;max-width:360px;background:#141412;border:1px solid var(--side-line);border-radius:18px;padding:30px 28px;display:flex;flex-direction:column;gap:12px;color:var(--side-text)}
-.logincard .mark{width:44px;height:44px;border-radius:50%;background:var(--accent);color:#111;display:grid;place-items:center;font-weight:800;font-size:20px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .omark{width:30px;height:30px;flex:none}
+.brand span{font-family:Unbounded,Inter,system-ui,sans-serif;font-weight:600;font-size:19px;letter-spacing:.04em;color:#fff}
+.side .brand{padding:18px 20px 0}
 .logincard h1{font-size:22px;margin:6px 0 4px}
 .logincard input{background:#0b0b0a;color:var(--side-text);border-color:#2c2c27}
 
@@ -258,7 +264,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
 <body>
 <form id="signupForm" hidden>
   <div class="logincard">
-    <div class="mark">✓</div>
+    <div class="brand"><svg class="omark" viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="var(--accent)"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="none" stroke="#141412" stroke-width="4"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40" stroke="#141412" stroke-width="4"/></svg><span>ORDYX</span></div>
     <h1>Регистрация</h1>
     <p>Офиси на Еконт и Спиди в чекаута, поръчките на едно място, товарителници и известия.</p>
     <input type="text" id="suName" placeholder="Име и фамилия" autocomplete="name" maxlength="80" required>
@@ -273,7 +279,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
 </form>
 <form id="inviteForm" hidden>
   <div class="logincard">
-    <div class="mark">✓</div>
+    <div class="brand"><svg class="omark" viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="var(--accent)"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="none" stroke="#141412" stroke-width="4"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40" stroke="#141412" stroke-width="4"/></svg><span>ORDYX</span></div>
     <h1>Задайте парола</h1>
     <p id="invWho"></p>
     <input type="password" id="invPw" placeholder="Нова парола (поне 8 знака)" autocomplete="new-password" minlength="8" required>
@@ -284,8 +290,8 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
 </form>
 <form id="login" hidden>
   <div class="logincard">
-    <div class="mark">✓</div>
-    <h1>Вход в админа</h1>
+    <div class="brand"><svg class="omark" viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="var(--accent)"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="none" stroke="#141412" stroke-width="4"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40" stroke="#141412" stroke-width="4"/></svg><span>ORDYX</span></div>
+    <h1>Вход</h1>
     <input type="email" id="loginEmail" placeholder="Имейл (клиенти)" autocomplete="username">
     <input type="password" id="pw" placeholder="Парола" autocomplete="current-password" required>
     <button class="primary">Вход</button>
@@ -294,6 +300,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
 </form>
 <div id="app" class="app" hidden>
   <aside class="side" id="side">
+    <div class="brand"><svg class="omark" viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="var(--accent)"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="none" stroke="var(--side)" stroke-width="4"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40" stroke="var(--side)" stroke-width="4"/></svg><span>ORDYX</span></div>
     <button type="button" class="shop" id="shopBtn" aria-haspopup="true" aria-expanded="false"><span class="avatar" id="shopInitial">М</span><b id="shopName">Моят магазин</b><span class="caret">▾</span></button>
     <div class="shopmenu" id="shopMenu" hidden></div>
     <nav class="nav">
@@ -1268,7 +1275,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     var name = currentShop === 'all' ? 'Всички магазини' : (s ? s.display : 'Моят магазин');
     $('shopName').textContent = name;
     $('shopInitial').textContent = currentShop === 'all' ? '∑' : (name.trim().charAt(0).toUpperCase() || 'М');
-    document.title = name + (DEMO ? ' – демо' : ' – админ');
+    document.title = name + (DEMO ? ' – Ordyx демо' : ' – Ordyx');
     $('iMetaFb').setAttribute('href', withShop(API + 'meta?start=1'));
     $('shopMenu').innerHTML = shops.filter(function (x) { return !x.hidden; }).map(function (x) {
       return '<button type="button" data-shop="' + esc(x.id) + '" class="' + (x.id === currentShop ? 'on' : '') + '"><span class="mini">' + esc(x.display.charAt(0).toUpperCase()) + '</span>' + esc(x.display) + '</button>';

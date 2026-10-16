@@ -1,6 +1,6 @@
 {
-  "name": "Демо – Поръчки",
-  "short_name": "Демо поръчки",
+  "name": "Ordyx – демо",
+  "short_name": "Ordyx демо",
   "description": "Демо: поръчки, товарителници и известия (примерни данни)",
   "lang": "bg",
   "start_url": "./#orders",
