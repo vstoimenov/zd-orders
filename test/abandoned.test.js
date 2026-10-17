@@ -157,3 +157,92 @@ test('opted-out numbers are flagged', async () => {
   await q(`insert into zd.campaign_optouts (shop_id, phone_norm) values ($1::uuid, '+359888123456')`, [SHOP]);
   assert.equal((await listCarts(q, { shopId: SHOP }))[0].optedOut, true);
 });
+
+/* ---- Task 2: reminder texts and links ---- */
+import { DEFAULT_TEXTS, getReminderSettings, setReminderSettings, safeLink, reminderLinks, markReminded, hideCart } from '../lib/abandoned.js';
+
+async function abandonedCart(patch) {
+  const { id } = await captureCart(q, cart(patch));
+  await age(id, 60);
+  return id;
+}
+
+test('default texts fill the cart', async () => {
+  const id = await abandonedCart();
+  const r = await reminderLinks(q, { id, kind: 'plain', scopeShopId: SHOP });
+  assert.equal(r.message, 'Здравейте, Мария! Видяхме, че не завършихте поръчката си в Магазин А (Книга). Ако имате въпрос — пишете ни тук, ще помогнем. Можете да продължите оттук: https://a-shop.bg/checkout');
+  assert.equal(DEFAULT_TEXTS.discount, 'Здравейте, {име}! Поръчката ви в {магазин} ({продукти}) още ви чака. Подарък от нас: {отстъпка} с код {код}. Продължете оттук: {линк}');
+});
+
+test("the shop's own texts and code are used", async () => {
+  const id = await abandonedCart();
+  await setReminderSettings(q, SHOP, { plain: '{пълно_име}: {сума}', discount: '{име}, {отстъпка} с {код} — {продукти}', code: 'ЛЯТО10'.replace('ЛЯТО', 'LYATO'), discountText: '10% отстъпка' });
+  assert.equal((await reminderLinks(q, { id, kind: 'plain', scopeShopId: SHOP })).message, 'Мария Иванова: 22,57 €');
+  assert.equal((await reminderLinks(q, { id, kind: 'discount', scopeShopId: SHOP })).message, 'Мария, 10% отстъпка с LYATO10 — Книга');
+  assert.deepEqual(await getReminderSettings(q, SHOP), { plain: '{пълно_име}: {сума}', discount: '{име}, {отстъпка} с {код} — {продукти}', code: 'LYATO10', discountText: '10% отстъпка' });
+});
+
+test('discount text must contain {код}; limits and shop are checked', async () => {
+  await assert.rejects(setReminderSettings(q, SHOP, { plain: 'x', discount: 'без код', code: 'A1', discountText: '5%' }), /\{код\}/);
+  await assert.rejects(setReminderSettings(q, SHOP, { plain: 'я'.repeat(701), discount: '{код}', code: 'A1', discountText: '5%' }), /700/);
+  await assert.rejects(setReminderSettings(q, SHOP, { plain: 'x', discount: '{код}', code: 'bad code!', discountText: '5%' }), /код/);
+  await assert.rejects(setReminderSettings(q, null, { plain: 'x' }), /Изберете магазин/);
+  const id = await abandonedCart();
+  await assert.rejects(reminderLinks(q, { id, kind: 'discount', scopeShopId: SHOP }), /код за отстъпка/);
+});
+
+test('a link to another site falls back to the shop home', () => {
+  assert.equal(safeLink('https://evil.example/x', 'a-shop.bg'), 'https://a-shop.bg/');
+  assert.equal(safeLink('https://www.a-shop.bg/p?utm=1#a', 'a-shop.bg'), 'https://www.a-shop.bg/p');
+  assert.equal(safeLink('https://shop.a-shop.bg/funnel', 'a-shop.bg'), 'https://shop.a-shop.bg/funnel');
+  assert.equal(safeLink('http://a-shop.bg/p', 'a-shop.bg'), 'https://a-shop.bg/');
+  assert.equal(safeLink('https://a-shop.bg.evil.example/', 'a-shop.bg'), 'https://a-shop.bg/');
+  assert.equal(safeLink('', 'a-shop.bg'), 'https://a-shop.bg/');
+});
+
+test('whatsapp, sms and viber links', async () => {
+  const id = await abandonedCart();
+  const r = await reminderLinks(q, { id, kind: 'plain', scopeShopId: SHOP });
+  assert.equal(r.whatsapp, `https://wa.me/359888123456?text=${encodeURIComponent(r.message)}`);
+  assert.equal(r.sms, `sms:+359888123456?&body=${encodeURIComponent(r.message)}`);
+  assert.equal(r.viber, 'viber://chat?number=%2B359888123456');
+  assert.equal(await reminderLinks(q, { id, kind: 'plain', scopeShopId: '00000000-0000-4000-8000-000000000099' }), null);
+});
+
+test('opted-out carts get no links', async () => {
+  const id = await abandonedCart();
+  await q(`insert into zd.campaign_optouts (shop_id, phone_norm) values ($1::uuid, '+359888123456')`, [SHOP]);
+  const r = await reminderLinks(q, { id, kind: 'plain', scopeShopId: SHOP });
+  assert.ok(r.message);
+  assert.deepEqual([r.whatsapp, r.sms, r.viber], [null, null, null]);
+});
+
+test('reminding marks the first time and counts', async () => {
+  const id = await abandonedCart();
+  assert.equal(await markReminded(q, { id, channel: 'viber', scopeShopId: SHOP }), true);
+  const [first] = await q(`select reminded_at from zd.abandoned_carts`);
+  await markReminded(q, { id, channel: 'sms', scopeShopId: SHOP });
+  const [r] = await listCarts(q, { shopId: SHOP });
+  assert.equal(r.state, 'reminded');
+  assert.equal(r.reminderChannel, 'sms');
+  assert.equal(r.reminderCount, 2);
+  assert.equal(r.remindedAt, new Date(first.reminded_at).toISOString());
+  assert.equal(await markReminded(q, { id, channel: 'fax', scopeShopId: SHOP }), false);
+  assert.equal(await markReminded(q, { id, channel: 'sms', scopeShopIds: [] }), false);
+});
+
+test('a reminded cart starts a new row on the next capture', async () => {
+  const id = await abandonedCart();
+  await markReminded(q, { id, channel: 'whatsapp', scopeShopId: SHOP });
+  const b = await captureCart(q, cart());
+  assert.equal(b.created, true);
+});
+
+test('hidden carts leave the open list and the badge but stay in stats', async () => {
+  const id = await abandonedCart();
+  assert.equal(await hideCart(q, { id, scopeShopId: SHOP }), true);
+  assert.deepEqual(await listCarts(q, { shopId: SHOP }), []);
+  assert.equal((await listCarts(q, { shopId: SHOP, state: 'hidden' })).length, 1);
+  assert.equal(await openCount(q, { shopId: SHOP }), 0);
+  assert.equal((await cartStats(q, { from: daysAgo(1), to: today(), shopId: SHOP })).count, 1);
+});
