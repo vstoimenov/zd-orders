@@ -85,6 +85,10 @@ form#login{min-height:100vh;display:flex;align-items:center;justify-content:cent
 .nav a:hover{background:var(--side-2)}
 .nav a.on{color:var(--accent);background:rgba(250,204,21,.08);border-color:rgba(250,204,21,.4)}
 .nav svg,.logout svg,.iconbtn svg{width:19px;height:19px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.navbadge{margin-left:auto;min-width:20px;padding:1px 7px;border-radius:999px;background:var(--accent);color:#111;font-size:11px;font-weight:800;text-align:center}
+.abmenu{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.abmenu a.ghost{display:inline-block;padding:6px 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:13px}
+#abSettings textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fafaf7;width:100%;box-sizing:border-box;resize:vertical}
 .logout{display:flex;align-items:center;gap:12px;margin:12px;padding:10px 12px;border:1px solid var(--side-line);background:none;color:var(--side-muted);border-radius:11px}
 .logout:hover{color:var(--side-text);background:var(--side-2)}
 .scrim{display:none}
@@ -308,6 +312,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
       <a href="#start" data-view="start"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>Първи стъпки</a>
       <a href="#dash" data-view="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Табло</a>
       <a href="#orders" data-view="orders"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Поръчки</a>
+      <a href="#abandoned" data-view="abandoned"><svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 12.4a2 2 0 0 0 2 1.6h8.7a2 2 0 0 0 2-1.6L22 7H6"/></svg>Изоставени<span class="navbadge" id="abBadge" hidden></span></a>
       <a href="#costs" data-view="costs"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>Финанси</a>
       <div class="sec">Отчети</div>
       <a href="#campaigns" data-view="campaigns"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Кампании</a>
@@ -442,6 +447,23 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     <section id="pickShopView" hidden>
       <div class="pagehead"><div><h1 id="pickTitle">Изберете магазин</h1><div class="sub">Тази страница е за конкретен магазин — изберете кой.</div></div></div>
       <div class="pickshop" id="pickShops"></div>
+    </section>
+    <section id="abandonedView" hidden>
+      <div class="pagehead"><div><h1>Изоставени колички</h1><div class="sub">Хора, които стигнаха до чекаута и въведоха телефон, но не поръчаха до 30 минути</div></div></div>
+      <div class="seg" id="abTabs"><button type="button" class="on" data-abstate="open">Отворени</button><button type="button" data-abstate="recovered">Върнати</button><button type="button" data-abstate="hidden">Скрити</button><button type="button" data-abstate="all">Всички</button></div>
+      <div class="panel"><table id="abTable"></table></div>
+      <div class="panel" id="abSettings" hidden>
+        <h2>Текст на напомнянето</h2>
+        <div class="fgrid">
+          <label>Без отстъпка<textarea id="abPlain" rows="3" maxlength="700"></textarea></label>
+          <label>С отстъпка<textarea id="abDiscount" rows="3" maxlength="700"></textarea></label>
+          <label>Код за отстъпка (създайте го първо в ConvertBuilder)<input id="abCode" maxlength="40" placeholder="напр. LYATO10"></label>
+          <label>Каква е отстъпката<input id="abDiscountText" maxlength="60" placeholder="напр. 10% отстъпка"></label>
+        </div>
+        <div class="muted">Променливи: {име} {пълно_име} {продукти} {сума} {магазин} {линк} · в текста с отстъпка и {код} {отстъпка}</div>
+        <div class="actions" style="margin-top:10px"><button type="button" class="primary" id="abSave">Запази</button><span class="muted" id="abSaved"></span></div>
+        <div class="muted" style="margin-top:12px">Добавете в политиката за поверителност, че данните, въведени в чекаута без завършена поръчка, се пазят до 30 дни, за да помогнем да я завършите.</div>
+      </div>
     </section>
     <section id="campaignsView" hidden>
       <div class="pagehead"><div><h1>Кампании</h1><div class="sub">SMS и WhatsApp съобщения до клиентите ви от поръчките</div></div><button type="button" class="primary" id="kNew">+ Нова SMS кампания</button></div>
@@ -1179,7 +1201,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     var c = d.cards, period = d.period.from === d.period.to ? d.period.from : d.period.from + ' – ' + d.period.to;
     $('dCards').innerHTML = card('Оборот', moneyList(c.revenue), 'без отказаните') + card('Реален приход', moneyList(c.delivered), 'само доставените', 'ok') +
       card('Поръчки', String(c.orders), period) + card('Средна поръчка (AOV)', moneyList(c.aov)) +
-      card('Върнати', pct(c.returnRate), 'от изпратените', 'warn') + card('⚠️ В НЕкоректен', String(c.nkFlagged), pct(c.nkFlaggedPct) + ' от поръчките', c.nkFlagged ? 'bad' : '') + adCards(d) + profitCards(d.profit);
+      card('Върнати', pct(c.returnRate), 'от изпратените', 'warn') + abandonedCard(d.abandoned) + card('⚠️ В НЕкоректен', String(c.nkFlagged), pct(c.nkFlaggedPct) + ' от поръчките', c.nkFlagged ? 'bad' : '') + adCards(d) + profitCards(d.profit);
     fillCalc(false);
     $('dSources').innerHTML = table(['Източник', 'Посещения', 'Поръчки', 'CR'], (d.sources || []).map(function (x) {
       return [esc(SOURCE_LABEL[x.source] || x.source), String(x.visits), String(x.orders), x.visits ? esc(pct(x.orders / x.visits)) : '—'];
@@ -1206,7 +1228,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
       .catch(function () { $('dCards').innerHTML = '<div class="err">Грешка при зареждане на таблото. Опитайте пак.</div>'; });
   }
   /* ---- навигация: страницата е в адреса (#orders, #dash, …) ---- */
-  var VIEWS = { orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции', clients: 'Клиенти', start: 'Първи стъпки', campaigns: 'Кампании' };
+  var VIEWS = { orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции', clients: 'Клиенти', start: 'Първи стъпки', campaigns: 'Кампании', abandoned: 'Изоставени' };
   function viewFromHash() { var v = location.hash.slice(1); return Object.prototype.hasOwnProperty.call(VIEWS, v) ? v : 'orders'; }
   function showView(view) {
     if (view === 'clients' && role !== 'owner') view = 'orders'; // only the owner manages clients
@@ -1225,10 +1247,82 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     if (view === 'clients') loadClients();
     if (view === 'start') loadStart();
     if (view === 'campaigns') loadCampaigns();
+    if (view === 'abandoned') loadAbandoned();
     if (view === 'costs') loadCosts();
     if (view === 'integrations') loadIntegrations();
     if (view === 'inventory') loadInventory();
   }
+
+  /* ---- Изоставени колички ---- */
+  var abState = 'open', abCarts = [], abSettings = null;
+  var AB_STATE = { open: 'нова', reminded: 'напомнено', recovered: 'върната ✓', hidden: 'скрита' };
+  function abCall(url, body) {
+    return fetch(withShop(API + url), { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
+      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Грешка'); return d; }); });
+  }
+  function setAbBadge(n) { var b = $('abBadge'); b.hidden = !n; b.textContent = n || ''; }
+  function refreshAbBadge() { abCall('abandoned?count=1').then(function (d) { setAbBadge(d.openCount); }).catch(function () {}); }
+  function abandonedCard(a) {
+    if (!a) return '';
+    return card('Изоставени колички', a.count ? a.count + ' за ' + moneyList(a.total) : '0', 'върнати ' + a.recovered + ' (' + a.afterReminder + ' след напомняне)', 'warn');
+  }
+  function loadAbandoned() {
+    abCall('abandoned?state=' + abState).then(function (d) {
+      abCarts = d.carts; abSettings = d.settings; setAbBadge(d.openCount);
+      $('abSettings').hidden = !d.settings;
+      if (d.settings) { $('abPlain').value = d.settings.plain; $('abDiscount').value = d.settings.discount; $('abCode').value = d.settings.code; $('abDiscountText').value = d.settings.discountText; }
+      renderAbandoned();
+    }).catch(function (e) { $('abTable').innerHTML = '<tr><td>' + esc(e.message) + '</td></tr>'; });
+  }
+  function renderAbandoned() {
+    if (!abCarts.length) { $('abTable').innerHTML = '<tr><td class="muted">Няма колички тук. Появяват се 30 минути след като клиент въведе телефон в чекаута и не поръча.</td></tr>'; return; }
+    $('abTable').innerHTML = '<thead><tr><th>Кога</th><th>Клиент</th><th>Продукти</th><th>Сума</th><th>Състояние</th><th></th></tr></thead><tbody>' + abCarts.map(function (c, i) {
+      var items = c.items.map(function (it) { return esc(it.qty + ' × ' + it.name); }).join('<br>') || '<span class="muted">—</span>';
+      var state = AB_STATE[c.state] + (c.state === 'reminded' ? ' <span class="muted">(' + esc(c.reminderChannel) + ', ' + when(c.remindedAt) + ')</span>' : '') + (c.state === 'recovered' ? ' <span class="muted">' + when(c.recoveredAt) + '</span>' : '');
+      var acts = c.optedOut ? '<span class="muted">отписан от съобщения</span>' : (c.state === 'recovered' ? '' : '<button type="button" class="ghost" data-abremind="' + i + '">💬 Напомни</button>');
+      if (c.state !== 'hidden' && c.state !== 'recovered') acts += ' <button type="button" class="ghost" data-abhide="' + i + '">Скрий</button>';
+      return '<tr><td data-label="Кога">' + when(c.updatedAt) + '</td><td data-label="Клиент"><b>' + esc(c.name || '—') + '</b><br>' + esc(c.phoneNorm) +
+        (c.email ? '<br><span class="muted">' + esc(c.email) + '</span>' : '') + (c.deliveryText ? '<br><span class="muted">' + esc(c.deliveryText) + '</span>' : '') +
+        '</td><td data-label="Продукти">' + items + '</td><td data-label="Сума">' + money(c.total, c.currency) + '</td><td data-label="Състояние">' + state + '</td><td>' + acts + '<div class="abmenu" id="abMenu' + i + '" hidden></div></td></tr>';
+    }).join('') + '</tbody>';
+  }
+  /** the ready text first; the tap on WhatsApp / SMS / Viber then opens it (and copies it for Viber) and marks the cart */
+  function abMenu(i, kind) {
+    var c = abCarts[i], box = $('abMenu' + i);
+    box.hidden = false; box.innerHTML = '<span class="muted">…</span>';
+    abCall('abandoned', { action: 'links', id: c.id, kind: kind }).then(function (d) {
+      box.setAttribute('data-message', d.message);
+      box.innerHTML = '<a class="ghost" target="_blank" rel="noopener" href="' + esc(d.whatsapp) + '" data-abmark="whatsapp" data-i="' + i + '">WhatsApp</a>' +
+        '<a class="ghost" href="' + esc(d.sms) + '" data-abmark="sms" data-i="' + i + '">SMS</a>' +
+        '<a class="ghost" href="' + esc(d.viber) + '" data-abmark="viber" data-i="' + i + '">Viber</a>' +
+        (abSettings && abSettings.code ? '<label class="muted"><input type="checkbox" data-abdisc="' + i + '"' + (kind === 'discount' ? ' checked' : '') + '> с отстъпка (' + esc(abSettings.code) + ')</label>' : '') +
+        '<div class="muted" style="flex-basis:100%" id="abMsg' + i + '">' + esc(d.message) + '</div>';
+    }).catch(function (e) { box.innerHTML = '<span class="err">' + esc(e.message) + '</span>'; });
+  }
+  $('abTable').addEventListener('click', function (e) {
+    var mark = e.target.closest('[data-abmark]');
+    if (mark) { // the link itself opens WhatsApp / SMS / Viber
+      var i = mark.getAttribute('data-i'), ch = mark.getAttribute('data-abmark'), msg = $('abMenu' + i).getAttribute('data-message');
+      if (ch === 'viber') {
+        if (navigator.clipboard) navigator.clipboard.writeText(msg).catch(function () {});
+        $('abMsg' + i).textContent = 'Текстът е копиран — поставете го във Viber: ' + msg;
+      }
+      abCall('abandoned', { action: 'mark', id: abCarts[i].id, channel: ch }).then(refreshAbBadge).catch(function () {});
+      return;
+    }
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.hasAttribute('data-abremind')) abMenu(+b.getAttribute('data-abremind'), 'plain');
+    if (b.hasAttribute('data-abhide')) busy(b, abCall('abandoned', { action: 'hide', id: abCarts[b.getAttribute('data-abhide')].id })).then(loadAbandoned).catch(function (err) { alert(err.message); });
+  });
+  $('abTable').addEventListener('change', function (e) { var i = e.target.getAttribute('data-abdisc'); if (i != null) abMenu(+i, e.target.checked ? 'discount' : 'plain'); });
+  $('abTabs').addEventListener('click', function (e) {
+    var st = e.target.getAttribute('data-abstate'); if (!st) return;
+    abState = st; [].forEach.call($('abTabs').children, function (x) { x.classList.toggle('on', x === e.target); }); loadAbandoned();
+  });
+  $('abSave').addEventListener('click', function () {
+    busy($('abSave'), abCall('abandoned', { action: 'settings', plain: $('abPlain').value, discount: $('abDiscount').value, code: $('abCode').value.trim(), discountText: $('abDiscountText').value }))
+      .then(function (d) { abSettings = d.settings; $('abSaved').textContent = 'Запазено ✓'; }).catch(function (err) { $('abSaved').textContent = err.message; });
+  });
 
   /* ---- Интеграции ---- */
   function integ(body) {
@@ -1278,6 +1372,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     $('shopName').textContent = name;
     $('shopInitial').textContent = currentShop === 'all' ? '∑' : (name.trim().charAt(0).toUpperCase() || 'М');
     document.title = name + (DEMO ? ' – Ordyx демо' : ' – Ordyx');
+    refreshAbBadge();
     $('iMetaFb').setAttribute('href', withShop(API + 'meta?start=1'));
     $('shopMenu').innerHTML = shops.filter(function (x) { return !x.hidden; }).map(function (x) {
       return '<button type="button" data-shop="' + esc(x.id) + '" class="' + (x.id === currentShop ? 'on' : '') + '"><span class="mini">' + esc(x.display.charAt(0).toUpperCase()) + '</span>' + esc(x.display) + '</button>';

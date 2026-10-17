@@ -43,6 +43,7 @@ const ROUTES = {
   campaigns: (await import('../../lib/admin/campaigns.js')).default,
   confirm: (await import('../../lib/admin/confirm.js')).default,
   confirmadmin: (await import('../../lib/admin/confirm-admin.js')).default,
+  abandoned: (await import('../../lib/admin/abandoned.js')).default,
 };
 
 /* ---- one sandbox per visitor (a cookie), at most MAX_BOXES per instance: the least recently used one is reset ---- */

@@ -68,6 +68,15 @@ for (const [visitor, source] of [['v1', 'facebook'], ['v2', 'facebook'], ['v3', 
 }
 await q(`update zd.orders set traffic_source = 'facebook' where cb_order_id in ('L1', 'L2')`);
 await q(`insert into zd.ad_spend (platform, account_id, day, spend, impressions, clicks, purchases, purchase_value, currency) values ('meta', '1234567890', $1::date, 18.4, 5200, 96, 2, 63.64, 'EUR')`, [today]);
+// abandoned carts: one open, one with an opted-out number (shown 1 h after they were typed)
+{
+  const { captureCart } = await import('../lib/abandoned.js');
+  const shop = '00000000-0000-4000-8000-000000000001';
+  await captureCart(q, { shopId: shop, phone: '0887 555 111', name: 'Елена Петрова', email: 'elena@example.bg', items: [{ name: 'Книга', qty: 2, price: 25.8 }], total: 28.28, currency: 'EUR', deliveryText: 'ЕКОНТ – офис Плевен', pageUrl: 'https://adhdbg.eu/chekout' });
+  await captureCart(q, { shopId: shop, phone: '0887 555 222', name: 'Иван Стоянов', items: [{ name: 'Книга', qty: 1, price: 12.9 }], total: 15.38, currency: 'EUR', pageUrl: 'https://adhdbg.eu/chekout' });
+  await q(`insert into zd.campaign_optouts (shop_id, phone_norm) values ($1::uuid, '+359887555222')`, [shop]);
+  await q(`update zd.abandoned_carts set created_at = now() - interval '1 hour', updated_at = now() - interval '1 hour'`);
+}
 await saveIntegration(q, 'meta', { config: { accountId: '1234567890', accountName: 'adhd реклами', currency: 'EUR', active: true, lastSyncAt: new Date().toISOString(), lastSyncResult: { days: 30 } }, secret: 'LOCAL-FAKE-TOKEN' });
 // a second shop with one order (multi-shop switcher)
 const { createShop, updateShop, DEFAULT_SHOP } = await import('../lib/shops.js');

@@ -31,9 +31,11 @@ test('the owner lists open carts and gets reminder links', async () => {
   assert.equal(list.openCount, 1);
   assert.equal(list.settings.code, '');
   assert.deepEqual(json(await call({ url: `/api/admin/abandoned?shop=${SHOP}&count=1`, cookie: owner })), { openCount: 1 });
-  const r = await call({ method: 'POST', url: `/api/admin/abandoned?shop=${SHOP}`, cookie: owner, body: { action: 'remind', id: cartId, kind: 'plain', channel: 'whatsapp' } });
+  const r = await call({ method: 'POST', url: `/api/admin/abandoned?shop=${SHOP}`, cookie: owner, body: { action: 'links', id: cartId, kind: 'plain' } });
   assert.equal(r.statusCode, 200);
   assert.match(json(r).whatsapp, /^https:\/\/wa\.me\/359888123456\?text=/);
+  assert.equal(json(await call({ url: `/api/admin/abandoned?shop=${SHOP}`, cookie: owner })).carts[0].state, 'open', 'looking at the text marks nothing');
+  assert.equal((await call({ method: 'POST', url: `/api/admin/abandoned?shop=${SHOP}`, cookie: owner, body: { action: 'mark', id: cartId, channel: 'whatsapp' } })).statusCode, 200);
   const after = json(await call({ url: `/api/admin/abandoned?shop=${SHOP}`, cookie: owner }));
   assert.equal(after.carts[0].state, 'reminded');
   assert.equal(after.openCount, 0);
@@ -48,7 +50,7 @@ test('a client sees and acts only on its own shops', async () => {
   const c = `zdo_admin=${clientSession('secret', { id, session_version: u.session_version })}`;
   assert.deepEqual(json(await call({ url: `/api/admin/abandoned?shop=${SHOP}`, cookie: c })).carts, []);
   assert.deepEqual(json(await call({ url: '/api/admin/abandoned?shop=all', cookie: c })).carts, []);
-  for (const body of [{ action: 'remind', id: cartId, kind: 'plain', channel: 'sms' }, { action: 'hide', id: cartId }]) {
+  for (const body of [{ action: 'links', id: cartId, kind: 'plain' }, { action: 'mark', id: cartId, channel: 'sms' }, { action: 'hide', id: cartId }]) {
     const r = await call({ method: 'POST', url: `/api/admin/abandoned?shop=${other}`, cookie: c, body });
     assert.equal(r.statusCode, 404);
     assert.equal(json(r).error, 'Няма такава количка');
