@@ -482,6 +482,7 @@
 
   /** platform.events.order_completed fires after ConvertBuilder accepted the order, before its thank-you redirect. */
   function onOrderCompleted(e) {
+    cartDone = true; clearTimeout(cartTimer);
     try {
       var body = JSON.stringify(buildOrderPayload(e.detail, selection(), readFields(), location.href));
       var url = API + '/api/orders';
@@ -556,7 +557,7 @@
   /* Abandoned carts: once a real phone is typed, what the customer entered goes to Ordyx — debounced, silent, never in the way.
      Funnel checkouts keep the cart only in ConvertBuilder's order events and the analytics data layer (adhdbg.eu, 2026-10-17);
      store checkouts in WebPlatform.Store.cart (tiarracosmetics.com). */
-  var lastOrderEvent = null, cartTimer = null, lastCartSent = '';
+  var lastOrderEvent = null, cartTimer = null, lastCartSent = '', cartDone = false;
   function watchCart() {
     var remember = function (e) { if (e && e.detail) lastOrderEvent = e.detail; queueCart(); };
     document.addEventListener('platform.events.order_changed', remember, true);
@@ -567,6 +568,7 @@
   }
   function queueCart() { clearTimeout(cartTimer); cartTimer = setTimeout(sendCart, 1500); }
   function sendCart() {
+    if (cartDone) return; // the order went through: this checkout is not abandoned
     try {
       var S = (window.WebPlatform && window.WebPlatform.Store) || {};
       var cart = cartFrom({ eventOrder: lastOrderEvent, storeCart: S.cart, dataLayer: window.dataLayer, currency: S.currency });

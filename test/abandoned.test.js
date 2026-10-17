@@ -304,3 +304,18 @@ test('the nightly job anonymises old carts', async () => {
   assert.equal(row.phone_norm, '');
   assert.ok(row.anonymised_at);
 });
+
+/* ---- final review fixes ---- */
+test('a cart captured just after the order (late beacon) is not abandoned', async () => {
+  await order({ minutesAgo: 41 });
+  const { id } = await captureCart(q, cart()); // arrived a moment after the order
+  await age(id, 40);
+  assert.deepEqual(await listCarts(q, { shopId: SHOP }), []);
+});
+
+test('links and domains are stripped from names and products (they reach customers under the shop name)', async () => {
+  const { id } = await captureCart(q, cart({ name: 'Мария https://evil.example/pay', items: [{ name: 'Платете тук: www.evil.example или pay.evil-site.com/x', qty: 1, price: 1 }, { name: 'Крем 50 мл. Vitamin C', qty: 1, price: 2 }] }));
+  const [r] = await q(`select name, items from zd.abandoned_carts where id = $1::uuid`, [id]);
+  assert.doesNotMatch(r.name + JSON.stringify(r.items), /evil|https?:|www\./i);
+  assert.equal(r.items[1].name, 'Крем 50 мл. Vitamin C');
+});

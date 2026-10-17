@@ -150,3 +150,10 @@ test('stats include abandoned carts for the period', async () => {
   const s = await getStats(q, { from: prev, to: day, shopId: DEFAULT_SHOP });
   assert.deepEqual(s.abandoned, { count: 2, total: [{ currency: 'EUR', amount: 25 }], recovered: 1, afterReminder: 1 });
 });
+
+test('the dashboard still works when abandoned carts cannot be read', async () => {
+  await q(`drop table zd.abandoned_carts`);
+  const day = new Date().toISOString().slice(0, 10);
+  const err = console.error; console.error = () => {};
+  try { assert.equal((await getStats(q, { from: day, to: day })).abandoned, null); } finally { console.error = err; }
+});
