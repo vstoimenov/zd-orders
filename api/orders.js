@@ -1,14 +1,11 @@
 import { getQuery } from '../lib/db.js';
 import { validateOrder } from '../lib/order.js';
 import { insertOrder, countRecentByIp } from '../lib/orders-repo.js';
-import { checkOrders } from '../lib/nk-check.js';
-import { nekorektenKey } from '../lib/nekorekten.js';
 import { syncStockSafe } from '../lib/stock.js';
+import { cbConfig, cbKnowsOrder, confirmKeptAside, startOrder } from '../lib/cb-sync.js';
 import { trafficSourceFor } from '../lib/visits.js';
 import { setCors, readJson, send, clientIp } from '../lib/http.js';
 import { allowedShopOrigin } from '../lib/shops.js';
-import { notifyNewOrder } from '../lib/push.js';
-import { sendOrderConfirmation } from '../lib/whatsapp.js';
 
 const RATE_LIMIT = 20; // orders per IP per 10 minutes (generous: shared mobile IPs / CGNAT)
 
@@ -44,15 +41,20 @@ export default async function handler(req, res) {
     }
     // ConvertBuilder numbers orders per store (each starts at 1): key them by the store's domain
     const cbOrderId = `${site}:${v.order.cbOrderId}`;
-    const r = await insertOrder(q, { ...v.order, cbOrderId, ip, userAgent: userAgent.slice(0, 300), trafficSource, shopId: allowed.shopId });
-    await syncStockSafe(q, r.id); // takes stock for a new order (never fails the order)
-    // check the phone on nekorekten.com now; failures are stored as 'error' and retried later — never fail the order for it
-    const nkKey = r.inserted && v.order.phoneNorm ? nekorektenKey() : null;
-    if (nkKey) {
-      try { await checkOrders(q, [{ id: r.id, phoneNorm: v.order.phoneNorm }], nkKey); } catch (err) { console.error('[orders] nekorekten', err); }
+    // anyone can post to this public endpoint: with a ConvertBuilder connection the order is kept aside until ConvertBuilder confirms it
+    const cfg = await cbConfig(q, allowed.shopId).catch(() => null);
+    const r = await insertOrder(q, { ...v.order, cbOrderId, ip, userAgent: userAgent.slice(0, 300), trafficSource, shopId: allowed.shopId, cbCheck: cfg ? 'pending' : '' });
+    let start = r.inserted && !cfg;
+    if (r.inserted && cfg) {
+      let known = false;
+      try { known = await cbKnowsOrder(cfg, { number: v.order.cbOrderId, phoneNorm: v.order.phoneNorm }); } catch (err) { console.warn('[orders] ConvertBuilder check failed — waiting for its webhook', cbOrderId, err.message); }
+      // the webhook may have confirmed it meanwhile: only the one that turns it starts it
+      start = known && await confirmKeptAside(q, cbOrderId, allowed.shopId, v.order.phoneNorm);
+      if (!known) console.warn('[orders] kept aside until ConvertBuilder confirms it', cbOrderId);
     }
-    // the owner's phone and the customer's WhatsApp confirmation (never fail the order, wait at most a few seconds)
-    if (r.inserted) await Promise.all([notifyNewOrder(q, r.id), sendOrderConfirmation(q, r.id)]);
+    // stock, nekorekten.com, the owner's phone and the customer's WhatsApp confirmation — never fail the order for them
+    if (start) await startOrder(q, { id: r.id, phoneNorm: v.order.phoneNorm }, '[orders]');
+    else await syncStockSafe(q, r.id);
     return send(res, 200, { ok: true, inserted: r.inserted, duplicate: r.duplicate });
   } catch (err) {
     console.error('[orders] store failed', v.order.cbOrderId, err);

@@ -706,6 +706,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
           <h3 style="margin:16px 0 6px">2. Автоматично при всяка нова поръчка</h3>
           <label class="check" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="waAuto"> Изпращай „потвърдете поръчката“ на клиента веднага при нова поръчка</label>
           <div class="muted">Когато клиентът натисне бутон, поръчката става „Потвърдена“ или „Отказана“ сама и получавате известие. Отговорът ни след натискането е безплатен.</div>
+          <div class="muted">Защита: при свързан ConvertBuilder съобщение получават само поръчки, които ConvertBuilder потвърди. Без връзка — само български мобилни номера, до 1 съобщение на номер на ден и до 30 на час; останалите изпращате с бутона „💬 Потвърди“.</div>
           <h3 style="margin:16px 0 6px">3. Проба на вашия телефон</h3>
           <div class="actions"><input type="tel" id="waTestPhone" placeholder="вашият телефон, напр. 0888…" style="width:220px"><button type="button" class="ghost" id="waTest">Изпрати проба</button></div>
           <div class="actions" style="margin-top:18px"><button type="button" class="del" id="waDisconnect">Изключи WhatsApp</button></div>
@@ -989,6 +990,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
       return '<tr class="st-' + esc(o.status) + '">' +
         '<td data-label="Дата">' + esc(date) + '</td>' +
         '<td data-label="Клиент"><b>' + esc(o.name || '—') + '</b>' + (o.isDuplicate ? '<span class="dup" title="Същият телефон в последните 24 ч">дубликат?</span>' : '') +
+          (o.cbCheck === 'pending' ? '<span class="dup" title="Модулът я изпрати, но ConvertBuilder още не я показва. Докато не я потвърди, няма автоматично съобщение, известие, наличности и не влиза в таблото. Ако е истинска, ще се оправи сама до минути.">непотвърдена от магазина</span>' : '') +
           '<br><a href="tel:' + esc(o.phone) + '">' + esc(o.phone) + '</a>' + (o.email ? '<br><span class="muted">' + esc(o.email) + '</span>' : '') +
           '<br>' + nkBadge(o) + (currentShop === 'all' && shopById(o.shopId) ? '<br><span class="shoptag">' + esc(shopById(o.shopId).display) + '</span>' : '') + '</td>' +
         '<td data-label="Доставка">' + esc(o.officeText) + '<br><span class="muted">' + esc(o.city) + (o.postCode ? ' ' + esc(o.postCode) : '') + '</span></td>' +
