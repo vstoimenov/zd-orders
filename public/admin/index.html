@@ -314,6 +314,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
       <a href="#dash" data-view="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Табло</a>
       <a href="#orders" data-view="orders"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>Поръчки</a>
       <a href="#abandoned" data-view="abandoned"><svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 12.4a2 2 0 0 0 2 1.6h8.7a2 2 0 0 0 2-1.6L22 7H6"/></svg>Изоставени<span class="navbadge" id="abBadge" hidden></span></a>
+      <a href="#buyers" data-view="buyers"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/></svg>Купувачи</a>
       <a href="#costs" data-view="costs"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>Финанси</a>
       <div class="sec">Отчети</div>
       <a href="#campaigns" data-view="campaigns"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Кампании</a>
@@ -448,6 +449,13 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     <section id="pickShopView" hidden>
       <div class="pagehead"><div><h1 id="pickTitle">Изберете магазин</h1><div class="sub">Тази страница е за конкретен магазин — изберете кой.</div></div></div>
       <div class="pickshop" id="pickShops"></div>
+    </section>
+    <section id="buyersView" hidden>
+      <div class="pagehead"><div><h1>Купувачи</h1><div class="sub" id="buSummary">Всеки телефон е един купувач · стойност = поръчките без отказаните и върнатите</div></div><button type="button" class="ghost" id="buCsv">Експорт CSV</button></div>
+      <div class="filters"><input type="search" id="buQ" class="search" placeholder="Търси по име или телефон…"><select id="buSort"><option value="spent">Най-много похарчили</option><option value="orders">Най-много поръчки</option><option value="last">Последно поръчали</option></select></div>
+      <div class="pills" id="buPills"><button type="button" class="pill on" data-bu="">Всички</button><button type="button" class="pill" data-bu="vip">⭐ VIP</button><button type="button" class="pill" data-bu="returning">Връщат се</button><button type="button" class="pill" data-bu="new">Нови</button><button type="button" class="pill" data-bu="sleeping">Заспали (90+ дни)</button><button type="button" class="pill" data-bu="risky">⚠️ Рискови</button></div>
+      <div class="panel"><table id="buTable"></table></div>
+      <div class="pager" id="buPager"></div>
     </section>
     <section id="abandonedView" hidden>
       <div class="pagehead"><div><h1>Изоставени колички</h1><div class="sub">Хора, които стигнаха до чекаута и въведоха телефон, но не поръчаха до 30 минути</div></div></div>
@@ -1212,7 +1220,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     var c = d.cards, period = d.period.from === d.period.to ? d.period.from : d.period.from + ' – ' + d.period.to;
     $('dCards').innerHTML = card('Оборот', moneyList(c.revenue), 'без отказаните') + card('Реален приход', moneyList(c.delivered), 'само доставените', 'ok') +
       card('Поръчки', String(c.orders), period) + card('Средна поръчка (AOV)', moneyList(c.aov)) +
-      card('Върнати', pct(c.returnRate), 'от изпратените', 'warn') + abandonedCard(d.abandoned) + card('⚠️ В НЕкоректен', String(c.nkFlagged), pct(c.nkFlaggedPct) + ' от поръчките', c.nkFlagged ? 'bad' : '') + adCards(d) + profitCards(d.profit);
+      card('Върнати', pct(c.returnRate), 'от изпратените', 'warn') + abandonedCard(d.abandoned) + customersCards(d.customers) + card('⚠️ В НЕкоректен', String(c.nkFlagged), pct(c.nkFlaggedPct) + ' от поръчките', c.nkFlagged ? 'bad' : '') + adCards(d) + profitCards(d.profit);
     fillCalc(false);
     $('dSources').innerHTML = table(['Източник', 'Посещения', 'Поръчки', 'CR'], (d.sources || []).map(function (x) {
       return [esc(SOURCE_LABEL[x.source] || x.source), String(x.visits), String(x.orders), x.visits ? esc(pct(x.orders / x.visits)) : '—'];
@@ -1239,7 +1247,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
       .catch(function () { $('dCards').innerHTML = '<div class="err">Грешка при зареждане на таблото. Опитайте пак.</div>'; });
   }
   /* ---- навигация: страницата е в адреса (#orders, #dash, …) ---- */
-  var VIEWS = { orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции', clients: 'Клиенти', start: 'Първи стъпки', campaigns: 'Кампании', abandoned: 'Изоставени' };
+  var VIEWS = { orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции', clients: 'Клиенти', start: 'Първи стъпки', campaigns: 'Кампании', abandoned: 'Изоставени', buyers: 'Купувачи' };
   function viewFromHash() { var v = location.hash.slice(1); return Object.prototype.hasOwnProperty.call(VIEWS, v) ? v : 'orders'; }
   function showView(view) {
     if (view === 'clients' && role !== 'owner') view = 'orders'; // only the owner manages clients
@@ -1259,10 +1267,46 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     if (view === 'start') loadStart();
     if (view === 'campaigns') loadCampaigns();
     if (view === 'abandoned') loadAbandoned();
+    if (view === 'buyers') loadBuyers(1);
     if (view === 'costs') loadCosts();
     if (view === 'integrations') loadIntegrations();
     if (view === 'inventory') loadInventory();
   }
+
+  /* ---- Купувачи ---- */
+  var buSeg = '', buRows = [], buTimer = null;
+  var BU_SEG = { new: 'нов', returning: 'връща се', vip: '⭐ VIP', sleeping: 'заспал', risky: '⚠️ рисков' };
+  function buUrl(page, csv) { return withShop(API + 'customers?q=' + encodeURIComponent($('buQ').value) + '&segment=' + buSeg + '&sort=' + $('buSort').value + (csv ? '&format=csv' : '&page=' + page)); }
+  function loadBuyers(page) {
+    fetch(buUrl(page), { credentials: 'same-origin' }).then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Грешка'); return d; }); }).then(function (d) {
+      buRows = d.customers;
+      var s = d.summary;
+      $('buSummary').textContent = s.customers + ' купувачи · ' + s.repeat + ' поръчали 2+ пъти (' + pct(s.repeatShare) + ') · средно ' + money(s.avgValue, 'EUR') + ' на купувач';
+      $('buTable').innerHTML = buRows.length ? '<thead><tr><th>Купувач</th><th>Поръчки</th><th>Похарчено</th><th>Последна поръчка</th><th>Сегмент</th></tr></thead><tbody>' + buRows.map(function (c, i) {
+        return '<tr><td data-label="Купувач"><a href="#" data-bu-open="' + i + '"><b>' + esc(c.name || '—') + '</b></a><br>' + esc(c.phoneNorm) + (c.email ? '<br><span class="muted">' + esc(c.email) + '</span>' : '') + '</td>' +
+          '<td data-label="Поръчки">' + c.orders + (c.returned ? ' <span class="muted">(' + c.returned + ' върнати)</span>' : '') + '</td>' +
+          '<td data-label="Похарчено"><b>' + money(c.spent, c.currency) + '</b><br><span class="muted">средно ' + money(c.avgOrder, c.currency) + '</span></td>' +
+          '<td data-label="Последна поръчка">' + when(c.lastOrderAt) + '<br><span class="muted">първа ' + when(c.firstOrderAt) + '</span></td>' +
+          '<td data-label="Сегмент">' + c.segments.map(function (x) { return '<span class="badge">' + esc(BU_SEG[x] || x) + '</span>'; }).join(' ') + '</td></tr>';
+      }).join('') + '</tbody>' : '<tr><td class="muted">Няма купувачи тук.</td></tr>';
+      var pages = Math.max(1, Math.ceil(d.total / d.pageSize));
+      $('buPager').innerHTML = pages > 1 ? '<button type="button" class="ghost" data-bu-page="' + (d.page - 1) + '"' + (d.page <= 1 ? ' disabled' : '') + '>‹ Назад</button> <span class="muted">Стр. ' + d.page + ' от ' + pages + '</span> <button type="button" class="ghost" data-bu-page="' + (d.page + 1) + '"' + (d.page >= pages ? ' disabled' : '') + '>Напред ›</button>' : '';
+    }).catch(function (e) { $('buTable').innerHTML = '<tr><td>' + esc(e.message) + '</td></tr>'; });
+  }
+  $('buQ').addEventListener('input', function () { clearTimeout(buTimer); buTimer = setTimeout(function () { loadBuyers(1); }, 300); });
+  $('buSort').addEventListener('change', function () { loadBuyers(1); });
+  $('buPills').addEventListener('click', function (e) {
+    var v = e.target.getAttribute('data-bu'); if (v == null) return;
+    buSeg = v; [].forEach.call($('buPills').children, function (b) { b.classList.toggle('on', b === e.target); }); loadBuyers(1);
+  });
+  $('buPager').addEventListener('click', function (e) { var p = e.target.getAttribute('data-bu-page'); if (p) loadBuyers(+p); });
+  $('buCsv').addEventListener('click', function () { location.href = buUrl(1, true); });
+  $('buTable').addEventListener('click', function (e) { // the customer's orders
+    var a = e.target.closest('[data-bu-open]'); if (!a) return;
+    e.preventDefault();
+    $('fQ').value = buRows[a.getAttribute('data-bu-open')].phoneNorm.replace(/^\+359/, '0');
+    snapshot(); go('#orders'); setTimeout(function () { load(1); }, 0);
+  });
 
   /* ---- Изоставени колички ---- */
   var abState = 'open', abCarts = [], abSettings = null;
@@ -1273,6 +1317,11 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
   }
   function setAbBadge(n) { var b = $('abBadge'); b.hidden = !n; b.textContent = n || ''; }
   function refreshAbBadge() { abCall('abandoned?count=1').then(function (d) { setAbBadge(d.openCount); }).catch(function () {}); }
+  function customersCards(c) {
+    if (!c) return '';
+    return card('Повторни купувачи', c.customers ? pct(c.repeatShare) : '—', c.repeat + ' от ' + c.customers + ' купувачи са поръчали 2+ пъти (за цялото време)', 'ok') +
+      card('Средна стойност на купувач', money(c.avgValue, 'EUR'), 'CLV: похарченото без отказани и върнати', '');
+  }
   function abandonedCard(a) {
     if (!a) return '';
     return card('Изоставени колички', a.count ? a.count + ' за ' + moneyList(a.total) : '0', 'върнати ' + a.recovered + ' (' + a.afterReminder + ' след напомняне)', 'warn');

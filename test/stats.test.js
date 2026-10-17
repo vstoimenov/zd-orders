@@ -157,3 +157,11 @@ test('the dashboard still works when abandoned carts cannot be read', async () =
   const err = console.error; console.error = () => {};
   try { assert.equal((await getStats(q, { from: day, to: day })).abandoned, null); } finally { console.error = err; }
 });
+
+test('stats include the customers summary (all time)', async () => {
+  await add({ phoneNorm: '+359888000001', total: 10 });
+  await add({ phoneNorm: '+359888000002', total: 20 });
+  await add({ phoneNorm: '+359888000002', total: 30 });
+  const s = await getStats(q, { from: today(), to: today() });
+  assert.deepEqual(s.customers, { customers: 2, repeat: 1, repeatShare: 0.5, avgValue: 30 });
+});
