@@ -148,3 +148,33 @@ test('shippingView: only what ConvertBuilder offers; none at all = a clear messa
   assert.equal(plain(core.shippingView([])).mode, 'none');
   assert.deepEqual(plain(core.shippingView(['Куриер до врата €5.00'])), { mode: 'all', available: { econt_office: true, speedy_office: true, speedy_address: true } }, 'unknown names: all choices, the shop prices them');
 });
+
+/* ---- abandoned carts: what the widget sends once a phone is typed ---- */
+test('cartPayload maps a store cart', () => {
+  const cart = core.cartFrom({ storeCart: { items: [{ title: 'Балсам', quantity: 2, price: 13.9 }], total: 27.8 }, currency: 'EUR' });
+  const p = plain(core.cartPayload({ name: ' Мария ', email: 'm@x.bg', phone: '0888 123 456' }, cart, 'ЕКОНТ – офис Плевен', 'https://a-shop.bg/store/checkout'));
+  assert.deepEqual(p, { e: 'cart', phone: '0888 123 456', name: 'Мария', email: 'm@x.bg', items: [{ name: 'Балсам', qty: 2, price: 13.9 }], total: 27.8, currency: 'EUR', delivery: 'ЕКОНТ – офис Плевен', page: 'https://a-shop.bg/store/checkout' });
+});
+
+test('cartFrom prefers the checkout event, then the store cart, then the analytics data layer', () => {
+  const ev = { order: { items: [{ title: 'Книга', quantity: 1, price: 12.9 }], total: 15.38, currency: 'EUR' } };
+  assert.deepEqual(plain(core.cartFrom({ eventOrder: ev, storeCart: { items: [{ title: 'Друго', quantity: 1, price: 1 }], total: 1 } })), { items: [{ name: 'Книга', qty: 1, price: 12.9 }], total: 15.38, currency: 'EUR' });
+  const dl = [['event', 'begin_checkout', { currency: 'EUR', items: [{ name: 'Книга "ADHD"', price: 12.9, quantity: 1 }, { name: 'DR AMEN ', price: 0, quantity: 1 }] }]];
+  assert.deepEqual(plain(core.cartFrom({ dataLayer: dl })), { items: [{ name: 'Книга "ADHD"', qty: 1, price: 12.9 }, { name: 'DR AMEN', qty: 1, price: 0 }], total: 12.9, currency: 'EUR' });
+  assert.deepEqual(plain(core.cartFrom({})), { items: [], total: 0, currency: 'EUR' });
+});
+
+test('cartPayload is null without a valid phone', () => {
+  const cart = core.cartFrom({});
+  assert.equal(core.cartPayload({ name: 'Х', phone: '' }, cart, '', 'https://a-shop.bg/'), null);
+  assert.equal(core.cartPayload({ name: 'Х', phone: '0888 12' }, cart, '', 'https://a-shop.bg/'), null);
+  assert.ok(core.cartPayload({ name: 'Х', phone: '+359 888 123 456' }, cart, '', 'https://a-shop.bg/'));
+  assert.ok(core.cartPayload({ name: 'Х', phone: '+44 7700 900123' }, cart, '', 'https://a-shop.bg/'));
+  assert.ok(core.cartPayload({ name: 'Х', phone: '888 123 456' }, cart, '', 'https://a-shop.bg/'), 'the field after a +359 country picker');
+});
+
+test('cartPayload trims to 50 items', () => {
+  const items = Array.from({ length: 80 }, (_, i) => ({ title: 'П' + i, quantity: 1, price: 1 }));
+  const p = core.cartPayload({ phone: '0888123456' }, core.cartFrom({ storeCart: { items, total: 80 } }), '', 'https://a-shop.bg/');
+  assert.equal(p.items.length, 50);
+});

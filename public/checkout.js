@@ -150,6 +150,39 @@
     };
   }
 
+  /** The cart being bought: from ConvertBuilder's order event (funnel checkouts), the store cart, or the analytics data layer. */
+  function cartFrom(src) {
+    src = src || {};
+    var map = function (list) {
+      return (list || []).slice(0, 50).map(function (it) {
+        return { name: clean(it.title || it.name || it.productId || it.id), qty: Number(it.quantity) || 1, price: Number(it.price) || 0 };
+      }).filter(function (it) { return it.name; });
+    };
+    var ev = src.eventOrder && (src.eventOrder.order || src.eventOrder);
+    if (ev && ev.items && ev.items.length) return { items: map(ev.items), total: Number(ev.total) || 0, currency: clean(ev.currency || src.currency || 'EUR') };
+    var sc = src.storeCart;
+    if (sc && sc.items && sc.items.length) return { items: map(sc.items), total: Number(sc.total) || 0, currency: clean(sc.currency || src.currency || 'EUR') };
+    var dl = src.dataLayer || [];
+    for (var i = dl.length - 1; i >= 0; i--) {
+      var e = dl[i];
+      if (e && e[0] === 'event' && /^(begin_checkout|add_payment_info|add_shipping_info)$/.test(e[1]) && e[2] && e[2].items) {
+        var items = map(e[2].items);
+        return { items: items, total: Math.round(items.reduce(function (a, it) { return a + it.price * it.qty; }, 0) * 100) / 100, currency: clean(e[2].currency || src.currency || 'EUR') };
+      }
+    }
+    return { items: [], total: 0, currency: clean(src.currency || 'EUR') };
+  }
+
+  /** What the customer typed, sent for abandoned carts once the phone looks real; null before that. */
+  function cartPayload(fields, cart, delivery, pageUrl) {
+    fields = fields || {};
+    var phone = clean(fields.phone), d = phone.replace(/[^\d+]/g, '');
+    // the same forms the server accepts (lib/phone.js): 0…, +359…, 00…, + international, or 9 digits after a +359 picker
+    if (!/^(\+359|00359|359|0)[2-9]\d{7,8}$/.test(d) && !/^(\+|00)[1-9]\d{7,14}$/.test(d) && !/^[89]\d{8}$/.test(d)) return null;
+    cart = cart || { items: [], total: 0, currency: 'EUR' };
+    return { e: 'cart', phone: phone, name: clean(fields.name), email: clean(fields.email), items: cart.items.slice(0, 50), total: cart.total, currency: cart.currency, delivery: clean(delivery), page: pageUrl };
+  }
+
   /** Anonymous page view for the shop's visit statistics: page, query (UTM / ad click ids) and referrer — no cookies, nothing personal. */
   function visitPayload(loc, doc) {
     return JSON.stringify({ p: String(loc.pathname || '/').slice(0, 200), s: String(loc.search || '').slice(0, 400), r: String(doc.referrer || '').slice(0, 400) });
@@ -158,7 +191,7 @@
   var core = {
     TOKEN: TOKEN, norm: norm, searchOffices: searchOffices, searchCities: searchCities, formatSelection: formatSelection,
     validateSelection: validateSelection, pickOptionIndex: pickOptionIndex, optionPrice: optionPrice, officeLabel: officeLabel,
-    buildOrderPayload: buildOrderPayload, visitPayload: visitPayload, shippingView: shippingView
+    buildOrderPayload: buildOrderPayload, visitPayload: visitPayload, shippingView: shippingView, cartFrom: cartFrom, cartPayload: cartPayload
   };
   if (typeof window !== 'undefined' && window.__ZDO_TEST__) { window.__zdoCore = core; return; }
 
@@ -516,7 +549,38 @@
     // ConvertBuilder may re-render its shipping methods after an address change: re-apply ours
     document.addEventListener('platform.events.order_changed', onOrderChanged, true);
     watchShipping();
+    watchCart();
     return true;
+  }
+
+  /* Abandoned carts: once a real phone is typed, what the customer entered goes to Ordyx — debounced, silent, never in the way.
+     Funnel checkouts keep the cart only in ConvertBuilder's order events and the analytics data layer (adhdbg.eu, 2026-10-17);
+     store checkouts in WebPlatform.Store.cart (tiarracosmetics.com). */
+  var lastOrderEvent = null, cartTimer = null, lastCartSent = '';
+  function watchCart() {
+    var remember = function (e) { if (e && e.detail) lastOrderEvent = e.detail; queueCart(); };
+    document.addEventListener('platform.events.order_changed', remember, true);
+    document.addEventListener('platform.events.order_initiate_checkout', remember, true);
+    var ours = /^(name|email|shippingPhone|zdo-type)$/;
+    document.addEventListener('input', function (e) { if (e.target && ours.test(e.target.name || '')) queueCart(); }, true);
+    document.addEventListener('change', function (e) { if (e.target && ours.test(e.target.name || '')) queueCart(); }, true);
+  }
+  function queueCart() { clearTimeout(cartTimer); cartTimer = setTimeout(sendCart, 1500); }
+  function sendCart() {
+    try {
+      var S = (window.WebPlatform && window.WebPlatform.Store) || {};
+      var cart = cartFrom({ eventOrder: lastOrderEvent, storeCart: S.cart, dataLayer: window.dataLayer, currency: S.currency });
+      var sel = formatSelection(selection());
+      var p = cartPayload({ name: val('name'), email: val('email'), phone: val('shippingPhone') }, cart, sel ? sel.address : '', location.href.split(/[?#]/)[0]);
+      if (!p) return;
+      var body = JSON.stringify(p);
+      if (body === lastCartSent) return;
+      lastCartSent = body;
+      var url = API + '/api/visit';
+      if (!(navigator.sendBeacon && navigator.sendBeacon(url, new Blob([body], { type: 'text/plain' })))) {
+        fetch(url, { method: 'POST', body: body, keepalive: true, headers: { 'Content-Type': 'text/plain' } }).catch(function () {});
+      }
+    } catch (e) { /* abandoned carts must never disturb the checkout */ }
   }
 
   function trackVisit() {
