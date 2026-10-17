@@ -144,3 +144,12 @@ test('outside calls are faked or blocked: nothing real leaves the demo except th
   assert.equal(other.ok, false);
   assert.equal(real.length, 1);
 });
+
+test('the demo shows sample abandoned carts', async () => {
+  const shops = json(await call('GET', '/api/demo/shops'));
+  const first = shops.shops[0].id;
+  const all = json(await call('GET', `/api/demo/abandoned?shop=${first}&state=all`));
+  const states = new Set(all.carts.map((c) => c.state));
+  assert.ok(states.has('open') && states.has('reminded') && states.has('recovered'), `states: ${[...states]}`);
+  assert.ok(json(await call('GET', `/api/demo/abandoned?shop=${first}&count=1`)).openCount >= 1);
+});
