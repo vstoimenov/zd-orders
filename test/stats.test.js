@@ -137,3 +137,16 @@ test('CR only counts orders placed after visit tracking began on that site', asy
   assert.equal(s.cards.cr, 0.5, '1 tracked order ÷ 2 visits, not 2 ÷ 2');
   assert.ok(s.cards.visitsSince, 'the dashboard can say since when visits are counted');
 });
+
+test('stats include abandoned carts for the period', async () => {
+  const { captureCart } = await import('../lib/abandoned.js');
+  const a = await captureCart(q, { shopId: DEFAULT_SHOP, phone: '0888111111', total: 10, currency: 'EUR' });
+  await captureCart(q, { shopId: DEFAULT_SHOP, phone: '0888222222', total: 15, currency: 'EUR' });
+  await q(`update zd.abandoned_carts set created_at = now() - interval '2 hours', updated_at = now() - interval '2 hours'`);
+  await q(`update zd.abandoned_carts set reminded_at = now() - interval '90 minutes' where id = $1::uuid`, [a.id]);
+  await add({ phoneNorm: '+359888111111', shopId: DEFAULT_SHOP });
+  const day = new Date(Date.now() + 3 * 3600e3).toISOString().slice(0, 10);
+  const prev = new Date(Date.now() - 86400e3).toISOString().slice(0, 10);
+  const s = await getStats(q, { from: prev, to: day, shopId: DEFAULT_SHOP });
+  assert.deepEqual(s.abandoned, { count: 2, total: [{ currency: 'EUR', amount: 25 }], recovered: 1, afterReminder: 1 });
+});
