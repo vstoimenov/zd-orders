@@ -246,3 +246,45 @@ test('hidden carts leave the open list and the badge but stay in stats', async (
   assert.equal(await openCount(q, { shopId: SHOP }), 0);
   assert.equal((await cartStats(q, { from: daysAgo(1), to: today(), shopId: SHOP })).count, 1);
 });
+
+/* ---- Task 3: capture through the visit endpoint ---- */
+import { fakeReq, fakeRes } from './helpers/http.js';
+import { setQueryForTests } from '../lib/db.js';
+import visitApi from '../api/visit.js';
+
+const UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148';
+async function beacon(body, { origin = 'https://a-shop.bg', ip = '5.5.5.5', ua = UA } = {}) {
+  setQueryForTests(q);
+  const res = fakeRes();
+  await visitApi(fakeReq({ method: 'POST', url: '/api/visit', headers: { origin, 'user-agent': ua, 'x-forwarded-for': ip }, body: JSON.stringify(body) }), res);
+  return res;
+}
+const cartEvent = (patch = {}) => ({ e: 'cart', phone: '0888123456', name: 'Мария Иванова', email: 'm@x.bg', items: [{ name: 'Книга', qty: 1, price: 20 }], total: 22.57, currency: 'EUR', delivery: 'ЕКОНТ – офис Плевен', page: 'https://a-shop.bg/checkout', ...patch });
+const carts = async () => (await q(`select * from zd.abandoned_carts`));
+
+test("a cart event from the shop's checkout is stored, not counted as a visit", async () => {
+  const res = await beacon(cartEvent());
+  assert.equal(res.statusCode, 204);
+  const [c] = await carts();
+  assert.equal(c.phone_norm, '+359888123456');
+  assert.equal(c.shop_id, SHOP);
+  assert.equal(c.page_url, 'https://a-shop.bg/checkout');
+  assert.equal(c.delivery_text, 'ЕКОНТ – офис Плевен');
+  assert.equal((await q(`select count(*)::int as n from zd.visits`))[0].n, 0);
+});
+
+test('capture from an unknown site is refused', async () => {
+  const res = await beacon(cartEvent(), { origin: 'https://evil.example' });
+  assert.equal(res.statusCode, 403);
+  assert.deepEqual(await carts(), []);
+});
+
+test('more than 30 captures from one address in 10 minutes are ignored', async () => {
+  for (let i = 0; i < 32; i++) assert.equal((await beacon(cartEvent({ phone: `08881${String(i).padStart(5, '0')}` }))).statusCode, 204);
+  assert.equal((await carts()).length, 30);
+});
+
+test('bots are ignored', async () => {
+  await beacon(cartEvent(), { ua: 'Googlebot/2.1 (+http://www.google.com/bot.html)' });
+  assert.deepEqual(await carts(), []);
+});
