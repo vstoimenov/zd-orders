@@ -17,9 +17,10 @@ import signup from '../../lib/admin/signup.js';
 import campaigns from '../../lib/admin/campaigns.js';
 import confirm from '../../lib/admin/confirm.js';
 import confirmadmin from '../../lib/admin/confirm-admin.js';
+import abandoned from '../../lib/admin/abandoned.js';
 import { send } from '../../lib/http.js';
 
-const ROUTES = { login, orders, stats, costs, integrations, inventory, meta, shops, waybills, push, me, invite, users, onboarding, signup, campaigns, confirm, confirmadmin };
+const ROUTES = { login, orders, stats, costs, integrations, inventory, meta, shops, waybills, push, me, invite, users, onboarding, signup, campaigns, confirm, confirmadmin, abandoned };
 const pick = (name) => (typeof name === 'string' && Object.hasOwn(ROUTES, name) ? ROUTES[name] : null);
 
 /** Changes only from our own pages: a request carrying another site's Origin is refused (on top of the SameSite cookie). */
