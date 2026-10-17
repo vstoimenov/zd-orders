@@ -123,8 +123,8 @@ test('shipmentStatuses maps each number to our status and Econt\'s text', async 
     { status: null, error: { message: 'няма такава' } },
   ] }));
   assert.deepEqual(await shipmentStatuses(creds, ['1', '2', '3'], r.impl), [
-    { number: '1', status: 'delivered', text: 'Доставена' },
-    { number: '2', status: null, text: 'Приета в офис' },
+    { number: '1', status: 'delivered', text: 'Доставена', atOffice: null },
+    { number: '2', status: null, text: 'Приета в офис', atOffice: null },
   ]);
   assert.match(r.calls[0].url, /ShipmentService\.getShipmentStatuses\.json$/);
 });
@@ -172,4 +172,17 @@ test('a server error from Econt is unclear even with a message (the waybill may 
   assert.equal(e500.rejected, false);
   const e517 = await econtCall(creds, 'A/B.c', {}, async () => reply(517, { message: 'Невалиден офис' })).catch((e) => e);
   assert.equal(e517.rejected, true);
+});
+
+/* ---- parcel waiting at the receiver's office ---- */
+import { atOfficeFromEcont } from '../lib/econt-api.js';
+test('atOfficeFromEcont: the first arrival at the receiver office, only while not delivered or returned', () => {
+  const ev = (destinationType, officeCode, time) => ({ destinationType, officeCode, time });
+  const base = { receiverOfficeCode: '5803', trackingEvents: [ev('courier', '1107', '2026-10-10T08:00:00+03:00'), ev('office', '1107', '2026-10-10T09:00:00+03:00'), ev('office', '5803', '2026-10-11T10:00:00+03:00'), ev('in_delivery_office', '5803', '2026-10-12T09:00:00+03:00')] };
+  assert.equal(atOfficeFromEcont(base), new Date('2026-10-11T10:00:00+03:00').toISOString());
+  assert.equal(atOfficeFromEcont({ ...base, deliveryTime: 5 }), null, 'collected');
+  assert.equal(atOfficeFromEcont({ ...base, trackingEvents: [...base.trackingEvents, ev('return', '5803', '2026-10-18T09:00:00+03:00')] }), null, 'going back');
+  assert.equal(atOfficeFromEcont({ receiverOfficeCode: '5803', trackingEvents: [ev('office', '1107', '2026-10-10T09:00:00+03:00')] }), null, 'only the sender office so far');
+  assert.equal(atOfficeFromEcont({ receiverOfficeCode: '', trackingEvents: [ev('office', '1107', '2026-10-10T09:00:00+03:00')] }), null, 'address delivery');
+  assert.equal(atOfficeFromEcont({ trackingEvents: [{ ...ev('office', '5803', '2026-10-11T10:00:00+03:00'), isReceipt: true }], receiverOfficeCode: '5803' }), null, 'return receipts do not count');
 });

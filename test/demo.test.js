@@ -153,3 +153,10 @@ test('the demo shows sample abandoned carts', async () => {
   assert.ok(states.has('open') && states.has('reminded') && states.has('recovered'), `states: ${[...states]}`);
   assert.ok(json(await call('GET', `/api/demo/abandoned?shop=${first}&count=1`)).openCount >= 1);
 });
+
+test('the demo shows parcels waiting at the office, one of them due for a call', async () => {
+  const first = json(await call('GET', '/api/demo/shops')).shops[0].id;
+  const d = json(await call('GET', `/api/demo/orders?shop=${first}&status=at_office`));
+  assert.ok(d.atOffice.waiting >= 2 && d.atOffice.due >= 1, JSON.stringify(d.atOffice));
+  assert.ok(d.orders.some((o) => o.shipment && o.shipment.atOfficeDay >= 4));
+});

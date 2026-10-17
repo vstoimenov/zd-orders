@@ -151,8 +151,8 @@ test('shipmentStatuses tracks 10 at a time and keeps the last description', asyn
   const out = await shipmentStatuses(creds, numbers, r.impl);
   assert.equal(r.calls.length, 2);
   assert.equal(r.calls[0].body.parcels.length, 10);
-  assert.deepEqual(out[0], { number: '100', status: 'delivered', text: 'Доставена' });
-  assert.deepEqual(out[1], { number: '101', status: null, text: 'За доставка' });
+  assert.deepEqual(out[0], { number: '100', status: 'delivered', text: 'Доставена', atOffice: null });
+  assert.deepEqual(out[1], { number: '101', status: null, text: 'За доставка', atOffice: null });
   assert.equal(out.length, 12);
 });
 
@@ -205,4 +205,14 @@ test('orderPickup asks Speedy to send a courier for the shipment', async () => {
   assert.equal(r.calls[0].body.autoAdjustPickupDate, true);
   assert.ok(r.calls[0].body.visitEndTime);
   assert.deepEqual(r.calls[0].body.phoneNumber, { number: '0888888888' });
+});
+
+/* ---- parcel waiting at the receiver's office ---- */
+import { atOfficeFromSpeedy } from '../lib/speedy-api.js';
+test('atOfficeFromSpeedy: prepared for self-collection or office notice, while not delivered or returned', () => {
+  const op = (operationCode, dateTime) => ({ operationCode, dateTime });
+  assert.equal(atOfficeFromSpeedy([op(1, '2026-10-10T08:00:00+03:00'), op(1134, '2026-10-11T11:00:00+03:00'), op(134, '2026-10-11T10:00:00+03:00')]), new Date('2026-10-11T10:00:00+03:00').toISOString());
+  assert.equal(atOfficeFromSpeedy([op(134, '2026-10-11T10:00:00+03:00'), op(-14, '2026-10-12T10:00:00+03:00')]), null);
+  assert.equal(atOfficeFromSpeedy([op(134, '2026-10-11T10:00:00+03:00'), op(111, '2026-10-18T10:00:00+03:00')]), null);
+  assert.equal(atOfficeFromSpeedy([op(12, '2026-10-11T10:00:00+03:00')]), null, 'out for delivery to an address');
 });

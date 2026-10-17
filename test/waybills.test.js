@@ -117,7 +117,7 @@ test('createWaybill makes the waybill, stores it on the order and marks it shipp
   assert.equal(o.status, 'shipped');
   assert.deepEqual(o.shipment, {
     number: '1051604331075', courier: 'econt', pdf: 'https://ee.econt.com/x.pdf', price: 3.78, currency: 'EUR', demo: false,
-    status: '', parcels: [], createdAt: o.shipment.createdAt, trackUrl: 'https://www.econt.com/services/track-shipment/1051604331075',
+    status: '', parcels: [], createdAt: o.shipment.createdAt, trackUrl: 'https://www.econt.com/services/track-shipment/1051604331075', atOfficeSince: null, atOfficeDay: null,
   });
   await assert.rejects(withFetch(f.impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} })), /вече има товарителница/);
   assert.equal(f.calls.filter((c) => c.path.includes('createLabel')).length, 1, 'never a second waybill');
@@ -438,4 +438,51 @@ test('an order with a real waybill cannot be deleted before the waybill is cance
   assert.equal(res.statusCode, 400);
   assert.match(json(res).error, /товарителница/);
   assert.ok(await orderById(id));
+});
+
+/* ---- parcels waiting at the receiver's office ---- */
+import { atOfficeCounts } from '../lib/orders-repo.js';
+async function shippedAt(numbers) {
+  await connect();
+  const ids = [];
+  let n = 0;
+  const mk = econt({ createLabel: () => reply(200, { label: { shipmentNumber: numbers[n++], totalPrice: 1, currency: 'EUR', pdfURL: 'x' } }) });
+  for (let i = 0; i < numbers.length; i++) { const id = await addOrder(); ids.push(id); await withFetch(mk.impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} })); }
+  return ids;
+}
+const atOfficeReply = (since) => econt({ getShipmentStatuses: (body) => reply(200, { shipmentStatuses: body.shipmentNumbers.map((num) => ({ status: {
+  shipmentNumber: num, receiverOfficeCode: '5803', shortDeliveryStatus: 'В офис',
+  trackingEvents: since[num] ? [{ destinationType: 'office', officeCode: '5803', time: since[num] }] : [{ destinationType: 'courier', officeCode: '1107', time: new Date().toISOString() }],
+} })) }) });
+const daysAgo = (d) => new Date(Date.now() - d * 86400e3).toISOString();
+
+test('the nightly check records since when a parcel waits at the office; from the 4th day it is due', async () => {
+  const [a, b, c] = await shippedAt(['501', '502', '503']);
+  await withFetch(atOfficeReply({ 501: daysAgo(3), 502: daysAgo(1) }).impl, () => syncEcontStatuses(q, SHOP));
+  const oa = await orderById(a);
+  assert.equal(oa.shipment.atOfficeSince.slice(0, 10), daysAgo(3).slice(0, 10));
+  assert.equal(oa.shipment.atOfficeDay, 4);
+  assert.equal((await orderById(b)).shipment.atOfficeDay, 2);
+  assert.equal((await orderById(c)).shipment.atOfficeSince, null, 'still on its way');
+  assert.deepEqual(await atOfficeCounts(q, { shopId: SHOP }), { waiting: 2, due: 1 });
+  const { rows } = await listOrders(q, { status: 'at_office', shopId: SHOP });
+  assert.deepEqual(rows.map((o) => o.id).sort(), [a, b].sort());
+});
+
+test('the arrival day is kept from the first check; a collected parcel leaves the list', async () => {
+  const [a] = await shippedAt(['601']);
+  await withFetch(atOfficeReply({ 601: daysAgo(2) }).impl, () => syncEcontStatuses(q, SHOP));
+  await withFetch(atOfficeReply({ 601: daysAgo(0) }).impl, () => syncEcontStatuses(q, SHOP)); // Econt shows a later office event
+  assert.equal((await orderById(a)).shipment.atOfficeDay, 3);
+  const collected = econt({ getShipmentStatuses: (body) => reply(200, { shipmentStatuses: body.shipmentNumbers.map((num) => ({ status: { shipmentNumber: num, deliveryTime: 5, receiverOfficeCode: '5803', shortDeliveryStatus: 'Доставена', trackingEvents: [] } })) }) });
+  await withFetch(collected.impl, () => syncEcontStatuses(q, SHOP));
+  assert.deepEqual(await atOfficeCounts(q, { shopId: SHOP }), { waiting: 0, due: 0 });
+});
+
+test('the orders page tells how many parcels wait at the office and how many are due', async () => {
+  await shippedAt(['701']);
+  await withFetch(atOfficeReply({ 701: daysAgo(5) }).impl, () => syncEcontStatuses(q, SHOP));
+  const res = fakeRes();
+  await ordersApi(fakeReq({ url: `/api/admin/orders?shop=${SHOP}`, headers: { cookie: cookie() } }), res);
+  assert.deepEqual(json(res).atOffice, { waiting: 1, due: 1 });
 });

@@ -103,6 +103,7 @@ main{padding:30px 32px 56px;max-width:1440px}
 .toolbar,.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
 .search{flex:0 1 380px;min-width:220px}
 .pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.pill.due:not(.on){border-color:#f3c6cb;color:var(--bad)}
 .pill{border-radius:999px;padding:8px 16px;font-weight:600;background:#fff}
 .pill.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
 
@@ -900,7 +901,14 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
   /* status filter as pills (the hidden #fStatus keeps the chosen value) */
   $('fPills').innerHTML = [['', 'Всички']].concat(STATUSES).map(function (s) {
     return '<button type="button" class="pill' + (s[0] === '' ? ' on' : '') + '" data-pill="' + s[0] + '">' + s[1] + '</button>';
-  }).join('');
+  }).join('') + '<button type="button" class="pill" data-pill="at_office" id="atOfficePill" hidden>📦 Чакат в офис</button>';
+  /** parcels waiting at the receiver's office (waybills made in Ordyx); from the 4th day the shop calls or writes */
+  function setAtOffice(a) {
+    var p = $('atOfficePill'); if (!a) return;
+    p.hidden = !a.waiting && $('fStatus').value !== 'at_office';
+    p.textContent = '📦 Чакат в офис: ' + a.waiting + (a.due ? ' · ' + a.due + ' за обаждане' : '');
+    p.classList.toggle('due', a.due > 0);
+  }
   $('fPills').addEventListener('click', function (e) {
     var v = e.target.getAttribute('data-pill');
     if (v == null) return;
@@ -948,7 +956,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
         if (id !== reqId) return;
         if (!d) { showLogin(); return; }
         page = target;
-        orders = d.orders; total = d.total; pageSize = d.pageSize;
+        orders = d.orders; total = d.total; pageSize = d.pageSize; setAtOffice(d.atOffice);
         shown = true;
         $('login').hidden = true; $('app').hidden = false;
         render();
@@ -993,6 +1001,9 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
       return '<span class="wb">📦 <a href="' + esc(w.trackUrl || '#') + '" target="_blank" rel="noopener" title="Проследи пратката">' + esc(w.number) + '</a>' + (w.demo ? '<span class="tag">тест</span>' : '') +
         (w.price != null ? ' · ' + esc(w.price.toFixed(2)) + ' ' + esc(cur(w.currency)) : '') +
         (w.status ? '<br><span class="muted">' + esc(w.status) + '</span>' : '') +
+        (w.atOfficeDay ? '<br>' + (w.atOfficeDay >= 4
+          ? '<span class="dup" title="Обадете се или пишете на клиента, преди пратката да се върне">📦 ' + w.atOfficeDay + '-и ден в офиса — звъннете</span>' + (o.phoneNorm ? ' <a href="tel:' + esc(o.phoneNorm) + '">📞 ' + esc(o.phoneNorm) + '</a>' : '')
+          : '<span class="muted">📦 ' + (w.atOfficeDay === 1 ? 'пристигна в офиса днес' : 'в офиса от ' + w.atOfficeDay + ' дни') + '</span>') : '') +
         '<br>' + (w.pdf ? '<a href="' + esc(pdfHref(w.pdf)) + '" target="_blank" rel="noopener">PDF за печат</a> · ' : '') +
         '<a href="#" data-wbcancel="' + i + '">Анулирай</a></span>';
     }
