@@ -288,3 +288,19 @@ test('bots are ignored', async () => {
   await beacon(cartEvent(), { ua: 'Googlebot/2.1 (+http://www.google.com/bot.html)' });
   assert.deepEqual(await carts(), []);
 });
+
+/* ---- Task 6: nightly anonymising ---- */
+test('the nightly job anonymises old carts', async () => {
+  setQueryForTests(q);
+  const { default: refresh } = await import('../api/cron/refresh.js');
+  process.env.CRON_SECRET = 'cron';
+  const { id } = await captureCart(q, cart());
+  await age(id, 31 * 1440);
+  const real = globalThis.fetch, err = console.error;
+  globalThis.fetch = async () => ({ ok: false, status: 503, json: async () => ({}) }); console.error = () => {};
+  const res = fakeRes();
+  try { await refresh(fakeReq({ headers: { authorization: 'Bearer cron' } }), res); } finally { globalThis.fetch = real; console.error = err; }
+  const [row] = await q(`select phone_norm, anonymised_at from zd.abandoned_carts`);
+  assert.equal(row.phone_norm, '');
+  assert.ok(row.anonymised_at);
+});

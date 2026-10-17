@@ -6,6 +6,7 @@ import { send, safeEqual } from '../../lib/http.js';
 import { cbConfig, syncOrders } from '../../lib/cb-sync.js';
 import { metaConfig, syncMeta } from '../../lib/meta.js';
 import { listShops } from '../../lib/shops.js';
+import { anonymiseOld } from '../../lib/abandoned.js';
 import { econtStatus, syncEcontStatuses, speedyStatus, syncSpeedyStatuses } from '../../lib/waybills.js';
 
 /** Vercel Cron calls this daily with `Authorization: Bearer $CRON_SECRET`. */
@@ -49,6 +50,12 @@ export default async function handler(req, res) {
     await q(`delete from zd.settings where key like 'visit_salt:%' and key < 'visit_salt:' || to_char(current_date - 2, 'YYYY-MM-DD')`);
   } catch (err) {
     console.error('[cron] visits cleanup failed', err);
+  }
+  // abandoned carts: personal details go after 30 days, the figures stay
+  try {
+    result.abandoned = await anonymiseOld(q);
+  } catch (err) {
+    console.error('[cron] abandoned carts cleanup failed', err);
   }
   // Meta ad spend of the last 7 days (Meta keeps refining recent days)
   for (const shop of shops) {
