@@ -36,6 +36,7 @@ function facebook() {
       ] });
     }
     if (u.pathname === '/v26.0/act_123') return ok({ id: 'act_123', name: 'adhd реклами', currency: 'EUR', account_status: 1 });
+    if (u.pathname === '/v26.0/me/permissions') return ok({ data: [{ permission: 'public_profile', status: 'granted' }, ...(f.noAds ? [] : [{ permission: 'ads_read', status: 'granted' }])] });
     return { ok: false, status: 400, json: async () => ({ error: { message: 'bad', code: 100 } }) };
   };
   f.calls = calls; return f;
@@ -117,6 +118,7 @@ test('with a Facebook Login for Business configuration the dialog uses config_id
     const fb = async (url) => {
       const u = new URL(String(url));
       if (u.searchParams.get('code') === 'CODE') return { ok: true, status: 200, json: async () => ({ access_token: 'SYSTEM-USER', token_type: 'bearer' }) };
+      if (u.pathname === '/v26.0/me/permissions') return { ok: true, status: 200, json: async () => ({ data: [{ permission: 'ads_read', status: 'granted' }] }) };
       return { ok: false, status: 400, json: async () => ({ error: { message: 'cannot exchange', code: 100 } }) };
     };
     const res = await withFetch(fb, () => call({ url: `/api/admin/meta?code=CODE&state=${state}`, headers: { cookie: `zdo_meta=${state}` } }));
@@ -135,4 +137,15 @@ test('the Facebook login comes back to the shop it was started for', async () =>
   assert.equal(res.headers.location, `https://kurier.profitbrand.online/admin/?meta=choose&shop=${kids.id}#integrations`);
   assert.equal(await getSecret(q, 'meta', kids.id), 'LONG');
   assert.equal(await getSecret(q, 'meta'), null, 'the default shop is untouched');
+});
+
+test('a login that gave no ad account (no ads_read) is not stored and says what to choose', async () => {
+  const start = await call({ url: '/api/admin/meta?start=1', headers: admin });
+  const state = new URL(start.headers.location).searchParams.get('state');
+  const fb = facebook(); fb.noAds = true;
+  const res = await withFetch(fb, () => call({ url: `/api/admin/meta?code=CODE&state=${state}`, headers: { cookie: `zdo_meta=${state}` } }));
+  assert.equal(res.statusCode, 302);
+  const err = new URL(res.headers.location).searchParams.get('meta_error');
+  assert.match(err, /рекламен акаунт/);
+  assert.equal(await getSecret(q, 'meta'), null);
 });
