@@ -106,6 +106,14 @@
   ],
   "rewrites": [
     {
+      "source": "/favicon.ico",
+      "destination": "/admin/icon-192.png"
+    },
+    {
+      "source": "/apple-touch-icon.png",
+      "destination": "/admin/apple-touch-icon.png"
+    },
+    {
       "source": "/",
       "has": [
         {
