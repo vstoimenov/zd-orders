@@ -30,10 +30,11 @@ function facebook() {
     }
     if (u.pathname === '/v26.0/oauth/access_token' && u.searchParams.get('grant_type') === 'fb_exchange_token') return ok({ access_token: 'LONG', expires_in: 5184000 });
     if (u.pathname === '/v26.0/me/adaccounts' && u.searchParams.get('access_token') === 'LONG') {
+      if (f.noBusiness && /business/.test(u.searchParams.get('fields'))) return { ok: false, status: 400, json: async () => ({ error: { message: '(#100) Requires business_management permission to access the field.', code: 100 } }) };
       return ok({ data: [
         { account_id: '123', name: 'adhd реклами', currency: 'EUR', account_status: 1, business: { name: 'ProfitBrand' } },
         { account_id: '456', name: 'Стар акаунт', currency: 'BGN', account_status: 2 },
-      ] });
+      ].map(({ business, ...a }) => (/business/.test(u.searchParams.get('fields')) && business ? { ...a, business } : a)) });
     }
     if (u.pathname === '/v26.0/act_123') return ok({ id: 'act_123', name: 'adhd реклами', currency: 'EUR', account_status: 1 });
     if (u.pathname === '/v26.0/me/permissions') return ok({ data: [{ permission: 'public_profile', status: 'granted' }, ...(f.noAds ? [] : [{ permission: 'ads_read', status: 'granted' }])] });
@@ -94,6 +95,16 @@ test('the admin picks an ad account from the list and it is connected', async ()
   const st = json(await call({ url: '/api/admin/integrations', headers: admin })).meta;
   assert.deepEqual([st.connected, st.accountId, st.oauth], [true, '123', true]);
   assert.ok(st.tokenExpiresAt);
+});
+
+test('a login with only ads_read (no business_management) still lists the accounts, without the portfolio name', async () => {
+  const start = await call({ url: '/api/admin/meta?start=1', headers: admin });
+  const state = new URL(start.headers.location).searchParams.get('state');
+  await withFetch(facebook(), () => call({ url: `/api/admin/meta?code=CODE&state=${state}`, headers: { cookie: `zdo_meta=${state}` } }));
+  const fb = facebook(); fb.noBusiness = true;
+  const res = await withFetch(fb, () => call({ method: 'POST', url: '/api/admin/integrations', headers: admin, body: JSON.stringify({ action: 'meta_accounts' }) }));
+  assert.equal(res.statusCode, 200, res.body);
+  assert.deepEqual(json(res).accounts.map((a) => [a.id, a.business]), [['123', ''], ['456', '']]);
 });
 
 test('without a Meta app configured the button is not offered; a pasted token can still list accounts', async () => {
