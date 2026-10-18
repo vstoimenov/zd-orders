@@ -149,3 +149,16 @@ test('a login that gave no ad account (no ads_read) is not stored and says what 
   assert.match(err, /рекламен акаунт/);
   assert.equal(await getSecret(q, 'meta'), null);
 });
+
+test('disconnecting Meta deletes the token at once (data deletion)', async () => {
+  const start = await call({ url: '/api/admin/meta?start=1', headers: admin });
+  const state = new URL(start.headers.location).searchParams.get('state');
+  await withFetch(facebook(), () => call({ url: `/api/admin/meta?code=CODE&state=${state}`, headers: { cookie: `zdo_meta=${state}` } }));
+  const post = (body) => call({ method: 'POST', url: '/api/admin/integrations', headers: admin, body: JSON.stringify(body) });
+  await withFetch(facebook(), () => post({ action: 'save_meta', accountId: '123', token: '' }));
+  const res = await post({ action: 'meta_disconnect' });
+  assert.equal(res.statusCode, 200);
+  assert.equal(await getSecret(q, 'meta'), null);
+  const st = json(await call({ url: '/api/admin/integrations', headers: admin })).meta;
+  assert.equal(st.connected, false);
+});

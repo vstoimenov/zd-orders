@@ -691,6 +691,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
             <button type="button" class="ghost" id="iMetaSync">Синхронизирай</button>
           </div>
           <div class="muted" id="iMetaInfo" style="margin-top:10px"></div>
+          <div class="actions" style="margin-top:14px"><button type="button" class="ghost" id="iMetaOff" style="color:var(--bad)">Прекъсни връзката с Meta</button></div>
         </div>
       </div>
     </div>
@@ -2377,6 +2378,10 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     busy($('iMetaTest'), integ({ action: 'test_meta' }))
       .then(function (d) { $('iMetaInfo').textContent = 'Връзката работи ✓ ' + d.accountName + ' (' + d.currency + ')'; })
       .catch(function (e) { showErr('iMetaInfo', e); });
+  });
+  $('iMetaOff').addEventListener('click', function () {
+    if (!window.confirm('Да прекъсна ли връзката с Meta? Ключът за достъп се изтрива веднага; вече отчетените разходи остават в печалбата.')) return;
+    busy($('iMetaOff'), integ({ action: 'meta_disconnect' })).then(function () { $('iMetaInfo').textContent = 'Връзката е прекъсната — ключът е изтрит.'; loadIntegrations(); }).catch(function (e) { $('iMetaInfo').textContent = e.message; });
   });
   $('iMetaSync').addEventListener('click', function () {
     $('iMetaInfo').textContent = 'Синхронизиране…';

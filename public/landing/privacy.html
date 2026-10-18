@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Политика за поверителност — Ordyx</title>
+<link rel="canonical" href="https://ordyx.eu/privacy">
+<link rel="icon" href="https://app.ordyx.eu/admin/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/landing/legal.css">
+</head>
+<body>
+<header><div class="w"><a href="/"><svg width="26" height="26" viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="#ffd21f"/></svg><b>ORDYX</b></a></div></header>
+<main><div class="w">
+<h1>Политика за поверителност</h1>
+<p class="upd">Последна актуализация: 18 октомври 2026 г.</p>
+<div class="card">
+
+<h2>1. Кои сме ние</h2>
+<p>Ordyx (ordyx.eu, app.ordyx.eu) е софтуер за онлайн магазини: избор на офис на куриер в чекаута, поръчки, товарителници, потвърждение на поръчки, наличности и отчети. Услугата се предоставя от <span class="ph">[ФИРМА]</span>, ЕИК <span class="ph">[ЕИК]</span>, със седалище <span class="ph">[АДРЕС]</span> („Ordyx“, „ние“). Контакт по въпроси за личните данни: <span class="ph">[ИМЕЙЛ]</span>.</p>
+
+<h2>2. В какво качество обработваме данни</h2>
+<ul>
+<li><b>Като администратор</b> — за данните на нашите клиенти (собственици и служители на магазини), които имат акаунт в Ordyx.</li>
+<li><b>Като обработващ</b> — за данните на купувачите на магазините (поръчки, контакти, адреси). Администратор на тези данни е съответният магазин; ние ги обработваме само по негово нареждане, за да предоставим услугата.</li>
+</ul>
+
+<h2>3. Какви данни обработваме</h2>
+<table>
+<tr><th>Данни</th><th>За какво</th><th>Основание</th></tr>
+<tr><td>Акаунт: име, имейл, парола (пази се само като необратим хеш)</td><td>Вход и управление на акаунта</td><td>Договор</td></tr>
+<tr><td>Данни за магазина: име, домейн, телефон, валута</td><td>Настройка на услугата</td><td>Договор</td></tr>
+<tr><td>Поръчки: име, телефон, имейл, офис или адрес за доставка, продукти, сума</td><td>Обработка на поръчките, товарителници, потвърждение</td><td>Договор с магазина (ние сме обработващ)</td></tr>
+<tr><td>Незавършени поръчки: данни, въведени в чекаута с валиден телефон, без завършена поръчка</td><td>Магазинът да може да помогне на купувача да завърши поръчката</td><td>Законен интерес на магазина; заличават се до 30 дни</td></tr>
+<tr><td>Ключове за интеграции (куриери, магазин, Meta, WhatsApp)</td><td>Връзка с тези услуги от името на магазина</td><td>Договор; пазят се криптирани (AES-256-GCM)</td></tr>
+<tr><td>Рекламни данни от Meta: дневни разходи, показвания, кликове и покупки по рекламен акаунт</td><td>Изчисляване на печалбата в таблото</td><td>Договор; само четене (право ads_read)</td></tr>
+<tr><td>Анонимна статистика на посещенията: страница, източник, тип устройство</td><td>Конверсия в таблото</td><td>Законен интерес; без бисквитки, без IP адрес, с дневно сменящ се анонимен ключ</td></tr>
+<tr><td>Абонаменти за известия на устройство</td><td>Известия за нови поръчки</td><td>Съгласие (включвате ги сами)</td></tr>
+</table>
+
+<h2>4. Данни от Meta (Facebook)</h2>
+<p>Когато свържете рекламния си акаунт чрез „Вход с Facebook“, получаваме ключ за достъп с право <b>ads_read</b> само за рекламния акаунт, който изберете. Използваме го единствено за да прочитаме дневните разходи и резултати на рекламите ви и да ги показваме в таблото на вашия магазин. Не публикуваме, не променяме реклами и не споделяме тези данни с трети лица. Ключът се пази криптиран и се изтрива, когато прекъснете връзката. Вижте и <a href="/data-deletion">Инструкции за изтриване на данни</a>.</p>
+
+<h2>5. На кого предаваме данни</h2>
+<table>
+<tr><th>Получател</th><th>Защо</th><th>Къде</th></tr>
+<tr><td>Supabase (база данни)</td><td>Съхранение на данните</td><td>ЕС (Франкфурт)</td></tr>
+<tr><td>Vercel (хостинг)</td><td>Работа на приложението</td><td>ЕС и САЩ (стандартни договорни клаузи)</td></tr>
+<tr><td>Еконт, Спиди</td><td>Товарителници и проследяване, когато магазинът ги ползва</td><td>България</td></tr>
+<tr><td>Meta Platforms (Facebook, WhatsApp)</td><td>Вход с Facebook, рекламни данни, WhatsApp съобщения, когато магазинът ги ползва</td><td>ЕС и САЩ</td></tr>
+<tr><td>nekorekten.com</td><td>Проверка на телефона на поръчката в регистъра на некоректни клиенти</td><td>България</td></tr>
+<tr><td>Apple, Google (услуги за известия)</td><td>Доставка на известия до устройството</td><td>ЕС и САЩ</td></tr>
+</table>
+<p>Не продаваме лични данни и не ги използваме за реклама.</p>
+
+<h2>6. Колко дълго пазим данните</h2>
+<ul>
+<li>Данни за акаунта и поръчките — докато акаунтът е активен; след закриването му ги изтриваме до 30 дни, освен ако закон не изисква друго.</li>
+<li>Незавършени поръчки — личните данни се заличават автоматично след 30 дни; остават само анонимни числа за отчетите.</li>
+<li>Анонимна статистика на посещенията — до 400 дни.</li>
+<li>Ключ за Meta — до прекъсване на връзката или закриване на акаунта.</li>
+</ul>
+
+<h2>7. Сигурност</h2>
+<p>Връзките са криптирани (HTTPS). Ключовете за външни услуги се пазят криптирани. Паролите се пазят само като хеш. Всеки клиент вижда само своите магазини.</p>
+
+<h2>8. Бисквитки</h2>
+<p>Използваме само необходими бисквитки: за вход в администрацията и за демо версията. Сайтът ordyx.eu не използва рекламни или проследяващи бисквитки.</p>
+
+<h2>9. Вашите права</h2>
+<p>Имате право на достъп, поправка, изтриване, ограничаване, преносимост и възражение. Пишете ни на <span class="ph">[ИМЕЙЛ]</span>. Ако сте купувач на магазин, обърнете се първо към магазина — той е администратор на данните ви, а ние ще му помогнем. Имате право на жалба до Комисията за защита на личните данни (cpdp.bg).</p>
+
+<h2>10. Промени</h2>
+<p>При съществени промени ще уведомим клиентите си по имейл или в администрацията.</p>
+
+<div class="en">
+<h2>English summary</h2>
+<p><b>Ordyx</b> (ordyx.eu, app.ordyx.eu) is software for online shops, provided by <span class="ph">[COMPANY]</span>, contact <span class="ph">[EMAIL]</span>. We are the controller for our customers' account data and a processor for their shoppers' order data.</p>
+<p><b>Meta data:</b> with Facebook Login we receive a token with the <b>ads_read</b> permission for the ad account the user selects. We only read daily ad spend and results to show profit in the shop's dashboard. We never publish or change ads and never share this data. The token is stored encrypted and deleted when the user disconnects. See <a href="/data-deletion">Data deletion instructions</a>.</p>
+<p>Data is stored in the EU (Supabase, Frankfurt). We do not sell personal data. Account data is deleted within 30 days after closing the account; abandoned-checkout data is anonymised after 30 days. Users may exercise their GDPR rights at <span class="ph">[EMAIL]</span>.</p>
+</div>
+</div>
+</div></main>
+<footer><div class="w"><a href="/">ordyx.eu</a> · <a href="/terms">Общи условия</a> · <a href="/data-deletion">Изтриване на данни</a></div></footer>
+</body>
+</html>
