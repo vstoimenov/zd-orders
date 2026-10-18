@@ -256,6 +256,28 @@
       "permanent": false
     },
     {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "ordyx.eu"
+        }
+      ],
+      "destination": "https://zd-orders.vercel.app/demo/",
+      "permanent": false
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.ordyx.eu"
+        }
+      ],
+      "destination": "https://zd-orders.vercel.app/demo/",
+      "permanent": false
+    },
+    {
       "source": "/demo",
       "destination": "/demo/",
       "permanent": false
