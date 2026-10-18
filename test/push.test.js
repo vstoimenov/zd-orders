@@ -111,7 +111,7 @@ test('admin route: key, subscribe for the chosen shop or all, test, unsubscribe;
   assert.equal(res.statusCode, 401);
   res = fakeRes();
   await pushApi(fakeReq({ url: '/api/admin/push', headers: { cookie: cookie() } }), res);
-  assert.deepEqual(json(res), { enabled: true, publicKey: 'BPublicKeyForTests' });
+  assert.deepEqual(json(res), { enabled: true, publicKey: 'BPublicKeyForTests', template: DEFAULT_PUSH });
   res = fakeRes();
   await pushApi(fakeReq({ method: 'POST', url: '/api/admin/push?shop=all', headers: { cookie: cookie() }, body: { action: 'subscribe', subscription: sub(1) } }), res);
   assert.equal(res.statusCode, 200);
@@ -205,4 +205,49 @@ test('a checkout without any shipping method alerts the shop once every few hour
   assert.match(sent[0].payload.title, /доставка/i);
   assert.match(sent[0].payload.body, /adhdbg\.eu/);
   assert.equal((await q(`select count(*)::int as n from zd.visits`))[0].n, 0, 'the alert is not a visit');
+});
+
+/* ---- the shop's own new-order notification text ---- */
+import { getPushTemplate, setPushTemplate, DEFAULT_PUSH } from '../lib/push.js';
+
+test('the shop writes its own notification with variables; another shop keeps the default', async () => {
+  const [other] = await q(`insert into zd.shops (name, domain) values ('Книги', 'knigi.bg') returning id`);
+  await saveSubscription(q, { subscription: sub(1), shopId: null });
+  await setPushTemplate(q, SHOP, { title: 'Нова: {сума}', body: '{име} — {продукти} ({брой} бр.) · {телефон} · {доставка}' });
+  await notifyNewOrder(q, await addOrder({ items: [{ name: 'Книга', qty: 2, price: 20 }, { name: 'Тетрадка', qty: 1, price: 2 }] }));
+  assert.equal(sent[0].payload.title, 'Нова: 22,57 €');
+  assert.equal(sent[0].payload.body, 'Мария — Книга, Тетрадка (3 бр.) · +359888123456 · ЕКОНТ – офис Плевен (5803)');
+  await notifyNewOrder(q, await addOrder({ shopId: other.id }));
+  assert.equal(sent[1].payload.title, '🛒 Нова поръчка · Книги');
+});
+
+test('a private text with no personal details; empty parts are dropped', async () => {
+  await saveSubscription(q, { subscription: sub(1), shopId: null });
+  await setPushTemplate(q, SHOP, { title: '🛒 Нова поръчка в {магазин}', body: '{телефон} · {доставка}' });
+  await notifyNewOrder(q, await addOrder({ phoneNorm: '', officeText: '' }));
+  assert.equal(sent[0].payload.title, '🛒 Нова поръчка в adhd');
+  assert.equal(sent[0].payload.body, '');
+});
+
+test('notification text: defaults when empty, limits, one shop only', async () => {
+  assert.deepEqual(await getPushTemplate(q, SHOP), DEFAULT_PUSH);
+  await setPushTemplate(q, SHOP, { title: '', body: '' });
+  assert.deepEqual(await getPushTemplate(q, SHOP), DEFAULT_PUSH);
+  await assert.rejects(setPushTemplate(q, SHOP, { title: 'я'.repeat(81), body: '' }), /80/);
+  await assert.rejects(setPushTemplate(q, SHOP, { title: 'x', body: 'я'.repeat(201) }), /200/);
+  await assert.rejects(setPushTemplate(q, null, { title: 'x' }), /Изберете магазин/);
+});
+
+test('admin route: read and save the text for a shop, send it as a test to this device', async () => {
+  await saveSubscription(q, { subscription: sub(5), shopId: SHOP });
+  const get = fakeRes(); await pushApi(fakeReq({ url: `/api/admin/push?shop=${SHOP}`, headers: { cookie: cookie() } }), get);
+  assert.deepEqual(json(get).template, DEFAULT_PUSH);
+  const save = fakeRes(); await pushApi(fakeReq({ method: 'POST', url: `/api/admin/push?shop=${SHOP}`, headers: { cookie: cookie() }, body: JSON.stringify({ action: 'template', title: 'Поръчка {сума}', body: '{пълно_име}' }) }), save);
+  assert.equal(save.statusCode, 200);
+  const all = fakeRes(); await pushApi(fakeReq({ method: 'POST', url: '/api/admin/push?shop=all', headers: { cookie: cookie() }, body: JSON.stringify({ action: 'template', title: 'x', body: '' }) }), all);
+  assert.equal(all.statusCode, 400);
+  const t = fakeRes(); await pushApi(fakeReq({ method: 'POST', url: `/api/admin/push?shop=${SHOP}`, headers: { cookie: cookie() }, body: JSON.stringify({ action: 'template_test', endpoint: sub(5).endpoint }) }), t);
+  assert.equal(t.statusCode, 200);
+  assert.equal(sent.at(-1).payload.title, 'Поръчка 24,90 €');
+  assert.equal(sent.at(-1).payload.body, 'Мария Примерова');
 });

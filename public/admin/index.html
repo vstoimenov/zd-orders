@@ -85,6 +85,7 @@ form#login{min-height:100vh;display:flex;align-items:center;justify-content:cent
 .nav a:hover{background:var(--side-2)}
 .nav a.on{color:var(--accent);background:rgba(250,204,21,.08);border-color:rgba(250,204,21,.4)}
 .nav svg,.logout svg,.iconbtn svg{width:19px;height:19px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.npreview{margin:12px 0;padding:12px 14px;border-radius:14px;background:#f1f0ec;display:flex;flex-direction:column;gap:2px;font-size:14px}
 .navbadge{margin-left:auto;min-width:20px;padding:1px 7px;border-radius:999px;background:var(--accent);color:#111;font-size:11px;font-weight:800;text-align:center}
 .abmenu{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
 .abmenu a.ghost{display:inline-block;padding:6px 12px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:13px}
@@ -785,6 +786,17 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
         <p id="nState" style="font-size:15px;margin:0 0 14px"></p>
         <div class="actions"><button type="button" class="primary" id="nOn">🔔 Включи известия</button><button type="button" class="ghost" id="nTest" hidden>Пробно известие</button><button type="button" class="ghost" id="nOff" hidden>Изключи</button></div>
         <div class="muted" id="nInfo" style="margin-top:10px"></div>
+        <div id="nTpl" hidden style="margin-top:18px;border-top:1px solid var(--line);padding-top:14px">
+          <h3 style="margin:0 0 10px">Текст на известието за нова поръчка</h3>
+          <div class="fgrid">
+            <label>Заглавие<input id="nTplTitle" maxlength="80"></label>
+            <label>Текст<input id="nTplBody" maxlength="200"></label>
+          </div>
+          <div class="muted" style="margin-top:6px">Променливи: {магазин} {име} {пълно_име} {сума} {продукти} {брой} {доставка} {телефон}. За да не се виждат лични данни на заключения екран, махнете {име}, {пълно_име} и {телефон}.</div>
+          <div class="npreview"><div class="muted" style="font-size:12px">Ordyx · сега</div><b id="nPrevTitle"></b><div id="nPrevBody"></div></div>
+          <div class="actions"><button type="button" class="primary" id="nTplSave">Запази текста</button><button type="button" class="ghost" id="nTplTest">Изпрати проба с този текст</button><span class="muted" id="nTplInfo"></span></div>
+        </div>
+        <div class="muted" id="nTplPick" hidden style="margin-top:14px">За да промените текста на известието, изберете магазин горе вляво.</div>
       </div>
     </div>
   </div>
@@ -2081,9 +2093,34 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     $('nState').innerHTML = text;
     $('nOn').hidden = on; $('nOff').hidden = !on; $('nTest').hidden = !on;
   }
+  /* the shop's own new-order text: preview with a sample order, mirrors renderPush in lib/push.js */
+  function showPushTemplate(t) {
+    var perShop = currentShop && currentShop !== 'all';
+    $('nTpl').hidden = !perShop || !t; $('nTplPick').hidden = perShop;
+    if (!perShop || !t) return;
+    $('nTplTitle').value = t.title; $('nTplBody').value = t.body; $('nTplInfo').textContent = ''; previewPush();
+  }
+  function previewPush() {
+    var shop = shopById(currentShop);
+    var vals = { '{магазин}': shop ? shop.display : '', '{име}': 'Мария', '{пълно_име}': 'Мария Иванова', '{сума}': '24,90 €', '{продукти}': 'Книга, Тетрадка', '{брой}': '3', '{доставка}': 'ЕКОНТ – офис Плевен', '{телефон}': '+359888123456' };
+    var f = function (s) { return String(s).replace(/\{[^{}\s]+\}/g, function (m) { return Object.prototype.hasOwnProperty.call(vals, m) ? vals[m] : m; }).split(' · ').map(function (x) { return x.trim(); }).filter(Boolean).join(' · '); };
+    $('nPrevTitle').textContent = f($('nTplTitle').value || '🛒 Нова поръчка · {магазин}') || 'Нова поръчка';
+    $('nPrevBody').textContent = f($('nTplBody').value || '{пълно_име} · {сума} · {доставка}');
+  }
+  function savePushTemplate() { return pushApi({ action: 'template', title: $('nTplTitle').value, body: $('nTplBody').value }); }
+  $('nTplTitle').addEventListener('input', previewPush); $('nTplBody').addEventListener('input', previewPush);
+  $('nTplSave').addEventListener('click', function () {
+    busy($('nTplSave'), savePushTemplate()).then(function (d) { showPushTemplate(d.template); $('nTplInfo').textContent = 'Запазено ✓'; }).catch(function (e) { $('nTplInfo').textContent = e.message; });
+  });
+  $('nTplTest').addEventListener('click', function () {
+    busy($('nTplTest'), savePushTemplate().then(function () { return readyReg(); }).then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (s) {
+      if (!s) throw new Error('Първо включете известията на това устройство');
+      return pushApi({ action: 'template_test', endpoint: s.endpoint });
+    })).then(function () { $('nTplInfo').textContent = 'Изпратено — вижте телефона ✓'; }).catch(function (e) { $('nTplInfo').textContent = e.message; });
+  });
   function refreshNotif() {
     $('nInfo').textContent = '';
-    pushApi().then(function (d) { pushKey = d.enabled ? d.publicKey : ''; }).catch(function () {}); // ready before the tap (iPhone wants the permission request right in the tap)
+    pushApi().then(function (d) { pushKey = d.enabled ? d.publicKey : ''; showPushTemplate(d.template); }).catch(function () {}); // ready before the tap (iPhone wants the permission request right in the tap)
     $('nIos').hidden = !(isIos && !standalone);
     $('nInstall').hidden = isIos || standalone;
     var supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
