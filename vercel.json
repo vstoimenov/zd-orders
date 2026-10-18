@@ -142,7 +142,7 @@
           "value": "zd-orders.vercel.app"
         }
       ],
-      "destination": "https://kurier.profitbrand.online/admin/",
+      "destination": "https://app.ordyx.eu/admin/",
       "permanent": false
     },
     {
@@ -175,7 +175,7 @@
           "value": "zd-orders.vercel.app"
         }
       ],
-      "destination": "https://kurier.profitbrand.online/admin/",
+      "destination": "https://app.ordyx.eu/admin/",
       "permanent": false
     },
     {
@@ -186,7 +186,62 @@
           "value": "zd-orders.vercel.app"
         }
       ],
-      "destination": "https://kurier.profitbrand.online/admin/:path*",
+      "destination": "https://app.ordyx.eu/admin/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/admin",
+      "has": [
+        {
+          "type": "host",
+          "value": "kurier.profitbrand.online"
+        }
+      ],
+      "destination": "https://app.ordyx.eu/admin/",
+      "permanent": false
+    },
+    {
+      "source": "/admin/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "kurier.profitbrand.online"
+        }
+      ],
+      "destination": "https://app.ordyx.eu/admin/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/demo",
+      "has": [
+        {
+          "type": "host",
+          "value": "app.ordyx.eu"
+        }
+      ],
+      "destination": "https://zd-orders.vercel.app/demo/",
+      "permanent": false
+    },
+    {
+      "source": "/demo/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "app.ordyx.eu"
+        }
+      ],
+      "destination": "https://zd-orders.vercel.app/demo/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "app.ordyx.eu"
+        }
+      ],
+      "destination": "/admin/",
       "permanent": false
     },
     {

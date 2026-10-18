@@ -34,7 +34,7 @@ test('a fresh shop: nothing done yet except adding it', async () => {
   assert.equal(d.convertbuilder.connected, false);
   assert.equal(d.orders, 0);
   assert.deepEqual([d.econt, d.speedy, d.meta], [false, false, false]);
-  assert.equal(d.snippet, '<script src="https://kurier.profitbrand.online/kurier.js" defer></script>');
+  assert.equal(d.snippet, '<script src="https://app.ordyx.eu/kurier.js" defer></script>');
 });
 
 test('the steps light up from real data: visits, widget orders, ConvertBuilder, couriers, ads', async () => {
@@ -58,7 +58,7 @@ test('a client sees the guide only for their own shop; with no shop it says to a
   assert.equal(d.shop.id, SHOP_B, 'never another shop');
   const none = await get('/api/admin/onboarding', await clientCookie([]));
   assert.equal(none.statusCode, 200);
-  assert.deepEqual(json(none), { shop: null, snippet: '<script src="https://kurier.profitbrand.online/kurier.js" defer></script>' });
+  assert.deepEqual(json(none), { shop: null, snippet: '<script src="https://app.ordyx.eu/kurier.js" defer></script>' });
   assert.equal((await get('/api/admin/onboarding', '')).statusCode, 401);
 });
 

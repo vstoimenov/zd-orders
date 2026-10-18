@@ -79,7 +79,7 @@ test('testConnection authenticates with a Bearer key and a User-Agent', async ()
   assert.deepEqual(await testConnection(cfg, fetchImpl), { totalOrders: 82, latestOrderId: 82, latestInvoiceNo: 60 });
   assert.equal(calls[0].url, 'https://adhdbg.eu/api/site/orders?limit=1');
   assert.equal(calls[0].auth, 'Bearer KEY');
-  assert.match(calls[0].ua, /ZdOrders/);
+  assert.match(calls[0].ua, /Ordyx/);
   const bad = fakeCb({ 'GET /api/site/orders': { __status: 401, success: false, message: 'Invalid API key' } });
   await assert.rejects(testConnection(cfg, bad.fetchImpl), /HTTP 401: Invalid API key/);
 });
