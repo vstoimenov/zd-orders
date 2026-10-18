@@ -88,7 +88,8 @@ section{padding:88px 0}
 .logos .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:12px 28px;justify-content:center}
 .logos small{font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-size:12px}
 .chip{display:inline-flex;align-items:center;gap:10px;font-weight:800;font-size:16px;color:#2a2a26;padding:8px 14px 8px 8px;border:1px solid var(--line);border-radius:14px;background:#fff}
-.chip img{width:28px;height:28px;border-radius:8px;object-fit:contain}
+.chip .lg{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:#f6f5f0;flex:none}
+.chip .lg svg,.chip .lg img{width:24px;height:24px;object-fit:contain}
 .chip em{font-style:normal;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--ysoft);color:#7a5c00}
 /* pain */
 .pain{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:36px}
@@ -216,6 +217,7 @@ input[type=range]{width:100%;accent-color:var(--ink);height:28px}
 .plan li::before{content:"✓";font-weight:800;color:var(--y);margin-right:8px}
 .plan.star li::before{color:var(--ok)}
 .plan .btn{margin-top:auto}
+.soon{font-style:normal;font-size:11px;font-weight:800;padding:1px 7px;border-radius:999px;background:var(--ysoft);color:#7a5c00;margin-left:4px}
 .plan.star .btn{background:var(--ink);color:#fff;box-shadow:0 6px 0 #000}
 .est{margin-top:28px;background:#1a1a17;border:1px solid #2c2c28;border-radius:22px;padding:24px;display:grid;grid-template-columns:1fr 1fr auto;gap:22px;align-items:center}
 .est .rng label{color:#fff}
@@ -225,7 +227,7 @@ input[type=range]{width:100%;accent-color:var(--ink);height:28px}
 .fine{margin-top:16px;font-size:14px;color:#a9a79f;text-align:center}
 @media (max-width:900px){.plans{grid-template-columns:1fr}.plan.star{transform:none}.est{grid-template-columns:1fr}.est .tot{text-align:left}}
 /* guarantee */
-.guar{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:36px}
+.guar{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:36px}
 .guar div{background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px}
 .guar b{display:block;font-size:17px;margin:8px 0 4px}
 .guar span{color:var(--muted);font-size:15px}
@@ -276,7 +278,7 @@ footer a{color:#e9e7df;text-decoration:none}
 <section class="hero">
   <div class="wrap">
     <div>
-      <div class="who"><i></i>За онлайн магазини, които пращат пратките си сами</div>
+      <div class="who"><i></i>За онлайн магазини, които искат пълния контрол и цялата картина на едно място</div>
       <h1>Всичко след „Поръчай“ — <em>на един екран</em>, на телефона ти</h1>
       <p class="sub">Един ред код в магазина. Офис, товарителница, потвърждение и печалба — без програмист.</p>
       <div><a class="btn" data-cta href="#">Започни безплатно →</a><a class="link demo-link" href="https://app.ordyx.eu/demo" target="_blank" rel="noopener">Виж демото</a></div>
@@ -299,7 +301,7 @@ footer a{color:#e9e7df;text-decoration:none}
 <div class="logos">
   <div class="wrap">
     <small>Работи с</small>
-    <span class="chip"><img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" width="28" height="28" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">Еконт</span><span class="chip"><img src="https://www.speedy.bg/apple-touch-icon.png" alt="" width="28" height="28" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">Спиди</span><span class="chip"><img src="https://www.google.com/s2/favicons?domain=convertbuilder.com&amp;sz=128" alt="" width="28" height="28" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">ConvertBuilder</span><span class="chip"><img src="https://www.google.com/s2/favicons?domain=woocommerce.com&amp;sz=128" alt="" width="28" height="28" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">WooCommerce <em>скоро</em></span><span class="chip"><img src="https://www.google.com/s2/favicons?domain=shopify.com&amp;sz=128" alt="" width="28" height="28" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">Shopify <em>скоро</em></span>
+    <span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>Еконт</span><span class="chip"><i class="lg" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.6 20.4 7.2v9.6L12 21.4 3.6 16.8V7.2z" fill="#e0234e" stroke="#e0234e" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 7.4 12 11.9l8-4.5M12 11.9v9" fill="none" stroke="#f7b6c5" stroke-width="1.3" stroke-linecap="round"/></svg></i>Спиди</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=convertbuilder.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>ConvertBuilder</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=woocommerce.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>WooCommerce</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=shopify.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>Shopify</span>
   </div>
 </div>
 
@@ -491,7 +493,7 @@ footer a{color:#e9e7df;text-decoration:none}
     </div>
     <div class="plans">
       <div class="plan"><h3>Старт</h3><div><span class="old" data-old>29 €</span></div><div class="now"><span data-p1>24 €</span><small>/мес</small></div><ul><li>1 магазин</li><li>до 500 поръчки на месец</li><li>всичко в Ordyx</li><li>+5 € за всеки 250 поръчки над лимита</li></ul><a class="btn" data-cta href="#">Започни безплатно</a></div>
-      <div class="plan star"><span class="badge">⭐ Най-избиран</span><h3>Растеж</h3><div><span class="old" data-old>29 € + 12 € за магазин</span></div><div class="now"><span data-p2>24 €</span><small> + <span data-p2s>9 €</span> за всеки следващ магазин</small></div><ul><li>от 2 до 10 магазина</li><li>до 500 поръчки на магазин</li><li>всички магазини на един екран</li><li>+5 € за всеки 250 поръчки над лимита</li></ul><a class="btn" data-cta href="#">Започни безплатно</a></div>
+      <div class="plan star"><span class="badge">⭐ Най-избиран</span><h3>Растеж</h3><div><span class="old" data-old>29 € + 12 € за магазин</span></div><div class="now"><span data-p2>24 €</span><small> + <span data-p2s>9 €</span> за всеки следващ магазин</small></div><ul><li>от 2 до 10 магазина</li><li>до 500 поръчки на магазин</li><li>всички магазини на един екран</li><li>🎙️ гласов агент, който потвърждава поръчките по телефона <em class="soon">скоро</em></li><li>+5 € за всеки 250 поръчки над лимита</li></ul><a class="btn" data-cta href="#">Започни безплатно</a></div>
       <div class="plan"><h3>Агенция</h3><div><span class="old" style="text-decoration:none">10+ магазина</span></div><div class="now" style="font-size:30px">По запитване</div><ul><li>над 10 магазина</li><li>поръчки по договаряне</li><li>вход за всеки клиент</li><li>помощ при включването</li></ul><a class="btn dark" href="mailto:hello@ordyx.eu?subject=Ordyx%20за%20агенция" style="background:#2a2a26">Пиши ни</a></div>
     </div>
     <div class="est">
@@ -499,7 +501,7 @@ footer a{color:#e9e7df;text-decoration:none}
       <div class="rng" style="margin:0"><label for="e2">Поръчки на месец на магазин <b id="ev2">400</b></label><input id="e2" type="range" min="50" max="2000" step="50" value="400"></div>
       <div class="tot" aria-live="polite"><small style="color:#a9a79f">Твоята месечна цена</small><b id="etot">24 €</b><s id="eold">29 €</s></div>
     </div>
-    <p class="fine">Цените са без ДДС. SMS и WhatsApp съобщенията се плащат отделно, на брой. След 30 ноември 2026 г. новите клиенти плащат редовните цени.</p>
+    <p class="fine">💯 30 дни гаранция за връщане на парите след първото плащане. Цените са без ДДС. SMS и WhatsApp съобщенията и гласовите обаждания се плащат отделно, според използването. След 30 ноември 2026 г. новите клиенти плащат редовните цени.</p>
   </div>
 </section>
 
@@ -510,6 +512,7 @@ footer a{color:#e9e7df;text-decoration:none}
     <h2 class="h2 rv">Пробваш спокойно</h2>
     <div class="guar">
       <div class="rv"><span class="e">🎁</span><b>14 дни безплатно</b><span>Без карта, без ангажимент.</span></div>
+      <div class="rv"><span class="e">💯</span><b>30 дни гаранция</b><span>Ако след първото плащане не си доволен, връщаме парите — без въпроси.</span></div>
       <div class="rv"><span class="e">📄</span><b>Без договор</b><span>Плащаш месец за месец.</span></div>
       <div class="rv"><span class="e">⏸️</span><b>Спираш по всяко време</b><span>Махаш реда код — чекаутът е както преди.</span></div>
       <div class="rv"><span class="e">📥</span><b>Данните са твои</b><span>Поръчки и купувачи — изтегляш ги в Excel.</span></div>
@@ -528,6 +531,7 @@ footer a{color:#e9e7df;text-decoration:none}
       <details class="rv"><summary>Колко струва след пробния период?</summary><p>24 € на месец за един магазин, ако се регистрираш до 30 ноември 2026 г. — заключени завинаги. След това редовната цена е 29 €. Цените са без ДДС.</p></details>
       <details class="rv"><summary>Сигурни ли са данните на клиентите ми (GDPR)?</summary><p>Данните се пазят в Европейския съюз. Ключовете за куриерите и магазина са криптирани. Данните от незавършени поръчки се заличават автоматично след 30 дни. Ти виждаш само своите магазини.</p></details>
       <details class="rv"><summary>Мога ли да имам няколко магазина?</summary><p>Да. Всички магазини са на един екран, а всеки следващ струва 9 € на месец с цената за основатели.</p></details>
+      <details class="rv"><summary>Има ли гаранция?</summary><p>Да. След пробните 14 дни, ако в първите 30 дни след първото плащане решиш, че Ordyx не е за теб, връщаме парите за абонамента — без въпроси.</p></details>
       <details class="rv"><summary>Какво става, ако спра?</summary><p>Махаш реда код и чекаутът е както преди. Поръчките и купувачите си ги изтегляш в Excel по всяко време.</p></details>
     </div>
   </div>
@@ -537,7 +541,7 @@ footer a{color:#e9e7df;text-decoration:none}
 <section class="final">
   <div class="wrap">
     <h2>Вечер поглеждаш телефона — и всичко е наред.</h2>
-    <p>Поръчките са потвърдени, товарителниците са готови, печалбата е пред теб. 14 дни безплатно, без карта.</p>
+    <p>Поръчките са потвърдени, товарителниците са готови, печалбата е пред теб. 14 дни безплатно, без карта, и 30 дни гаранция след първото плащане.</p>
     <a class="btn" data-cta href="#">Започни безплатно →</a>
   </div>
 </section>
