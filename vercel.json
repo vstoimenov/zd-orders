@@ -201,6 +201,17 @@
       "permanent": false
     },
     {
+      "source": "/admin/",
+      "has": [
+        {
+          "type": "host",
+          "value": "kurier.profitbrand.online"
+        }
+      ],
+      "destination": "https://app.ordyx.eu/admin/",
+      "permanent": false
+    },
+    {
       "source": "/admin/:path*",
       "has": [
         {
