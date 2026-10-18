@@ -106,6 +106,16 @@
   ],
   "rewrites": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "ordyx.eu"
+        }
+      ],
+      "destination": "/landing/index.html"
+    },
+    {
       "source": "/kurier.js",
       "destination": "/checkout.js"
     },
@@ -260,18 +270,29 @@
       "has": [
         {
           "type": "host",
-          "value": "ordyx.eu"
+          "value": "www.ordyx.eu"
         }
       ],
-      "destination": "https://zd-orders.vercel.app/demo/",
-      "permanent": false
+      "destination": "https://ordyx.eu/$1",
+      "permanent": true
     },
     {
-      "source": "/(.*)",
+      "source": "/admin(.*)",
       "has": [
         {
           "type": "host",
-          "value": "www.ordyx.eu"
+          "value": "ordyx.eu"
+        }
+      ],
+      "destination": "https://app.ordyx.eu/admin$1",
+      "permanent": false
+    },
+    {
+      "source": "/demo(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "ordyx.eu"
         }
       ],
       "destination": "https://zd-orders.vercel.app/demo/",

@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ordyx — всичко след „Поръчай“ на един екран</title>
+<meta name="description" content="Избор на офис на Еконт и Спиди в чекаута, товарителница с един клик, потвърждение на поръчката по WhatsApp и печалбата ти — на телефона. За онлайн магазини, които пращат сами.">
+<meta property="og:title" content="Ordyx — всичко след „Поръчай“ на един екран">
+<meta property="og:description" content="Офис, товарителница, потвърждение и печалба — без програмист. Един ред код в магазина.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ordyx.eu/">
+<link rel="canonical" href="https://ordyx.eu/">
+<meta property="og:image" content="https://app.ordyx.eu/admin/icon-512.png">
+<meta name="theme-color" content="#0d0d0d">
+<link rel="icon" href="https://app.ordyx.eu/admin/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0d0d0d;--ink2:#1a1a18;--paper:#f4f2ec;--card:#fff;--line:#e4e1d8;--muted:#5f5d57;--y:#ffd21f;--y2:#f5c400;--ysoft:#fff6cc;--ok:#15803d;--bad:#b91c1c;--r:18px}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font:16px/1.6 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+h1,h2,h3,.uf{font-family:Unbounded,Manrope,sans-serif;letter-spacing:-.01em;line-height:1.15;margin:0}
+a{color:inherit}
+img{max-width:100%}
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+section{padding:88px 0}
+.eyebrow{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.h2{font-size:clamp(28px,4.2vw,44px)}
+.lead{font-size:clamp(17px,1.6vw,19px);color:var(--muted);max-width:660px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 26px;border-radius:14px;border:0;background:var(--y);color:var(--ink);font:800 16px Manrope,sans-serif;text-decoration:none;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 6px 0 var(--y2)}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 0 var(--y2)}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--y2)}
+.btn.dark{background:var(--ink);color:#fff;box-shadow:0 6px 0 #000}
+.link{font-weight:700;text-underline-offset:4px}
+.trust{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:16px;font-size:14px;color:var(--muted);font-weight:600}
+.trust span::before{content:"✓ ";color:var(--ok);font-weight:800}
+/* nav */
+.nav{position:sticky;top:0;z-index:50;background:rgba(13,13,13,.92);backdrop-filter:blur(10px);color:#fff}
+.nav .wrap{display:flex;align-items:center;gap:22px;height:66px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo svg{width:30px;height:30px}
+.logo b{font-family:Unbounded,sans-serif;font-weight:600;letter-spacing:.05em;font-size:19px}
+.nav nav{display:flex;gap:22px;margin-left:auto;font-weight:600;font-size:15px}
+.nav nav a{text-decoration:none;opacity:.8}.nav nav a:hover{opacity:1}
+.nav .btn{min-height:42px;padding:0 18px;font-size:15px;box-shadow:none}
+@media (max-width:820px){.nav nav{display:none}.nav .btn{margin-left:auto;white-space:nowrap;padding:0 14px;font-size:14px}}
+/* hero */
+.hero{background:var(--ink);color:#fff;padding:56px 0 0;overflow:hidden;position:relative}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:40px;align-items:center}
+.who{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:#1f1f1c;color:#e9e7df;font-weight:600;font-size:14px;margin-bottom:22px}
+.who i{width:8px;height:8px;border-radius:50%;background:var(--y);box-shadow:0 0 0 4px rgba(255,210,31,.2)}
+.hero h1{font-size:clamp(32px,4.4vw,52px);font-weight:600;overflow-wrap:break-word}
+.hero h1 em{font-style:normal;color:var(--y)}
+.hero p.sub{font-size:clamp(17px,1.7vw,20px);color:#c9c7bf;margin:20px 0 28px;max-width:560px}
+.hero .trust{color:#a9a79f}
+.hero .demo-link{color:#fff;margin-left:18px}
+.stage{position:relative;height:560px}
+.admin-back{position:absolute;right:-80px;top:40px;width:560px;height:420px;border-radius:16px;background:#f4f2ec;box-shadow:0 30px 80px rgba(0,0,0,.5);overflow:hidden;transform:rotate(-2deg)}
+.admin-back .bar{height:38px;background:#0b0b0a;display:flex;align-items:center;gap:8px;padding:0 14px}
+.admin-back .bar svg{width:18px;height:18px}
+.admin-back .bar b{font-family:Unbounded;font-size:12px;color:#fff;letter-spacing:.05em}
+.admin-back .rows{padding:14px;display:flex;flex-direction:column;gap:8px}
+.arow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--ink)}
+.arow b{font-size:13px}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:800;background:#f1f0ec;color:var(--muted)}
+.tag.y{background:var(--ysoft);color:#7a5c00}.tag.g{background:#e7f6ec;color:var(--ok)}.tag.r{background:#fdecee;color:var(--bad)}
+.phone{position:absolute;left:10px;top:0;width:270px;height:550px;border-radius:44px;background:#000;padding:12px;box-shadow:0 30px 80px rgba(0,0,0,.6),inset 0 0 0 2px #2b2b28}
+.screen{position:relative;width:100%;height:100%;border-radius:34px;overflow:hidden;background:linear-gradient(160deg,#3a3320,#151410 60%)}
+.notch{position:absolute;left:50%;top:10px;transform:translateX(-50%);width:90px;height:26px;border-radius:20px;background:#000;z-index:3}
+.clock{position:absolute;top:70px;width:100%;text-align:center;color:#fff}
+.clock b{display:block;font:600 64px/1 Manrope;letter-spacing:-.03em}
+.clock span{font-size:14px;opacity:.8}
+.notes{position:absolute;left:10px;right:10px;top:200px;display:flex;flex-direction:column;gap:8px}
+.note{display:flex;gap:10px;align-items:flex-start;padding:11px 12px;border-radius:18px;background:rgba(245,243,236,.86);backdrop-filter:blur(8px);color:var(--ink);font-size:12.5px;line-height:1.35;animation:pop .5s cubic-bezier(.2,.9,.3,1.3) both}
+.note .ic{flex:none;width:32px;height:32px;border-radius:8px;background:#0d0d0d;display:grid;place-items:center}
+.note .ic svg{width:20px;height:20px}
+.note small{display:flex;justify-content:space-between;color:var(--muted);font-size:11px}
+@keyframes pop{from{opacity:0;transform:translateY(-14px) scale(.96)}to{opacity:1;transform:none}}
+@media (max-width:900px){.hero .demo-link{display:block;margin:16px 0 0;width:max-content}.hero .wrap{grid-template-columns:1fr}.stage{height:440px;margin-top:10px}.phone{left:50%;transform:translateX(-50%) scale(.82);transform-origin:top center}.admin-back{display:none}}
+/* integrations */
+.logos{background:#fff;border-bottom:1px solid var(--line);padding:22px 0}
+.logos .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:12px 28px;justify-content:center}
+.logos small{font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-size:12px}
+.chip{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:16px;color:#2a2a26}
+.chip em{font-style:normal;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--ysoft);color:#7a5c00}
+/* pain */
+.pain{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:36px}
+.pcard{position:relative;min-height:190px;perspective:900px;cursor:pointer;border:0;padding:0;background:none;text-align:left;font:inherit;color:inherit}
+.pcard .in{position:absolute;inset:0;transition:transform .6s cubic-bezier(.3,.8,.3,1);transform-style:preserve-3d}
+.pcard.on .in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:10px}
+.face.f{background:#fff;border:1px solid var(--line)}
+.face.b{background:var(--ink);color:#fff;transform:rotateY(180deg)}
+.face .em{font-size:30px}
+.face b{font-size:16px;line-height:1.35}
+.face small{margin-top:auto;font-weight:700;color:var(--muted);font-size:12px}
+.face.b small{color:var(--y)}
+/* benefits */
+.ben{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}
+.bcard{background:#fff;border:1px solid var(--line);border-radius:22px;padding:26px;display:flex;flex-direction:column;gap:12px}
+.bcard .lbl{font-weight:800;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.bcard h3{font-size:22px}
+.bcard p{margin:0;color:var(--muted)}
+.bcard .scene{margin-top:auto;padding:14px;border-radius:14px;background:var(--paper);font-size:14px;font-style:italic}
+@media (max-width:900px){.ben{grid-template-columns:1fr}}
+/* checkout demo */
+.demo{background:var(--ink);color:#fff}
+.demo .grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:40px;align-items:start;margin-top:36px}
+.demo .lead{color:#c9c7bf}
+.co{background:#fff;color:var(--ink);border-radius:22px;padding:22px;box-shadow:0 30px 70px rgba(0,0,0,.4)}
+.co h4{margin:0 0 12px;font-size:15px}
+.opt{display:flex;align-items:center;gap:10px;padding:13px 14px;margin:0 0 8px;border:1.5px solid #e8e2cf;border-radius:12px;cursor:pointer;font-size:15px;background:#fff;width:100%;font:inherit;text-align:left}
+.opt.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.opt .dot{width:18px;height:18px;border-radius:50%;border:2px solid #bbb;flex:none}
+.opt.on .dot{border:6px solid var(--ink)}
+.opt .pr{margin-left:auto;font-weight:800}
+.search{width:100%;min-height:48px;padding:0 14px;border:1.5px solid #ddd;border-radius:12px;font:inherit;font-size:16px}
+.search:focus{outline:3px solid var(--y);border-color:var(--ink)}
+.res{max-height:230px;overflow:auto;margin-top:8px;border:1px solid #eee;border-radius:12px}
+.res button{display:block;width:100%;text-align:left;padding:10px 14px;border:0;border-bottom:1px solid #f0efe9;background:#fff;font:inherit;font-size:14px;cursor:pointer}
+.res button:hover,.res button:focus{background:var(--ysoft)}
+.res button small{display:block;color:var(--muted)}
+.picked{margin-top:12px;padding:12px 14px;border-radius:12px;background:#e7f6ec;color:#14532d;font-weight:700;font-size:14px}
+.flow{display:flex;flex-direction:column;gap:10px}
+.fstep{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:16px;background:#1a1a17;border:1px solid #2a2a26;opacity:.45;transition:opacity .4s,border-color .4s,transform .4s}
+.fstep.on{opacity:1;border-color:var(--y);transform:translateX(6px)}
+.fstep .n{flex:none;width:30px;height:30px;border-radius:50%;background:#2a2a26;display:grid;place-items:center;font-weight:800;font-size:14px}
+.fstep.on .n{background:var(--y);color:var(--ink)}
+.fstep b{display:block}
+.fstep span{font-size:14px;color:#bdbbb3}
+@media (max-width:900px){.demo .grid{grid-template-columns:1fr}}
+/* how */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px;counter-reset:s}
+.step{background:#fff;border:1px solid var(--line);border-radius:22px;padding:26px}
+.step .big{font-family:Unbounded;font-size:44px;color:var(--y2);line-height:1}
+.step h3{font-size:19px;margin:14px 0 8px}
+.step p{margin:0;color:var(--muted)}
+@media (max-width:900px){.steps{grid-template-columns:1fr}}
+/* screens */
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:32px 0 18px}
+.tabs button{min-height:44px;padding:0 18px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font:700 15px Manrope;cursor:pointer}
+.tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.screenbox{background:#fff;border:1px solid var(--line);border-radius:22px;padding:22px;min-height:360px;box-shadow:0 20px 50px rgba(0,0,0,.06)}
+.sc{display:none;animation:fade .35s ease both}.sc.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kpi{border:1px solid var(--line);border-radius:14px;padding:14px}
+.kpi small{color:var(--muted);font-weight:600}
+.kpi b{display:block;font:700 24px Manrope;margin-top:6px}
+.kpi.g b{color:var(--ok)}
+.bars{display:flex;align-items:flex-end;gap:6px;height:130px;margin-top:16px;padding:10px;border:1px solid var(--line);border-radius:14px}
+.bars i{flex:1;background:var(--y);border-radius:6px 6px 2px 2px;transform-origin:bottom;animation:grow .8s cubic-bezier(.2,.8,.3,1) both}
+@keyframes grow{from{transform:scaleY(0)}}
+.confirm{max-width:380px;margin:0 auto;border:1px solid var(--line);border-radius:18px;padding:22px;text-align:center}
+.confirm .btns{display:flex;gap:8px;margin-top:16px}
+.confirm .btns button{flex:1;min-height:46px;border-radius:12px;border:0;font:800 15px Manrope;cursor:pointer}
+@media (max-width:700px){.kpis{grid-template-columns:repeat(2,1fr)}}
+/* calculator */
+.calc{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:36px;background:#fff;border:1px solid var(--line);border-radius:26px;padding:30px}
+.rng{margin-bottom:22px}
+.rng label{display:flex;justify-content:space-between;font-weight:700;margin-bottom:8px}
+.rng label b{font-family:Unbounded;font-weight:600}
+input[type=range]{width:100%;accent-color:var(--ink);height:28px}
+.out{background:var(--ink);color:#fff;border-radius:20px;padding:26px;display:flex;flex-direction:column;gap:14px}
+.out .big{font-family:Unbounded;font-size:clamp(34px,5vw,52px);color:var(--y);line-height:1}
+.out small{color:#bdbbb3}
+.out .line{display:flex;justify-content:space-between;border-top:1px solid #2a2a26;padding-top:10px;font-size:15px}
+@media (max-width:860px){.calc{grid-template-columns:1fr}}
+/* compare */
+.cmp{width:100%;border-collapse:separate;border-spacing:0;margin-top:36px;background:#fff;border:1px solid var(--line);border-radius:22px;overflow:hidden}
+.cmp th,.cmp td{padding:15px 18px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top;font-size:15px}
+.cmp tr:last-child td{border-bottom:0}
+.cmp th{background:#fafaf7;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cmp td:nth-child(3){background:#fffbe6;font-weight:700}
+.cmp td:first-child{font-weight:700}
+@media (max-width:700px){.cmp th:first-child,.cmp td:first-child{display:none}.cmp td::before{content:attr(data-k);display:block;font-size:12px;color:var(--muted);font-weight:700}}
+/* fit */
+.fit{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:36px}
+.fit div{border-radius:22px;padding:26px}
+.fit .yes{background:#fff;border:2px solid var(--ink)}
+.fit .no{background:#ecebe5}
+.fit ul{margin:12px 0 0;padding-left:20px}
+.fit li{margin:6px 0}
+@media (max-width:760px){.fit{grid-template-columns:1fr}}
+/* story */
+.story{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center;margin-top:30px;background:#fff;border:1px solid var(--line);border-radius:26px;padding:30px}
+.story .mark{width:86px;height:86px;border-radius:22px;background:var(--ink);display:grid;place-items:center}
+.story .mark svg{width:54px;height:54px}
+.story p{margin:0 0 10px;font-size:17px}
+@media (max-width:640px){.story{grid-template-columns:1fr}}
+/* pricing */
+.pricing{background:var(--ink);color:#fff}
+.count{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px 22px;margin:30px auto 0;padding:16px 20px;border-radius:18px;background:var(--y);color:var(--ink);max-width:860px;text-align:center}
+.count b{font-weight:800}
+.cd{display:flex;gap:8px}
+.cd span{min-width:58px;padding:6px 8px;border-radius:12px;background:var(--ink);color:#fff;font:700 22px Unbounded;line-height:1.1}
+.cd span small{display:block;font:700 10px Manrope;color:var(--y);letter-spacing:.1em;text-transform:uppercase}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
+.plan{background:#1a1a17;border:1px solid #2c2c28;border-radius:24px;padding:26px;display:flex;flex-direction:column;gap:12px;position:relative}
+.plan.star{background:#fff;color:var(--ink);border:3px solid var(--y);transform:translateY(-8px)}
+.plan .badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--y);color:var(--ink);font-weight:800;font-size:13px;padding:5px 14px;border-radius:999px;white-space:nowrap}
+.plan h3{font-size:22px}
+.plan .old{text-decoration:line-through;color:#8f8d86;font-weight:700}
+.plan.star .old{color:#9a978f}
+.plan .now{font-family:Unbounded;font-size:44px;font-weight:700;color:var(--y);line-height:1}
+.plan.star .now{color:var(--ink);background:var(--y);display:inline-block;padding:4px 10px;border-radius:12px}
+.plan .now small{font:700 15px Manrope}
+.plan ul{list-style:none;margin:6px 0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:15px}
+.plan li::before{content:"✓";font-weight:800;color:var(--y);margin-right:8px}
+.plan.star li::before{color:var(--ok)}
+.plan .btn{margin-top:auto}
+.plan.star .btn{background:var(--ink);color:#fff;box-shadow:0 6px 0 #000}
+.est{margin-top:28px;background:#1a1a17;border:1px solid #2c2c28;border-radius:22px;padding:24px;display:grid;grid-template-columns:1fr 1fr auto;gap:22px;align-items:center}
+.est .rng label{color:#fff}
+.est .tot{text-align:right}
+.est .tot b{display:block;font-family:Unbounded;font-size:38px;color:var(--y)}
+.est .tot s{color:#8f8d86}
+.fine{margin-top:16px;font-size:14px;color:#a9a79f;text-align:center}
+@media (max-width:900px){.plans{grid-template-columns:1fr}.plan.star{transform:none}.est{grid-template-columns:1fr}.est .tot{text-align:left}}
+/* guarantee */
+.guar{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:36px}
+.guar div{background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px}
+.guar b{display:block;font-size:17px;margin:8px 0 4px}
+.guar span{color:var(--muted);font-size:15px}
+.guar .e{font-size:28px}
+@media (max-width:900px){.guar{grid-template-columns:1fr 1fr}}
+/* faq */
+.faq{max-width:820px;margin:36px auto 0}
+.faq details{background:#fff;border:1px solid var(--line);border-radius:16px;margin-bottom:10px;overflow:hidden}
+.faq summary{cursor:pointer;list-style:none;padding:18px 54px 18px 22px;font-weight:800;font-size:17px;position:relative}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";position:absolute;right:22px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;background:var(--ysoft);display:grid;place-items:center;font-size:20px;transition:transform .25s}
+.faq details[open] summary::after{transform:translateY(-50%) rotate(45deg)}
+.faq details p{margin:0;padding:0 22px 20px;color:var(--muted)}
+/* final */
+.final{background:var(--y);text-align:center}
+.final h2{font-size:clamp(28px,4.4vw,48px)}
+.final p{font-size:19px;max-width:620px;margin:16px auto 26px}
+.final .btn{background:var(--ink);color:#fff;box-shadow:0 6px 0 #000}
+footer{background:var(--ink);color:#a9a79f;padding:40px 0 100px;font-size:14px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:16px 30px;align-items:center;justify-content:space-between}
+footer a{color:#e9e7df;text-decoration:none}
+/* sticky mobile cta */
+.mcta{position:fixed;left:12px;right:12px;bottom:12px;z-index:60;display:none}
+.mcta .btn{width:100%}
+@media (max-width:820px){.mcta.show{display:block}}
+/* reveal */
+.rv{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
+:focus-visible{outline:3px solid var(--y);outline-offset:3px}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="Ordyx — начало">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="#ffd21f"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="none" stroke="#0d0d0d" stroke-width="5"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40" stroke="#0d0d0d" stroke-width="5"/></svg>
+      <b>ORDYX</b>
+    </a>
+    <nav aria-label="Основно меню"><a href="#how">Как работи</a><a href="#prices">Цени</a><a href="#faq">ЧЗВ</a><a href="https://app.ordyx.eu/admin/">Вход</a></nav>
+    <a class="btn" data-cta href="#">Започни безплатно</a>
+  </div>
+</header>
+
+<main id="top">
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <div class="who"><i></i>За онлайн магазини, които пращат пратките си сами</div>
+      <h1>Всичко след „Поръчай“ — <em>на един екран</em>, на телефона ти</h1>
+      <p class="sub">Един ред код в магазина. Офис, товарителница, потвърждение и печалба — без програмист.</p>
+      <div><a class="btn" data-cta href="#">Започни безплатно →</a><a class="link demo-link" href="https://app.ordyx.eu/demo" target="_blank" rel="noopener">Виж демото</a></div>
+      <div class="trust"><span>14 дни безплатно</span><span>Без карта</span><span>Включване за 10 минути</span></div>
+    </div>
+    <div class="stage" aria-hidden="true">
+      <div class="admin-back">
+        <div class="bar"><svg viewBox="0 0 100 100"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="#ffd21f"/></svg><b>ORDYX</b><span style="margin-left:auto;font-size:11px;color:#0d0d0d;background:#ffd21f;border-radius:999px;padding:2px 10px;font-weight:800">3 нови поръчки</span></div>
+        <div class="rows" id="adminRows"></div>
+      </div>
+      <div class="phone"><div class="screen"><div class="notch"></div>
+        <div class="clock"><b id="clk">9:41</b><span id="clkDay">неделя</span></div>
+        <div class="notes" id="notes"></div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<!-- INTEGRATIONS -->
+<div class="logos">
+  <div class="wrap">
+    <small>Работи с</small>
+    <span class="chip">Еконт</span><span class="chip">Спиди</span><span class="chip">ConvertBuilder</span><span class="chip">WooCommerce <em>скоро</em></span><span class="chip">Shopify <em>скоро</em></span>
+  </div>
+</div>
+
+<!-- PAIN -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow rv">Познато ли ти е?</span>
+    <h2 class="h2 rv">Магазинът продава. А после започва ръчната работа.</h2>
+    <p class="lead rv">Докосни картата, за да видиш как изглежда със Ordyx.</p>
+    <div class="pain">
+      <button class="pcard rv" type="button"><div class="in"><div class="face f"><span class="em">📞</span><b>Звъниш на клиента, защото е написал „офиса до мола“.</b><small>Докосни →</small></div><div class="face b"><span class="em">📍</span><b>Клиентът избира точния офис или автомат от списък още в чекаута.</b><small>Със Ordyx</small></div></div></button>
+      <button class="pcard rv" type="button"><div class="in"><div class="face f"><span class="em">⌨️</span><b>Преписваш данни в сайта на куриера, поръчка по поръчка.</b><small>Докосни →</small></div><div class="face b"><span class="em">🧾</span><b>Товарителницата се създава с един клик, с PDF за печат.</b><small>Със Ordyx</small></div></div></button>
+      <button class="pcard rv" type="button"><div class="in"><div class="face f"><span class="em">↩️</span><b>Пратката се връща и плащаш доставка два пъти.</b><small>Докосни →</small></div><div class="face b"><span class="em">✅</span><b>Клиентът потвърждава от телефона си, преди да изпратиш.</b><small>Със Ordyx</small></div></div></button>
+      <button class="pcard rv" type="button"><div class="in"><div class="face f"><span class="em">🤷</span><b>Не знаеш колко ти остава след рекламата.</b><small>Докосни →</small></div><div class="face b"><span class="em">📊</span><b>Таблото смята реклама, доставка, връщания и себестойност.</b><small>Със Ordyx</small></div></div></button>
+      <button class="pcard rv" type="button"><div class="in"><div class="face f"><span class="em">💸</span><b>Плащаш три абонамента за три различни неща.</b><small>Докосни →</small></div><div class="face b"><span class="em">🎯</span><b>Едно място, един абонамент.</b><small>Със Ordyx</small></div></div></button>
+    </div>
+  </div>
+</section>
+
+<!-- BENEFITS -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <span class="eyebrow rv">Какво получаваш</span>
+    <h2 class="h2 rv">Три неща, които движат печалбата ти</h2>
+    <div class="ben">
+      <div class="bcard rv"><span class="lbl">📦 Пратката</span><h3>Точният офис. Товарителница с един клик.</h3><p>Клиентът търси офис или автомат на Еконт и Спиди направо в чекаута. Ти натискаш „Създай товарителница“ — и опаковаш.</p><div class="scene">Сутрин, докато пиеш кафето, товарителниците вече са готови.</div></div>
+      <div class="bcard rv"><span class="lbl">🛡️ Сигурността</span><h3>Изпращаш само това, което ще бъде взето.</h3><p>Клиентът потвърждава поръчката по WhatsApp или SMS с личен линк, а телефонът му се проверява автоматично в регистъра на некоректни клиенти.</p><div class="scene">Отказаната поръчка вече не е пратка, която се връща — тя просто не тръгва.</div></div>
+      <div class="bcard rv"><span class="lbl">📈 Печалбата</span><h3>Колко реално остава — без таблици.</h3><p>Реклама, доставка, връщания, такса за наложен платеж и себестойност — сметнати заедно, за избрания период.</p><div class="scene">Вечер поглеждаш телефона и знаеш дали денят е бил на печалба.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE CHECKOUT DEMO -->
+<section class="demo" id="how">
+  <div class="wrap">
+    <span class="eyebrow rv" style="color:#a9a79f">Пробвай сега</span>
+    <h2 class="h2 rv">Ето какво вижда твоят клиент в чекаута</h2>
+    <p class="lead rv">Това е истинската търсачка на Ordyx — с реалните офиси и автомати на Еконт и Спиди. Напиши град.</p>
+    <div class="grid">
+      <div class="co rv" id="co">
+        <h4>Доставка</h4>
+        <button type="button" class="opt on" data-c="econt"><span class="dot"></span><span>До офис или автомат на <b>Еконт</b></span><span class="pr">4,07 €</span></button>
+        <button type="button" class="opt" data-c="speedy"><span class="dot"></span><span>До офис или автомат на <b>Спиди</b></span><span class="pr">Безплатна</span></button>
+        <label for="q" class="visually" style="display:block;font-weight:700;margin:12px 0 6px;font-size:14px">Търси офис по град или име</label>
+        <input id="q" class="search" type="search" placeholder="напр. Плевен, Варна, Младост…" autocomplete="off">
+        <div class="res" id="res" role="listbox" aria-label="Офиси"></div>
+        <div class="picked" id="picked" hidden></div>
+      </div>
+      <div>
+        <div class="flow" id="flow">
+          <div class="fstep on"><span class="n">1</span><div><b>Клиентът поръчва</b><span>избира офис на Еконт или Спиди</span></div></div>
+          <div class="fstep"><span class="n">2</span><div><b>Поръчката влиза в Ordyx</b><span>проверка на телефона и известие на твоя телефон</span></div></div>
+          <div class="fstep"><span class="n">3</span><div><b>Клиентът потвърждава</b><span>личен линк по WhatsApp или SMS</span></div></div>
+          <div class="fstep"><span class="n">4</span><div><b>Товарителница с един клик</b><span>Еконт или Спиди, PDF за печат</span></div></div>
+          <div class="fstep"><span class="n">5</span><div><b>Проследяване</b><span>доставена или върната — само; на 4-ия ден в офиса те подсеща да звъннеш</span></div></div>
+          <div class="fstep"><span class="n">6</span><div><b>Табло: чиста печалба</b><span>реклама, доставка, връщания, себестойност</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW: 3 STEPS -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow rv">Как работи</span>
+    <h2 class="h2 rv">Три стъпки. Без програмист.</h2>
+    <div class="steps">
+      <div class="step rv"><div class="big">01</div><h3>Слагаш един ред код</h3><p>Копираш го в магазина си. Водачът „Първи стъпки“ те превежда отметка по отметка.</p></div>
+      <div class="step rv"><div class="big">02</div><h3>Поръчките идват сами</h3><p>С точния офис, проверен телефон и известие на твоя телефон. Клиентът потвърждава от своя.</p></div>
+      <div class="step rv"><div class="big">03</div><h3>Създаваш товарителница и опаковаш</h3><p>Един клик с твоя профил в Еконт или договор със Спиди. Статусът се обновява сам.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SCREENS -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <span class="eyebrow rv">Отвътре</span>
+    <h2 class="h2 rv">Целият магазин след „Поръчай“</h2>
+    <div class="tabs" role="tablist">
+      <button class="on" role="tab" data-t="s1">📋 Поръчки</button><button role="tab" data-t="s2">📊 Табло</button><button role="tab" data-t="s3">💬 Потвърждение</button><button role="tab" data-t="s4">🛒 Изоставени колички</button>
+    </div>
+    <div class="screenbox">
+      <div class="sc on" id="s1">
+        <div class="arow"><div><b>Мария Иванова</b><br>2 × Книга · ЕКОНТ – офис Плевен</div><span class="tag g">потвърдена ✓</span><span class="tag">📦 товарителница</span></div>
+        <div class="arow" style="margin-top:8px"><div><b>Георги Петров</b><br>1 × Крем · СПИДИ – автомат Варна</div><span class="tag y">нова</span><span class="tag">💬 Потвърди</span></div>
+        <div class="arow" style="margin-top:8px"><div><b>Елена Стоянова</b><br>1 × Комплект · ЕКОНТ – офис София</div><span class="tag r">4-и ден в офиса — звъннете</span><span class="tag">📞</span></div>
+        <div class="arow" style="margin-top:8px"><div><b>Иван Димитров</b><br>3 × Балсам · СПИДИ – офис Бургас</div><span class="tag r">⚠️ сигнали</span><span class="tag">проверен</span></div>
+      </div>
+      <div class="sc" id="s2">
+        <div class="kpis"><div class="kpi"><small>Оборот</small><b>4 820 €</b></div><div class="kpi g"><small>Чиста печалба</small><b>1 312 €</b></div><div class="kpi"><small>Върнати</small><b>6,1%</b></div><div class="kpi"><small>Изоставени колички</small><b>23</b></div></div>
+        <div class="bars" id="bars"></div>
+        <p style="margin:12px 0 0;color:var(--muted);font-size:14px">Примерни данни. Реклама, доставка, връщания, наложен платеж и себестойност — заедно.</p>
+      </div>
+      <div class="sc" id="s3">
+        <div class="confirm"><div style="font-size:13px;color:var(--muted)">Магазин А</div><h3 style="font-size:20px;margin:6px 0">Здравей, Мария!</h3><div style="color:var(--muted)">2 × Книга — 28,28 €<br>ЕКОНТ – офис Плевен</div>
+          <div class="btns"><button type="button" id="cYes" style="background:var(--y)">✓ Потвърждавам</button><button type="button" id="cNo" style="background:#f1f0ec">Отказвам</button></div>
+          <div id="cMsg" style="margin-top:14px;font-weight:700"></div></div>
+      </div>
+      <div class="sc" id="s4">
+        <div class="arow"><div><b>Деси Колева</b><br>1 × Книга · 15,38 € · преди 50 мин.</div><span class="tag y">нова</span><span class="tag">💬 Напомни</span></div>
+        <div class="arow" style="margin-top:8px"><div><b>Пламен Георгиев</b><br>2 × Книга · 28,28 € · напомнено по WhatsApp</div><span class="tag">напомнено</span><span class="tag">с отстъпка</span></div>
+        <div class="arow" style="margin-top:8px"><div><b>Нели Иванова</b><br>1 × Книга · 15,38 €</div><span class="tag g">върната ✓</span><span class="tag">Viber</span></div>
+        <p style="margin:12px 0 0;color:var(--muted);font-size:14px">Хора, които въведоха телефон в чекаута, но не поръчаха. Едно докосване и напомнянето е в WhatsApp, SMS или Viber.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CALCULATOR -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <span class="eyebrow rv">Сметни сам</span>
+    <h2 class="h2 rv">Колко те струват върнатите пратки?</h2>
+    <p class="lead rv">Всяка върната пратка с наложен платеж я плащаш два пъти — дотам и обратно. Плъзни със своите числа.</p>
+    <div class="calc rv">
+      <div>
+        <div class="rng"><label for="r1">Поръчки на месец <b id="v1">300</b></label><input id="r1" type="range" min="20" max="3000" step="10" value="300"></div>
+        <div class="rng"><label for="r2">Върнати пратки <b id="v2">12%</b></label><input id="r2" type="range" min="1" max="35" step="1" value="12"></div>
+        <div class="rng"><label for="r3">Доставка в едната посока <b id="v3">4,50 €</b></label><input id="r3" type="range" min="2" max="10" step="0.1" value="4.5"></div>
+        <div class="rng" style="margin:0"><label for="r4">Опаковка и време за пратка <b id="v4">1,00 €</b></label><input id="r4" type="range" min="0" max="5" step="0.1" value="1"></div>
+      </div>
+      <div class="out" aria-live="polite">
+        <small>Губиш на месец само от върнатите пратки</small>
+        <div class="big" id="lossM">0 €</div>
+        <div class="line"><span>Върнати пратки на месец</span><b id="lossN">0</b></div>
+        <div class="line"><span>На година</span><b id="lossY">0 €</b></div>
+        <small>Сметка, не обещание: брой върнати × (доставка дотам и обратно + опаковка). Колко ще спестиш зависи от магазина ти — потвърждението и проверката на телефона спират част от тези пратки, преди да тръгнат.</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <span class="eyebrow rv">Днес срещу Ordyx</span>
+    <h2 class="h2 rv">Една система вместо пет раздела в браузъра</h2>
+    <table class="cmp rv">
+      <thead><tr><th></th><th>Днес</th><th>С Ordyx</th></tr></thead>
+      <tbody>
+        <tr><td>Избор на офис</td><td data-k="Избор на офис — днес">Клиентът пише на ръка, ти уточняваш по телефона</td><td data-k="С Ordyx">Списък с офиси и автомати в чекаута</td></tr>
+        <tr><td>Товарителници</td><td data-k="Товарителници — днес">Сайтът на куриера, поръчка по поръчка</td><td data-k="С Ordyx">Един клик, PDF за печат, статусът се следи сам</td></tr>
+        <tr><td>Потвърждение</td><td data-k="Потвърждение — днес">Обаждания, които никой не вдига</td><td data-k="С Ordyx">Личен линк по WhatsApp или SMS</td></tr>
+        <tr><td>Проверка на телефона</td><td data-k="Проверка — днес">Ръчно търсене, ако изобщо</td><td data-k="С Ordyx">Автоматично при всяка поръчка</td></tr>
+        <tr><td>Наличности</td><td data-k="Наличности — днес">Отделна таблица</td><td data-k="С Ordyx">Намаляват и се връщат сами</td></tr>
+        <tr><td>Печалба</td><td data-k="Печалба — днес">Отделен инструмент за статистика</td><td data-k="С Ordyx">Табло с реклама, доставка и връщания</td></tr>
+        <tr><td>Месечна сметка</td><td data-k="Месечна сметка — днес">3–4 отделни абонамента</td><td data-k="С Ordyx">Един</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- FIT -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <span class="eyebrow rv">Честно</span>
+    <h2 class="h2 rv">За теб ли е?</h2>
+    <div class="fit">
+      <div class="yes rv"><h3 style="font-size:20px">✅ За теб е, ако…</h3><ul><li>продаваш с наложен платеж или до офис</li><li>правиш от 5 до 200 поръчки на ден</li><li>управляваш магазина сам или с малък екип</li><li>искаш да виждаш всичко от телефона</li></ul></div>
+      <div class="no rv"><h3 style="font-size:20px">✋ Не е за теб, ако…</h3><ul><li>имаш собствен склад с ERP система</li><li>пращаш само с международни куриери</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- STORY -->
+<section style="padding-top:0">
+  <div class="wrap">
+    <span class="eyebrow rv">Защо Ordyx</span>
+    <h2 class="h2 rv">Направено от търговец за търговци</h2>
+    <div class="story rv">
+      <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="#ffd21f"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="none" stroke="#0d0d0d" stroke-width="5"/></svg></div>
+      <div>
+        <p>Ordyx започна като инструмент за собствения ни онлайн магазин. Писахме офисите на ръка, преписвахме товарителници и не знаехме колко ни остава след рекламата.</p>
+        <p style="color:var(--muted);margin:0">Направихме си едно място за всичко след „Поръчай“. Сега го даваме и на други магазини — със същите неща, които ползваме всеки ден.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="prices">
+  <div class="wrap">
+    <div style="text-align:center"><span class="eyebrow" style="color:#a9a79f">Цени</span><h2 class="h2">Една цена. Без изненади.</h2></div>
+    <div class="count" id="count">
+      <div><b>Цена за основатели — заключена завинаги</b><br>за всеки, който се регистрира до 30 ноември 2026 г.</div>
+      <div class="cd" id="cd"><span id="cdD">0<small>дни</small></span><span id="cdH">0<small>часа</small></span><span id="cdM">0<small>мин</small></span><span id="cdS">0<small>сек</small></span></div>
+    </div>
+    <div class="plans">
+      <div class="plan"><h3>Старт</h3><div><span class="old" data-old>29 €</span></div><div class="now"><span data-p1>24 €</span><small>/мес</small></div><ul><li>1 магазин</li><li>до 500 поръчки на месец</li><li>всичко в Ordyx</li><li>+5 € за всеки 250 поръчки над лимита</li></ul><a class="btn" data-cta href="#">Започни безплатно</a></div>
+      <div class="plan star"><span class="badge">⭐ Най-избиран</span><h3>Растеж</h3><div><span class="old" data-old>29 € + 12 € за магазин</span></div><div class="now"><span data-p2>24 €</span><small> + <span data-p2s>9 €</span> за всеки следващ магазин</small></div><ul><li>от 2 до 10 магазина</li><li>до 500 поръчки на магазин</li><li>всички магазини на един екран</li><li>+5 € за всеки 250 поръчки над лимита</li></ul><a class="btn" data-cta href="#">Започни безплатно</a></div>
+      <div class="plan"><h3>Агенция</h3><div><span class="old" style="text-decoration:none">10+ магазина</span></div><div class="now" style="font-size:30px">По запитване</div><ul><li>над 10 магазина</li><li>поръчки по договаряне</li><li>вход за всеки клиент</li><li>помощ при включването</li></ul><a class="btn dark" href="mailto:hello@ordyx.eu?subject=Ordyx%20за%20агенция" style="background:#2a2a26">Пиши ни</a></div>
+    </div>
+    <div class="est">
+      <div class="rng" style="margin:0"><label for="e1">Колко магазина имаш? <b id="ev1">1</b></label><input id="e1" type="range" min="1" max="10" value="1"></div>
+      <div class="rng" style="margin:0"><label for="e2">Поръчки на месец на магазин <b id="ev2">400</b></label><input id="e2" type="range" min="50" max="2000" step="50" value="400"></div>
+      <div class="tot" aria-live="polite"><small style="color:#a9a79f">Твоята месечна цена</small><b id="etot">24 €</b><s id="eold">29 €</s></div>
+    </div>
+    <p class="fine">Цените са без ДДС. SMS и WhatsApp съобщенията се плащат отделно, на брой. След 30 ноември 2026 г. новите клиенти плащат редовните цени.</p>
+  </div>
+</section>
+
+<!-- GUARANTEE -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow rv">Без риск</span>
+    <h2 class="h2 rv">Пробваш спокойно</h2>
+    <div class="guar">
+      <div class="rv"><span class="e">🎁</span><b>14 дни безплатно</b><span>Без карта, без ангажимент.</span></div>
+      <div class="rv"><span class="e">📄</span><b>Без договор</b><span>Плащаш месец за месец.</span></div>
+      <div class="rv"><span class="e">⏸️</span><b>Спираш по всяко време</b><span>Махаш реда код — чекаутът е както преди.</span></div>
+      <div class="rv"><span class="e">📥</span><b>Данните са твои</b><span>Поръчки и купувачи — изтегляш ги в Excel.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section style="padding-top:0" id="faq">
+  <div class="wrap">
+    <div style="text-align:center"><span class="eyebrow rv">ЧЗВ</span><h2 class="h2 rv">Въпроси, които ни задават</h2></div>
+    <div class="faq">
+      <details class="rv"><summary>Трябва ли ми програмист?</summary><p>Не. Копираш един ред код в настройките на магазина. Водачът „Първи стъпки“ ти показва всяка стъпка с отметки.</p></details>
+      <details class="rv"><summary>Работи ли с моя магазин?</summary><p>Днес Ordyx работи с магазини и фунии в ConvertBuilder. Shopify и WooCommerce идват скоро — пиши ни и ще те уведомим първи.</p></details>
+      <details class="rv"><summary>Ползвам ли моя договор с Еконт и Спиди?</summary><p>Да. Товарителниците се правят с твоя профил в Еконт и с твоя договор със Спиди — цените и условията остават твоите.</p></details>
+      <details class="rv"><summary>Колко струва след пробния период?</summary><p>24 € на месец за един магазин, ако се регистрираш до 30 ноември 2026 г. — заключени завинаги. След това редовната цена е 29 €. Цените са без ДДС.</p></details>
+      <details class="rv"><summary>Сигурни ли са данните на клиентите ми (GDPR)?</summary><p>Данните се пазят в Европейския съюз. Ключовете за куриерите и магазина са криптирани. Данните от незавършени поръчки се заличават автоматично след 30 дни. Ти виждаш само своите магазини.</p></details>
+      <details class="rv"><summary>Мога ли да имам няколко магазина?</summary><p>Да. Всички магазини са на един екран, а всеки следващ струва 9 € на месец с цената за основатели.</p></details>
+      <details class="rv"><summary>Какво става, ако спра?</summary><p>Махаш реда код и чекаутът е както преди. Поръчките и купувачите си ги изтегляш в Excel по всяко време.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL -->
+<section class="final">
+  <div class="wrap">
+    <h2>Вечер поглеждаш телефона — и всичко е наред.</h2>
+    <p>Поръчките са потвърдени, товарителниците са готови, печалбата е пред теб. 14 дни безплатно, без карта.</p>
+    <a class="btn" data-cta href="#">Започни безплатно →</a>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a class="logo" href="#top"><svg viewBox="0 0 100 100" style="width:26px;height:26px" aria-hidden="true"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="#ffd21f"/></svg><b style="color:#fff">ORDYX</b></a>
+    <span>ordyx.eu · <a href="mailto:hello@ordyx.eu">hello@ordyx.eu</a></span>
+    <span><a href="https://app.ordyx.eu/admin/">Вход</a> · <a href="https://app.ordyx.eu/demo" target="_blank" rel="noopener">Демо</a></span>
+    <span>от ProfitBrand</span>
+  </div>
+</footer>
+
+<div class="mcta" id="mcta"><a class="btn" data-cta href="#">Започни безплатно — 14 дни</a></div>
+
+<script>
+(function () {
+  var SIGNUP = 'https://app.ordyx.eu/admin/?signup=xO7uvr0BirFU_hCbXoAGgnTG';
+  var API = /(^|\.)ordyx\.eu$/.test(location.hostname) ? '' : 'https://app.ordyx.eu';
+  var DEADLINE = Date.parse('2026-11-30T23:59:59+02:00');
+  var $ = function (id) { return document.getElementById(id); };
+  var eur = function (v) { return (Math.round(v * 100) / 100).toLocaleString('bg-BG', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }) + ' €'; };
+  var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var founders = function () { return Date.now() < DEADLINE; };
+
+  [].forEach.call(document.querySelectorAll('[data-cta]'), function (a) { a.href = SIGNUP; });
+
+  /* reveal on scroll */
+  var io = 'IntersectionObserver' in window ? new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { threshold: .12 }) : null;
+  [].forEach.call(document.querySelectorAll('.rv'), function (el) { io ? io.observe(el) : el.classList.add('in'); });
+
+  /* sticky mobile CTA after the hero */
+  var hero = document.querySelector('.hero');
+  window.addEventListener('scroll', function () { $('mcta').classList.toggle('show', window.scrollY > hero.offsetHeight - 80 && window.scrollY < document.body.scrollHeight - innerHeight - 260); }, { passive: true });
+
+  /* hero: phone notifications + admin rows */
+  var ORDERS = [['Варна', 'Георги П.', 64, 'СПИДИ – автомат Варна'], ['Плевен', 'Мария И.', 28.28, 'ЕКОНТ – офис Плевен'], ['София', 'Елена С.', 41.8, 'ЕКОНТ – офис Младост'], ['Бургас', 'Иван Д.', 33.9, 'СПИДИ – офис Бургас'], ['Русе', 'Деси К.', 19.9, 'ЕКОНТ – офис Русе']];
+  var MARK = '<svg viewBox="0 0 100 100"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="#ffd21f"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="none" stroke="#0d0d0d" stroke-width="6"/></svg>';
+  var oi = 0;
+  function tick() {
+    var o = ORDERS[oi % ORDERS.length]; oi++;
+    var n = document.createElement('div');
+    n.className = 'note';
+    n.innerHTML = '<span class="ic">' + MARK + '</span><div style="flex:1"><small><b>Ordyx</b><span>сега</span></small><b>🛒 Нова поръчка от ' + esc(o[0]) + ' · ' + eur(o[2]) + '</b><br>' + esc(o[1]) + ' · ' + esc(o[3]) + '</div>';
+    var box = $('notes'); box.insertBefore(n, box.firstChild);
+    while (box.children.length > 3) box.removeChild(box.lastChild);
+    var row = document.createElement('div');
+    row.className = 'arow'; row.style.animation = 'pop .5s both';
+    row.innerHTML = '<div><b>' + esc(o[1]) + '</b><br>' + esc(o[3]) + '</div><b>' + eur(o[2]) + '</b><span class="tag y">нова</span>';
+    var rows = $('adminRows'); rows.insertBefore(row, rows.firstChild);
+    while (rows.children.length > 7) rows.removeChild(rows.lastChild);
+  }
+  for (var k = 0; k < 4; k++) { var o0 = ORDERS[(k + 2) % ORDERS.length]; var r0 = document.createElement('div'); r0.className = 'arow'; r0.innerHTML = '<div><b>' + esc(o0[1]) + '</b><br>' + esc(o0[3]) + '</div><b>' + eur(o0[2]) + '</b><span class="tag ' + (k % 2 ? 'g">потвърдена' : '">изпратена') + '</span>'; $('adminRows').appendChild(r0); }
+  tick(); setInterval(tick, 3200);
+  var now = new Date();
+  $('clk').textContent = now.toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' });
+  $('clkDay').textContent = now.toLocaleDateString('bg-BG', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  /* pain cards flip */
+  [].forEach.call(document.querySelectorAll('.pcard'), function (c) { c.addEventListener('click', function () { c.classList.toggle('on'); }); });
+
+  /* live checkout: real office search */
+  var courier = 'econt', cache = {}, flowTimer = null;
+  function norm(s) { return String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim(); }
+  function load(c) {
+    if (cache[c]) return Promise.resolve(cache[c]);
+    return fetch(API + '/api/offices?courier=' + c).then(function (r) { return r.json(); }).then(function (d) {
+      return (cache[c] = (d.offices || []).map(function (o) { o._n = norm(o.city + ' ' + o.name + ' ' + o.address); return o; }));
+    });
+  }
+  function search() {
+    var q = norm($('q').value);
+    if (q.length < 2) { $('res').innerHTML = ''; return; }
+    $('res').innerHTML = '<button type="button" disabled>Търсим…</button>';
+    load(courier).then(function (list) {
+      var words = q.split(' ');
+      var hits = list.filter(function (o) { return words.every(function (w) { return o._n.indexOf(w) !== -1; }); }).slice(0, 8);
+      $('res').innerHTML = hits.length ? hits.map(function (o, i) { return '<button type="button" role="option" data-i="' + list.indexOf(o) + '">' + (o.isAutomat ? '🔲 Автомат ' : '🏢 Офис ') + esc(o.name) + '<small>' + esc(o.city) + (o.address ? ' · ' + esc(o.address) : '') + '</small></button>'; }).join('') : '<button type="button" disabled>Няма офис с това име — пробвай с друг град</button>';
+    }).catch(function () { $('res').innerHTML = '<button type="button" disabled>Търсачката не се зареди — опитай пак</button>'; });
+  }
+  var qt;
+  $('q').addEventListener('input', function () { clearTimeout(qt); qt = setTimeout(search, 160); });
+  $('q').addEventListener('focus', function () { load(courier); });
+  [].forEach.call(document.querySelectorAll('.opt'), function (b) {
+    b.addEventListener('click', function () {
+      [].forEach.call(document.querySelectorAll('.opt'), function (x) { x.classList.toggle('on', x === b); });
+      courier = b.getAttribute('data-c'); $('picked').hidden = true; search();
+    });
+  });
+  $('res').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-i]'); if (!b) return;
+    var o = cache[courier][+b.getAttribute('data-i')];
+    $('picked').hidden = false;
+    $('picked').innerHTML = '✓ ' + (courier === 'econt' ? 'ЕКОНТ' : 'СПИДИ') + ' – ' + (o.isAutomat ? 'автомат ' : 'офис ') + esc(o.name) + ', ' + esc(o.city) + '<br><span style="font-weight:600">Точно това влиза в поръчката — без звънене.</span>';
+    $('res').innerHTML = '';
+    runFlow();
+  });
+  function runFlow() {
+    var steps = document.querySelectorAll('.fstep'), i = 0;
+    clearInterval(flowTimer);
+    [].forEach.call(steps, function (s, j) { s.classList.toggle('on', j === 0); });
+    flowTimer = setInterval(function () { i++; if (i >= steps.length) { clearInterval(flowTimer); return; } steps[i].classList.add('on'); }, 700);
+  }
+
+  /* screens tabs */
+  var tabs = document.querySelectorAll('.tabs button');
+  [].forEach.call(tabs, function (t) {
+    t.addEventListener('click', function () {
+      [].forEach.call(tabs, function (x) { x.classList.toggle('on', x === t); });
+      [].forEach.call(document.querySelectorAll('.sc'), function (s) { s.classList.toggle('on', s.id === t.getAttribute('data-t')); });
+      if (t.getAttribute('data-t') === 's2') drawBars();
+    });
+  });
+  function drawBars() { $('bars').innerHTML = [38, 52, 44, 61, 58, 73, 66, 80, 71, 88, 79, 95].map(function (h, i) { return '<i style="height:' + h + '%;animation-delay:' + i * 40 + 'ms"></i>'; }).join(''); }
+  $('cYes').addEventListener('click', function () { $('cMsg').textContent = '✓ Благодарим! Поръчката е потвърдена — магазинът току-що получи известие.'; $('cMsg').style.color = 'var(--ok)'; });
+  $('cNo').addEventListener('click', function () { $('cMsg').textContent = 'Поръчката е отказана — пратката няма да тръгне и няма да се върне.'; $('cMsg').style.color = 'var(--bad)'; });
+
+  /* returns calculator */
+  function calc() {
+    var orders = +$('r1').value, rate = +$('r2').value / 100, ship = +$('r3').value, pack = +$('r4').value;
+    $('v1').textContent = orders.toLocaleString('bg-BG'); $('v2').textContent = $('r2').value + '%'; $('v3').textContent = eur(ship); $('v4').textContent = eur(pack);
+    var n = Math.round(orders * rate), loss = n * (ship * 2 + pack);
+    $('lossN').textContent = n; $('lossM').textContent = eur(Math.round(loss)); $('lossY').textContent = eur(Math.round(loss * 12));
+  }
+  ['r1', 'r2', 'r3', 'r4'].forEach(function (id) { $(id).addEventListener('input', calc); }); calc();
+
+  /* pricing: founders vs regular, countdown, estimate */
+  function prices() {
+    var f = founders();
+    var base = f ? 24 : 29, extra = f ? 9 : 12;
+    [].forEach.call(document.querySelectorAll('[data-old]'), function (el) { el.hidden = !f; });
+    [].forEach.call(document.querySelectorAll('[data-p1],[data-p2]'), function (el) { el.textContent = base + ' €'; });
+    [].forEach.call(document.querySelectorAll('[data-p2s]'), function (el) { el.textContent = extra + ' €'; });
+    var shops = +$('e1').value, per = +$('e2').value;
+    $('ev1').textContent = shops; $('ev2').textContent = per.toLocaleString('bg-BG');
+    var over = Math.max(0, Math.ceil((per - 500) / 250)) * 5 * shops;
+    var tot = base + extra * (shops - 1) + over, old = 29 + 12 * (shops - 1) + over;
+    $('etot').textContent = eur(tot); $('eold').textContent = f ? eur(old) : ''; $('eold').hidden = !f;
+    if (!f) $('count').hidden = true;
+  }
+  ['e1', 'e2'].forEach(function (id) { $(id).addEventListener('input', prices); });
+  function countdown() {
+    var ms = DEADLINE - Date.now();
+    if (ms <= 0) { prices(); return; }
+    var s = Math.floor(ms / 1000);
+    var put = function (id, v, label) { $(id).innerHTML = v + '<small>' + label + '</small>'; };
+    put('cdD', Math.floor(s / 86400), 'дни'); put('cdH', Math.floor(s % 86400 / 3600), 'часа'); put('cdM', Math.floor(s % 3600 / 60), 'мин'); put('cdS', s % 60, 'сек');
+  }
+  prices(); countdown(); setInterval(countdown, 1000);
+})();
+</script>
+</body>
+</html>
