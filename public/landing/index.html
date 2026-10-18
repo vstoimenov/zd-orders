@@ -571,8 +571,20 @@ footer a{color:#e9e7df;text-decoration:none}
   [].forEach.call(document.querySelectorAll('[data-cta]'), function (a) { a.href = SIGNUP; });
 
   /* reveal on scroll */
-  var io = 'IntersectionObserver' in window ? new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { threshold: .12 }) : null;
-  [].forEach.call(document.querySelectorAll('.rv'), function (el) { io ? io.observe(el) : el.classList.add('in'); });
+  // shown when on screen; checked on scroll too, so nothing stays hidden where the observer is slow or missing
+  var pending = [].slice.call(document.querySelectorAll('.rv'));
+  function reveal() {
+    var h = window.innerHeight || 800;
+    pending = pending.filter(function (el) { if (el.getBoundingClientRect().top < h * 0.95) { el.classList.add('in'); return false; } return true; });
+  }
+  var ticking = false;
+  window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(function () { ticking = false; reveal(); }); } }, { passive: true });
+  window.addEventListener('resize', reveal);
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { threshold: .12 });
+    pending.forEach(function (el) { io.observe(el); });
+  }
+  reveal();
 
   /* sticky mobile CTA after the hero */
   var hero = document.querySelector('.hero');
