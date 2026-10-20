@@ -413,12 +413,13 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
           <div class="icard"><div class="tile speedy">S<img src="https://www.google.com/s2/favicons?domain=speedy.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Спиди</b> <span class="chip ok">активен</span><div class="muted">Експресни куриерски доставки</div><div class="muted" id="iSpeedy"></div><div class="muted" id="iSpeedyApiLine"></div></div><button type="button" class="primary" id="iSpeedyOpen">+ Товарителници</button></div>
           <div class="icard"><div class="tile boxnow">BN<img src="https://www.google.com/s2/favicons?domain=boxnow.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>BOX NOW</b> <span class="chip" id="iBoxnowChip">изключен</span><div class="muted">Автомати за пратки</div><div class="muted" id="iBoxnow"></div><div class="muted" id="iBoxnowApiLine"></div></div><button type="button" class="primary" id="iBoxnowOpen">+ Включи</button></div>
           <div class="icard"><div class="tile pigeon">PE<img src="https://www.google.com/s2/favicons?domain=pigeonexpress.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Pigeon Express</b> <span class="chip">скоро</span><div class="muted">Куриерски услуги</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
-          <div class="icard"><div class="tile" style="color:#b0426b">⏱</div><div class="ibody"><b>Срок за доставка в чекаута</b><div class="muted">Ред под всеки куриер, напр. „1–2 работни дни“ (празно = без ред)</div>
-            <div class="fgrid" style="margin-top:8px">
+          <div class="icard" style="grid-column:1/-1"><div class="tile" style="color:#b0426b"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="ibody" style="flex:1"><b>Срок за доставка в чекаута</b><div class="muted">Ред под всеки куриер, напр. „1–2 работни дни“ (празно = без ред)</div>
+            <div class="fgrid" style="margin-top:10px">
               <label>Еконт<input type="text" id="etaEcont" maxlength="40"></label>
               <label>Спиди<input type="text" id="etaSpeedy" maxlength="40"></label>
               <label>BOX NOW<input type="text" id="etaBoxnow" maxlength="40"></label>
-            </div><div class="muted" id="etaInfo"></div></div><button type="button" class="ghost" id="etaSave">Запази</button></div>
+            </div>
+            <div class="actions" style="margin:8px 0 0"><button type="button" class="primary" id="etaSave">Запази</button><span class="muted" id="etaInfo"></span></div></div></div>
         </div>
       </div>
       <div class="isec">
