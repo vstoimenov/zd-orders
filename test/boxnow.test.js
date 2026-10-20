@@ -16,12 +16,14 @@ export const LOCKERS = { data: [
   { id: '1840', type: 'apm', lat: '42.64480928803469', lng: '23.339724129024635', addressLine1: 'ул. Проф. арх. Храбър Попов №14', addressLine2: 'София', postalCode: '1700', title: 'Stud. Grad New Avenue', name: 'BOX NOW - New Avenue, ул. Проф. Храбър Попов 14, София - 24/7', country: 'BG', image: '', note: '24/7', region: 'bg-BG', state: 'boxnow-ready', expectedDeliveryTime: '2026-10-21T19:00:00.000Z' },
   { id: '5365', type: 'apm', lat: '42.70295', lng: '23.31272', addressLine1: 'Цар Симеон 170 ', addressLine2: 'Пловдив ', postalCode: '4000', title: 'Test 1', name: 'Test Locker 1', country: 'BG', image: '', note: '', region: 'bg-BG', state: 'only-delivery', expectedDeliveryTime: '' },
   { id: '9999', type: 'apm', addressLine1: 'x', addressLine2: 'Варна', postalCode: '9000', name: 'BOX NOW - Затворен', state: 'disabled' },
+  { id: '7777', type: 'apm', lat: '43.2', lng: '27.9', addressLine1: 'ул. Y 2', addressLine2: 'Варна', postalCode: '9000', name: 'BOX NOW - Мол Варна - 24/7', note: 'В сградата на мола.', state: 'boxnow-ready' },
 ] };
 
 test('the public BOX NOW list becomes lockers in our office list; lockers out of service are left out', () => {
   assert.deepEqual(parseBoxnowLockers(LOCKERS), [
     { id: 'boxnow:1840', courier: 'boxnow', code: '1840', name: 'New Avenue, ул. Проф. Храбър Попов 14, София - 24/7', city: 'София', cityId: null, postCode: '1700', address: 'ул. Проф. арх. Храбър Попов №14', isAutomat: true, lat: 42.64480928803469, lng: 23.339724129024635, hours: '24/7' },
     { id: 'boxnow:5365', courier: 'boxnow', code: '5365', name: 'Test Locker 1', city: 'Пловдив', cityId: null, postCode: '4000', address: 'Цар Симеон 170', isAutomat: true, lat: 42.70295, lng: 23.31272, hours: '' },
+    { id: 'boxnow:7777', courier: 'boxnow', code: '7777', name: 'Мол Варна - 24/7', city: 'Варна', cityId: null, postCode: '9000', address: 'ул. Y 2', isAutomat: true, lat: 43.2, lng: 27.9, hours: '24/7' }, // 24/7 said in the name only
   ]);
   assert.throws(() => parseBoxnowLockers({ nope: 1 }), /BOX NOW/);
 });
@@ -31,7 +33,7 @@ test('the list is read from BOX NOW\'s public address; an error status is an err
   const lockers = await fetchBoxnowLockers(async (url) => { asked = String(url); return { ok: true, json: async () => LOCKERS }; });
   assert.equal(asked, BOXNOW_LOCKERS_URL);
   assert.equal(BOXNOW_LOCKERS_URL, 'https://locationapi-production.boxnow.bg/v1/apms_bg-BG.json');
-  assert.equal(lockers.length, 2);
+  assert.equal(lockers.length, 3);
   await assert.rejects(fetchBoxnowLockers(async () => ({ ok: false, status: 503 })), /HTTP 503/);
 });
 
@@ -48,7 +50,7 @@ test('BOX NOW lockers go only to a shop that switched BOX NOW on in Ordyx', asyn
   await saveIntegration(q, 'boxnow', { config: { checkout: true }, shopId: SHOP });
   res = await ask('/api/offices?courier=boxnow&host=www.adhdbg.eu');
   assert.equal(json(res).enabled, true);
-  assert.deepEqual(json(res).offices.map((o) => [o.id, o.city, o.isAutomat]), [['boxnow:5365', 'Пловдив', true], ['boxnow:1840', 'София', true]]);
+  assert.deepEqual(json(res).offices.map((o) => [o.id, o.city, o.isAutomat]), [['boxnow:7777', 'Варна', true], ['boxnow:5365', 'Пловдив', true], ['boxnow:1840', 'София', true]]);
   assert.deepEqual(json(await ask('/api/offices?courier=boxnow&host=other.bg')), { offices: [], enabled: false }, 'unknown site');
   assert.deepEqual(json(await ask('/api/offices?courier=boxnow')), { offices: [], enabled: false }, 'no site');
   await saveIntegration(q, 'boxnow', { config: { checkout: false }, shopId: SHOP });
@@ -69,7 +71,7 @@ test('admin: the shop switches BOX NOW in the checkout on and off; the status sh
   const call = async (opts) => { const res = fakeRes(); await router(fakeReq({ url: `/api/admin/integrations?shop=${SHOP}`, headers: { cookie }, ...opts }), res); return res; };
   await replaceOffices(q, 'boxnow', parseBoxnowLockers(LOCKERS));
   let st = json(await call({})).boxnow;
-  assert.deepEqual([st.offices, st.checkout], [2, false]);
+  assert.deepEqual([st.offices, st.checkout], [3, false]);
   assert.equal((await call({ method: 'POST', body: JSON.stringify({ action: 'boxnow_checkout', on: true }) })).statusCode, 200);
   st = json(await call({})).boxnow;
   assert.equal(st.checkout, true);

@@ -212,7 +212,7 @@ test('distanceM is the straight line in metres; distanceText rounds the way a pe
   assert.equal(core.distanceText(null), '');
 });
 
-test('nearestOffices sorts by distance, puts points without coordinates last and respects the limit', () => {
+test('nearestOffices sorts by distance, leaves out points without coordinates and respects the limit', () => {
   const list = [
     { id: 'a', lat: 42.14, lng: 24.75 },           // Plovdiv
     { id: 'none' },                                 // no coordinates
@@ -220,7 +220,8 @@ test('nearestOffices sorts by distance, puts points without coordinates last and
     { id: 'c', lat: 42.65, lng: 23.38 },           // Sofia south
     { id: 'zero', lat: null, lng: null },
   ];
-  assert.deepEqual(plain(core.nearestOffices(list, SOFIA, 10)).map((o) => o.id), ['b', 'c', 'a', 'none', 'zero']);
+  assert.deepEqual(plain(core.nearestOffices(list, SOFIA, 10)).map((o) => o.id), ['b', 'c', 'a'], 'a point without coordinates is never "nearest"');
+  assert.deepEqual(plain(core.nearestOffices([{ id: 'none' }, { id: 'zero', lat: null, lng: null }], SOFIA, 8)), [], 'nothing located yet (e.g. before the first refresh): an empty list, not the alphabet');
   assert.deepEqual(plain(core.nearestOffices(list, SOFIA, 2)).map((o) => o.id), ['b', 'c']);
   assert.ok(core.nearestOffices(list, SOFIA, 2)[0]._dist < 1000, 'distance kept on the point for the list');
   assert.deepEqual(plain(core.nearestOffices(list, null, 3)), [], 'no location: nothing to sort by');
@@ -255,4 +256,5 @@ test('markerPoints keeps the points inside the view, nearest to its centre first
   assert.deepEqual(plain(core.markerPoints(pts, sofia, 1)).map((o) => o.id), ['centre']);
   const many = Array.from({ length: 500 }, (_, i) => ({ id: String(i), lat: 42.65 + (i % 50) * 0.002, lng: 23.25 + Math.floor(i / 50) * 0.01 }));
   assert.equal(core.markerPoints(many, sofia, 400).length, 400);
+  assert.deepEqual(plain(core.markerPoints([{ id: 'nan', lat: NaN, lng: NaN }, { id: 'ok', lat: 42.7, lng: 23.3 }], sofia, 10)).map((o) => o.id), ['ok'], 'NaN never reaches the map');
 });

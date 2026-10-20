@@ -54,17 +54,17 @@
     if (m < 1000) return Math.max(50, Math.round(m / 50) * 50) + ' m';
     return (Math.round(m / 100) / 10).toFixed(1).replace('.', ',') + ' km';
   }
-  /** Points sorted by distance from `point` (kept on `_dist`); points without coordinates last. */
+  /** Points with coordinates sorted by distance from `point` (kept on `_dist`); a point without coordinates is never "nearest". */
   function nearestOffices(offices, point, limit) {
     if (!point) return [];
-    var withDist = [], without = [];
+    var withDist = [];
     for (var i = 0; i < offices.length; i++) {
       var d = distanceM(point, offices[i]);
       offices[i]._dist = d;
-      (d == null ? without : withDist).push(offices[i]);
+      if (d != null) withDist.push(offices[i]);
     }
     withDist.sort(function (a, b) { return a._dist - b._dist; });
-    return withDist.concat(without).slice(0, limit || 8);
+    return withDist.slice(0, limit || 8);
   }
   function hoursLine(o) {
     var h = clean(o && o.hours);
@@ -81,7 +81,7 @@
     var c = { lat: (bounds.south + bounds.north) / 2, lng: (bounds.west + bounds.east) / 2 }, out = [];
     for (var i = 0; i < offices.length; i++) {
       var o = offices[i];
-      if (typeof o.lat !== 'number' || typeof o.lng !== 'number') continue;
+      if (typeof o.lat !== 'number' || typeof o.lng !== 'number' || !isFinite(o.lat + o.lng)) continue;
       if (o.lat < bounds.south || o.lat > bounds.north || o.lng < bounds.west || o.lng > bounds.east) continue;
       o._dc = distanceM(c, o);
       out.push(o);
@@ -433,14 +433,14 @@
     var found = norm(q) ? searchOffices(offices[courier], q, 80) : nearestOffices(offices[courier], state.geo, 8);
     var noun = courier === 'boxnow' ? 'автомат' : 'офис';
     list.innerHTML = found.length ? (norm(q) ? '' : '<div class="zdo-note">Най-близките до вас:</div>') + found.map(officeItem).join('')
-      : '<div class="zdo-note">Няма намерен ' + noun + '. Опитайте само с името на града.</div>';
+      : '<div class="zdo-note">' + (norm(q) ? 'Няма намерен ' + noun + '. Опитайте само с името на града.' : 'В момента няма данни за близките точки — напишете град или ' + noun + '.') + '</div>';
   }
   var mapLib = null; // the loading library, shared by every open of the map
   function loadMap() {
     if (mapLib) return mapLib;
     mapLib = new Promise(function (resolve, reject) {
       if (window.maplibregl) return resolve(window.maplibregl);
-      var css = document.createElement('link'); css.rel = 'stylesheet'; css.href = MAP_CSS; document.head.appendChild(css);
+      if (!document.querySelector('link[href="' + MAP_CSS + '"]')) { var css = document.createElement('link'); css.rel = 'stylesheet'; css.href = MAP_CSS; document.head.appendChild(css); }
       var s = document.createElement('script'); s.src = window.__zdoMapScript || MAP_SCRIPT; s.async = true;
       var timer = setTimeout(fail, 15000);
       function fail() { clearTimeout(timer); mapLib = null; reject(new Error('map script')); }
@@ -481,22 +481,30 @@
       (state.geo && o._dist != null ? '<br>' + esc(distanceText(o._dist)) + ' от вас' : '') +
       '<button type="button" class="zdo-map-pick" data-pick="' + esc(o.id) + '">Избери</button>';
   }
+  function showPopup(lib, ui, o) {
+    if (ui.popup) ui.popup.remove();
+    ui.popup = new lib.Popup({ offset: 24, maxWidth: '280px' }).setLngLat([o.lng, o.lat]).setHTML(popupHtml(o)).addTo(ui.map);
+  }
+  /** Markers for the points in view: only what changed is added or removed, so an open popup survives a pan; popups are made on tap. */
   function placeMarkers(lib) {
     var ui = mapUi;
     if (!ui || !ui.map) return;
-    ui.markers.forEach(function (m) { m.remove(); });
-    ui.markers = [];
     var b = ui.map.getBounds();
-    var pts = markerPoints(offices[ui.courier] || [], { south: b.getSouth(), west: b.getWest(), north: b.getNorth(), east: b.getEast() }, MAP_MAX);
+    var all = markerPoints(offices[ui.courier] || [], { south: b.getSouth(), west: b.getWest(), north: b.getNorth(), east: b.getEast() }, 1e9);
+    var pts = all.slice(0, MAP_MAX), keep = {};
+    pts.forEach(function (o) { keep[o.id] = true; });
+    Object.keys(ui.markers).forEach(function (id) { if (!keep[id]) { ui.markers[id].remove(); delete ui.markers[id]; } });
     pts.forEach(function (o) {
+      if (ui.markers[o.id]) return;
       if (state.geo) o._dist = distanceM(state.geo, o);
       var pin = document.createElement('div');
       pin.className = 'zdo-pin' + (o.isAutomat ? ' is-automat' : '');
       pin.title = kindPrefix(o, true) + o.name;
-      var m = new lib.Marker({ element: pin, anchor: 'bottom' }).setLngLat([o.lng, o.lat])
-        .setPopup(new lib.Popup({ offset: 24, maxWidth: '280px' }).setHTML(popupHtml(o))).addTo(ui.map);
-      ui.markers.push(m);
+      pin.addEventListener('click', function (e) { e.stopPropagation(); showPopup(lib, ui, o); });
+      ui.markers[o.id] = new lib.Marker({ element: pin, anchor: 'bottom' }).setLngLat([o.lng, o.lat]).addTo(ui.map);
     });
+    var hint = ui.root.querySelector('.zdo-map-hint');
+    hint.textContent = all.length > MAP_MAX ? 'Показваме най-близките ' + MAP_MAX + ' точки — приближете картата, за да видите всички.' : '';
   }
   function openMap(courier) {
     closeMap();
@@ -504,8 +512,8 @@
     var wrap = document.createElement('div');
     wrap.className = 'zdo-map';
     wrap.innerHTML = '<div class="zdo-map-head"><b>' + noun + ' на ' + COURIER_NAME[courier] + '</b><button type="button" class="zdo-map-x" data-role="map-close" aria-label="Затвори">×</button></div>' +
-      '<div class="zdo-map-note">Зареждаме картата…</div><div class="zdo-map-canvas"></div>';
-    var ui = { root: wrap, map: null, markers: [], courier: courier, overflow: document.body.style.overflow, onKey: function (e) { if (e.key === 'Escape') closeMap(); } };
+      '<div class="zdo-map-note">Зареждаме картата…</div><div class="zdo-map-note zdo-map-hint"></div><div class="zdo-map-canvas"></div>';
+    var ui = { root: wrap, map: null, markers: {}, popup: null, courier: courier, overflow: document.body.style.overflow, onKey: function (e) { if (e.key === 'Escape') closeMap(); } };
     mapUi = ui;
     document.body.style.overflow = 'hidden';
     document.body.appendChild(wrap);
@@ -531,7 +539,7 @@
       map.on('load', function () { note.textContent = ''; placeMarkers(lib); });
       map.on('error', function () { if (note.textContent) note.textContent = MAP_FAIL; }); // tiles failed: markers still work
       map.on('moveend', function () { placeMarkers(lib); });
-      setTimeout(function () { if (mapUi === ui && !ui.markers.length) placeMarkers(lib); }, 1500);
+      setTimeout(function () { if (mapUi === ui && !Object.keys(ui.markers).length) placeMarkers(lib); }, 1500);
       if (state.geo) { var me = document.createElement('div'); me.className = 'zdo-pin is-me'; me.title = 'Вие сте тук'; new lib.Marker({ element: me }).setLngLat([state.geo.lng, state.geo.lat]).addTo(map); }
     }, function () { if (mapUi === ui) note.textContent = MAP_FAIL; });
   }
@@ -551,21 +559,22 @@
     if (state.geo) { renderOfficeList(courier); return done(''); }
     if (!navigator.geolocation || (typeof isSecureContext !== 'undefined' && !isSecureContext)) return done(GEO_FAIL);
     btn.disabled = true; note.hidden = false; note.textContent = 'Търсим най-близките…';
-    var finished = false;
-    var fail = function () { if (finished) return; finished = true; done(GEO_FAIL); };
-    var timer = setTimeout(fail, 9000);
+    // the customer may read the browser's permission prompt for a while: a late answer is still used (the note only says what to do meanwhile)
+    var answered = false;
+    var fail = function () { if (answered) return; done(GEO_FAIL); };
+    var timer = setTimeout(fail, 30000);
     try {
       navigator.geolocation.getCurrentPosition(function (pos) {
-        if (finished) return;
-        finished = true; clearTimeout(timer);
+        if (answered) return;
+        answered = true; clearTimeout(timer);
         var c = pos && pos.coords;
         if (!c || !isFinite(c.latitude) || !isFinite(c.longitude)) return done(GEO_FAIL);
         state.geo = { lat: c.latitude, lng: c.longitude };
         done('');
         ['econt', 'speedy', 'boxnow'].forEach(function (k) { if (offices[k]) renderOfficeList(k); });
         if (!offices[courier]) loadOffices(courier).then(function () { renderOfficeList(courier); }, function () { officesFailed(courier); });
-      }, fail, { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 });
-    } catch (e) { fail(); }
+      }, function () { answered = true; clearTimeout(timer); done(GEO_FAIL); }, { enableHighAccuracy: false, timeout: 20000, maximumAge: 300000 });
+    } catch (e) { answered = true; clearTimeout(timer); done(GEO_FAIL); }
   }
 
   function renderCityList() {
