@@ -24,6 +24,10 @@ pre{background:#f4f4f4;padding:8px;white-space:pre-wrap;font-size:12px}
     { id: 'speedy:9364', code: '9364', name: 'СТАРА ЗАГОРА – СЛАВЯНСКА (УЛ.) (АВТОМАТ)', city: 'Стара Загора', postCode: '', address: '', isAutomat: true },
     { id: 'speedy:79', code: '79', name: 'ПЛОВДИВ - ОФИС', city: 'Пловдив', postCode: '', address: '', isAutomat: false }
   ];
+  var FIX_BOXNOW = [
+    { id: 'boxnow:1840', code: '1840', name: 'New Avenue, ул. Проф. Храбър Попов 14, София - 24/7', city: 'София', postCode: '1700', address: 'ул. Проф. арх. Храбър Попов №14', isAutomat: true },
+    { id: 'boxnow:1842', code: '1842', name: 'Сграда SIVEN, бул. Черни връх 47А, София - 24/7', city: 'София', postCode: '1407', address: 'бул. Черни връх 47А', isAutomat: true }
+  ];
   var FIX_CITIES = [
     { id: 1, name: 'Варна', postCode: '9000', region: 'Варна', hasOffice: true },
     { id: 2, name: 'Велико Търново', postCode: '5000', region: 'Велико Търново', hasOffice: true },
@@ -33,7 +37,7 @@ pre{background:#f4f4f4;padding:8px;white-space:pre-wrap;font-size:12px}
   window.fetch = function (url, init) {
     url = String(url);
     var reply = function (status, data) { return Promise.resolve(new Response(JSON.stringify(data), { status: status })); };
-    if (url.indexOf('/api/offices') > -1) return window.__failOffices ? reply(500, {}) : reply(200, { offices: url.indexOf('courier=speedy') > -1 ? FIX_SPEEDY : FIX_OFFICES });
+    if (url.indexOf('/api/offices') > -1) return window.__failOffices ? reply(500, {}) : reply(200, { offices: url.indexOf('courier=speedy') > -1 ? FIX_SPEEDY : url.indexOf('courier=boxnow') > -1 ? FIX_BOXNOW : FIX_OFFICES });
     if (url.indexOf('/api/cities') > -1) return reply(200, { cities: FIX_CITIES });
     return realFetch(url, init);
   };
@@ -61,6 +65,7 @@ pre{background:#f4f4f4;padding:8px;white-space:pre-wrap;font-size:12px}
 <div class="tick-wrapper"><input type="radio" name="shippingOption"> До офис ECONT 4.07€ (7.96 лв)</div>
 <div class="tick-wrapper"><input type="radio" name="shippingOption" checked> До офис speedy 4.07€ (7.96 лв)</div>
 <div class="tick-wrapper"><input type="radio" name="shippingOption"> До адрес speedy 4.04€ (7.90 лв)</div>
+<div class="tick-wrapper"><input type="radio" name="shippingOption"> Автомат BOX NOW 3.50€ (6.85 лв)</div>
 <p><a data-role="continue" href="#" id="go">ПОРЪЧАЙ СЕГА</a></p>
 <p><button type="button" id="reset-method">Нулирай метода + order_changed</button></p>
 <div id="status"></div>
@@ -85,7 +90,7 @@ pre{background:#f4f4f4;padding:8px;white-space:pre-wrap;font-size:12px}
   });
   // Simulates CB re-rendering the shipping methods: unchecks all, checks a method that is NOT the widget's current type, fires order_changed
   document.getElementById('reset-method').addEventListener('click', function () {
-    var patterns = { econt_office: /офис\s+econt/i, speedy_office: /офис\s+speedy/i, speedy_address: /адрес\s+speedy/i };
+    var patterns = { econt_office: /офис\s+econt/i, speedy_office: /офис\s+speedy/i, speedy_address: /адрес\s+speedy/i, boxnow_locker: /box\s*now/i };
     var picked = document.querySelector('input[name="zdo-type"]:checked');
     var re = picked && patterns[picked.value];
     var radios = [].slice.call(document.querySelectorAll('input[name="shippingOption"]'));
