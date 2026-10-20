@@ -729,6 +729,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
           <label>Парола (e-Econt)<input type="password" id="ePass" autocomplete="new-password" placeholder="парола"></label>
           <label class="check"><input type="checkbox" id="eDemo"> Тестов режим (demo.econt.com — пратките не са истински)</label>
           <div class="actions" style="margin:0"><button type="button" class="ghost" id="eLoad">Зареди профила</button><span class="muted" id="eProfile"></span></div>
+          <label id="eClientWrap" hidden>От кой профил да се пускат товарителниците<select id="eClient"></select><span class="muted">С този вход имате няколко профила в Еконт. Изберете от чие име да са пратките — на фирмата или на физическото лице.</span></label>
         </div>
         <h3 style="margin:0 0 10px">Откъде изпращате</h3>
         <div class="radios"><label><input type="radio" name="eSenderType" value="office" checked> От офис на Еконт</label><label><input type="radio" name="eSenderType" value="address"> От адрес (идват да вземат пратката)</label></div>
@@ -1618,11 +1619,18 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     $('eReview').checked = Boolean(e.review);
     $('eActive').checked = e.active !== false;
     $('eProfile').textContent = e.profileName ? 'Профил: ' + e.profileName : '';
+    $('eClient').innerHTML = e.clientId ? '<option value="' + esc(e.clientId) + '">' + esc(e.profileName) + '</option>' : '';
+    $('eClientWrap').hidden = true; eClientFor = e.clientId ? (e.username || '') + (e.demo ? '|demo' : '') : null;
     econtSenderToggle();
     $('econtModal').hidden = false;
     loadEcontOffices();
   }
-  function econtCreds() { return { username: $('eUser').value.trim(), password: $('ePass').value, demo: $('eDemo').checked }; }
+  var eClientFor = null; // the login (user + mode) the profile choice belongs to
+  function econtCreds() {
+    var c = { username: $('eUser').value.trim(), password: $('ePass').value, demo: $('eDemo').checked };
+    c.clientId = eClientFor === c.username + (c.demo ? '|demo' : '') ? $('eClient').value : '';
+    return c;
+  }
   $('iEcontOpen').addEventListener('click', openEcont);
   [].forEach.call(document.querySelectorAll('input[name="eSenderType"]'), function (r) { r.addEventListener('change', econtSenderToggle); });
   $('eLoad').addEventListener('click', function () {
@@ -1630,11 +1638,14 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     var c = econtCreds(); c.action = 'econt_profile';
     busy($('eLoad'), integ(c)).then(function (d) {
       var p = d.profile, keep = $('eAddress').value;
+      $('eClient').innerHTML = (p.profiles || []).map(function (x) { return '<option value="' + esc(x.id) + '"' + (x.id === p.clientId ? ' selected' : '') + '>' + esc(x.name) + (x.company ? ' (фирма)' : ' (физическо лице)') + '</option>'; }).join('');
+      $('eClientWrap').hidden = (p.profiles || []).length < 2; eClientFor = c.username + (c.demo ? '|demo' : '');
       $('eProfile').textContent = 'Профил: ' + p.name + ' ✓' + (p.company ? ' · фирма — попълнете упълномощено лице' : '');
       $('eAddress').innerHTML = p.addresses.length ? p.addresses.map(function (a) { return '<option value="' + esc(a.id) + '"' + (a.id === keep ? ' selected' : '') + '>' + esc(a.text) + '</option>'; }).join('') : '<option value="">Профилът няма адреси — добавете в e-Econt или изпращайте от офис</option>';
       if (!$('eSenderPhone').value && p.phones[0]) $('eSenderPhone').value = p.phones[0];
     }).catch(function (e) { showErr('eProfile', e); });
   });
+  $('eClient').addEventListener('change', function () { $('eLoad').click(); }); // each profile has its own addresses and phones
   $('eSave').addEventListener('click', function () {
     var b = econtCreds();
     b.action = 'save_econt'; b.senderType = econtSenderType();

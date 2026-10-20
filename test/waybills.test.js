@@ -261,7 +261,7 @@ test('integrations: econt settings through the admin, status shows them without 
   let res = fakeRes();
   await withFetch(econt().impl, () => integrationsApi(fakeReq({ method: 'POST', url: '/api/admin/integrations', headers: { cookie: cookie() }, body: { action: 'econt_profile', username: 'shop-user', password: 'pa55' } }), res));
   assert.equal(res.statusCode, 200);
-  assert.deepEqual(json(res).profile, { name: 'ЕТ Консулт', company: false, phones: ['359883525008'], addresses: [{ id: '77', text: 'София 1000, бул. Гешов 2' }] });
+  assert.deepEqual(json(res).profile, { clientId: '', profiles: [{ id: '', name: 'ЕТ Консулт', company: false }], name: 'ЕТ Консулт', company: false, phones: ['359883525008'], addresses: [{ id: '77', text: 'София 1000, бул. Гешов 2' }] });
   res = fakeRes();
   await withFetch(econt().impl, () => integrationsApi(fakeReq({ method: 'POST', url: '/api/admin/integrations', headers: { cookie: cookie() }, body: { action: 'save_econt', ...settingsBody } }), res));
   assert.equal(res.statusCode, 200);
@@ -485,4 +485,33 @@ test('the orders page tells how many parcels wait at the office and how many are
   const res = fakeRes();
   await ordersApi(fakeReq({ url: `/api/admin/orders?shop=${SHOP}`, headers: { cookie: cookie() } }), res);
   assert.deepEqual(json(res).atOffice, { waiting: 1, due: 1 });
+});
+
+const TWO = { profiles: [
+  { client: { id: 501, name: 'Профитбранд ЕООД', juridicalEntity: true, phones: ['359883000001'] }, addresses: [{ id: 11, city: { name: 'Плевен', postCode: '5800' }, street: 'жк. Кайлъка', num: '345' }] },
+  { client: { id: 502, name: 'Виктор Стоименов', juridicalEntity: false, phones: ['359883000002'] }, addresses: [{ id: 22, city: { name: 'София', postCode: '1000' }, street: 'ул. Шипка', num: '5' }] },
+] };
+
+test('one e-Econt login with a company and a personal profile: the admin sees both and loads the one chosen', async () => {
+  const f = econt({ getClientProfiles: () => reply(200, TWO) });
+  const first = await withFetch(f.impl, () => econtProfile(q, SHOP, settingsBody));
+  assert.deepEqual(first.profiles, [{ id: '501', name: 'Профитбранд ЕООД', company: true }, { id: '502', name: 'Виктор Стоименов', company: false }]);
+  assert.equal(first.clientId, '501');
+  const p = await withFetch(f.impl, () => econtProfile(q, SHOP, { ...settingsBody, clientId: '502' }));
+  assert.deepEqual([p.clientId, p.name, p.company, p.phones[0], p.addresses[0].id], ['502', 'Виктор Стоименов', false, '359883000002', '22']);
+  await assert.rejects(withFetch(f.impl, () => econtProfile(q, SHOP, { ...settingsBody, clientId: '999' })), /Изберете профил/);
+});
+
+test('waybills go out from the chosen profile (the personal one), not just the first Econt returns', async () => {
+  const f = econt({ getClientProfiles: () => reply(200, TWO) });
+  await withFetch(f.impl, () => saveEcont(q, SHOP, { ...settingsBody, clientId: '502' }));
+  const s = await econtStatus(q, SHOP);
+  assert.deepEqual([s.clientId, s.profileName, s.profileCompany], ['502', 'Виктор Стоименов', false]);
+  const id = await addOrder();
+  const g = econt();
+  await withFetch(g.impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} }));
+  const create = g.calls.find((c) => c.path.includes('createLabel'));
+  assert.deepEqual(create.body.label.senderClient, { id: 502, name: 'Виктор Стоименов', phones: ['0888888888'] });
+  await withFetch(f.impl, () => saveEcont(q, SHOP, { ...settingsBody, password: '', weight: '2' })); // a later save that does not pick again
+  assert.equal((await econtStatus(q, SHOP)).clientId, '502', 'the chosen profile stays');
 });
