@@ -258,3 +258,16 @@ test('markerPoints keeps the points inside the view, nearest to its centre first
   assert.equal(core.markerPoints(many, sofia, 400).length, 400);
   assert.deepEqual(plain(core.markerPoints([{ id: 'nan', lat: NaN, lng: NaN }, { id: 'ok', lat: 42.7, lng: 23.3 }], sofia, 10)).map((o) => o.id), ['ok'], 'NaN never reaches the map');
 });
+
+/* ---- courier logos and the delivery-time line ---- */
+test('each option shows its courier logo from our own domain and the shop\'s delivery-time line', () => {
+  assert.equal(core.logoFor('https://kurier.profitbrand.online', 'econt_office'), 'https://kurier.profitbrand.online/logos/econt.svg');
+  assert.equal(core.logoFor('https://x', 'speedy_address'), 'https://x/logos/speedy.svg');
+  assert.equal(core.logoFor('https://x', 'boxnow_locker'), 'https://x/logos/boxnow.svg');
+  const info = { boxnow: true, eta: { econt: '1–2 работни дни', speedy: '', boxnow: 'до 24 часа' } };
+  assert.equal(core.etaFor(info, 'econt_office'), '1–2 работни дни');
+  assert.equal(core.etaFor(info, 'speedy_office'), '', 'the shop switched the line off for Speedy');
+  assert.equal(core.etaFor(info, 'speedy_address'), '');
+  assert.equal(core.etaFor(info, 'boxnow_locker'), 'до 24 часа');
+  assert.equal(core.etaFor(null, 'econt_office'), '', 'nothing before the shop info arrived');
+});

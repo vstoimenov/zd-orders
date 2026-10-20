@@ -413,6 +413,12 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
           <div class="icard"><div class="tile speedy">S<img src="https://www.google.com/s2/favicons?domain=speedy.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Спиди</b> <span class="chip ok">активен</span><div class="muted">Експресни куриерски доставки</div><div class="muted" id="iSpeedy"></div><div class="muted" id="iSpeedyApiLine"></div></div><button type="button" class="primary" id="iSpeedyOpen">+ Товарителници</button></div>
           <div class="icard"><div class="tile boxnow">BN<img src="https://www.google.com/s2/favicons?domain=boxnow.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>BOX NOW</b> <span class="chip" id="iBoxnowChip">изключен</span><div class="muted">Автомати за пратки</div><div class="muted" id="iBoxnow"></div><div class="muted" id="iBoxnowApiLine"></div></div><button type="button" class="primary" id="iBoxnowOpen">+ Включи</button></div>
           <div class="icard"><div class="tile pigeon">PE<img src="https://www.google.com/s2/favicons?domain=pigeonexpress.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Pigeon Express</b> <span class="chip">скоро</span><div class="muted">Куриерски услуги</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
+          <div class="icard"><div class="tile" style="color:#b0426b">⏱</div><div class="ibody"><b>Срок за доставка в чекаута</b><div class="muted">Ред под всеки куриер, напр. „1–2 работни дни“ (празно = без ред)</div>
+            <div class="fgrid" style="margin-top:8px">
+              <label>Еконт<input type="text" id="etaEcont" maxlength="40"></label>
+              <label>Спиди<input type="text" id="etaSpeedy" maxlength="40"></label>
+              <label>BOX NOW<input type="text" id="etaBoxnow" maxlength="40"></label>
+            </div><div class="muted" id="etaInfo"></div></div><button type="button" class="ghost" id="etaSave">Запази</button></div>
         </div>
       </div>
       <div class="isec">
@@ -1616,7 +1622,15 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     renderWa(s.whatsapp || {});
     $('iSpeedy').textContent = s.speedy.offices + ' офиса и автомата · обновено ' + when(s.speedy.updatedAt);
     renderBoxnow(s.boxnow || { offices: 0, updatedAt: null, checkout: false }, s.boxnowApi || {});
+    var eta = (s.checkout && s.checkout.eta) || {};
+    $('etaEcont').value = eta.econt || ''; $('etaSpeedy').value = eta.speedy || ''; $('etaBoxnow').value = eta.boxnow || '';
   }
+  $('etaSave').addEventListener('click', function () {
+    $('etaInfo').textContent = 'Запазвам…';
+    busy($('etaSave'), integ({ action: 'save_checkout_text', eta: { econt: $('etaEcont').value, speedy: $('etaSpeedy').value, boxnow: $('etaBoxnow').value } }))
+      .then(function () { $('etaInfo').textContent = 'Запазено ✓ — до 5 минути се вижда в чекаута.'; })
+      .catch(function (e) { showErr('etaInfo', e); });
+  });
   /* ---- BOX NOW: автомати в чекаута (включва се за всеки магазин) ---- */
   var lastBoxnow = {}, lastBoxnowApi = {};
   function renderBoxnow(b, a) {

@@ -8,6 +8,13 @@
   // ConvertBuilder method names differ per store ("До офис ECONT", "Доставка до офис на Еконт"…): match the kind + courier in Latin or Cyrillic
   var OPTION_PATTERN = { econt_office: /офис.*(econt|еконт)/i, speedy_office: /офис.*(speedy|спиди)/i, speedy_address: /адрес.*(speedy|спиди)/i, boxnow_locker: /box\s*now|бокс\s*нау/i };
   var OFFICE_TYPES = { econt_office: 'econt', speedy_office: 'speedy', boxnow_locker: 'boxnow' }; // type → courier of its office list
+  var TYPE_COURIER = { econt_office: 'econt', speedy_office: 'speedy', speedy_address: 'speedy', boxnow_locker: 'boxnow' };
+  /** The courier's logo, served from our own domain (never a third-party CDN in a checkout). */
+  function logoFor(api, type) { return (window.__zdoLogoBase || api + '/logos/') + TYPE_COURIER[type] + '.svg'; }
+  /** The shop's delivery-time line for an option ('' = none); nothing until the shop info has arrived. */
+  function etaFor(info, type) { var e = info && info.eta; return e && typeof e[TYPE_COURIER[type]] === 'string' ? e[TYPE_COURIER[type]] : ''; }
+  var ICON_LOCATE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>';
+  var ICON_MAP = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>';
 
   function clean(v) { return v == null ? '' : String(v).replace(/\s+/g, ' ').trim(); }
   function norm(v) { return clean(v).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim(); }
@@ -251,7 +258,7 @@
   var core = {
     TOKEN: TOKEN, norm: norm, searchOffices: searchOffices, searchCities: searchCities, formatSelection: formatSelection,
     validateSelection: validateSelection, pickOptionIndex: pickOptionIndex, optionPrice: optionPrice, officeLabel: officeLabel,
-    buildOrderPayload: buildOrderPayload, visitPayload: visitPayload, shippingView: shippingView, cartFrom: cartFrom, cartPayload: cartPayload,
+    buildOrderPayload: buildOrderPayload, visitPayload: visitPayload, shippingView: shippingView, cartFrom: cartFrom, cartPayload: cartPayload, logoFor: logoFor, etaFor: etaFor,
     distanceM: distanceM, distanceText: distanceText, nearestOffices: nearestOffices, hoursLine: hoursLine,
     MAP_SCRIPT: MAP_SCRIPT, MAP_CSS: MAP_CSS, MAP_STYLE: MAP_STYLE, markerPoints: markerPoints
   };
@@ -276,6 +283,9 @@
     '.zdo-opt.is-on{border-color:#b0426b;background:#fdf3f6}',
     '.zdo-opt input{accent-color:#b0426b;width:18px;height:18px;margin:0;flex:none}',
     '.zdo-price{margin-left:auto;font-weight:700;white-space:nowrap}',
+    '.zdo-logo{width:44px;height:30px;flex:none;object-fit:contain;border-radius:6px;background:#fff}',
+    '.zdo-opt-text{display:flex;flex-direction:column;gap:2px;min-width:0}.zdo-opt-text small{font-size:13px;color:#7a6a6f}.zdo-opt-text small:empty{display:none}',
+    '.zdo-tool svg{vertical-align:-4px;margin-right:6px}',
     '.zdo-panel{display:none;margin:-2px 0 10px}.zdo-panel.is-on{display:block}',
     '.zdo-input{display:block;width:100%!important;height:46px!important;padding:0 12px!important;margin:0 0 8px!important;border:1.5px solid #d9c3ca!important;border-radius:8px!important;font-size:16px!important;background:#fff!important;color:#222!important}',
     '.zdo-list{max-height:260px;overflow-y:auto;border-radius:8px}',
@@ -305,10 +315,10 @@
 
   function officePanel(courier, type, name, lockersOnly) {
     var where = lockersOnly ? 'автомат' : 'офис';
-    return '<label class="zdo-opt"><input type="radio" name="zdo-type" value="' + type + '"><span>До ' + (lockersOnly ? '' : 'офис или ') + 'автомат на <b>' + name + '</b></span><span class="zdo-price" data-price="' + type + '"></span></label>' +
+    return '<label class="zdo-opt"><input type="radio" name="zdo-type" value="' + type + '"><img class="zdo-logo" data-logo="' + type + '" alt=""><span class="zdo-opt-text"><span>До ' + (lockersOnly ? '' : 'офис или ') + 'автомат на <b>' + name + '</b></span><small data-eta="' + type + '"></small></span><span class="zdo-price" data-price="' + type + '"></span></label>' +
       '<div class="zdo-panel" data-for="' + type + '">' +
         '<div class="zdo-picked" data-role="' + courier + '-picked"></div>' +
-        '<div data-role="' + courier + '-pick"><div class="zdo-tools"><button type="button" class="zdo-tool" data-role="' + courier + '-locate">📍 Намери ме</button><button type="button" class="zdo-tool" data-role="' + courier + '-map">🗺 Виж на картата</button></div><div class="zdo-note" data-role="' + courier + '-geo" hidden></div>' +
+        '<div data-role="' + courier + '-pick"><div class="zdo-tools"><button type="button" class="zdo-tool" data-role="' + courier + '-locate">' + ICON_LOCATE + 'Намери ме</button><button type="button" class="zdo-tool" data-role="' + courier + '-map">' + ICON_MAP + 'Виж на картата</button></div><div class="zdo-note" data-role="' + courier + '-geo" hidden></div>' +
           '<input class="zdo-input" data-role="' + courier + '-search" type="text" placeholder="Напишете град или ' + (lockersOnly ? 'адрес на автомат' : 'име на офис') + '" autocomplete="off"><div class="zdo-list" data-role="' + courier + '-list"></div>' +
           '<a href="#" class="zdo-link" data-role="' + courier + '-manual">Не намирам ' + where + 'а си – въведи ръчно</a></div>' +
         '<div data-role="' + courier + '-fallback" hidden><div class="zdo-note">Въведете ' + where + 'а ръчно:</div>' +
@@ -321,7 +331,7 @@
     '<div class="zdo-none" hidden></div>' +
     officePanel('econt', 'econt_office', 'Еконт') +
     officePanel('speedy', 'speedy_office', 'Спиди') +
-    '<label class="zdo-opt"><input type="radio" name="zdo-type" value="speedy_address"><span>До адрес със <b>Спиди</b></span><span class="zdo-price" data-price="speedy_address"></span></label>' +
+    '<label class="zdo-opt"><input type="radio" name="zdo-type" value="speedy_address"><img class="zdo-logo" data-logo="speedy_address" alt=""><span class="zdo-opt-text"><span>До адрес със <b>Спиди</b></span><small data-eta="speedy_address"></small></span><span class="zdo-price" data-price="speedy_address"></span></label>' +
     '<div class="zdo-panel" data-for="speedy_address">' +
       '<input class="zdo-input" data-role="addr-city" type="text" placeholder="Населено място" autocomplete="off"><div class="zdo-list" data-role="city-list"></div>' +
       '<input class="zdo-input" data-role="addr-street" type="text" placeholder="Улица, номер, блок, вход, етаж, апартамент">' +
@@ -587,17 +597,21 @@
 
   function officesFailed(courier) { state[courier + 'Fallback'] = true; render(); sync(); loadCities().then(sync, function () {}); }
 
-  var mountedAt = 0, noShippingSent = false, boxnowOn = false, boxnowAsked = false, boxnowPending = false;
-  /** Asked once, only when the page offers a BOX NOW method: is BOX NOW switched on for this shop in Ordyx? */
-  function checkBoxnow(labels) {
-    if (boxnowAsked || pickOptionIndex(labels, 'boxnow_locker') < 0) return;
-    boxnowAsked = true; boxnowPending = true;
-    loadOffices('boxnow').then(function () { boxnowOn = true; }, function () {}).then(function () { boxnowPending = false; fillPrices(); });
+  var mountedAt = 0, noShippingSent = false, boxnowOn = false, boxnowPending = false, shopInfo = null;
+  /** Asked once per page: is BOX NOW switched on for this shop, and what delivery-time lines to show. */
+  function loadShopInfo() {
+    boxnowPending = true;
+    getJson('/api/offices?courier=shop&host=' + encodeURIComponent(location.host)).then(function (d) {
+      shopInfo = d || null; boxnowOn = Boolean(d && d.boxnow);
+    }, function () {}).then(function () {
+      boxnowPending = false;
+      TYPES.forEach(function (t) { var e = root.querySelector('[data-eta="' + t + '"]'); if (e) e.textContent = etaFor(shopInfo, t); });
+      fillPrices();
+    });
   }
   var NO_SHIPPING_GRACE_MS = 3000; // ConvertBuilder may still be loading its methods (slow phones)
   function fillPrices() {
     var o = shippingOptions(), view = shippingView(o.labels, { boxnow: boxnowOn });
-    checkBoxnow(o.labels);
     TYPES.forEach(function (t) {
       var i = pickOptionIndex(o.labels, t);
       root.querySelector('[data-price="' + t + '"]').textContent = i >= 0 ? optionPrice(o.labels[i]) : '';
@@ -785,6 +799,8 @@
     root.innerHTML = TEMPLATE;
     part.parentNode.insertBefore(root, part);
     mountedAt = Date.now();
+    [].forEach.call(root.querySelectorAll('[data-logo]'), function (img) { img.src = logoFor(API, img.getAttribute('data-logo')); img.onerror = function () { img.remove(); }; });
+    loadShopInfo();
     fillPrices();
     setTimeout(fillPrices, NO_SHIPPING_GRACE_MS + 100); // decide "no shipping" only after ConvertBuilder had time to load
     bind();

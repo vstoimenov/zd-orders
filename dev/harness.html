@@ -33,6 +33,7 @@ pre{background:#f4f4f4;padding:8px;white-space:pre-wrap;font-size:12px}
     { id: 2, name: 'Велико Търново', postCode: '5000', region: 'Велико Търново', hasOffice: true },
     { id: 3, name: 'Долни Воден', postCode: '4000', region: 'Пловдив', hasOffice: false }
   ];
+  window.__zdoLogoBase = 'https://kurier.profitbrand.online/logos/'; // python's http.server sends .svg as octet-stream, so the logos come from the live domain here
   // ?geo=sofia → the browser "knows" the customer is in Sofia; ?geo=deny → permission denied
   var geo = (location.search.match(/[?&]geo=(\w+)/) || [])[1];
   if (geo) Object.defineProperty(navigator, 'geolocation', { value: { getCurrentPosition: function (ok, fail) {
@@ -44,6 +45,7 @@ pre{background:#f4f4f4;padding:8px;white-space:pre-wrap;font-size:12px}
     var raw = url; // MapLibre passes Request objects: only our own API calls are faked, everything else goes out untouched
     url = typeof url === 'string' ? url : (url && url.url) || String(url);
     var reply = function (status, data) { return Promise.resolve(new Response(JSON.stringify(data), { status: status })); };
+    if (url.indexOf('courier=shop') > -1) return reply(200, { boxnow: !/[?&]boxnow=off/.test(location.search), eta: { econt: '1–2 работни дни', speedy: '', boxnow: 'до 24 часа' } });
     if (url.indexOf('/api/offices') > -1) return window.__failOffices ? reply(500, {}) : reply(200, { offices: url.indexOf('courier=speedy') > -1 ? FIX_SPEEDY : url.indexOf('courier=boxnow') > -1 ? (/[?&]boxnow=off/.test(location.search) ? [] : FIX_BOXNOW) : FIX_OFFICES });
     if (url.indexOf('/api/cities') > -1) return reply(200, { cities: FIX_CITIES });
     return realFetch(raw, init);
