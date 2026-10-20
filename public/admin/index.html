@@ -442,6 +442,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
           <label>Такса наложен платеж (%)<input type="number" step="0.01" min="0" id="cCodFeePct"></label>
           <label>Доставка Еконт при безплатна доставка<input type="number" step="0.01" min="0" id="cFreeEcont"></label>
           <label>Доставка Спиди при безплатна доставка<input type="number" step="0.01" min="0" id="cFreeSpeedy"></label>
+          <label>Доставка BOX NOW при безплатна доставка<input type="number" step="0.01" min="0" id="cFreeBoxnow"></label>
           <label>Разход при върната пратка<input type="number" step="0.01" min="0" id="cReturn"></label>
         </div>
         <p class="muted">Безплатна доставка се отчита автоматично, когато клиентът не е платил доставка (над 20 €). Тогава цената ѝ е ваш разход.</p>
@@ -1162,7 +1163,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
   $('fStatus').value = ''; // matches the "Всички" pill even if the browser restored the form
   snapshot();
   /* ---- Табло ---- */
-  var DELIVERY = { econt_office: 'Еконт – офис', speedy_office: 'Спиди – офис', speedy_address: 'Спиди – адрес', other: 'Друго' };
+  var DELIVERY = { econt_office: 'Еконт – офис', speedy_office: 'Спиди – офис', speedy_address: 'Спиди – адрес', boxnow_locker: 'BOX NOW – автомат', other: 'Друго' };
   var STATUS_LABEL = {};
   STATUSES.forEach(function (s) { STATUS_LABEL[s[0]] = s[1]; });
   var dashLoaded = false;
@@ -2579,7 +2580,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
       return [esc(p.name), String(p.soldQty), '<input type="number" step="0.01" min="0" class="cost-in" data-pi="' + i + '" value="' + esc(num(p.unitCost)) + '">'];
     }));
     $('cPackaging').value = num(d.settings.packaging); $('cCodFeePct').value = num(d.settings.codFeePct);
-    $('cFreeEcont').value = num(d.settings.freeShippingEcont); $('cFreeSpeedy').value = num(d.settings.freeShippingSpeedy);
+    $('cFreeEcont').value = num(d.settings.freeShippingEcont); $('cFreeSpeedy').value = num(d.settings.freeShippingSpeedy); $('cFreeBoxnow').value = num(d.settings.freeShippingBoxnow);
     $('cReturn').value = num(d.settings.returnCost);
     $('cExpenses').innerHTML = table(['Дата', 'Описание', 'Сума', ''], d.expenses.map(function (e) {
       return [esc(e.spentOn), esc(e.name), esc(money(e.amount, 'EUR')), '<button type="button" class="del" data-eid="' + esc(e.id) + '">Изтрий</button>'];
@@ -2592,7 +2593,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
   $('cSave').addEventListener('click', function () {
     var products = [].map.call(document.querySelectorAll('[data-pi]'), function (inp) { return { name: costsData.products[inp.getAttribute('data-pi')].name, unitCost: inp.value === '' ? 0 : inp.value }; });
     var v = function (id) { return $(id).value === '' ? 0 : $(id).value; };
-    var settings = { packaging: v('cPackaging'), codFeePct: v('cCodFeePct'), freeShippingEcont: v('cFreeEcont'), freeShippingSpeedy: v('cFreeSpeedy'), returnCost: v('cReturn') };
+    var settings = { packaging: v('cPackaging'), codFeePct: v('cCodFeePct'), freeShippingEcont: v('cFreeEcont'), freeShippingSpeedy: v('cFreeSpeedy'), freeShippingBoxnow: v('cFreeBoxnow'), returnCost: v('cReturn') };
     $('cSave').disabled = true;
     costsFetch('PUT', { products: products, settings: settings })
       .then(function () { $('cSaved').textContent = 'Запазено ✓'; dashLoaded = false; setTimeout(function () { $('cSaved').textContent = ''; }, 2000); })

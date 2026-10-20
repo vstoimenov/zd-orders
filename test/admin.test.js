@@ -140,3 +140,8 @@ test('admin can delete an order permanently', async () => {
   await adminOrders(fakeReq({ method: 'DELETE', body: JSON.stringify({ id }) }), res);
   assert.equal(res.statusCode, 401);
 });
+
+test('waybillText names BOX NOW and the locker', () => {
+  const t = waybillText({ ...sample, courier: 'boxnow', deliveryType: 'boxnow_locker', officeText: 'BOX NOW – автомат New Avenue (1840)' });
+  assert.match(t, /^Куриер: BOX NOW – до автомат$/m);
+});

@@ -28,10 +28,10 @@ async function add(patch = {}, status = 'new') {
 test('getCosts lists every sold product with its saved unit cost', async () => {
   await add();
   await add({ items: [{ name: 'Книга', qty: 2, price: 25.8 }] });
-  await saveCosts(q, { products: [{ name: 'Книга', unitCost: 4.2 }], settings: { packaging: 0.5, codFeePct: 1.5, freeShippingEcont: 3.55, freeShippingSpeedy: 2.48, returnCost: 7 } });
+  await saveCosts(q, { products: [{ name: 'Книга', unitCost: 4.2 }], settings: { packaging: 0.5, codFeePct: 1.5, freeShippingEcont: 3.55, freeShippingSpeedy: 2.48, freeShippingBoxnow: 3.1, returnCost: 7 } });
   const c = await getCosts(q);
   assert.deepEqual(c.products, [{ name: 'Книга', unitCost: 4.2, soldQty: 3 }, { name: 'Бонус', unitCost: 0, soldQty: 1 }]);
-  assert.deepEqual(c.settings, { packaging: 0.5, codFeePct: 1.5, freeShippingEcont: 3.55, freeShippingSpeedy: 2.48, returnCost: 7 });
+  assert.deepEqual(c.settings, { packaging: 0.5, codFeePct: 1.5, freeShippingEcont: 3.55, freeShippingSpeedy: 2.48, freeShippingBoxnow: 3.1, returnCost: 7 });
 });
 
 test('saveCosts rejects negative or non-numeric values', async () => {
@@ -78,4 +78,10 @@ test('the costs API needs the admin cookie and round-trip', async () => {
   assert.deepEqual(json(res), { ok: true });
   res = fakeRes(); await costsApi(fakeReq({ method: 'PUT', headers: { cookie: cookie() }, body: JSON.stringify({ products: [{ name: 'Книга', unitCost: -5 }] }) }), res);
   assert.equal(res.statusCode, 400);
+});
+
+test('a free-shipping BOX NOW order costs the shop its BOX NOW price', async () => {
+  await saveCosts(q, { products: [], settings: { freeShippingBoxnow: 3.1 } });
+  await add({ total: 12.9, courier: 'boxnow', deliveryType: 'boxnow_locker', officeId: 'boxnow:1840', officeText: 'BOX NOW – автомат (1840)' });
+  assert.equal((await getProfit(q, { from: today(), to: today() })).freeShipping, 3.1);
 });

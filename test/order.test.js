@@ -66,3 +66,10 @@ test('validateOrder accepts a missing name and an unrecognised phone (ConvertBui
   assert.equal(r.order.phone, '123');
   assert.equal(r.order.phoneNorm, '');
 });
+
+test('validateOrder accepts an order to a BOX NOW locker; the locker is required', () => {
+  const r = validateOrder({ ...base, delivery_type: 'boxnow_locker', office_id: 'boxnow:1840', office_text: 'BOX NOW – автомат New Avenue (1840), ул. Храбър Попов 14', city: 'София', post_code: '1700' });
+  assert.equal(r.ok, true);
+  assert.deepEqual([r.order.deliveryType, r.order.courier, r.order.officeId], ['boxnow_locker', 'boxnow', 'boxnow:1840']);
+  assert.deepEqual(validateOrder({ ...base, delivery_type: 'boxnow_locker', office_text: '' }), { ok: false, error: 'office required' });
+});

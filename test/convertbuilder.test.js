@@ -44,6 +44,8 @@ test('mapOrder infers delivery and status from ConvertBuilder fields', () => {
   assert.deepEqual([m({ shippingAddress: { address: 'СПИДИ – адрес: ул. Роза 5' } }).deliveryType, m({ shippingAddress: { address: 'СПИДИ – офис ВАРНА (79)' } }).deliveryType], ['speedy_address', 'speedy_office']);
   assert.equal(m({ shippingAddress: { address: 'ул. Роза 5' }, shippingName: 'До адрес speedy' }).deliveryType, 'speedy_address');
   assert.deepEqual([m({ shippingAddress: { address: '' }, shippingName: '' }).deliveryType, m({ shippingAddress: { address: '' }, shippingName: '' }).courier], ['other', 'other']);
+  assert.deepEqual([m({ shippingAddress: { address: 'BOX NOW – автомат New Avenue (1840), ул. Х' } }).deliveryType, m({ shippingAddress: { address: 'BOX NOW – автомат New Avenue (1840)' } }).courier], ['boxnow_locker', 'boxnow']);
+  assert.equal(m({ shippingAddress: { address: 'ж.к. Младост' }, shippingName: 'Автомат BOX NOW' }).deliveryType, 'boxnow_locker');
   assert.equal(m({ status: 'shipped' }).updateStatus, 'shipped');
   assert.equal(m({ status: 'completed' }).updateStatus, 'delivered');
   assert.equal(m({ status: 'canceled' }).updateStatus, 'cancelled');
