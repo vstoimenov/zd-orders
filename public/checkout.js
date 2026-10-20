@@ -71,6 +71,25 @@
     return h === '24/7' ? 'денонощно (24/7)' : h;
   }
 
+  /* ---- the map: a free library and free tiles (no keys), loaded only when the customer asks for it ---- */
+  var MAP_SCRIPT = 'https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/5.6.0/maplibre-gl.js';
+  var MAP_CSS = 'https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/5.6.0/maplibre-gl.css';
+  var MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
+  var MAP_MAX = 400; // markers at once: enough for a city view, light enough for a phone
+  /** Points with coordinates inside `bounds` ({south, west, north, east}), nearest to its centre first, at most `max`. */
+  function markerPoints(offices, bounds, max) {
+    var c = { lat: (bounds.south + bounds.north) / 2, lng: (bounds.west + bounds.east) / 2 }, out = [];
+    for (var i = 0; i < offices.length; i++) {
+      var o = offices[i];
+      if (typeof o.lat !== 'number' || typeof o.lng !== 'number') continue;
+      if (o.lat < bounds.south || o.lat > bounds.north || o.lng < bounds.west || o.lng > bounds.east) continue;
+      o._dc = distanceM(c, o);
+      out.push(o);
+    }
+    out.sort(function (a, b) { return a._dc - b._dc; });
+    return out.slice(0, max || MAP_MAX);
+  }
+
   /** "автомат " / "офис " before a name, unless the name already says it (Speedy: "… (АВТОМАТ)"). */
   function kindPrefix(o, capital) {
     if (o.isAutomat && /автомат/i.test(o.name || '')) return '';
@@ -233,7 +252,8 @@
     TOKEN: TOKEN, norm: norm, searchOffices: searchOffices, searchCities: searchCities, formatSelection: formatSelection,
     validateSelection: validateSelection, pickOptionIndex: pickOptionIndex, optionPrice: optionPrice, officeLabel: officeLabel,
     buildOrderPayload: buildOrderPayload, visitPayload: visitPayload, shippingView: shippingView, cartFrom: cartFrom, cartPayload: cartPayload,
-    distanceM: distanceM, distanceText: distanceText, nearestOffices: nearestOffices, hoursLine: hoursLine
+    distanceM: distanceM, distanceText: distanceText, nearestOffices: nearestOffices, hoursLine: hoursLine,
+    MAP_SCRIPT: MAP_SCRIPT, MAP_CSS: MAP_CSS, MAP_STYLE: MAP_STYLE, markerPoints: markerPoints
   };
   if (typeof window !== 'undefined' && window.__ZDO_TEST__) { window.__zdoCore = core; return; }
 
@@ -266,6 +286,15 @@
     '.zdo-tools{display:flex;gap:8px;margin:0 0 8px}',
     '.zdo-tool{flex:1;height:40px;border:1.5px solid #b0426b;border-radius:8px;background:#fff;color:#b0426b;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}',
     '.zdo-tool:disabled{opacity:.6;cursor:default}',
+    '.zdo-map{position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483000;background:#fff;display:flex;flex-direction:column;font-family:inherit;color:#3a2b2f}',
+    '.zdo-map-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #e8d3da;font-size:16px}',
+    '.zdo-map-head b{flex:1}.zdo-map-x{width:40px;height:40px;border:0;border-radius:8px;background:#f3e6ea;color:#3a2b2f;font-size:26px;line-height:1;cursor:pointer}',
+    '.zdo-map-note{padding:8px 14px;font-size:14px;color:#7a6a6f}.zdo-map-note:empty{display:none}',
+    '.zdo-map-canvas{flex:1;min-height:0}',
+    '.zdo-pin{width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#b0426b;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);cursor:pointer}',
+    '.zdo-pin.is-automat{background:#2563eb}.zdo-pin.is-me{width:16px;height:16px;border-radius:50%;transform:none;background:#16a34a;cursor:default}',
+    '.zdo-map .maplibregl-popup-content{font-family:inherit;font-size:14px;line-height:1.4;padding:12px 14px;border-radius:10px}',
+    '.zdo-map-pick{display:block;width:100%;margin-top:8px;height:38px;border:0;border-radius:8px;background:#b0426b;color:#fff;font-size:15px;font-weight:700;cursor:pointer}',
     '.zdo-note{padding:8px 2px;font-size:14px;color:#7a6a6f}',
     '.zdo-picked:not(:empty){padding:10px 12px;margin:0 0 8px;border-radius:8px;background:#f3faf4;border:1px solid #bfe0c6;font-size:14px;line-height:1.4}',
     '.zdo-picked button{border:0;background:none;color:#b0426b;text-decoration:underline;padding:0;margin-left:6px;cursor:pointer;font-size:14px}',
@@ -279,7 +308,7 @@
     return '<label class="zdo-opt"><input type="radio" name="zdo-type" value="' + type + '"><span>До ' + (lockersOnly ? '' : 'офис или ') + 'автомат на <b>' + name + '</b></span><span class="zdo-price" data-price="' + type + '"></span></label>' +
       '<div class="zdo-panel" data-for="' + type + '">' +
         '<div class="zdo-picked" data-role="' + courier + '-picked"></div>' +
-        '<div data-role="' + courier + '-pick"><div class="zdo-tools"><button type="button" class="zdo-tool" data-role="' + courier + '-locate">📍 Намери ме</button></div><div class="zdo-note" data-role="' + courier + '-geo" hidden></div>' +
+        '<div data-role="' + courier + '-pick"><div class="zdo-tools"><button type="button" class="zdo-tool" data-role="' + courier + '-locate">📍 Намери ме</button><button type="button" class="zdo-tool" data-role="' + courier + '-map">🗺 Виж на картата</button></div><div class="zdo-note" data-role="' + courier + '-geo" hidden></div>' +
           '<input class="zdo-input" data-role="' + courier + '-search" type="text" placeholder="Напишете град или ' + (lockersOnly ? 'адрес на автомат' : 'име на офис') + '" autocomplete="off"><div class="zdo-list" data-role="' + courier + '-list"></div>' +
           '<a href="#" class="zdo-link" data-role="' + courier + '-manual">Не намирам ' + where + 'а си – въведи ръчно</a></div>' +
         '<div data-role="' + courier + '-fallback" hidden><div class="zdo-note">Въведете ' + where + 'а ръчно:</div>' +
@@ -406,6 +435,114 @@
     list.innerHTML = found.length ? (norm(q) ? '' : '<div class="zdo-note">Най-близките до вас:</div>') + found.map(officeItem).join('')
       : '<div class="zdo-note">Няма намерен ' + noun + '. Опитайте само с името на града.</div>';
   }
+  var mapLib = null; // the loading library, shared by every open of the map
+  function loadMap() {
+    if (mapLib) return mapLib;
+    mapLib = new Promise(function (resolve, reject) {
+      if (window.maplibregl) return resolve(window.maplibregl);
+      var css = document.createElement('link'); css.rel = 'stylesheet'; css.href = MAP_CSS; document.head.appendChild(css);
+      var s = document.createElement('script'); s.src = window.__zdoMapScript || MAP_SCRIPT; s.async = true;
+      var timer = setTimeout(fail, 15000);
+      function fail() { clearTimeout(timer); mapLib = null; reject(new Error('map script')); }
+      s.onload = function () { clearTimeout(timer); if (window.maplibregl) resolve(window.maplibregl); else fail(); };
+      s.onerror = fail;
+      document.head.appendChild(s);
+    });
+    return mapLib;
+  }
+  var mapUi = null; // { root, map, markers, courier, overflow, onKey }
+  var MAP_FAIL = 'Картата не се зареди — ползвайте търсенето или „Намери ме“.';
+  var COURIER_NAME = { econt: 'Еконт', speedy: 'Спиди', boxnow: 'BOX NOW' };
+  function closeMap() {
+    if (!mapUi) return;
+    try { if (mapUi.map) mapUi.map.remove(); } catch (e) { /* already gone */ }
+    if (mapUi.root.parentNode) mapUi.root.parentNode.removeChild(mapUi.root);
+    document.body.style.overflow = mapUi.overflow;
+    document.removeEventListener('keydown', mapUi.onKey);
+    mapUi = null;
+  }
+  /** Where the map opens: the customer's location, else the city typed in the search, else Bulgaria. */
+  function mapView(courier) {
+    if (state.geo) {
+      // the customer and the 5 nearest points in one frame (a city view that is never empty)
+      var near = nearestOffices(offices[courier] || [], state.geo, 5).filter(function (o) { return o._dist != null; });
+      if (!near.length) return { center: [state.geo.lng, state.geo.lat], zoom: 13 };
+      var s = state.geo.lat, n = s, w = state.geo.lng, e = w;
+      near.forEach(function (o) { s = Math.min(s, o.lat); n = Math.max(n, o.lat); w = Math.min(w, o.lng); e = Math.max(e, o.lng); });
+      return { bounds: [[w, s], [e, n]] };
+    }
+    var q = el(courier + '-search').value, hit = norm(q) ? searchOffices(offices[courier] || [], q, 1)[0] : null;
+    if (hit && typeof hit.lat === 'number') return { center: [hit.lng, hit.lat], zoom: 12 };
+    return { center: [25.48, 42.73], zoom: 6.3 };
+  }
+  function popupHtml(o) {
+    var sub = [o.address, o.city, hoursLine(o)].filter(Boolean);
+    return '<b>' + esc(kindPrefix(o, true) + o.name) + '</b>' + (sub.length ? '<br>' + esc(sub.join(' · ')) : '') +
+      (state.geo && o._dist != null ? '<br>' + esc(distanceText(o._dist)) + ' от вас' : '') +
+      '<button type="button" class="zdo-map-pick" data-pick="' + esc(o.id) + '">Избери</button>';
+  }
+  function placeMarkers(lib) {
+    var ui = mapUi;
+    if (!ui || !ui.map) return;
+    ui.markers.forEach(function (m) { m.remove(); });
+    ui.markers = [];
+    var b = ui.map.getBounds();
+    var pts = markerPoints(offices[ui.courier] || [], { south: b.getSouth(), west: b.getWest(), north: b.getNorth(), east: b.getEast() }, MAP_MAX);
+    pts.forEach(function (o) {
+      if (state.geo) o._dist = distanceM(state.geo, o);
+      var pin = document.createElement('div');
+      pin.className = 'zdo-pin' + (o.isAutomat ? ' is-automat' : '');
+      pin.title = kindPrefix(o, true) + o.name;
+      var m = new lib.Marker({ element: pin, anchor: 'bottom' }).setLngLat([o.lng, o.lat])
+        .setPopup(new lib.Popup({ offset: 24, maxWidth: '280px' }).setHTML(popupHtml(o))).addTo(ui.map);
+      ui.markers.push(m);
+    });
+  }
+  function openMap(courier) {
+    closeMap();
+    var noun = courier === 'boxnow' ? 'Автомати' : 'Офиси и автомати';
+    var wrap = document.createElement('div');
+    wrap.className = 'zdo-map';
+    wrap.innerHTML = '<div class="zdo-map-head"><b>' + noun + ' на ' + COURIER_NAME[courier] + '</b><button type="button" class="zdo-map-x" data-role="map-close" aria-label="Затвори">×</button></div>' +
+      '<div class="zdo-map-note">Зареждаме картата…</div><div class="zdo-map-canvas"></div>';
+    var ui = { root: wrap, map: null, markers: [], courier: courier, overflow: document.body.style.overflow, onKey: function (e) { if (e.key === 'Escape') closeMap(); } };
+    mapUi = ui;
+    document.body.style.overflow = 'hidden';
+    document.body.appendChild(wrap);
+    document.addEventListener('keydown', ui.onKey);
+    var note = wrap.querySelector('.zdo-map-note');
+    wrap.addEventListener('click', function (e) {
+      var t = e.target.closest('button');
+      if (!t) return;
+      if (t.getAttribute('data-role') === 'map-close') closeMap();
+      else if (t.hasAttribute('data-pick')) pickFromMap(courier, t.getAttribute('data-pick'));
+    });
+    loadMap().then(function (lib) {
+      if (mapUi !== ui) return; // closed while loading
+      var view = mapView(courier), map;
+      try {
+        var opts = { container: wrap.querySelector('.zdo-map-canvas'), style: MAP_STYLE, attributionControl: { compact: true } };
+        if (view.bounds) { opts.bounds = view.bounds; opts.fitBoundsOptions = { padding: 70, maxZoom: 15 }; } else { opts.center = view.center; opts.zoom = view.zoom; }
+        map = new lib.Map(opts);
+      } catch (err) { note.textContent = MAP_FAIL; return; }
+      ui.map = map;
+      map.addControl(new lib.NavigationControl({ showCompass: false }));
+      // the view has no size until the first frame: markers go on at load (or after a moment, if the tiles never come) and on every move
+      map.on('load', function () { note.textContent = ''; placeMarkers(lib); });
+      map.on('error', function () { if (note.textContent) note.textContent = MAP_FAIL; }); // tiles failed: markers still work
+      map.on('moveend', function () { placeMarkers(lib); });
+      setTimeout(function () { if (mapUi === ui && !ui.markers.length) placeMarkers(lib); }, 1500);
+      if (state.geo) { var me = document.createElement('div'); me.className = 'zdo-pin is-me'; me.title = 'Вие сте тук'; new lib.Marker({ element: me }).setLngLat([state.geo.lng, state.geo.lat]).addTo(map); }
+    }, function () { if (mapUi === ui) note.textContent = MAP_FAIL; });
+  }
+  function pickFromMap(courier, id) {
+    var o = (offices[courier] || []).filter(function (x) { return x.id === id; })[0];
+    if (!o) return;
+    state[courier] = o; state[courier + 'Fallback'] = false;
+    el(courier + '-search').value = ''; el(courier + '-list').innerHTML = '';
+    closeMap();
+    render(); sync(); showError('');
+  }
   var GEO_FAIL = 'Браузърът не даде местоположение — напишете град или офис.';
   /** „Намери ме“: asks the browser once, remembers the answer for every courier; any failure only shows a note. */
   function locate(courier) {
@@ -514,6 +651,9 @@
         sync(); el('addr-street').focus();
       } else if (/-locate$/.test(role || '')) {
         locate(role.split('-')[0]);
+      } else if (/-map$/.test(role || '')) {
+        var mc2 = role.split('-')[0];
+        (offices[mc2] ? Promise.resolve() : loadOffices(mc2)).then(function () { openMap(mc2); }, function () { officesFailed(mc2); });
       } else if (role === 'econt-manual' || role === 'speedy-manual' || role === 'boxnow-manual') {
         e.preventDefault();
         var mc = role.split('-')[0];

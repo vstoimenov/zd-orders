@@ -234,3 +234,25 @@ test('the hours line and the address never leak into what ConvertBuilder stores'
   assert.equal(plain(core.formatSelection({ type: 'econt_office', office: o })).address, 'ЕКОНТ – автомат Тракия (2), бул. Освобождение 31');
   assert.equal(core.officeLabel(o), 'Пловдив – автомат Тракия');
 });
+
+/* ---- the map: loaded only on tap, free tiles, markers limited to the view ---- */
+test('the map library and style are pinned (no keys, no Google)', () => {
+  assert.equal(core.MAP_SCRIPT, 'https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/5.6.0/maplibre-gl.js');
+  assert.equal(core.MAP_CSS, 'https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/5.6.0/maplibre-gl.css');
+  assert.equal(core.MAP_STYLE, 'https://tiles.openfreemap.org/styles/liberty');
+});
+
+test('markerPoints keeps the points inside the view, nearest to its centre first, capped, without coordinate-less points', () => {
+  const sofia = { south: 42.60, west: 23.20, north: 42.80, east: 23.45 };
+  const pts = [
+    { id: 'far', lat: 42.14, lng: 24.75 },
+    { id: 'edge', lat: 42.79, lng: 23.44 },
+    { id: 'centre', lat: 42.70, lng: 23.32 },
+    { id: 'none' },
+    { id: 'null', lat: null, lng: null },
+  ];
+  assert.deepEqual(plain(core.markerPoints(pts, sofia, 400)).map((o) => o.id), ['centre', 'edge']);
+  assert.deepEqual(plain(core.markerPoints(pts, sofia, 1)).map((o) => o.id), ['centre']);
+  const many = Array.from({ length: 500 }, (_, i) => ({ id: String(i), lat: 42.65 + (i % 50) * 0.002, lng: 23.25 + Math.floor(i / 50) * 0.01 }));
+  assert.equal(core.markerPoints(many, sofia, 400).length, 400);
+});
