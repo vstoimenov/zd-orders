@@ -81,6 +81,7 @@ test('saveBoxnow refuses a wrong secret, an unknown warehouse, a missing size fo
   await assert.rejects(withFetch(boxnowApi().impl, () => saveBoxnow(q, SHOP, { ...body, originId: 'W9' })), /склад/);
   await assert.rejects(withFetch(boxnowApi().impl, () => saveBoxnow(q, SHOP, { ...body, originType: 'any-apm', size: '' })), /размер/);
   await assert.rejects(withFetch(boxnowApi().impl, () => saveBoxnow(q, SHOP, { ...body, senderPhone: '' })), /телефон/);
+  await assert.rejects(withFetch(boxnowApi().impl, () => saveBoxnow(q, SHOP, { ...body, senderEmail: '' })), /имейл/, 'BOX NOW needs an email for customers who gave none');
   await withFetch(boxnowApi().impl, () => saveBoxnow(q, SHOP, { ...body, originType: 'any-apm', size: '2' }));
   assert.deepEqual((await boxnowStatus(q, SHOP)).sender, { type: 'any-apm', text: 'Пускате пратките в автомат на BOX NOW' });
 });
@@ -120,7 +121,7 @@ test('BOX NOW: a clear refusal frees the order; an unclear answer blocks it unti
     () => createWaybill(q, { orderId: a, scopeShopId: SHOP, input: {} })), /наложен платеж/);
   assert.equal((await orderById(a)).waybillState, '', 'free for another try');
   await assert.rejects(withFetch(boxnowApi({ '/delivery-requests': () => reply(502, 'Bad gateway') }).impl,
-    () => createWaybill(q, { orderId: b, scopeShopId: SHOP, input: {} })), /Partner Portal/);
+    () => createWaybill(q, { orderId: b, scopeShopId: SHOP, input: {} })), new RegExp(`Partner Portal.*${b.slice(0, 8)}-1`, 's'), 'tells which order number to look for');
   assert.equal((await orderById(b)).waybillState, 'unknown');
 });
 
@@ -148,6 +149,9 @@ test('BOX NOW cancel frees the order; the nightly sync moves delivered and notes
   assert.equal(cancel.calls.at(-1).path, '/api/v1/parcels/333:cancel');
   const oc = await orderById(c);
   assert.deepEqual([oc.shipment, oc.status], [null, 'new']);
+  const again = boxnowApi();
+  await withFetch(again.impl, () => createWaybill(q, { orderId: c, scopeShopId: SHOP, input: {} }));
+  assert.equal(again.calls.find((x) => x.path === '/api/v1/delivery-requests').body.orderNumber, `${c.slice(0, 8)}-2`, 'after a cancel BOX NOW gets a new order number');
 });
 
 test('integrations: BOX NOW waybill settings through the admin, status without the secret; the cron syncs it', async () => {
@@ -172,4 +176,13 @@ test('integrations: BOX NOW waybill settings through the admin, status without t
   await withFetch(async (url, init) => (String(url).startsWith('https://api-production.boxnow.bg/') ? tr.impl(url, init) : reply(500, {})),
     () => refresh(fakeReq({ headers: { authorization: 'Bearer cron' } }), res));
   assert.deepEqual(json(res).boxnowWaybills, { 'adhdbg.eu': { checked: 1, delivered: 1, returned: 0 } });
+});
+
+test('test mode: the waybill goes to BOX NOW\'s test locker and the window says so', async () => {
+  await connect({ demo: true });
+  const id = await addOrder();
+  assert.match((await waybillDefaults(q, { orderId: id, scopeShopId: SHOP })).officeText, /тестов автомат на BOX NOW/);
+  const f = boxnowApi();
+  await withFetch(f.impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} }));
+  assert.equal(f.calls.find((c) => c.path === '/api/v1/delivery-requests').body.destination.locationId, '5365');
 });

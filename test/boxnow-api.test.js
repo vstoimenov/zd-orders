@@ -1,7 +1,7 @@
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  BOXNOW_HOSTS, boxnowCall, clearBoxnowTokens, getProfile, buildDelivery, createDelivery, cancelParcel, labelPdf, shipmentStatuses,
+  BOXNOW_HOSTS, BOXNOW_STAGE_LOCKER, boxnowCall, clearBoxnowTokens, getProfile, buildDelivery, createDelivery, cancelParcel, labelPdf, shipmentStatuses,
 } from '../lib/boxnow-api.js';
 
 const live = { username: 'cid', password: 'sec', demo: false };
@@ -69,7 +69,8 @@ test('getProfile lists the shop\'s warehouses and whether it may drop parcels in
 
 test('buildDelivery: COD order from a warehouse to the chosen locker, phones in +359 form', () => {
   const r = buildDelivery(order, warehouse, {});
-  assert.match(r.orderNumber, /^6f1c2a9e-[0-9a-z]+$/);
+  assert.equal(r.orderNumber, '6f1c2a9e-1', 'the same number on every try, so BOX NOW refuses a second parcel (P410)');
+  assert.equal(buildDelivery({ ...order, waybillAttempt: 1 }, warehouse, {}).orderNumber, '6f1c2a9e-2', 'a new number only after a cancelled parcel');
   assert.deepEqual({ ...r, orderNumber: 'N' }, {
     orderNumber: 'N', invoiceValue: '22.57', paymentMode: 'cod', amountToBeCollected: '22.57', allowReturn: true,
     origin: { locationId: 'W1', contactName: 'Профитбранд', contactNumber: '+359899111222', contactEmail: 'shop@x.bg' },
@@ -145,4 +146,31 @@ test('statuses: delivered, returned, waiting in the locker since the first arriv
     { number: '3', status: null, text: 'В автомата, чака получателя', atOffice: '2026-10-19T09:30:00.000Z' },
     { number: '4', status: null, text: 'На път', atOffice: null },
   ]);
+});
+
+test('test mode sends the parcel to BOX NOW\'s test locker (stage knows no real lockers)', () => {
+  assert.equal(BOXNOW_STAGE_LOCKER, '5365');
+  assert.equal(buildDelivery(order, { ...warehouse, demo: true }, {}).destination.locationId, '5365');
+  assert.equal(buildDelivery(order, { ...warehouse, demo: false }, {}).destination.locationId, '1840');
+});
+
+test('statuses ask for cash-on-delivery parcels first, skip a parcel BOX NOW fails on, stop on a wrong login', async () => {
+  const f = boxnow({
+    '/api/v1/parcels': ({ query }) => {
+      if (query.parcelId === '1') return reply(500, 'oops');
+      if (query.parcelId === '2') return reply(200, query.paymentMode === 'cod' ? { data: [{ id: '2', state: 'delivered', events: [] }] } : { data: [] });
+      return reply(200, { data: [] });
+    },
+  });
+  assert.deepEqual(await shipmentStatuses(live, ['1', '2'], f.impl), [{ number: '2', status: 'delivered', text: 'Доставена', atOffice: null }]);
+  const asked = f.calls.filter((c) => c.path === '/api/v1/parcels' && c.query.parcelId === '2');
+  assert.deepEqual(asked.map((c) => c.query.paymentMode), ['cod'], 'one call for a COD parcel');
+  clearBoxnowTokens();
+  const bad = boxnow({ '/api/v1/auth-sessions': () => reply(401, { message: 'bad' }) });
+  await assert.rejects(shipmentStatuses(live, ['1'], bad.impl), /Client ID или Client Secret/);
+});
+
+test('a disabled BOX NOW account says so at login', async () => {
+  const f = boxnow({ '/api/v1/auth-sessions': () => reply(403, { code: 'X403', message: 'Account disabled' }) });
+  await assert.rejects(boxnowCall(live, { path: '/api/v1/origins' }, f.impl), /спрян/);
 });

@@ -118,7 +118,9 @@
       any = any || available[t];
     });
     if (any) return { mode: 'normal', available: available };
-    if (!labels.length || known) return { mode: 'none', available: { econt_office: false, speedy_office: false, speedy_address: false, boxnow_locker: false } };
+    // only methods we know but may not show (a switched-off BOX NOW): a message; an unknown method among them: the classic choices
+    var allKnown = labels.every(function (l) { return TYPES.some(function (t) { return OPTION_PATTERN[t].test(l); }); });
+    if (!labels.length || (known && allKnown)) return { mode: 'none', available: { econt_office: false, speedy_office: false, speedy_address: false, boxnow_locker: false } };
     // BOX NOW only when the shop offers it by name: a shop without a BOX NOW contract must never get locker orders
     return { mode: 'all', available: { econt_office: true, speedy_office: true, speedy_address: true, boxnow_locker: false } };
   }
@@ -370,12 +372,12 @@
 
   function officesFailed(courier) { state[courier + 'Fallback'] = true; render(); sync(); loadCities().then(sync, function () {}); }
 
-  var mountedAt = 0, noShippingSent = false, boxnowOn = false, boxnowAsked = false;
+  var mountedAt = 0, noShippingSent = false, boxnowOn = false, boxnowAsked = false, boxnowPending = false;
   /** Asked once, only when the page offers a BOX NOW method: is BOX NOW switched on for this shop in Ordyx? */
   function checkBoxnow(labels) {
     if (boxnowAsked || pickOptionIndex(labels, 'boxnow_locker') < 0) return;
-    boxnowAsked = true;
-    loadOffices('boxnow').then(function () { boxnowOn = true; fillPrices(); }, function () {});
+    boxnowAsked = true; boxnowPending = true;
+    loadOffices('boxnow').then(function () { boxnowOn = true; }, function () {}).then(function () { boxnowPending = false; fillPrices(); });
   }
   var NO_SHIPPING_GRACE_MS = 3000; // ConvertBuilder may still be loading its methods (slow phones)
   function fillPrices() {
@@ -385,7 +387,7 @@
       var i = pickOptionIndex(o.labels, t);
       root.querySelector('[data-price="' + t + '"]').textContent = i >= 0 ? optionPrice(o.labels[i]) : '';
     });
-    var waiting = view.mode === 'none' && Date.now() - mountedAt < NO_SHIPPING_GRACE_MS;
+    var waiting = view.mode === 'none' && (Date.now() - mountedAt < NO_SHIPPING_GRACE_MS || boxnowPending); // still asking whether BOX NOW is on
     var none = view.mode === 'none' && !waiting;
     [].forEach.call(root.querySelectorAll('.zdo-opt input'), function (r) { r.closest('.zdo-opt').hidden = view.mode === 'none' || !view.available[r.value]; });
     if (view.mode === 'none') [].forEach.call(root.querySelectorAll('.zdo-panel'), function (p) { p.classList.remove('is-on'); });

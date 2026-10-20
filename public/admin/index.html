@@ -1088,7 +1088,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
   function shipmentCell(o, i) {
     var w = o.shipment;
     if (w) {
-      return '<span class="wb">📦 <a href="' + esc(w.trackUrl || '#') + '" target="_blank" rel="noopener" title="Проследи пратката">' + esc(w.number) + '</a>' + (w.demo ? '<span class="tag">тест</span>' : '') +
+      return '<span class="wb">📦 ' + (w.trackUrl ? '<a href="' + esc(w.trackUrl) + '" target="_blank" rel="noopener" title="Проследи пратката">' + esc(w.number) + '</a>' : esc(w.number)) + (w.demo ? '<span class="tag">тест</span>' : '') +
         (w.price != null ? ' · ' + esc(w.price.toFixed(2)) + ' ' + esc(cur(w.currency)) : '') +
         (w.status ? '<br><span class="muted">' + esc(w.status) + '</span>' : '') +
         (w.atOfficeDay ? '<br>' + (w.atOfficeDay >= 4
@@ -1618,7 +1618,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     renderBoxnow(s.boxnow || { offices: 0, updatedAt: null, checkout: false }, s.boxnowApi || {});
   }
   /* ---- BOX NOW: автомати в чекаута (включва се за всеки магазин) ---- */
-  var lastBoxnow = {}, lastBoxnowApi = {}, bProfileFor = null;
+  var lastBoxnow = {}, lastBoxnowApi = {};
   function renderBoxnow(b, a) {
     lastBoxnow = b; lastBoxnowApi = a || {};
     chip('iBoxnowApiChip', lastBoxnowApi.connected, 'Свързан', lastBoxnowApi.configured ? 'Неактивен' : 'Не е свързан');
@@ -1642,7 +1642,6 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     $('bSize').value = String(a.size || 2); $('bName').value = a.senderName || ''; $('bPhone').value = a.senderPhone || ''; $('bEmail').value = a.senderEmail || '';
     $('bWeight').value = String(a.weight == null ? 1 : a.weight).replace('.', ','); $('bDesc').value = a.description || '';
     $('bReturn').checked = a.allowReturn !== false; $('bActive').checked = a.active !== false;
-    bProfileFor = a.sender ? (a.clientId || '') + (a.demo ? '|demo' : '') : null;
     boxnowOriginToggle();
     $('boxnowModal').hidden = false;
   });
@@ -1656,7 +1655,6 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
       var opts = p.warehouses.map(function (w) { return '<option value="' + esc(w.id) + '"' + (w.id === keep ? ' selected' : '') + '>Склад: ' + esc(w.name + (w.address ? ', ' + w.address : '')) + '</option>'; });
       if (p.anyApmId) opts.push('<option value="any-apm"' + (keep === 'any-apm' ? ' selected' : '') + '>Пускам пратките в автомат на BOX NOW</option>');
       $('bOrigin').innerHTML = opts.length ? opts.join('') : '<option value="">Профилът няма склад — питайте BOX NOW</option>';
-      bProfileFor = c.clientId + (c.demo ? '|demo' : '');
       $('bProfile').textContent = 'Профилът е зареден ✓';
       boxnowOriginToggle();
     }).catch(function (e) { showErr('bProfile', e); });

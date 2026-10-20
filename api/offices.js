@@ -23,8 +23,9 @@ export default async function handler(req, res) {
 
 /** BOX NOW lockers only for a shop that switched BOX NOW on in Ordyx (cached briefly so switching shows within minutes). */
 async function boxnowFor(q, host, res) {
-  res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
   const shopId = host ? await shopIdForHost(q, String(host).toLowerCase()) : null;
   const on = shopId ? (await getIntegration(q, 'boxnow', shopId)).config.checkout === true : false;
-  return on ? { offices: await listOffices(q, 'boxnow'), enabled: true } : { offices: [], enabled: false };
+  const answer = on ? { offices: await listOffices(q, 'boxnow'), enabled: true } : { offices: [], enabled: false };
+  res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+  return answer;
 }

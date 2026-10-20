@@ -160,6 +160,7 @@ test('BOX NOW: found by its ConvertBuilder method, shown next to Econt, written 
   assert.deepEqual(plain(core.shippingView(labels, { boxnow: true })), { mode: 'normal', available: { econt_office: true, speedy_office: false, speedy_address: false, boxnow_locker: true } });
   assert.equal(plain(core.shippingView(['Автомат BOX NOW 3,50 €'])).mode, 'none', 'only BOX NOW offered but not switched on: no made-up choices');
   assert.equal(plain(core.shippingView(['Автомат BOX NOW 3,50 €'], { boxnow: true })).mode, 'normal');
+  assert.deepEqual(plain(core.shippingView(['Куриер до врата €5.00', 'Автомат BOX NOW 3,50 €'])), { mode: 'all', available: { econt_office: true, speedy_office: true, speedy_address: true, boxnow_locker: false } }, 'an unknown method next to a switched-off BOX NOW: the classic choices as before');
   assert.deepEqual(plain(core.formatSelection({ type: 'boxnow_locker', office: locker })),
     { address: 'BOX NOW – автомат New Avenue, ул. Проф. Храбър Попов 14, София - 24/7 (1840), ул. Проф. арх. Храбър Попов №14', city: 'София', zip: '1700', officeId: 'boxnow:1840' });
   assert.deepEqual(plain(core.formatSelection({ type: 'boxnow_locker', office: null, fallback: true, city: 'Варна', officeText: 'до Лидл' })),
