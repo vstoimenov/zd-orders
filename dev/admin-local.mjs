@@ -10,6 +10,7 @@ import { insertOrder, saveNekorekten, updateStatus } from '../lib/orders-repo.js
 import { saveIntegration } from '../lib/integrations-repo.js';
 import adminRouter from '../api/admin/[route].js';
 import officesApi from '../api/offices.js';
+import { demoFetch } from '../lib/demo/fakes.js';
 
 process.env.ADMIN_PASSWORD = 'local-test';
 process.env.ADMIN_SECRET = 'local-secret';
@@ -22,6 +23,7 @@ const realFetch = globalThis.fetch;
 globalThis.fetch = async (url, init) => {
   const u = new URL(String(url));
   if (u.hostname === 'api.speedy.bg') return fakeSpeedy(u.pathname.replace('/v1/', ''), JSON.parse(init.body));
+  if (u.hostname.endsWith('.boxnow.bg') && u.hostname.startsWith('api-')) return demoFetch(realFetch)(url, init); // sample BOX NOW Partner API
   if (u.hostname !== 'graph.facebook.com') return realFetch(url, init);
   const ok = (d) => ({ ok: true, status: 200, json: async () => d });
   if (u.pathname.endsWith('/me/adaccounts')) return ok({ data: [
@@ -107,6 +109,9 @@ await saveIntegration(q, 'speedy', {
     senderPhone: '0888888888', senderContact: 'Иван Петров', payer: 'receiver', weight: 1, description: '', review: 'OPEN', serviceId: 505, serviceName: 'СТАНДАРТ 24 ЧАСА', paperSize: 'A4', active: true, connectedAt: new Date().toISOString() },
   secret: JSON.stringify({ username: '999111', password: 'local-speedy' }),
 });
+
+await q(`insert into zd.offices (id, courier, code, name, city, post_code, address, is_automat) values ('boxnow:1840', 'boxnow', '1840', 'New Avenue, ул. Проф. Храбър Попов 14, София - 24/7', 'София', '1700', 'ул. Проф. арх. Храбър Попов №14', true)`);
+await insertOrder(q, { ...base, cbOrderId: 'L6', name: 'Ивана Петрова', phone: '0899123456', phoneNorm: '+359899123456', courier: 'boxnow', deliveryType: 'boxnow_locker', officeId: 'boxnow:1840', officeText: 'BOX NOW – автомат New Avenue (1840), ул. Проф. арх. Храбър Попов №14', city: 'София', postCode: '1700', items: [{ name: 'Да се заобичаме с думи', qty: 1, price: 18.5 }], total: 22.57 });
 
 // a sample client who sees only "Книги за деца" (local only): local-client@example.com / client-pass-1
 { const { createClient, acceptInvite } = await import('../lib/users.js'); const c = await createClient(q, { email: 'local-client@example.com', name: 'Клиент Книги', shopIds: [kids.id] }); await acceptInvite(q, c.token, 'client-pass-1'); }

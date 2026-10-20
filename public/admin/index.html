@@ -411,7 +411,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
         <div class="igrid">
           <div class="icard"><div class="tile econt">E<img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Еконт</b> <span class="chip ok">активен</span><div class="muted">Куриерски услуги и автомати</div><div class="muted" id="iEcont"></div><div class="muted" id="iEcontApiLine"></div></div><button type="button" class="primary" id="iEcontOpen">+ Товарителници</button></div>
           <div class="icard"><div class="tile speedy">S<img src="https://www.google.com/s2/favicons?domain=speedy.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Спиди</b> <span class="chip ok">активен</span><div class="muted">Експресни куриерски доставки</div><div class="muted" id="iSpeedy"></div><div class="muted" id="iSpeedyApiLine"></div></div><button type="button" class="primary" id="iSpeedyOpen">+ Товарителници</button></div>
-          <div class="icard"><div class="tile boxnow">BN<img src="https://www.google.com/s2/favicons?domain=boxnow.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>BOX NOW</b> <span class="chip" id="iBoxnowChip">изключен</span><div class="muted">Автомати за пратки</div><div class="muted" id="iBoxnow"></div></div><button type="button" class="primary" id="iBoxnowOpen">+ Включи</button></div>
+          <div class="icard"><div class="tile boxnow">BN<img src="https://www.google.com/s2/favicons?domain=boxnow.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>BOX NOW</b> <span class="chip" id="iBoxnowChip">изключен</span><div class="muted">Автомати за пратки</div><div class="muted" id="iBoxnow"></div><div class="muted" id="iBoxnowApiLine"></div></div><button type="button" class="primary" id="iBoxnowOpen">+ Включи</button></div>
           <div class="icard"><div class="tile pigeon">PE<img src="https://www.google.com/s2/favicons?domain=pigeonexpress.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Pigeon Express</b> <span class="chip">скоро</span><div class="muted">Куриерски услуги</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
         </div>
       </div>
@@ -843,8 +843,29 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
           Клиентите избират автомат от списъка (<span id="bBoxnowCount">—</span> автомата в цялата страна), а вие виждате избрания автомат в поръчката.</div>
         <label class="check"><input type="checkbox" id="bCheckout"> Покажи BOX NOW в чекаута на този магазин</label>
         <div class="actions"><button type="button" class="primary" id="bSave">Запази</button><span class="muted" id="bInfo"></span></div>
-        <h3 style="margin:16px 0 6px">Товарителници</h3>
-        <div class="muted">Скоро: товарителници за BOX NOW с един бутон от поръчката. Дотогава ги създавайте в Partner Portal на BOX NOW.</div>
+        <h3 style="margin:18px 0 6px">Товарителници <span class="chip" id="iBoxnowApiChip"></span></h3>
+        <div class="tip">💡 Нужни са <b>Client ID и Client Secret</b> за Partner API — дава ги BOX NOW при регистрация (integrationsupport@boxnow.bg). Тайната се пази криптирана и не се показва никъде.<br>
+          Пратките са <b>истински</b> и се таксуват по договора ви с BOX NOW. За проба включете „Тестов режим“ (с тестовите данни от BOX NOW).</div>
+        <div class="fgrid">
+          <label>Client ID<input type="text" id="bId" autocomplete="off"></label>
+          <label>Client Secret<input type="password" id="bSecret" autocomplete="new-password" placeholder="Client Secret"></label>
+          <label class="check"><input type="checkbox" id="bDemo"> Тестов режим (пратките не са истински)</label>
+          <div class="actions" style="margin:0"><button type="button" class="ghost" id="bLoad">Зареди профила</button><span class="muted" id="bProfile"></span></div>
+        </div>
+        <h3 style="margin:10px 0">Откъде тръгват пратките</h3>
+        <div class="fgrid">
+          <label>Място на изпращане<select id="bOrigin"><option value="">— натиснете „Зареди профила“ —</option></select></label>
+          <label id="bSizeWrap" hidden>Размер по подразбиране<select id="bSize"><option value="1">Малка (до 8 см височина)</option><option value="2" selected>Средна (до 17 см)</option><option value="3">Голяма (до 36 см)</option></select></label>
+          <label>Име на подателя<input type="text" id="bName" maxlength="80" placeholder="магазинът или фирмата"></label>
+          <label>Телефон на подателя<input type="tel" id="bPhone" maxlength="30" placeholder="0888…"></label>
+          <label>Имейл на подателя<input type="email" id="bEmail" maxlength="120" placeholder="ползва се и за клиенти без имейл"></label>
+          <label>Тегло по подразбиране (кг)<input type="text" inputmode="decimal" id="bWeight" value="1"></label>
+          <label style="grid-column:1/-1">Описание по подразбиране<input type="text" id="bDesc" maxlength="100" placeholder="по подразбиране — продуктите от поръчката"></label>
+          <label class="check"><input type="checkbox" id="bReturn" checked> Неполучените пратки се връщат към мен</label>
+          <label class="check"><input type="checkbox" id="bActive" checked> Активни товарителници</label>
+        </div>
+        <div class="actions"><button type="button" class="primary" id="bSaveWb">Запази товарителниците</button><button type="button" class="ghost" id="bSync">Провери статусите</button></div>
+        <div class="muted" id="bWbInfo"></div>
       </div>
     </div>
   </div>
@@ -893,10 +914,11 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
         <div class="fgrid">
           <label>Наложен платеж<input type="text" inputmode="decimal" id="wbCod"></label>
           <label>Тегло (кг)<input type="text" inputmode="decimal" id="wbWeight"></label>
-          <label>Брой пакети<input type="number" min="1" max="10" id="wbPacks"></label>
-          <label>Доставката се плаща от<select id="wbPayer"><option value="receiver">Получателя</option><option value="sender">Мен (подателя)</option></select></label>
+          <label id="wbPacksWrap">Брой пакети<input type="number" min="1" max="10" id="wbPacks"></label>
+          <label id="wbSizeWrap" hidden>Размер на пратката<select id="wbSize"><option value="">Определя BOX NOW (от склад)</option><option value="1">Малка (до 8 см височина)</option><option value="2">Средна (до 17 см)</option><option value="3">Голяма (до 36 см)</option></select></label>
+          <label id="wbPayerWrap">Доставката се плаща от<select id="wbPayer"><option value="receiver">Получателя</option><option value="sender">Мен (подателя)</option></select></label>
           <label style="grid-column:1/-1">Описание<input type="text" id="wbDesc" maxlength="100"></label>
-          <label class="check"><input type="checkbox" id="wbReview"> Преглед преди плащане</label>
+          <label class="check" id="wbReviewWrap"><input type="checkbox" id="wbReview"> Преглед преди плащане</label>
         </div>
         <div class="actions"><button type="button" class="ghost" id="wbCalc">Изчисли цена</button><button type="button" class="primary" id="wbCreate">Създай товарителница</button></div>
         <div class="wbprice" id="wbInfo"></div>
@@ -1076,11 +1098,11 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
         '<a href="#" data-wbcancel="' + i + '">Анулирай</a></span>';
     }
     if (o.waybillState === 'unknown') {
-      var site = o.courier === 'speedy' ? ['https://www.myspeedy.bg', 'MySpeedy'] : ['https://ee.econt.com', 'e-Econt'];
+      var site = o.courier === 'speedy' ? ['https://www.myspeedy.bg', 'MySpeedy'] : o.courier === 'boxnow' ? ['https://boxnow.bg', 'Partner Portal на BOX NOW'] : ['https://ee.econt.com', 'e-Econt'];
       return '<span class="wb warn">⚠️ Не е ясно дали товарителницата е създадена — проверете в <a href="' + site[0] + '" target="_blank" rel="noopener">' + site[1] + '</a>.<br><a href="#" data-wbrelease="' + i + '">Освободи (няма товарителница)</a></span>';
     }
     if (o.waybillState === 'creating') return '<span class="wb muted">Товарителницата се създава…</span>';
-    return (o.courier === 'econt' || o.courier === 'speedy') && ['new', 'confirmed', 'shipped'].indexOf(o.status) >= 0 ? '<button type="button" class="wbbtn" data-wb="' + i + '">Създай товарителница</button>' : '';
+    return ['econt', 'speedy', 'boxnow'].indexOf(o.courier) >= 0 && ['new', 'confirmed', 'shipped'].indexOf(o.status) >= 0 ? '<button type="button" class="wbbtn" data-wb="' + i + '">Създай товарителница</button>' : '';
   }
   function render() {
     $('count').textContent = total + (total === 1 ? ' поръчка' : ' поръчки');
@@ -1593,21 +1615,69 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     renderSpeedy(s.speedyApi || {});
     renderWa(s.whatsapp || {});
     $('iSpeedy').textContent = s.speedy.offices + ' офиса и автомата · обновено ' + when(s.speedy.updatedAt);
-    renderBoxnow(s.boxnow || { offices: 0, updatedAt: null, checkout: false });
+    renderBoxnow(s.boxnow || { offices: 0, updatedAt: null, checkout: false }, s.boxnowApi || {});
   }
   /* ---- BOX NOW: автомати в чекаута (включва се за всеки магазин) ---- */
-  var lastBoxnow = {};
-  function renderBoxnow(b) {
-    lastBoxnow = b;
+  var lastBoxnow = {}, lastBoxnowApi = {}, bProfileFor = null;
+  function renderBoxnow(b, a) {
+    lastBoxnow = b; lastBoxnowApi = a || {};
+    chip('iBoxnowApiChip', lastBoxnowApi.connected, 'Свързан', lastBoxnowApi.configured ? 'Неактивен' : 'Не е свързан');
+    $('iBoxnowApiLine').textContent = lastBoxnowApi.connected ? 'Товарителници: ' + (lastBoxnowApi.sender ? lastBoxnowApi.sender.text : '—') + (lastBoxnowApi.demo ? ' (тестов режим)' : '') : '';
+    var r = lastBoxnowApi.lastSyncResult;
+    $('bWbInfo').innerHTML = lastBoxnowApi.configured ? 'Последна проверка: ' + esc(when(lastBoxnowApi.lastSyncAt)) + (r ? ' (проверени ' + r.checked + ', доставени ' + r.delivered + ', върнати ' + r.returned + ')' : '') +
+      (lastBoxnowApi.lastError ? '<br><span class="err">Последна грешка: ' + esc(lastBoxnowApi.lastError) + '</span>' : '') : '';
     chip('iBoxnowChip', b.checkout, 'в чекаута', 'изключен'); chip('iBoxnowChip2', b.checkout, 'Включен в чекаута', 'Изключен');
     $('iBoxnow').textContent = b.offices ? b.offices + ' автомата · обновено ' + when(b.updatedAt) : '';
     $('bBoxnowCount').textContent = b.offices || '—';
     $('iBoxnowOpen').textContent = b.checkout ? 'Настройки' : '+ Включи';
     $('iBoxnowOpen').className = b.checkout ? 'ghost' : 'primary';
   }
+  function boxnowOriginToggle() { $('bSizeWrap').hidden = $('bOrigin').value !== 'any-apm'; }
   $('iBoxnowOpen').addEventListener('click', function () {
+    var a = lastBoxnowApi;
     $('bCheckout').checked = Boolean(lastBoxnow.checkout); $('bInfo').textContent = '';
+    $('bId').value = a.clientId || ''; $('bSecret').value = ''; $('bSecret').placeholder = a.configured ? '•••••• запазена (въведете нова, за да я смените)' : 'Client Secret';
+    $('bDemo').checked = Boolean(a.demo); $('bProfile').textContent = '';
+    $('bOrigin').innerHTML = a.sender ? '<option value="' + esc(a.originType === 'any-apm' ? 'any-apm' : a.originId) + '">' + esc(a.sender.text) + '</option>' : '<option value="">— натиснете „Зареди профила“ —</option>';
+    $('bSize').value = String(a.size || 2); $('bName').value = a.senderName || ''; $('bPhone').value = a.senderPhone || ''; $('bEmail').value = a.senderEmail || '';
+    $('bWeight').value = String(a.weight == null ? 1 : a.weight).replace('.', ','); $('bDesc').value = a.description || '';
+    $('bReturn').checked = a.allowReturn !== false; $('bActive').checked = a.active !== false;
+    bProfileFor = a.sender ? (a.clientId || '') + (a.demo ? '|demo' : '') : null;
+    boxnowOriginToggle();
     $('boxnowModal').hidden = false;
+  });
+  $('bOrigin').addEventListener('change', boxnowOriginToggle);
+  function boxnowCreds() { return { clientId: $('bId').value.trim(), secret: $('bSecret').value, demo: $('bDemo').checked }; }
+  $('bLoad').addEventListener('click', function () {
+    $('bProfile').textContent = 'Зареждам…';
+    var c = boxnowCreds(); c.action = 'boxnow_profile';
+    busy($('bLoad'), integ(c)).then(function (d) {
+      var p = d.profile, keep = $('bOrigin').value;
+      var opts = p.warehouses.map(function (w) { return '<option value="' + esc(w.id) + '"' + (w.id === keep ? ' selected' : '') + '>Склад: ' + esc(w.name + (w.address ? ', ' + w.address : '')) + '</option>'; });
+      if (p.anyApmId) opts.push('<option value="any-apm"' + (keep === 'any-apm' ? ' selected' : '') + '>Пускам пратките в автомат на BOX NOW</option>');
+      $('bOrigin').innerHTML = opts.length ? opts.join('') : '<option value="">Профилът няма склад — питайте BOX NOW</option>';
+      bProfileFor = c.clientId + (c.demo ? '|demo' : '');
+      $('bProfile').textContent = 'Профилът е зареден ✓';
+      boxnowOriginToggle();
+    }).catch(function (e) { showErr('bProfile', e); });
+  });
+  $('bSaveWb').addEventListener('click', function () {
+    var b = boxnowCreds(), origin = $('bOrigin').value;
+    b.action = 'save_boxnow'; b.originType = origin === 'any-apm' ? 'any-apm' : 'warehouse'; b.originId = origin === 'any-apm' ? '' : origin; b.size = $('bSize').value;
+    b.senderName = $('bName').value; b.senderPhone = $('bPhone').value; b.senderEmail = $('bEmail').value; b.weight = $('bWeight').value; b.description = $('bDesc').value;
+    b.allowReturn = $('bReturn').checked; b.active = $('bActive').checked;
+    $('bWbInfo').textContent = 'Проверявам профила в BOX NOW…';
+    busy($('bSaveWb'), integ(b)).then(function (d) {
+      $('bSecret').value = '';
+      return loadIntegrations().then(function () { $('bWbInfo').textContent = d.active === false ? 'Товарителниците са изключени.' : 'Свързано ✓ · ' + d.sender; });
+    }).catch(function (e) { showErr('bWbInfo', e); });
+  });
+  $('bSync').addEventListener('click', function () {
+    $('bWbInfo').textContent = 'Проверявам…';
+    busy($('bSync'), integ({ action: 'sync_boxnow' })).then(function (d) {
+      var r = d.result; load(page);
+      return loadIntegrations().then(function () { $('bWbInfo').textContent = 'Готово: проверени ' + r.checked + ', доставени ' + r.delivered + ', върнати ' + r.returned + '.'; });
+    }).catch(function (e) { showErr('bWbInfo', e); });
   });
   $('bSave').addEventListener('click', function () {
     var on = $('bCheckout').checked;
@@ -2342,16 +2412,21 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
       });
   }
   function wbInput() {
-    return { id: wbOrder.id, cod: $('wbCod').value, weight: $('wbWeight').value, packCount: $('wbPacks').value, payer: $('wbPayer').value, description: $('wbDesc').value, review: $('wbReview').checked };
+    var b = { id: wbOrder.id, cod: $('wbCod').value, weight: $('wbWeight').value, packCount: $('wbPacks').value, payer: $('wbPayer').value, description: $('wbDesc').value, review: $('wbReview').checked };
+    if (wbOrder.courier === 'boxnow') b.size = $('wbSize').value;
+    return b;
   }
   var wbCourierName = 'Еконт';
+  var WB_COURIER = { econt: ['Еконт', 'E', 'econt.com'], speedy: ['Спиди', 'S', 'speedy.bg'], boxnow: ['BOX NOW', 'BN', 'boxnow.bg'] };
   function openWaybill(o) {
     wbOrder = o;
-    var sp = o.courier === 'speedy';
-    wbCourierName = sp ? 'Спиди' : 'Еконт';
+    var k = WB_COURIER[o.courier] ? o.courier : 'econt', bn = k === 'boxnow';
+    wbCourierName = WB_COURIER[k][0];
     $('wbTitle').textContent = 'Товарителница ' + wbCourierName;
-    $('wbTile').className = 'tile ' + (sp ? 'speedy' : 'econt');
-    $('wbTile').innerHTML = (sp ? 'S' : 'E') + '<img src="https://www.google.com/s2/favicons?domain=' + (sp ? 'speedy.bg' : 'econt.com') + '&amp;sz=128" alt="" referrerpolicy="no-referrer" onerror="this.remove()">';
+    $('wbTile').className = 'tile ' + k;
+    $('wbTile').innerHTML = WB_COURIER[k][1] + '<img src="https://www.google.com/s2/favicons?domain=' + WB_COURIER[k][2] + '&amp;sz=128" alt="" referrerpolicy="no-referrer" onerror="this.remove()">';
+    // BOX NOW: one parcel per locker, no payer choice or review, price per the shop's BOX NOW contract — a size instead
+    $('wbPacksWrap').hidden = bn; $('wbPayerWrap').hidden = bn; $('wbReviewWrap').hidden = bn; $('wbCalc').hidden = bn; $('wbSizeWrap').hidden = !bn;
     $('wbWho').textContent = (o.name || 'Клиент') + ' · ' + o.phone + ' · ' + o.total.toFixed(2) + ' ' + cur(o.currency);
     $('wbInfo').textContent = 'Зареждам…'; $('wbRoute').textContent = '';
     $('wbCreate').disabled = true; $('wbCalc').disabled = true; $('wbDemo').hidden = true;
@@ -2365,7 +2440,8 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
       $('wbRoute').innerHTML = '<b>От:</b> ' + esc(d.sender) + '<br><b>До:</b> ' + esc(d.officeText);
       $('wbCod').value = String(d.cod).replace('.', ','); $('wbWeight').value = String(d.weight).replace('.', ',');
       $('wbPacks').value = d.packCount; $('wbPayer').value = d.payer; $('wbDesc').value = d.description; $('wbReview').checked = d.review;
-      $('wbInfo').textContent = ''; $('wbCreate').disabled = false; $('wbCalc').disabled = false;
+      if (bn) { $('wbSize').value = d.size ? String(d.size) : (d.sizeRequired ? '2' : ''); $('wbSize').options[0].disabled = Boolean(d.sizeRequired); }
+      $('wbInfo').textContent = bn ? 'Цената е по договора ви с BOX NOW.' : ''; $('wbCreate').disabled = false; $('wbCalc').disabled = false;
       $('wbCreate').setAttribute('data-demo', d.demo ? '1' : '');
     }).catch(function (e) { showErr('wbInfo', e); });
   }
