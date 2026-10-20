@@ -198,3 +198,39 @@ test('cartPayload trims to 50 items', () => {
   const p = core.cartPayload({ phone: '0888123456' }, core.cartFrom({ storeCart: { items, total: 80 } }), '', 'https://a-shop.bg/');
   assert.equal(p.items.length, 50);
 });
+
+/* ---- „Намери ме“: distance in the browser, nearest points, opening hours ---- */
+const SOFIA = { lat: 42.6977, lng: 23.3219 }, PLOVDIV = { lat: 42.1354, lng: 24.7453 };
+
+test('distanceM is the straight line in metres; distanceText rounds the way a person reads it', () => {
+  const d = core.distanceM(SOFIA, PLOVDIV);
+  assert.ok(d > 130000 && d < 134000, `Sofia–Plovdiv ≈ 132 km, got ${d}`);
+  assert.equal(core.distanceText(650), '650 m');
+  assert.equal(core.distanceText(1234), '1,2 km');
+  assert.equal(core.distanceText(40), '50 m');
+  assert.equal(core.distanceText(12345), '12,3 km');
+  assert.equal(core.distanceText(null), '');
+});
+
+test('nearestOffices sorts by distance, puts points without coordinates last and respects the limit', () => {
+  const list = [
+    { id: 'a', lat: 42.14, lng: 24.75 },           // Plovdiv
+    { id: 'none' },                                 // no coordinates
+    { id: 'b', lat: 42.70, lng: 23.33 },           // Sofia centre
+    { id: 'c', lat: 42.65, lng: 23.38 },           // Sofia south
+    { id: 'zero', lat: null, lng: null },
+  ];
+  assert.deepEqual(plain(core.nearestOffices(list, SOFIA, 10)).map((o) => o.id), ['b', 'c', 'a', 'none', 'zero']);
+  assert.deepEqual(plain(core.nearestOffices(list, SOFIA, 2)).map((o) => o.id), ['b', 'c']);
+  assert.ok(core.nearestOffices(list, SOFIA, 2)[0]._dist < 1000, 'distance kept on the point for the list');
+  assert.deepEqual(plain(core.nearestOffices(list, null, 3)), [], 'no location: nothing to sort by');
+});
+
+test('the hours line and the address never leak into what ConvertBuilder stores', () => {
+  const o = { ...econt, hours: 'пн–пт 09:00–18:00 · сб 09:00–15:00' };
+  assert.equal(core.hoursLine(o), 'пн–пт 09:00–18:00 · сб 09:00–15:00');
+  assert.equal(core.hoursLine({ ...econt, hours: '24/7' }), 'денонощно (24/7)');
+  assert.equal(core.hoursLine({ ...econt }), '');
+  assert.equal(plain(core.formatSelection({ type: 'econt_office', office: o })).address, 'ЕКОНТ – автомат Тракия (2), бул. Освобождение 31');
+  assert.equal(core.officeLabel(o), 'Пловдив – автомат Тракия');
+});

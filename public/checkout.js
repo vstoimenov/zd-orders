@@ -40,6 +40,37 @@
     return starts.concat(inner).slice(0, limit || 8);
   }
 
+  /* ---- „Намери ме“: everything about the customer's location stays in the browser ---- */
+  function distanceM(a, b) {
+    if (!a || !b || typeof a.lat !== 'number' || typeof a.lng !== 'number' || typeof b.lat !== 'number' || typeof b.lng !== 'number' || !isFinite(a.lat + a.lng + b.lat + b.lng)) return null;
+    var R = 6371000, toRad = Math.PI / 180;
+    var dLat = (b.lat - a.lat) * toRad, dLng = (b.lng - a.lng) * toRad;
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(a.lat * toRad) * Math.cos(b.lat * toRad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return 2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  }
+  /** 650 m (50 m steps) under a kilometre, otherwise 2,3 km. */
+  function distanceText(m) {
+    if (m == null || !isFinite(m)) return '';
+    if (m < 1000) return Math.max(50, Math.round(m / 50) * 50) + ' m';
+    return (Math.round(m / 100) / 10).toFixed(1).replace('.', ',') + ' km';
+  }
+  /** Points sorted by distance from `point` (kept on `_dist`); points without coordinates last. */
+  function nearestOffices(offices, point, limit) {
+    if (!point) return [];
+    var withDist = [], without = [];
+    for (var i = 0; i < offices.length; i++) {
+      var d = distanceM(point, offices[i]);
+      offices[i]._dist = d;
+      (d == null ? without : withDist).push(offices[i]);
+    }
+    withDist.sort(function (a, b) { return a._dist - b._dist; });
+    return withDist.concat(without).slice(0, limit || 8);
+  }
+  function hoursLine(o) {
+    var h = clean(o && o.hours);
+    return h === '24/7' ? 'денонощно (24/7)' : h;
+  }
+
   /** "автомат " / "офис " before a name, unless the name already says it (Speedy: "… (АВТОМАТ)"). */
   function kindPrefix(o, capital) {
     if (o.isAutomat && /автомат/i.test(o.name || '')) return '';
@@ -201,7 +232,8 @@
   var core = {
     TOKEN: TOKEN, norm: norm, searchOffices: searchOffices, searchCities: searchCities, formatSelection: formatSelection,
     validateSelection: validateSelection, pickOptionIndex: pickOptionIndex, optionPrice: optionPrice, officeLabel: officeLabel,
-    buildOrderPayload: buildOrderPayload, visitPayload: visitPayload, shippingView: shippingView, cartFrom: cartFrom, cartPayload: cartPayload
+    buildOrderPayload: buildOrderPayload, visitPayload: visitPayload, shippingView: shippingView, cartFrom: cartFrom, cartPayload: cartPayload,
+    distanceM: distanceM, distanceText: distanceText, nearestOffices: nearestOffices, hoursLine: hoursLine
   };
   if (typeof window !== 'undefined' && window.__ZDO_TEST__) { window.__zdoCore = core; return; }
 
@@ -211,6 +243,7 @@
     type: '', econt: null, econtFallback: false, econtCity: '', econtText: '',
     speedy: null, speedyFallback: false, speedyCity: '', speedyText: '',
     boxnow: null, boxnowFallback: false, boxnowCity: '', boxnowText: '',
+    geo: null, // the customer's location after „Намери ме“ ({lat, lng}); never sent anywhere
     addrCity: '', addrPost: '', addrStreet: ''
   };
 
@@ -229,6 +262,10 @@
     '.zdo-list:not(:empty){border:1px solid #e8d3da;margin:-4px 0 8px}',
     '.zdo-item{display:block;width:100%;text-align:left;padding:10px 12px;border:0;border-bottom:1px solid #f1e4e8;background:#fff;font-size:14px;line-height:1.35;cursor:pointer;color:#222}',
     '.zdo-item:hover,.zdo-item:focus{background:#fdf3f6}.zdo-item small{display:block;color:#7a6a6f}',
+    '.zdo-dist{float:right;margin-left:8px;color:#b0426b;font-weight:700;font-size:13px}',
+    '.zdo-tools{display:flex;gap:8px;margin:0 0 8px}',
+    '.zdo-tool{flex:1;height:40px;border:1.5px solid #b0426b;border-radius:8px;background:#fff;color:#b0426b;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}',
+    '.zdo-tool:disabled{opacity:.6;cursor:default}',
     '.zdo-note{padding:8px 2px;font-size:14px;color:#7a6a6f}',
     '.zdo-picked:not(:empty){padding:10px 12px;margin:0 0 8px;border-radius:8px;background:#f3faf4;border:1px solid #bfe0c6;font-size:14px;line-height:1.4}',
     '.zdo-picked button{border:0;background:none;color:#b0426b;text-decoration:underline;padding:0;margin-left:6px;cursor:pointer;font-size:14px}',
@@ -242,7 +279,8 @@
     return '<label class="zdo-opt"><input type="radio" name="zdo-type" value="' + type + '"><span>До ' + (lockersOnly ? '' : 'офис или ') + 'автомат на <b>' + name + '</b></span><span class="zdo-price" data-price="' + type + '"></span></label>' +
       '<div class="zdo-panel" data-for="' + type + '">' +
         '<div class="zdo-picked" data-role="' + courier + '-picked"></div>' +
-        '<div data-role="' + courier + '-pick"><input class="zdo-input" data-role="' + courier + '-search" type="text" placeholder="Напишете град или ' + (lockersOnly ? 'адрес на автомат' : 'име на офис') + '" autocomplete="off"><div class="zdo-list" data-role="' + courier + '-list"></div>' +
+        '<div data-role="' + courier + '-pick"><div class="zdo-tools"><button type="button" class="zdo-tool" data-role="' + courier + '-locate">📍 Намери ме</button></div><div class="zdo-note" data-role="' + courier + '-geo" hidden></div>' +
+          '<input class="zdo-input" data-role="' + courier + '-search" type="text" placeholder="Напишете град или ' + (lockersOnly ? 'адрес на автомат' : 'име на офис') + '" autocomplete="off"><div class="zdo-list" data-role="' + courier + '-list"></div>' +
           '<a href="#" class="zdo-link" data-role="' + courier + '-manual">Не намирам ' + where + 'а си – въведи ръчно</a></div>' +
         '<div data-role="' + courier + '-fallback" hidden><div class="zdo-note">Въведете ' + where + 'а ръчно:</div>' +
           '<input class="zdo-input" data-role="' + courier + '-city" type="text" placeholder="Населено място"><input class="zdo-input" data-role="' + courier + '-text" type="text" placeholder="' + (lockersOnly ? 'Адрес на автомата' : 'Име или адрес на офиса') + ' на ' + name + '"></div>' +
@@ -338,7 +376,7 @@
   function pickedHtml(o) {
     var title = kindPrefix(o, true) + o.name;
     return '<b>' + esc(title) + '</b>' + (o.address ? '<br>' + esc(o.address) : '') +
-      (o.city ? '<br>' + esc(o.city) : '') + ' <button type="button" data-role="change">Смени</button>';
+      (o.city ? '<br>' + esc(o.city) : '') + (hoursLine(o) ? '<br>🕒 ' + esc(hoursLine(o)) : '') + ' <button type="button" data-role="change">Смени</button>';
   }
 
   function render() {
@@ -352,14 +390,45 @@
     });
   }
 
+  function officeItem(o) {
+    var dist = state.geo ? distanceText(o._dist != null ? o._dist : distanceM(state.geo, o)) : '';
+    var sub = [o.address, hoursLine(o)].filter(Boolean).join(' · ');
+    return '<button type="button" class="zdo-item" data-id="' + esc(o.id) + '">' + (dist ? '<span class="zdo-dist">' + esc(dist) + '</span>' : '') +
+      esc(officeLabel(o)) + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</button>';
+  }
+  /** Typed query → matches; nothing typed but located → the nearest points. */
   function renderOfficeList(courier) {
     var list = el(courier + '-list'), q = el(courier + '-search').value;
-    if (!norm(q)) { list.innerHTML = ''; return; }
+    if (!norm(q) && !state.geo) { list.innerHTML = ''; return; }
     if (!offices[courier]) { list.innerHTML = '<div class="zdo-note">Зареждане…</div>'; return; }
-    var found = searchOffices(offices[courier], q, 80);
-    list.innerHTML = found.length ? found.map(function (o) {
-      return '<button type="button" class="zdo-item" data-id="' + esc(o.id) + '">' + esc(officeLabel(o)) + (o.address ? '<small>' + esc(o.address) + '</small>' : '') + '</button>';
-    }).join('') : '<div class="zdo-note">Няма намерен ' + (courier === 'boxnow' ? 'автомат' : 'офис') + '. Опитайте само с името на града.</div>';
+    var found = norm(q) ? searchOffices(offices[courier], q, 80) : nearestOffices(offices[courier], state.geo, 8);
+    var noun = courier === 'boxnow' ? 'автомат' : 'офис';
+    list.innerHTML = found.length ? (norm(q) ? '' : '<div class="zdo-note">Най-близките до вас:</div>') + found.map(officeItem).join('')
+      : '<div class="zdo-note">Няма намерен ' + noun + '. Опитайте само с името на града.</div>';
+  }
+  var GEO_FAIL = 'Браузърът не даде местоположение — напишете град или офис.';
+  /** „Намери ме“: asks the browser once, remembers the answer for every courier; any failure only shows a note. */
+  function locate(courier) {
+    var note = el(courier + '-geo'), btn = el(courier + '-locate');
+    var done = function (msg) { btn.disabled = false; note.hidden = !msg; note.textContent = msg || ''; };
+    if (state.geo) { renderOfficeList(courier); return done(''); }
+    if (!navigator.geolocation || (typeof isSecureContext !== 'undefined' && !isSecureContext)) return done(GEO_FAIL);
+    btn.disabled = true; note.hidden = false; note.textContent = 'Търсим най-близките…';
+    var finished = false;
+    var fail = function () { if (finished) return; finished = true; done(GEO_FAIL); };
+    var timer = setTimeout(fail, 9000);
+    try {
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        if (finished) return;
+        finished = true; clearTimeout(timer);
+        var c = pos && pos.coords;
+        if (!c || !isFinite(c.latitude) || !isFinite(c.longitude)) return done(GEO_FAIL);
+        state.geo = { lat: c.latitude, lng: c.longitude };
+        done('');
+        ['econt', 'speedy', 'boxnow'].forEach(function (k) { if (offices[k]) renderOfficeList(k); });
+        if (!offices[courier]) loadOffices(courier).then(function () { renderOfficeList(courier); }, function () { officesFailed(courier); });
+      }, fail, { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 });
+    } catch (e) { fail(); }
   }
 
   function renderCityList() {
@@ -443,6 +512,8 @@
         if (c) { state.addrCity = c.name; state.addrPost = c.postCode; el('addr-city').value = c.name; }
         el('city-list').innerHTML = '';
         sync(); el('addr-street').focus();
+      } else if (/-locate$/.test(role || '')) {
+        locate(role.split('-')[0]);
       } else if (role === 'econt-manual' || role === 'speedy-manual' || role === 'boxnow-manual') {
         e.preventDefault();
         var mc = role.split('-')[0];

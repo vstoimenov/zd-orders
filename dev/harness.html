@@ -15,9 +15,9 @@ pre{background:#f4f4f4;padding:8px;white-space:pre-wrap;font-size:12px}
     onReady: function (fn) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn); else fn(); }
   };
   var FIX_OFFICES = [
-    { id: 'econt:4001', code: '4001', name: 'Пловдив Център', city: 'Пловдив', postCode: '4000', address: 'ул. Гладстон 1', isAutomat: false },
-    { id: 'econt:4002', code: '4002', name: 'Тракия', city: 'Пловдив', postCode: '4000', address: 'бул. Освобождение 31', isAutomat: true },
-    { id: 'econt:1001', code: '1001', name: 'Лозенец', city: 'София', postCode: '1000', address: 'ул. Бяла черква 2', isAutomat: false }
+    { id: 'econt:4001', code: '4001', name: 'Пловдив Център', city: 'Пловдив', postCode: '4000', address: 'ул. Гладстон 1', isAutomat: false, lat: 42.1419, lng: 24.7497, hours: 'пн–пт 09:00–18:00 · сб 09:00–15:00' },
+    { id: 'econt:4002', code: '4002', name: 'Тракия', city: 'Пловдив', postCode: '4000', address: 'бул. Освобождение 31', isAutomat: true, lat: 42.1366, lng: 24.7811, hours: '24/7' },
+    { id: 'econt:1001', code: '1001', name: 'Лозенец', city: 'София', postCode: '1000', address: 'ул. Бяла черква 2', isAutomat: false, lat: 42.6734, lng: 23.3191, hours: 'пн–пт 09:00–18:00' }
   ];
   var FIX_SPEEDY = [
     { id: 'speedy:190', code: '190', name: 'АЙТОС - КИРИЛ И МЕТОДИЙ (УЛ.)', city: 'Айтос', postCode: '', address: '', isAutomat: false },
@@ -25,14 +25,19 @@ pre{background:#f4f4f4;padding:8px;white-space:pre-wrap;font-size:12px}
     { id: 'speedy:79', code: '79', name: 'ПЛОВДИВ - ОФИС', city: 'Пловдив', postCode: '', address: '', isAutomat: false }
   ];
   var FIX_BOXNOW = [
-    { id: 'boxnow:1840', code: '1840', name: 'New Avenue, ул. Проф. Храбър Попов 14, София - 24/7', city: 'София', postCode: '1700', address: 'ул. Проф. арх. Храбър Попов №14', isAutomat: true },
-    { id: 'boxnow:1842', code: '1842', name: 'Сграда SIVEN, бул. Черни връх 47А, София - 24/7', city: 'София', postCode: '1407', address: 'бул. Черни връх 47А', isAutomat: true }
+    { id: 'boxnow:1840', code: '1840', name: 'New Avenue, ул. Проф. Храбър Попов 14, София - 24/7', city: 'София', postCode: '1700', address: 'ул. Проф. арх. Храбър Попов №14', isAutomat: true, lat: 42.6448, lng: 23.3397, hours: '24/7' },
+    { id: 'boxnow:1842', code: '1842', name: 'Сграда SIVEN, бул. Черни връх 47А, София - 24/7', city: 'София', postCode: '1407', address: 'бул. Черни връх 47А', isAutomat: true, lat: 42.6625, lng: 23.3179, hours: '24/7' }
   ];
   var FIX_CITIES = [
     { id: 1, name: 'Варна', postCode: '9000', region: 'Варна', hasOffice: true },
     { id: 2, name: 'Велико Търново', postCode: '5000', region: 'Велико Търново', hasOffice: true },
     { id: 3, name: 'Долни Воден', postCode: '4000', region: 'Пловдив', hasOffice: false }
   ];
+  // ?geo=sofia → the browser "knows" the customer is in Sofia; ?geo=deny → permission denied
+  var geo = (location.search.match(/[?&]geo=(\w+)/) || [])[1];
+  if (geo) Object.defineProperty(navigator, 'geolocation', { value: { getCurrentPosition: function (ok, fail) {
+    setTimeout(function () { geo === 'deny' ? fail({ code: 1 }) : ok({ coords: { latitude: 42.6977, longitude: 23.3219 } }); }, 300);
+  } } });
   var realFetch = window.fetch.bind(window);
   window.fetch = function (url, init) {
     url = String(url);
