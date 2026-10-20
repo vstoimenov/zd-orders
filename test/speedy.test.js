@@ -16,10 +16,10 @@ const HTML = `<script> var speedy_offices = {
 
 test('parseSpeedyOffices reads the offices embedded in the public Speedy map', () => {
   assert.deepEqual(parseSpeedyOffices(HTML), [
-    { id: 'speedy:190', courier: 'speedy', code: '190', name: 'АЙТОС - КИРИЛ И МЕТОДИЙ (УЛ.)', city: 'Айтос', cityId: null, postCode: '', address: '', isAutomat: false, lat: 42.1, lng: 24.7 },
-    { id: 'speedy:9364', courier: 'speedy', code: '9364', name: 'СТАРА ЗАГОРА – СЛАВЯНСКА (УЛ.) (АВТОМАТ)', city: 'Стара Загора', cityId: null, postCode: '', address: '', isAutomat: true, lat: 42.1, lng: 24.7 },
-    { id: 'speedy:77', courier: 'speedy', code: '77', name: 'ДОБРИЧ', city: 'Добрич', cityId: null, postCode: '', address: '', isAutomat: false, lat: 42.1, lng: 24.7 },
-    { id: 'speedy:88', courier: 'speedy', code: '88', name: "СОФИЯ - Д'АРТ ЦЕНТЪР", city: 'София', cityId: null, postCode: '', address: '', isAutomat: true, lat: 42.1, lng: 24.7 },
+    { id: 'speedy:190', courier: 'speedy', code: '190', name: 'АЙТОС - КИРИЛ И МЕТОДИЙ (УЛ.)', city: 'Айтос', cityId: null, postCode: '', address: '', isAutomat: false, lat: 42.1, lng: 24.7, hours: '' },
+    { id: 'speedy:9364', courier: 'speedy', code: '9364', name: 'СТАРА ЗАГОРА – СЛАВЯНСКА (УЛ.) (АВТОМАТ)', city: 'Стара Загора', cityId: null, postCode: '', address: '', isAutomat: true, lat: 42.1, lng: 24.7, hours: '' },
+    { id: 'speedy:77', courier: 'speedy', code: '77', name: 'ДОБРИЧ', city: 'Добрич', cityId: null, postCode: '', address: '', isAutomat: false, lat: 42.1, lng: 24.7, hours: '' },
+    { id: 'speedy:88', courier: 'speedy', code: '88', name: "СОФИЯ - Д'АРТ ЦЕНТЪР", city: 'София', cityId: null, postCode: '', address: '', isAutomat: true, lat: 42.1, lng: 24.7, hours: '' },
   ]);
 });
 

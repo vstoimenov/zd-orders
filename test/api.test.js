@@ -24,11 +24,12 @@ const body = (patch = {}) => JSON.stringify({
 const post = (b, headers = {}) => fakeReq({ method: 'POST', url: '/api/orders', headers: { origin: ORIGIN, 'x-forwarded-for': '9.9.9.9', ...headers }, body: b });
 
 test('GET /api/offices returns cached Econt offices with CDN caching', async () => {
-  await replaceOffices(q, 'econt', [{ id: 'econt:1', code: '1', name: 'Център', city: 'Пловдив', cityId: 1, postCode: '4000', address: 'ул. Х', isAutomat: false }]);
+  await replaceOffices(q, 'econt', [{ id: 'econt:1', code: '1', name: 'Център', city: 'Пловдив', cityId: 1, postCode: '4000', address: 'ул. Х', isAutomat: false, lat: 42.15, lng: 24.75, hours: '24/7' }]);
   const res = fakeRes();
   await offices(fakeReq({ url: '/api/offices?courier=econt', headers: { origin: ORIGIN } }), res);
   assert.equal(res.statusCode, 200);
   assert.equal(json(res).offices[0].name, 'Център');
+  assert.deepEqual([json(res).offices[0].lat, json(res).offices[0].lng, json(res).offices[0].hours], [42.15, 24.75, '24/7'], 'the widget needs coordinates and hours');
   assert.match(res.headers['cache-control'], /s-maxage=3600/);
   assert.equal(res.headers['access-control-allow-origin'], '*');
   await replaceOffices(q, 'speedy', [{ id: 'speedy:190', code: '190', name: 'АЙТОС - КИРИЛ И МЕТОДИЙ (УЛ.)', city: 'Айтос', cityId: null, postCode: '', address: '', isAutomat: false }]);

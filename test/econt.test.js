@@ -5,8 +5,12 @@ import { normalizeOffices, normalizeCities, fetchEcont, econtPoints } from '../l
 const country = { code3: 'BGR' };
 const OFFICES = {
   offices: [
-    { code: '7538', name: 'Айдемир', isAPS: false, address: { city: { id: 11, name: 'Айдемир', postCode: '7538', country }, fullAddress: ' Айдемир кв. Деленките ул. София №7' } },
-    { code: '6752', name: 'Ардино', isAPS: true, address: { city: { id: 83, name: 'Ардино', postCode: '6750', country }, fullAddress: '', quarter: 'кв. Бостанджиите', street: 'ул. Бели брези', num: '21' } },
+    { code: '7538', name: 'Айдемир', isAPS: false, address: { city: { id: 11, name: 'Айдемир', postCode: '7538', country }, fullAddress: ' Айдемир кв. Деленките ул. София №7', location: { latitude: 44.1009192550187, longitude: 27.1950400265455 } },
+      normalBusinessHoursFrom: Date.UTC(2026, 9, 20, 6, 0), normalBusinessHoursTo: Date.UTC(2026, 9, 20, 15, 0), halfDayBusinessHoursFrom: Date.UTC(2026, 9, 20, 6, 0), halfDayBusinessHoursTo: Date.UTC(2026, 9, 20, 12, 0) },
+    { code: '6752', name: 'Ардино', isAPS: true, address: { city: { id: 83, name: 'Ардино', postCode: '6750', country }, fullAddress: '', quarter: 'кв. Бостанджиите', street: 'ул. Бели брези', num: '21' },
+      normalBusinessHoursFrom: Date.UTC(2026, 9, 19, 21, 0), normalBusinessHoursTo: Date.UTC(2026, 9, 20, 20, 59), halfDayBusinessHoursFrom: Date.UTC(2026, 9, 19, 21, 0), halfDayBusinessHoursTo: Date.UTC(2026, 9, 20, 20, 59) },
+    { code: '1001', name: 'Лозенец', isAPS: false, address: { city: { id: 41, name: 'София', postCode: '1000', country }, fullAddress: ' София ул. Бяла черква 2', location: { latitude: 42.67, longitude: 23.32 } },
+      normalBusinessHoursFrom: Date.UTC(2026, 9, 20, 6, 0), normalBusinessHoursTo: Date.UTC(2026, 9, 20, 15, 0), halfDayBusinessHoursFrom: null, halfDayBusinessHoursTo: null },
     { code: '9999', name: 'Букурещ', address: { city: { id: 5, name: 'Букурещ', postCode: '', country: { code3: 'ROU' } } } },
     { name: 'без код', address: { city: { id: 6, name: 'X', country } } },
   ],
@@ -14,8 +18,9 @@ const OFFICES = {
 
 test('normalizeOffices keeps BG offices with a code and strips the city from the address', () => {
   assert.deepEqual(normalizeOffices(OFFICES), [
-    { id: 'econt:7538', courier: 'econt', code: '7538', name: 'Айдемир', city: 'Айдемир', cityId: 11, postCode: '7538', address: 'кв. Деленките ул. София №7', isAutomat: false },
-    { id: 'econt:6752', courier: 'econt', code: '6752', name: 'Ардино', city: 'Ардино', cityId: 83, postCode: '6750', address: 'кв. Бостанджиите ул. Бели брези 21', isAutomat: true },
+    { id: 'econt:7538', courier: 'econt', code: '7538', name: 'Айдемир', city: 'Айдемир', cityId: 11, postCode: '7538', address: 'кв. Деленките ул. София №7', isAutomat: false, lat: 44.1009192550187, lng: 27.1950400265455, hours: 'пн–пт 09:00–18:00 · сб 09:00–15:00' },
+    { id: 'econt:6752', courier: 'econt', code: '6752', name: 'Ардино', city: 'Ардино', cityId: 83, postCode: '6750', address: 'кв. Бостанджиите ул. Бели брези 21', isAutomat: true, lat: null, lng: null, hours: '24/7' },
+    { id: 'econt:1001', courier: 'econt', code: '1001', name: 'Лозенец', city: 'София', cityId: 41, postCode: '1000', address: 'ул. Бяла черква 2', isAutomat: false, lat: 42.67, lng: 23.32, hours: 'пн–пт 09:00–18:00' },
   ]);
 });
 

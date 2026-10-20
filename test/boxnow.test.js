@@ -20,8 +20,8 @@ export const LOCKERS = { data: [
 
 test('the public BOX NOW list becomes lockers in our office list; lockers out of service are left out', () => {
   assert.deepEqual(parseBoxnowLockers(LOCKERS), [
-    { id: 'boxnow:1840', courier: 'boxnow', code: '1840', name: 'New Avenue, ул. Проф. Храбър Попов 14, София - 24/7', city: 'София', cityId: null, postCode: '1700', address: 'ул. Проф. арх. Храбър Попов №14', isAutomat: true },
-    { id: 'boxnow:5365', courier: 'boxnow', code: '5365', name: 'Test Locker 1', city: 'Пловдив', cityId: null, postCode: '4000', address: 'Цар Симеон 170', isAutomat: true },
+    { id: 'boxnow:1840', courier: 'boxnow', code: '1840', name: 'New Avenue, ул. Проф. Храбър Попов 14, София - 24/7', city: 'София', cityId: null, postCode: '1700', address: 'ул. Проф. арх. Храбър Попов №14', isAutomat: true, lat: 42.64480928803469, lng: 23.339724129024635, hours: '24/7' },
+    { id: 'boxnow:5365', courier: 'boxnow', code: '5365', name: 'Test Locker 1', city: 'Пловдив', cityId: null, postCode: '4000', address: 'Цар Симеон 170', isAutomat: true, lat: 42.70295, lng: 23.31272, hours: '' },
   ]);
   assert.throws(() => parseBoxnowLockers({ nope: 1 }), /BOX NOW/);
 });
