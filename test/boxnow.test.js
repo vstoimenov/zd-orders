@@ -4,6 +4,7 @@ import { makeTestQuery } from './helpers/pglite.js';
 import { fakeReq, fakeRes, json } from './helpers/http.js';
 import { setQueryForTests } from '../lib/db.js';
 import { replaceOffices } from '../lib/catalog-repo.js';
+import { saveIntegration } from '../lib/integrations-repo.js';
 import { parseBoxnowLockers, fetchBoxnowLockers, BOXNOW_LOCKERS_URL } from '../lib/boxnow.js';
 import offices from '../api/offices.js';
 
@@ -34,16 +35,44 @@ test('the list is read from BOX NOW\'s public address; an error status is an err
   await assert.rejects(fetchBoxnowLockers(async () => ({ ok: false, status: 503 })), /HTTP 503/);
 });
 
-test('BOX NOW lockers are stored and served by /api/offices?courier=boxnow', async () => {
+const SHOP = '00000000-0000-4000-8000-000000000001';
+const ask = async (url) => { const res = fakeRes(); await offices(fakeReq({ url }), res); return res; };
+
+test('BOX NOW lockers go only to a shop that switched BOX NOW on in Ordyx', async () => {
+  await q(`update zd.shops set domain = 'adhdbg.eu', approved = true where id = $1`, [SHOP]);
   await replaceOffices(q, 'boxnow', parseBoxnowLockers(LOCKERS));
-  const res = fakeRes();
-  await offices(fakeReq({ url: '/api/offices?courier=boxnow' }), res);
+  let res = await ask('/api/offices?courier=boxnow&host=adhdbg.eu');
   assert.equal(res.statusCode, 200);
+  assert.deepEqual(json(res), { offices: [], enabled: false }, 'not switched on yet');
+  assert.match(res.headers['cache-control'], /s-maxage=300/, 'switching on shows within minutes');
+  await saveIntegration(q, 'boxnow', { config: { checkout: true }, shopId: SHOP });
+  res = await ask('/api/offices?courier=boxnow&host=www.adhdbg.eu');
+  assert.equal(json(res).enabled, true);
   assert.deepEqual(json(res).offices.map((o) => [o.id, o.city, o.isAutomat]), [['boxnow:5365', 'Пловдив', true], ['boxnow:1840', 'София', true]]);
+  assert.deepEqual(json(await ask('/api/offices?courier=boxnow&host=other.bg')), { offices: [], enabled: false }, 'unknown site');
+  assert.deepEqual(json(await ask('/api/offices?courier=boxnow')), { offices: [], enabled: false }, 'no site');
+  await saveIntegration(q, 'boxnow', { config: { checkout: false }, shopId: SHOP });
+  assert.equal(json(await ask('/api/offices?courier=boxnow&host=adhdbg.eu')).enabled, false, 'switched off again');
 });
 
 test('orders to a BOX NOW locker are accepted by the database', async () => {
   const [o] = await q(`insert into zd.orders (cb_order_id, name, phone, phone_norm, delivery_type, courier, office_id, office_text, total, currency)
     values ('b1', 'Мария', '0888123456', '+359888123456', 'boxnow_locker', 'boxnow', 'boxnow:1840', 'BOX NOW – автомат New Avenue (1840)', 10, 'EUR') returning courier`);
   assert.equal(o.courier, 'boxnow');
+});
+
+test('admin: the shop switches BOX NOW in the checkout on and off; the status shows it with the locker count', async () => {
+  const { signSession } = await import('../lib/auth.js');
+  const { default: router } = await import('../api/admin/[route].js');
+  process.env.ADMIN_SECRET = 'secret';
+  const cookie = `zdo_admin=${signSession('secret')}`;
+  const call = async (opts) => { const res = fakeRes(); await router(fakeReq({ url: `/api/admin/integrations?shop=${SHOP}`, headers: { cookie }, ...opts }), res); return res; };
+  await replaceOffices(q, 'boxnow', parseBoxnowLockers(LOCKERS));
+  let st = json(await call({})).boxnow;
+  assert.deepEqual([st.offices, st.checkout], [2, false]);
+  assert.equal((await call({ method: 'POST', body: JSON.stringify({ action: 'boxnow_checkout', on: true }) })).statusCode, 200);
+  st = json(await call({})).boxnow;
+  assert.equal(st.checkout, true);
+  await call({ method: 'POST', body: JSON.stringify({ action: 'boxnow_checkout', on: false }) });
+  assert.equal(json(await call({})).boxnow.checkout, false);
 });

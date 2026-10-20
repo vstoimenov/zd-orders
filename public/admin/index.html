@@ -411,7 +411,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
         <div class="igrid">
           <div class="icard"><div class="tile econt">E<img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Еконт</b> <span class="chip ok">активен</span><div class="muted">Куриерски услуги и автомати</div><div class="muted" id="iEcont"></div><div class="muted" id="iEcontApiLine"></div></div><button type="button" class="primary" id="iEcontOpen">+ Товарителници</button></div>
           <div class="icard"><div class="tile speedy">S<img src="https://www.google.com/s2/favicons?domain=speedy.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Спиди</b> <span class="chip ok">активен</span><div class="muted">Експресни куриерски доставки</div><div class="muted" id="iSpeedy"></div><div class="muted" id="iSpeedyApiLine"></div></div><button type="button" class="primary" id="iSpeedyOpen">+ Товарителници</button></div>
-          <div class="icard"><div class="tile boxnow">BN<img src="https://www.google.com/s2/favicons?domain=boxnow.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>BOX NOW</b> <span class="chip">скоро</span><div class="muted">Автомати за пратки</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
+          <div class="icard"><div class="tile boxnow">BN<img src="https://www.google.com/s2/favicons?domain=boxnow.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>BOX NOW</b> <span class="chip" id="iBoxnowChip">изключен</span><div class="muted">Автомати за пратки</div><div class="muted" id="iBoxnow"></div></div><button type="button" class="primary" id="iBoxnowOpen">+ Включи</button></div>
           <div class="icard"><div class="tile pigeon">PE<img src="https://www.google.com/s2/favicons?domain=pigeonexpress.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Pigeon Express</b> <span class="chip">скоро</span><div class="muted">Куриерски услуги</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
         </div>
       </div>
@@ -830,6 +830,21 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
           <div class="actions"><button type="button" class="primary" id="nTplSave">Запази текста</button><button type="button" class="ghost" id="nTplTest">Изпрати проба с този текст</button><span class="muted" id="nTplInfo"></span></div>
         </div>
         <div class="muted" id="nTplPick" hidden style="margin-top:14px">За да промените текста на известието, изберете магазин горе вляво.</div>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="boxnowModal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="boxnowTitle">
+      <div class="dhead"><div class="tile boxnow">BN<img src="https://www.google.com/s2/favicons?domain=boxnow.bg&amp;sz=128" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></div><div><h2 id="boxnowTitle">BOX NOW <span class="chip" id="iBoxnowChip2"></span></h2><div class="muted" style="font-size:15px">Доставка до автомат на BOX NOW в чекаута</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div class="tip">💡 Включете само ако изпращате с <b>BOX NOW</b> (имате профил при тях).<br>
+          1. Включете отметката отдолу и запазете.<br>
+          2. В ConvertBuilder добавете метод за доставка, в чието име пише <b>BOX NOW</b> — напр. „Автомат BOX NOW“ — с вашата цена.<br>
+          Клиентите избират автомат от списъка (<span id="bBoxnowCount">—</span> автомата в цялата страна), а вие виждате избрания автомат в поръчката.</div>
+        <label class="check"><input type="checkbox" id="bCheckout"> Покажи BOX NOW в чекаута на този магазин</label>
+        <div class="actions"><button type="button" class="primary" id="bSave">Запази</button><span class="muted" id="bInfo"></span></div>
+        <h3 style="margin:16px 0 6px">Товарителници</h3>
+        <div class="muted">Скоро: товарителници за BOX NOW с един бутон от поръчката. Дотогава ги създавайте в Partner Portal на BOX NOW.</div>
       </div>
     </div>
   </div>
@@ -1578,7 +1593,30 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
     renderSpeedy(s.speedyApi || {});
     renderWa(s.whatsapp || {});
     $('iSpeedy').textContent = s.speedy.offices + ' офиса и автомата · обновено ' + when(s.speedy.updatedAt);
+    renderBoxnow(s.boxnow || { offices: 0, updatedAt: null, checkout: false });
   }
+  /* ---- BOX NOW: автомати в чекаута (включва се за всеки магазин) ---- */
+  var lastBoxnow = {};
+  function renderBoxnow(b) {
+    lastBoxnow = b;
+    chip('iBoxnowChip', b.checkout, 'в чекаута', 'изключен'); chip('iBoxnowChip2', b.checkout, 'Включен в чекаута', 'Изключен');
+    $('iBoxnow').textContent = b.offices ? b.offices + ' автомата · обновено ' + when(b.updatedAt) : '';
+    $('bBoxnowCount').textContent = b.offices || '—';
+    $('iBoxnowOpen').textContent = b.checkout ? 'Настройки' : '+ Включи';
+    $('iBoxnowOpen').className = b.checkout ? 'ghost' : 'primary';
+  }
+  $('iBoxnowOpen').addEventListener('click', function () {
+    $('bCheckout').checked = Boolean(lastBoxnow.checkout); $('bInfo').textContent = '';
+    $('boxnowModal').hidden = false;
+  });
+  $('bSave').addEventListener('click', function () {
+    var on = $('bCheckout').checked;
+    busy($('bSave'), integ({ action: 'boxnow_checkout', on: on })).then(function () {
+      return loadIntegrations().then(function () {
+        $('bInfo').textContent = on ? 'Включено ✓ — до 5 минути BOX NOW се показва в чекаута (ако имате метод с BOX NOW в ConvertBuilder).' : 'Изключено — BOX NOW не се показва в чекаута.';
+      });
+    }).catch(function (e) { showErr('bInfo', e); });
+  });
   /* ---- Еконт: настройки за товарителници ---- */
   var econtOfficesLoaded = false, lastEcont = {};
   function renderEcont(e) {

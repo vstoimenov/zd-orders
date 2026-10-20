@@ -107,12 +107,18 @@
   /**
    * Which of our choices to show from ConvertBuilder's shipping labels: the ones it offers (normal); none offered at all → 'none'
    * (the cart has no shipping method — a message, never made-up choices); only unknown names → 'all' (the shop prices them).
+   * BOX NOW also needs the shop's switch in Ordyx (opts.boxnow); a BOX NOW method that is not switched on is known, not unknown.
    */
-  function shippingView(labels) {
-    var available = {}, any = false;
-    TYPES.forEach(function (t) { available[t] = pickOptionIndex(labels, t) >= 0; any = any || available[t]; });
+  function shippingView(labels, opts) {
+    var available = {}, any = false, known = false;
+    TYPES.forEach(function (t) {
+      var offered = pickOptionIndex(labels, t) >= 0;
+      known = known || offered;
+      available[t] = offered && (t !== 'boxnow_locker' || !!(opts && opts.boxnow));
+      any = any || available[t];
+    });
     if (any) return { mode: 'normal', available: available };
-    if (!labels.length) return { mode: 'none', available: { econt_office: false, speedy_office: false, speedy_address: false, boxnow_locker: false } };
+    if (!labels.length || known) return { mode: 'none', available: { econt_office: false, speedy_office: false, speedy_address: false, boxnow_locker: false } };
     // BOX NOW only when the shop offers it by name: a shop without a BOX NOW contract must never get locker orders
     return { mode: 'all', available: { econt_office: true, speedy_office: true, speedy_address: true, boxnow_locker: false } };
   }
@@ -261,7 +267,8 @@
   function getJson(path) { return fetch(API + path).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); }
   function loadOffices(courier) {
     if (offices[courier]) return Promise.resolve(offices[courier]);
-    return getJson('/api/offices?courier=' + courier).then(function (d) {
+    var site = courier === 'boxnow' ? '&host=' + encodeURIComponent(location.host) : ''; // BOX NOW only for shops that switched it on
+    return getJson('/api/offices?courier=' + courier + site).then(function (d) {
       if (!d.offices || !d.offices.length) throw new Error('empty office list'); // treat as a failure → manual entry
       return (offices[courier] = d.offices);
     });
@@ -363,10 +370,17 @@
 
   function officesFailed(courier) { state[courier + 'Fallback'] = true; render(); sync(); loadCities().then(sync, function () {}); }
 
-  var mountedAt = 0, noShippingSent = false;
+  var mountedAt = 0, noShippingSent = false, boxnowOn = false, boxnowAsked = false;
+  /** Asked once, only when the page offers a BOX NOW method: is BOX NOW switched on for this shop in Ordyx? */
+  function checkBoxnow(labels) {
+    if (boxnowAsked || pickOptionIndex(labels, 'boxnow_locker') < 0) return;
+    boxnowAsked = true;
+    loadOffices('boxnow').then(function () { boxnowOn = true; fillPrices(); }, function () {});
+  }
   var NO_SHIPPING_GRACE_MS = 3000; // ConvertBuilder may still be loading its methods (slow phones)
   function fillPrices() {
-    var o = shippingOptions(), view = shippingView(o.labels);
+    var o = shippingOptions(), view = shippingView(o.labels, { boxnow: boxnowOn });
+    checkBoxnow(o.labels);
     TYPES.forEach(function (t) {
       var i = pickOptionIndex(o.labels, t);
       root.querySelector('[data-price="' + t + '"]').textContent = i >= 0 ? optionPrice(o.labels[i]) : '';
