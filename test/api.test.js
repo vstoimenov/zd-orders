@@ -128,14 +128,15 @@ test('GET /api/cron/refresh requires the secret and stores Econt data', async ()
   globalThis.fetch = async (url) => ({
     ok: true,
     text: async () => "var speedy_offices = { 190: {oID: 190, officeName: 'АЙТОС - КИРИЛ И МЕТОДИЙ (УЛ.)', officeIcon: iconMarker, officeIconFocused: iconMarkerFocused, officeDescription: null, Y: 42.7, X: 27.2, officeType: 'OFFICE', dropOffAllowed: 1, pickUpAllowed: 1} };",
-    json: async () => (String(url).includes('getOffices')
+    json: async () => (String(url).includes('boxnow') ? { data: [{ id: '1840', addressLine1: 'ул. Х 1', addressLine2: 'София', postalCode: '1700', name: 'BOX NOW - Център', state: 'boxnow-ready' }] }
+      : String(url).includes('getOffices')
       ? { offices: [{ code: '1', name: 'Център', address: { city: { id: 7, name: 'Пловдив', postCode: '4000', country: { code3: 'BGR' } }, fullAddress: 'Пловдив ул. Х 1' } }] }
       : { cities: [{ id: 7, name: 'Пловдив', postCode: '4000', regionName: 'Пловдив' }] }),
   });
   try {
     res = fakeRes(); await refresh(fakeReq({ headers: { authorization: 'Bearer cron' } }), res);
   } finally { globalThis.fetch = realFetch; }
-  assert.deepEqual(json(res), { offices: { upserted: 1, removed: 0 }, cities: { upserted: 1, removed: 0 }, speedy: { upserted: 1, removed: 0 }, visitsDeleted: 0, abandoned: { anonymised: 0, deleted: 0 } });
+  assert.deepEqual(json(res), { offices: { upserted: 1, removed: 0 }, cities: { upserted: 1, removed: 0 }, speedy: { upserted: 1, removed: 0 }, boxnow: { upserted: 1, removed: 0 }, visitsDeleted: 0, abandoned: { anonymised: 0, deleted: 0 } });
   const [sp] = await q("select name, city, is_automat from zd.offices where id = 'speedy:190'");
   assert.deepEqual(sp, { name: 'АЙТОС - КИРИЛ И МЕТОДИЙ (УЛ.)', city: 'Айтос', is_automat: false });
   const [pc] = await q("select post_code from zd.offices where id = 'speedy:190'");
@@ -159,6 +160,23 @@ test('GET /api/cron/refresh keeps the Econt refresh when Speedy fails', async ()
   assert.equal(res.statusCode, 200);
   assert.deepEqual(json(res).offices, { upserted: 1, removed: 0 });
   assert.match(json(res).speedy.error, /HTTP 503/);
+});
+
+test('GET /api/cron/refresh keeps the Econt refresh when BOX NOW fails', async () => {
+  const realFetch = globalThis.fetch, savedError = console.error;
+  console.error = () => {};
+  globalThis.fetch = async (url) => (String(url).includes('boxnow') || String(url).includes('speedy')
+    ? { ok: false, status: 502 }
+    : { ok: true, json: async () => (String(url).includes('getOffices')
+      ? { offices: [{ code: '1', name: 'Център', address: { city: { id: 7, name: 'Пловдив', postCode: '4000', country: { code3: 'BGR' } }, fullAddress: 'Пловдив ул. Х 1' } }] }
+      : { cities: [{ id: 7, name: 'Пловдив', postCode: '4000', regionName: 'Пловдив' }] }) });
+  let res;
+  try {
+    res = fakeRes(); await refresh(fakeReq({ headers: { authorization: 'Bearer cron' } }), res);
+  } finally { globalThis.fetch = realFetch; console.error = savedError; }
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(json(res).offices, { upserted: 1, removed: 0 });
+  assert.match(json(res).boxnow.error, /HTTP 502/);
 });
 
 test('POST /api/orders handles and logs DB errors', async () => {

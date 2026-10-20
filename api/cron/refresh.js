@@ -1,6 +1,7 @@
 import { getQuery } from '../../lib/db.js';
 import { fetchEcont, normalizeOffices, normalizeCities, econtPoints } from '../../lib/econt.js';
 import { fetchSpeedyMap, parseSpeedyOffices, attachPostCodes } from '../../lib/speedy.js';
+import { fetchBoxnowLockers } from '../../lib/boxnow.js';
 import { replaceOffices, replaceCities } from '../../lib/catalog-repo.js';
 import { send, safeEqual } from '../../lib/http.js';
 import { cbConfig, syncOrders } from '../../lib/cb-sync.js';
@@ -28,6 +29,12 @@ export default async function handler(req, res) {
     } catch (err) {
       console.error('[cron] speedy refresh failed', err);
       result.speedy = { error: err.message };
+    }
+    try {
+      result.boxnow = await replaceOffices(q, 'boxnow', await fetchBoxnowLockers(), { minRatio: 0.8 });
+    } catch (err) {
+      console.error('[cron] boxnow refresh failed', err);
+      result.boxnow = { error: err.message };
     }
   } catch (err) {
     console.error('[cron] refresh failed', err);
