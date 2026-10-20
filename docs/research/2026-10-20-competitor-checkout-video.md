@@ -1,0 +1,56 @@
+# Видео: Sendica Checkout — пълно ръководство (27:39) — визуални бележки по кадри
+0:12 Abandoned checkouts: таблица (Draft order #, дата, клиент, имейл, КУРИЕР, цена), търсене, филтри; Shopify draft order → „създай поръчка“.
+0:25 Попъп чекаут (shop.sendica.io): горе Quantity breaks (Купете 1 −5%, 2 −10%, 3 −15%, „Вземете офертата“); „Вашите данни“: Име, Фамилия, Имейл, Телефон с флаг +359; чек „Добавяне на данни за фактура“; „Избери начин на доставка“: „Намери ме“ (локация) + „Вижте на картата“; поле за адрес (Google Places, „Sofia Center, bul. Vitosha 23“); табове ПО МЕТОД: До Офис / До Кутия / До Адрес (не по куриер!); карта-ред: лого Еконт, „До автомат с Еконт“, „До 1–2 работни дни“, цена EUR 4.90, „[30852] Варна 24/7 Еконтомат OMB ул. Мир“ + адрес. → списък от ВСИЧКИ куриери, сортиран по близост до адреса; срок на доставка на ред.
+0:50 Pickup Point Configurations по държава (Bulgaria BG): ред на куриер — Econt, BoxNow, SameDay, ExpressOne, Speedy, Pigeon Express; колони: Office/Box/Address shipping method (вързани към Shopify методи), Created, Order (стрелки ↑↓), Edit/Delete; „App Embed Status: Active“; Setup Guide 5/5.
+1:02 Settings табове: Delivery & Popup | Map & Location | Payments | Legal & Compliance. „Delivery methods“: drag-подредба Box & Office Delivery / Office Delivery / Box Delivery / Address Delivery (режим Standard или Combined Box & Office). „Hide discounts section“. „Hide the pickup point search bar“ (избор само от карта и „най-близки“).
+1:15 Попъп = 2 колони: ляво форма; дясно количка (qty ±, кошче), поле за код за отстъпка + „Приложи“, Междинна сума / Доставка / Общо. Горе банер за доверие (95 000+ щастливи клиенти; гаранция 24 м.; наложен платеж; преглед и тест; 30 дни връщане).
+1:35 Избран автомат = карта с лого, срок „До 1–2 работни дни“, цена, код+име, адрес, линк „Промени на точката за взимане“; под нея търсене „Напиши град, офис или адрес“.
+1:58 Settings: Country/market switcher; Customer login (Shopify акаунт → попълнени данни); Cart item editing: Block quantity changes / Block item removal (за подаръци).
+2:15 В попъпа поле „Държава/регион“ (при мулти-пазари).
+2:40 В попъпа: „Имате акаунт? Влезте, за да попълните автоматично данните си…“ + бутон Вход.
+3:25 Settings „Delivery address“: Structured Delivery Address — шаблон „[Office/Box] [Courier]: [Name]: [Full Address]“ на езика на магазина (може собствен шаблон); Delivery Method Address Persistence — промени на клиента в адреса на следващата стъпка се игнорират, оригиналът се пази, аномалиите се тагват „Address Persistence“; Combine delivery boxes and pickup points offices. „Customer details“: Require customer email; Collect invoice details (фирма + ДДС номер → в поръчката).
+4:05 След попъпа → стандартният Shopify чекаут с попълнен адрес („Автомат Econt [39852] Варна 24/7 Еконтомат…“), метод „До автомат с Еконт · До 1–2 работни дни · БЕЗПЛАТНО“, поле „Номер по ДДС“. (Т.е. попъпът е стъпка ПРЕДИ чекаута; плащането остава в Shopify.)
+5:00 Shopify Поръчки: тагове „Address Persistence“, „Cart Difference“, „sendica“; колона Delivery method („До автомат с Еконт“, „Ridicare din sediu Sameday“, „До офис с Pigeon Express“, „Doručení do Z-BOXu“ — работят и в RO/CZ).
+5:20 Детайл на поръчка: метаполета Locker Address/Name/ID, РАБОТНО ВРЕМЕ по дни (JSON), PickupPointId, courier, „Address Difference: Original … / Cart …“, „ZIP Difference“; блок „Pickup point“ (код, име, адрес) + бутони „Refresh order details“ и „Change pickup point“ (смяна от админа).
+5:42 Thank-you страница: „Място за взимане“ — „Вижте на картата“; табове До офис & кутия / До офиса / В кутия / До адрес; списък от всички куриери (BoxNow, Еконт, SameDay EasyBox, Спиди) с цена; текущата точка: „Промяна на точката за взимане“ + търсене + „Това е текущата ви точка… Изберете друга, за да актуализирате поръчката.“ + Отказ / „Актуализиране на точката за взимане“ → КЛИЕНТЪТ сменя автомата/офиса СЛЕД поръчката.
+6:12 Shopify checkout editor: блок на Thank you / Order status страниците.
+6:50 Админ „Change pickup point“: прозорец с текущата точка + падащо меню с всички методи (До автомат с BoxNow / EasyBox / Еконт / Спиди; До адрес с …; До офис с … Express One, Pigeon…) → после избор на точка. 7:05 След смяната: блокът показва новата точка („[8705] АМП – Базар Левски“), адресът за доставка в поръчката е обновен, в хронологията „… updated the shipping address“ (историята се пази).
+7:38 Invoice details: фирмата → полето Company на поръчката; ДДС номер → метаполе sendica.vat_number.
+8:06 Магазинът: количка-чекмедже → „Преминаване към плащане“ отваря попъпа.
+8:48 Попъп с „Добавяне на данни за фактура“ ✓ → полета „Име на фирмата“, „ДДС номер“. Комбиниран режим: табове „До Офис/Автомат“ | „До Адрес“.
+9:08 „Popup behavior: Open Sendica popup after Add to cart“. На избран метод се вижда значка „Плащане само с карта“ (метод без наложен платеж).
+9:35 Theme editor: блок „Sendica Buy Now Button“ в продукта (Buy Now → попъпа, не стандартния чекаут).
+10:25 Settings → Map & Location (Google Maps ключ в Integrations): „Map display mode“: Button only („Виж на картата“) / Embedded map / Disabled; „Locate me (Намери ме)“ — локира клиента и ПОПЪЛВА адреса му (само ако браузърът позволява); „Location permission trigger“: On user action / On popup load.
+11:25 Попъп с „Намери ме“: полето показва адреса (обратно геокодиране: „ж.к. Красно село, 213Е, 1618 София“); таб „До Кутия“ → АКОРДЕОН ПО КУРИЕР: „До автомат с Еконт · До 1–2 работни дни · Безплатно“ (отворен: търсене + най-близки точки с разстояние „842 m“), „До автомат с BoxNow“ (значка „Плащане само с карта“), „До автомат с EasyBox“, „До автомат със Спиди“. Таб „До Офис“: Еконт / Sameday (отворен: 5 най-близки с метри 145 m, 643 m, 716 m…) / Express One…
+11:40 Под методите: upsell „Add 1 for only EUR 5.00“.
+12:08 Карта (модален прозорец „Избери начин за доставка“): горе търсене по адрес + „Намери ме“ + филтри „Куриер“, „Метод“, „Цена“; карта Google; червен пин = клиента; маркери = логото на куриера (Еконт, Sameday, Box Now зелен…), под всеки етикет с ЦЕНАТА („Безплатно“) и иконка вид (кутия/офис); при посочване — име на точката („SAMEDAY point 1463 FastPay София Борово“); клик → избрана.
+12:55 Избран офис Express One показан като карта: „[221032] PUP 1035“, адрес, „Промяна на точката за взимане“.
+13:15 Режим „Embedded map“: картата е вградена в попъпа над табовете (търсене, Намери ме, филтри). Препоръчват „Button only“.
+13:30 Търсене на картата по място („България Мол, бул. България, София“ — Google Places) → маркерите около него.
+13:58 Settings → Payments: „Payment method order“ (правила „Name is …“ + „Other available payment methods“); „Cash on Delivery“ по държава (Bulgaria BG, Finland FI…): „Payment method rules“ (Name, Status Active, Type Hide) + Create rule; „Offer Cash on Delivery in the popup“ (поръчката се създава директно с pending плащане и таксата); „Enable COD fee“.
+14:25 Shopify Manual payment methods: „Наложен платеж (+0.99€)“, Cash on Delivery, Romanian CoD.
+14:55 Shopify чекаут при BoxNow: само „Кредитна карта“ (правилото скрива наложения платеж).
+16:05 „Edit payment rule“: Status Active; Condition: Type „Shipping method“, Operator „is“, Shipping methods (мулти-избор: До автомат с BoxNow…); Action: Hide payment method → конкретния.
+17:40 COD fee: „COD Name“ (кой ръчен метод = наложен платеж), „Enable COD fee“, Fee type Fixed value, Fee amount EUR 0.99, Fee name „Такса наложен платеж“ (ред в поръчката); „Notify customer by email when the fee is added“ (Shopify order-edit invoice с бутон за плащане — опасно при fulfillment).
+18:12 Имейл „Payment of €… is due“ + Pay now (Shopify Order invoice шаблон).
+19:10 Попъп с COD в попъпа: в количката ред „Такса наложен платеж EUR 0.99“, Общо 450.99.
+20:05 Payments по държави: BG, FI, FR, GR, HR, HU, NL… (всеки със свои правила, COD в попъпа, такса).
+20:35 Таксата = скрит продукт „Такса наложен платеж“ (Service, €0.99, SKU, тагове sendica-cod-fee, sendica), Unlisted.
+21:08 „Upsell & Trust“ табове: Layout | Quantity breaks | One-Click Upsell | Trust elements. Quantity breaks: Performance (Total redemptions), Offers таблица (Campaign, Status, Summary „3 tiers – up to 15% off“, Scope „1 products“, Market BG, Created, Uses, Discount given) + „Add an offer“; „Multi-offer display: Allow offers on up to 3 products in the cart“.
+21:35 Попъпът и на английски (Your Information, Add invoice details, Delivery Method, Locate me, View on map) — превод по пазар.
+22:25 След „Get the offer“: „✓ Successfully took the offer“; в количката редове с тагове „ONE-CLICK UPSELL (−EUR 694.00)“ (Aurora Snowboard за EUR 5.00) и „КУПИ ПОВЕЧЕ И СПЕСТИ! (−EUR 27.00)“; Order discounts изброени; Shipping Free; Такса НП 0.99.
+22:40 Upsell & Trust → Layout: „Popup layout“ по пазар (All markets EUR / Custom layout); зони „Top — above the pickup-point selector“ (Trust element 1 Banner; One-click upsell Active All markets; Quantity breaks Active BG) и „Bottom — below…“, „Not placed“; drag & drop; „Bottom/Remove“; стилове през theme editor „Upsell Customization“.
+23:05 Trust elements: качени банери (Trust element 1, 1776×897), Rename/Remove, „Add trust element“.
+24:35 Quantity breaks редакция: обхват (продукти / колекции), „Discount rules“ → Tiers (Buy from N items, Discount per item %, или Fixed EUR, Pre-selected tier), Tier 2 Pre-selected; „Discount source based on: Product price“; „Set quantity conditions: Total quantity of each selected product“; Exclusions; Maximum discount uses.
+25:10 One-click upsell: пазар (All markets EUR — цени в базова валута), Upsell name, Status, „Show the upsell for: All products / Specific products“, Upsell title, Upsell price EUR 5, „Checkbox text: Add {title} for only {price}“, Description, „Connect the upsell to a product in your store“ (иначе виртуален продукт/услуга, напр. застраховка, експресна доставка).
+26:40 Integrations табове All / Marketing / Courier / Fulfillment / ERP / App. Marketing: Klaviyo (имейли към клиенти, избрали точка). Courier: euShipments, Econt (през приложението „Deliver with Econt“), Box Now (през BOX NOW Bulgaria Shopify app), Prim („за всички куриери без Еконт“), WSA DPD (метаданни за Спиди/DPD). Fulfillment: Bigarena, FulHouse, euShipments, ST Fulfillment. App: Beyond Cart (мобилно приложение), Google Maps (карта, „Намери ме“, автодовършване на адрес), „Sendica SaaS“ (праща поръчки/продукти/клиенти към отделния им SaaS акаунт).
+→ ВАЖНО: товарителниците при тях минават през чужди приложения/интеграции; в това приложение няма собствено създаване на товарителница. Ordyx ги създава директно (Еконт, Спиди, BOX NOW) — наше предимство.
+
+## Извод за Ordyx (ConvertBuilder сега, Shopify после)
+1. „Намери ме“ + най-близки точки с метри, за всички куриери — без Google ключ (локация от браузъра + разстояние при нас). Нужни координати на офисите.
+2. Карта с всички куриери (безплатни карти OSM/Leaflet), филтри куриер/вид/цена, цена върху маркера.
+3. Срок „1–2 работни дни“ и работно време на офиса в списъка.
+4. Смяна на офиса след поръчката: от админа И от клиента (нашият линк за потвърждение = тяхната Thank-you страница).
+5. Данни за фактура (фирма, ЕИК/ДДС).
+6. Изоставена количка → поръчка с един бутон.
+За Shopify по-късно: попъп преди чекаута, quantity breaks, one-click upsell, банери за доверие, правила за плащане по метод, такса НП, адрес-шаблон + защита от редакция.
