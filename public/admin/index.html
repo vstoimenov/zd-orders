@@ -457,6 +457,14 @@ tr.hl td{background:#fffbe6}
           <label>Разход при върната пратка<input type="number" step="0.01" min="0" id="cReturn"></label>
         </div>
         <p class="muted">Безплатна доставка се отчита автоматично, когато клиентът не е платил доставка (над 20 €). Тогава цената ѝ е ваш разход.</p>
+        <h2>Данъци (ориентировъчно)</h2>
+        <div class="costgrid">
+          <label class="check"><input type="checkbox" id="cVat"> Регистриран по ДДС</label>
+          <label>Ставка ДДС (%)<input type="number" step="1" min="0" max="100" id="cVatRate"></label>
+          <label class="check"><input type="checkbox" id="cCostsVat"> Разходите ми са с включено ДДС (приспада се)</label>
+          <label>Данък печалба (%)<input type="number" step="0.5" min="0" max="100" id="cTaxPct"></label>
+        </div>
+        <p class="muted">10% за фирма (ЕООД/ООД), 15% за ЕТ. Сметките в „Табло“ са ориентировъчни за планиране и не заместват счетоводител: цените се приемат с включено ДДС, рекламният разход от Meta е без ДДС (обратно начисляване). Праг за регистрация по ДДС: 51 130 € облагаем оборот за календарната година.</p>
         <button type="button" class="primary" id="cSave">Запази разходите</button> <span class="muted" id="cSaved"></span>
       </div>
       <div class="panel">
@@ -1358,7 +1366,24 @@ tr.hl td{background:#fffbe6}
     return card('Разход за продукти', money(p.productCost, 'EUR'), 'себестойност (въвежда се във „Финанси“)') +
       card('Други разходи', money(p.otherCosts, 'EUR'), other) +
       card('Печалба преди ДДС', money(p.profit, 'EUR'), 'от приход от артикули ' + money(p.itemsRevenue, 'EUR') + (p.adSpend ? ', след реклама ' + money(p.adSpend, 'EUR') : ''), p.profit < 0 ? 'bad' : 'ok') +
-      card('Марж', pct(p.margin), 'печалба ÷ приход');
+      card('Марж', pct(p.margin), 'печалба ÷ приход') + taxCards(p);
+  }
+  /** VAT, accounting profit and profit tax — orientation only (settings in Финанси → Данъци) */
+  function taxCards(p) {
+    if (p.netProfit == null) return '';
+    var tone = function (v) { return v < 0 ? 'bad' : 'ok'; };
+    var out = '';
+    if (p.vatRegistered || p.vatDue) {
+      out += card('ДДС за внасяне', money(p.vatDue, 'EUR'), 'в продажбите ' + money(p.vatOnSales, 'EUR') + ' − в разходите ' + money(p.vatOnCosts, 'EUR') + ' · ориентировъчно', p.vatDue > 0 ? 'warn' : 'ok') +
+        card('Счетоводна печалба', money(p.accountingProfit, 'EUR'), 'без ДДС · ориентировъчно', tone(p.accountingProfit));
+    }
+    out += card('Данък печалба', money(p.profitTax, 'EUR'), (p.profitTaxPct != null ? p.profitTaxPct + '% от ' : 'от ') + 'счетоводната печалба · ориентировъчно', 'warn') +
+      card('Чиста печалба', money(p.netProfit, 'EUR'), 'след ДДС и данък печалба · ориентировъчно', tone(p.netProfit));
+    if (p.vatRegistered === false) {
+      var year = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Sofia' }).slice(0, 4);
+      out += card('Оборот ' + year + ' г.', money(p.yearRevenue, 'EUR'), 'праг за ДДС регистрация ' + Math.round(p.vatThreshold).toLocaleString('bg-BG') + ' € за календарната година', p.yearRevenue >= p.vatThreshold * 0.8 ? 'warn' : '');
+    }
+    return out;
   }
   function renderDash(d) {
     dashLoaded = true;
@@ -2789,6 +2814,8 @@ tr.hl td{background:#fffbe6}
     $('cPackaging').value = num(d.settings.packaging); $('cCodFeePct').value = num(d.settings.codFeePct);
     $('cFreeEcont').value = num(d.settings.freeShippingEcont); $('cFreeSpeedy').value = num(d.settings.freeShippingSpeedy); $('cFreeBoxnow').value = num(d.settings.freeShippingBoxnow);
     $('cReturn').value = num(d.settings.returnCost);
+    $('cVat').checked = d.settings.vatRegistered === 1; $('cVatRate').value = num(d.settings.vatRate);
+    $('cCostsVat').checked = d.settings.costsWithVat === 1; $('cTaxPct').value = num(d.settings.profitTaxPct);
     $('cExpenses').innerHTML = table(['Дата', 'Описание', 'Сума', ''], d.expenses.map(function (e) {
       return [esc(e.spentOn), esc(e.name), esc(money(e.amount, 'EUR')), '<button type="button" class="del" data-eid="' + esc(e.id) + '">Изтрий</button>'];
     }));
@@ -2800,7 +2827,8 @@ tr.hl td{background:#fffbe6}
   $('cSave').addEventListener('click', function () {
     var products = [].map.call(document.querySelectorAll('[data-pi]'), function (inp) { return { name: costsData.products[inp.getAttribute('data-pi')].name, unitCost: inp.value === '' ? 0 : inp.value }; });
     var v = function (id) { return $(id).value === '' ? 0 : $(id).value; };
-    var settings = { packaging: v('cPackaging'), codFeePct: v('cCodFeePct'), freeShippingEcont: v('cFreeEcont'), freeShippingSpeedy: v('cFreeSpeedy'), freeShippingBoxnow: v('cFreeBoxnow'), returnCost: v('cReturn') };
+    var settings = { packaging: v('cPackaging'), codFeePct: v('cCodFeePct'), freeShippingEcont: v('cFreeEcont'), freeShippingSpeedy: v('cFreeSpeedy'), freeShippingBoxnow: v('cFreeBoxnow'), returnCost: v('cReturn'),
+      vatRegistered: $('cVat').checked ? 1 : 0, vatRate: v('cVatRate'), costsWithVat: $('cCostsVat').checked ? 1 : 0, profitTaxPct: v('cTaxPct') };
     $('cSave').disabled = true;
     costsFetch('PUT', { products: products, settings: settings })
       .then(function () { $('cSaved').textContent = 'Запазено ✓'; dashLoaded = false; setTimeout(function () { $('cSaved').textContent = ''; }, 2000); })
