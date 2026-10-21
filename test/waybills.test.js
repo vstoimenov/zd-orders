@@ -178,7 +178,7 @@ test('waybillDefaults fills the window from the order and the settings', async (
   await connect({ weight: '0,5', review: true });
   assert.deepEqual(await waybillDefaults(q, { orderId: id, scopeShopId: SHOP }), {
     connected: true, courier: 'econt', courierName: 'Еконт', demo: false, officeText: 'Офис Плевен', sender: 'Офис Младост, София',
-    cod: 22.57, weight: 0.5, packCount: 1, description: '1 × Книга', payer: 'receiver', review: true, shippingInOrder: 2.57,
+    cod: 20, weight: 0.5, packCount: 1, description: '1 × Книга', payer: 'receiver', review: true, shippingInOrder: 2.57, codTotal: 22.57, codItems: 20, // the customer pays the courier: cash on delivery = the items
   });
 });
 
@@ -522,9 +522,10 @@ test('the sender pays the courier unless the shop chose otherwise; the window wa
   const id = await addOrder(); // items 20, total 22.57: shipping is inside the order
   const d = await waybillDefaults(q, { orderId: id, scopeShopId: SHOP });
   assert.deepEqual([d.payer, d.shippingInOrder], ['sender', 2.57]);
+  assert.equal(d.cod, 22.57, 'the shop pays the courier: cash on delivery = the whole order');
   await connect({ payer: 'receiver' });
   const d2 = await waybillDefaults(q, { orderId: id, scopeShopId: SHOP });
-  assert.deepEqual([d2.payer, d2.shippingInOrder], ['receiver', 2.57], 'the window can warn: shipping would be paid twice');
+  assert.deepEqual([d2.payer, d2.shippingInOrder, d2.cod, d2.codItems, d2.codTotal], ['receiver', 2.57, 20, 20, 22.57], 'the customer pays the courier at the office: cash on delivery = the items only, never shipping twice');
   const flat = await addOrder({ total: 20 });
   assert.equal((await waybillDefaults(q, { orderId: flat, scopeShopId: SHOP })).shippingInOrder, 0);
 });
