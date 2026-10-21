@@ -1058,7 +1058,7 @@ tr.hl td{background:#fffbe6}
     if (v == null) return;
     $('fStatus').value = v;
     [].forEach.call($('fPills').children, function (b) { b.classList.toggle('on', b === e.target); });
-    snapshot(); load(1);
+    clearFocus(); snapshot(); load(1);
   });
 
   function snapshot() {
@@ -1102,6 +1102,12 @@ tr.hl td{background:#fffbe6}
         if (!d) { showLogin(); return; }
         page = target;
         orders = d.orders; total = d.total; pageSize = d.pageSize; setAtOffice(d.atOffice); setToPack(d.toPack);
+        if (focusOrder && orders[0] && currentShop !== 'all' && orders[0].shopId !== currentShop && shopById(orders[0].shopId)) {
+          // a scanned slip of another shop: the phone switches to that shop, so the buttons act on the right one
+          currentShop = orders[0].shopId;
+          try { localStorage.setItem('zdShop', currentShop); } catch (err) { /* private mode */ }
+          renderShopBtn();
+        }
         shown = true;
         $('login').hidden = true; $('app').hidden = false;
         render();
@@ -1198,7 +1204,7 @@ tr.hl td{background:#fffbe6}
       .catch(function () { $('loginErr').textContent = 'Няма връзка със сървъра. Опитайте пак.'; })
       .then(function () { btn.disabled = false; });
   });
-  $('filters').addEventListener('submit', function (e) { e.preventDefault(); snapshot(); load(1); });
+  $('filters').addEventListener('submit', function (e) { e.preventDefault(); clearFocus(); snapshot(); load(1); });
   $('csv').addEventListener('click', function () { location.href = withShop(API + 'orders?' + filters() + '&format=csv'); });
   $('prev').addEventListener('click', function () { load(page - 1); });
   $('next').addEventListener('click', function () { load(page + 1); });
@@ -1589,6 +1595,7 @@ tr.hl td{background:#fffbe6}
       });
   }
   function chooseShop(id) {
+    clearFocus();
     currentShop = id;
     try { localStorage.setItem('zdShop', id); } catch (e) { /* private mode */ }
     $('shopMenu').hidden = true; $('shopBtn').setAttribute('aria-expanded', 'false');

@@ -11,6 +11,7 @@ process.env.ZD_DEMO = '1'; // lib/db.js refuses the real database
 process.env.ADMIN_SECRET = `demo-${randomBytes(16).toString('hex')}`;
 process.env.INTEGRATIONS_SECRET = `demo-${randomBytes(16).toString('hex')}`;
 process.env.PUSH_ADMIN_PATH = '/demo/'; // a tapped notification opens the demo, not the real admin
+process.env.ADMIN_BASE_URL = 'https://zd-orders.vercel.app/demo'; // the QR on a demo packing slip opens the demo
 process.env.PUBLIC_BASE_URL = 'https://zd-orders.vercel.app'; // links made in the demo (order confirmation) open on the demo's origin
 { // own push keys: the demo never signs with the real admin's key
   const { default: webpush } = await import('web-push');

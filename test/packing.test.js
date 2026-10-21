@@ -73,6 +73,20 @@ test('the QR link opens one order: the list can be asked for a single id (nothin
   const res = await call({ url: `/api/admin/orders?shop=${SHOP}&id=${a}` });
   assert.deepEqual(json(res).orders.map((o) => o.id), [a]);
   const [{ id: other }] = await q(`insert into zd.shops (name, domain) values ('Друг', 'other.bg') returning id`);
-  assert.deepEqual(json(await call({ url: `/api/admin/orders?shop=${other}&id=${a}` })).orders, [], 'another shop sees nothing');
+  // the phone may have another shop selected when the QR is scanned: the owner still gets the order (from its own shop)
+  const res2 = await call({ url: `/api/admin/orders?shop=${other}&id=${a}` });
+  assert.deepEqual(json(res2).orders.map((o) => [o.id, o.shopId]), [[a, SHOP]], 'the owner sees it whatever shop is selected');
+  // a client of another shop never does
+  const { id, token } = await createClient(q, { email: 'c2@x.bg', shopIds: [other] });
+  const u = await acceptInvite(q, token, 'client-pass-1');
+  const c = `zdo_admin=${clientSession('secret', { id, session_version: u.session_version })}`;
+  assert.deepEqual(json(await call({ url: `/api/admin/orders?shop=${other}&id=${a}`, headers: { cookie: c } })).orders, []);
+  assert.equal((await call({ url: `/api/admin/orders?shop=${SHOP}&id=${'-'.repeat(36)}` })).statusCode, 200, 'a malformed id is just nothing, not a crash');
   void b;
+});
+
+test('packing never changes the status', async () => {
+  const a = await add({}, 'confirmed');
+  await setPacked(q, a, true);
+  assert.equal((await listOrders(q, { shopId: SHOP })).rows[0].status, 'confirmed');
 });

@@ -5,7 +5,7 @@ import { fakeReq, fakeRes } from './helpers/http.js';
 import { setQueryForTests } from '../lib/db.js';
 import { insertOrder, updateStatus, setPacked } from '../lib/orders-repo.js';
 import { signSession } from '../lib/auth.js';
-import { slipHtml, ADMIN_BASE } from '../lib/packing-slip.js';
+import { slipHtml, adminBase, orderLink } from '../lib/packing-slip.js';
 import router from '../api/admin/[route].js';
 
 process.env.ADMIN_SECRET = 'secret';
@@ -31,7 +31,10 @@ test('the slip has what the packer needs, escaped, with a QR that opens the orde
   const [o] = (await q(`select * from zd.orders where id = $1::uuid`, [id]));
   const { toOrder } = await import('../lib/orders-repo.js');
   const html = await slipHtml({ name: 'ADHD книга' }, [toOrder(o)]);
-  assert.equal(ADMIN_BASE, 'https://app.ordyx.eu');
+  assert.equal(adminBase(), 'https://app.ordyx.eu/admin');
+  process.env.ADMIN_BASE_URL = 'https://zd-orders.vercel.app/demo';
+  assert.equal(orderLink('x'), 'https://zd-orders.vercel.app/demo/?order=x', 'the demo keeps its QR links on the demo');
+  delete process.env.ADMIN_BASE_URL;
   assert.match(html, /Мария &lt;script&gt;/);
   assert.ok(!html.includes('<script>alert'), 'customer text is escaped');
   assert.match(html, /Книга &amp; тесте.*×\s*2/s);
@@ -61,5 +64,6 @@ test('GET ?slip=<id> is an HTML page for the logged-in admin of that shop; ?slip
   assert.equal((await get(`/api/admin/orders?slip=all&shop=${other}`)).statusCode, 200);
   assert.match(String((await get(`/api/admin/orders?slip=all&shop=${other}`)).body), /Няма поръчки за пакетиране/);
   assert.equal((await get(`/api/admin/orders?slip=nope&shop=${SHOP}`)).statusCode, 404);
+  assert.equal((await get(`/api/admin/orders?slip=${'-'.repeat(36)}&shop=${SHOP}`)).statusCode, 404, 'a malformed id is 404, not 500');
   void shipped;
 });
