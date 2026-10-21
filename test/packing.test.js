@@ -65,3 +65,14 @@ test('admin: the packed action, the toPack count in the list and the shop scope'
   assert.equal(res.statusCode, 404);
   assert.equal((await listOrders(q, { shopId: SHOP })).rows[0].packedAt, null);
 });
+
+test('the QR link opens one order: the list can be asked for a single id (nothing for a foreign or unknown one)', async () => {
+  const a = await add(), b = await add();
+  assert.deepEqual((await listOrders(q, { id: a, shopId: SHOP })).rows.map((o) => o.id), [a]);
+  assert.deepEqual((await listOrders(q, { id: 'nope', shopId: SHOP })).rows, []);
+  const res = await call({ url: `/api/admin/orders?shop=${SHOP}&id=${a}` });
+  assert.deepEqual(json(res).orders.map((o) => o.id), [a]);
+  const [{ id: other }] = await q(`insert into zd.shops (name, domain) values ('Друг', 'other.bg') returning id`);
+  assert.deepEqual(json(await call({ url: `/api/admin/orders?shop=${other}&id=${a}` })).orders, [], 'another shop sees nothing');
+  void b;
+});
