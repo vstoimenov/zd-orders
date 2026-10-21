@@ -178,7 +178,7 @@ test('waybillDefaults fills the window from the order and the settings', async (
   await connect({ weight: '0,5', review: true });
   assert.deepEqual(await waybillDefaults(q, { orderId: id, scopeShopId: SHOP }), {
     connected: true, courier: 'econt', courierName: 'Еконт', demo: false, officeText: 'Офис Плевен', sender: 'Офис Младост, София',
-    cod: 22.57, weight: 0.5, packCount: 1, description: '1 × Книга', payer: 'receiver', review: true,
+    cod: 22.57, weight: 0.5, packCount: 1, description: '1 × Книга', payer: 'receiver', review: true, shippingInOrder: 2.57,
   });
 });
 
@@ -514,4 +514,17 @@ test('waybills go out from the chosen profile (the personal one), not just the f
   assert.deepEqual(create.body.label.senderClient, { id: 502, name: 'Виктор Стоименов', phones: ['0888888888'] });
   await withFetch(f.impl, () => saveEcont(q, SHOP, { ...settingsBody, password: '', weight: '2' })); // a later save that does not pick again
   assert.equal((await econtStatus(q, SHOP)).clientId, '502', 'the chosen profile stays');
+});
+
+test('the sender pays the courier unless the shop chose otherwise; the window warns when the order already includes shipping', async () => {
+  await saveIntegration(q, 'econt', { config: { username: 'u', demo: false, sender: { type: 'office', officeCode: '1107', text: 'Офис' }, senderPhone: '0888888888', active: true }, secret: JSON.stringify({ username: 'u', password: 'p' }), shopId: SHOP });
+  assert.equal((await econtStatus(q, SHOP)).payer, 'sender', 'never set = the shop pays (the customer paid shipping in the order)');
+  const id = await addOrder(); // items 20, total 22.57: shipping is inside the order
+  const d = await waybillDefaults(q, { orderId: id, scopeShopId: SHOP });
+  assert.deepEqual([d.payer, d.shippingInOrder], ['sender', 2.57]);
+  await connect({ payer: 'receiver' });
+  const d2 = await waybillDefaults(q, { orderId: id, scopeShopId: SHOP });
+  assert.deepEqual([d2.payer, d2.shippingInOrder], ['receiver', 2.57], 'the window can warn: shipping would be paid twice');
+  const flat = await addOrder({ total: 20 });
+  assert.equal((await waybillDefaults(q, { orderId: flat, scopeShopId: SHOP })).shippingInOrder, 0);
 });

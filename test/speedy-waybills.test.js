@@ -88,7 +88,7 @@ test('a Speedy office order: price, then the waybill; the order is shipped and l
   const d = await waybillDefaults(q, { orderId: id, scopeShopId: SHOP });
   assert.deepEqual(d, {
     connected: true, courier: 'speedy', courierName: 'Спиди', demo: false, officeText: 'СПИДИ – офис Плевен', sender: 'СОФИЯ - ЦЕНТЪР',
-    cod: 22.57, weight: 1, packCount: 1, description: '1 × Книга', payer: 'receiver', review: true,
+    cod: 22.57, weight: 1, packCount: 1, description: '1 × Книга', payer: 'receiver', review: true, shippingInOrder: 2.57,
   });
   const p = await withFetch(speedyApi().impl, () => previewWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} }));
   assert.deepEqual(p, { price: 6.1, currency: 'EUR', receiverDue: 6.1, senderDue: 0, demo: false });

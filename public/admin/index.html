@@ -751,7 +751,7 @@ tr.hl td{background:#fffbe6}
           <label>Име на подателя<input type="text" id="eSenderName" maxlength="80" placeholder="по подразбиране — от профила"></label>
           <label>Упълномощено лице<input type="text" id="eSenderAgent" maxlength="80" placeholder="задължително, ако профилът е на фирма"></label>
           <label>Телефон на подателя<input type="tel" id="eSenderPhone" maxlength="30" placeholder="0888…"></label>
-          <label>Доставката се плаща от<select id="ePayer"><option value="receiver">Получателя</option><option value="sender">Мен (подателя)</option></select></label>
+          <label>Доставката се плаща от<select id="ePayer"><option value="sender">Мен (подателя) — клиентът вече плаща доставка в поръчката</option><option value="receiver">Получателя — ще плати на куриера при получаване</option></select></label>
           <label>Тегло по подразбиране (кг)<input type="text" inputmode="decimal" id="eWeight" value="1"></label>
           <label>Описание на пратката<input type="text" id="eDesc" maxlength="100" placeholder="по подразбиране — артикулите от поръчката"></label>
           <label class="check"><input type="checkbox" id="eReview"> Преглед преди плащане</label>
@@ -898,7 +898,7 @@ tr.hl td{background:#fffbe6}
           <label id="sOfficeWrap">Офис на Спиди<input type="text" id="sOffice" list="sOffices" placeholder="започнете да пишете град или офис"><datalist id="sOffices"></datalist></label>
           <label>Телефон на подателя<input type="tel" id="sPhone" maxlength="30" placeholder="0888…"></label>
           <label>Лице за контакт<input type="text" id="sContact" maxlength="60" placeholder="задължително, ако подателят е фирма"></label>
-          <label>Доставката се плаща от<select id="sPayer"><option value="receiver">Получателя</option><option value="sender">Мен (подателя)</option></select></label>
+          <label>Доставката се плаща от<select id="sPayer"><option value="sender">Мен (подателя) — клиентът вече плаща доставка в поръчката</option><option value="receiver">Получателя — ще плати на куриера при получаване</option></select></label>
           <label>Тегло по подразбиране (кг)<input type="text" inputmode="decimal" id="sWeight" value="1"></label>
           <label>Описание на пратката<input type="text" id="sDesc" maxlength="100" placeholder="по подразбиране — артикулите от поръчката"></label>
           <label>Преглед преди плащане<select id="sReview"><option value="">Без преглед</option><option value="OPEN">Отваряне (преглед)</option><option value="TEST">Отваряне и тест</option></select></label>
@@ -926,7 +926,7 @@ tr.hl td{background:#fffbe6}
           <label>Тегло (кг)<input type="text" inputmode="decimal" id="wbWeight"></label>
           <label id="wbPacksWrap">Брой пакети<input type="number" min="1" max="10" id="wbPacks"></label>
           <label id="wbSizeWrap" hidden>Размер на пратката<select id="wbSize"><option value="">Определя BOX NOW (от склад)</option><option value="1">Малка (до 8 см височина)</option><option value="2">Средна (до 17 см)</option><option value="3">Голяма (до 36 см)</option></select></label>
-          <label id="wbPayerWrap">Доставката се плаща от<select id="wbPayer"><option value="receiver">Получателя</option><option value="sender">Мен (подателя)</option></select></label>
+          <label id="wbPayerWrap">Доставката се плаща от<select id="wbPayer"><option value="sender">Мен (подателя)</option><option value="receiver">Получателя</option></select><span class="err" id="wbPayerWarn" hidden></span></label>
           <label style="grid-column:1/-1">Описание<input type="text" id="wbDesc" maxlength="100"></label>
           <label class="check" id="wbReviewWrap"><input type="checkbox" id="wbReview"> Преглед преди плащане</label>
         </div>
@@ -1799,7 +1799,7 @@ tr.hl td{background:#fffbe6}
     $('eSenderName').value = e.senderName || '';
     $('eSenderPhone').value = e.senderPhone || '';
     $('eSenderAgent').value = e.senderAgent || '';
-    $('ePayer').value = e.payer || 'receiver';
+    $('ePayer').value = e.payer || 'sender';
     $('eWeight').value = String(e.weight == null ? 1 : e.weight).replace('.', ',');
     $('eDesc').value = e.description || '';
     $('eReview').checked = Boolean(e.review);
@@ -2438,7 +2438,7 @@ tr.hl td{background:#fffbe6}
     $('sOffice').value = e.sender && e.sender.type === 'office' ? e.sender.officeId + ' · ' + e.sender.text : '';
     $('sPhone').value = e.senderPhone || '';
     $('sContact').value = e.senderContact || '';
-    $('sPayer').value = e.payer || 'receiver';
+    $('sPayer').value = e.payer || 'sender';
     $('sWeight').value = String(e.weight == null ? 1 : e.weight).replace('.', ',');
     $('sDesc').value = e.description || '';
     $('sReview').value = e.review || '';
@@ -2493,7 +2493,14 @@ tr.hl td{background:#fffbe6}
     if (wbOrder.courier === 'boxnow') b.size = $('wbSize').value;
     return b;
   }
-  var wbCourierName = 'Еконт';
+  var wbCourierName = 'Еконт', wbShipping = 0;
+  /** the customer already paid shipping inside the order: with „Получателя“ the courier would collect it a second time */
+  function wbPayerWarn() {
+    var w = $('wbPayerWarn'), on = $('wbPayer').value === 'receiver' && wbShipping > 0;
+    w.hidden = !on;
+    w.textContent = on ? 'Клиентът вече плаща ' + wbShipping.toFixed(2).replace('.', ',') + ' € доставка в поръчката — така ще плати и на куриера. Обикновено изберете „Мен (подателя)“.' : '';
+  }
+  $('wbPayer').addEventListener('change', wbPayerWarn);
   var WB_COURIER = { econt: ['Еконт', 'E', 'econt.com'], speedy: ['Спиди', 'S', 'speedy.bg'], boxnow: ['BOX NOW', 'BN', 'boxnow.bg'] };
   function openWaybill(o) {
     wbOrder = o;
@@ -2517,6 +2524,7 @@ tr.hl td{background:#fffbe6}
       $('wbRoute').innerHTML = '<b>От:</b> ' + esc(d.sender) + '<br><b>До:</b> ' + esc(d.officeText);
       $('wbCod').value = String(d.cod).replace('.', ','); $('wbWeight').value = String(d.weight).replace('.', ',');
       $('wbPacks').value = d.packCount; $('wbPayer').value = d.payer; $('wbDesc').value = d.description; $('wbReview').checked = d.review;
+      wbShipping = d.shippingInOrder || 0; wbPayerWarn();
       if (bn) { $('wbSize').value = d.size ? String(d.size) : (d.sizeRequired ? '2' : ''); $('wbSize').options[0].disabled = Boolean(d.sizeRequired); }
       $('wbInfo').textContent = bn ? 'Цената е по договора ви с BOX NOW.' : ''; $('wbCreate').disabled = false; $('wbCalc').disabled = false;
       $('wbCreate').setAttribute('data-demo', d.demo ? '1' : '');
