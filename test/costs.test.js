@@ -7,9 +7,10 @@ import { insertOrder, updateStatus } from '../lib/orders-repo.js';
 import { getCosts, saveCosts, addExpense, deleteExpense, getProfit, getProfitAll } from '../lib/costs.js';
 import { signSession } from '../lib/auth.js';
 import costsApi from '../lib/admin/costs.js';
+import { saveIntegration } from '../lib/integrations-repo.js';
 
 let q;
-beforeEach(async () => { q = await makeTestQuery(); setQueryForTests(q); process.env.ADMIN_SECRET = 'secret'; });
+beforeEach(async () => { q = await makeTestQuery(); setQueryForTests(q); process.env.ADMIN_SECRET = 'secret'; process.env.INTEGRATIONS_SECRET = 'test-secret'; });
 const today = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Sofia' });
 const cookie = () => `zdo_admin=${signSession('secret')}`;
 let n = 0;
@@ -67,7 +68,7 @@ test('getProfit applies product costs, packaging, COD fee, free shipping, return
     currency: 'EUR', itemsRevenue: 38.7, productCost: 12, packaging: 1.5, codFee: 0.85, freeShipping: 2.48, returns: 7,
     expenses: 10, otherCosts: 21.83, adSpend: 0, profitBeforeAds: 4.87, profit: 4.87, margin: 0.1258,
     // not registered for VAT: no VAT figures, 10% profit tax on the whole profit
-    vatRegistered: false, profitTaxPct: 10, vatOnSales: 0, vatOnCosts: 0, vatDue: 0, netRevenue: 38.7,
+    vatRegistered: false, profitTaxPct: 10, vatOnSales: 0, vatOnCosts: 0, vatDue: 0, adVat: 0, netRevenue: 38.7,
     accountingProfit: 4.87, profitTax: 0.49, netProfit: 4.38, yearRevenue: 42.25, vatThreshold: 51130,
   });
 });
@@ -82,12 +83,32 @@ async function profitFixture(settings) {
   return getProfit(q, { from: today(), to: today() });
 }
 const taxes = (p) => ({ vatOnSales: p.vatOnSales, vatOnCosts: p.vatOnCosts, vatDue: p.vatDue, netRevenue: p.netRevenue, accountingProfit: p.accountingProfit, profitTax: p.profitTax, netProfit: p.netProfit });
+/** 10 € of Meta spend today on the connected account */
+async function adSpend10() {
+  await saveIntegration(q, 'meta', { config: { accountId: '123' }, secret: 'T' });
+  await q(`insert into zd.ad_spend (platform, account_id, day, spend, currency) values ('meta', '123', $1::date, 10, 'EUR')`, [today()]);
+}
 
 test('a VAT-registered shop sees the VAT in sales and in costs, the accounting profit and the profit tax', async () => {
   const p = await profitFixture({ vatRegistered: 1, vatRate: 20, costsWithVat: 1, profitTaxPct: 10 });
   assert.equal(p.vatRegistered, true);
   assert.equal(p.profit, 4.87); // the gross profit is unchanged
-  assert.deepEqual(taxes(p), { vatOnSales: 6.45, vatOnCosts: 5.64, vatDue: 0.81, netRevenue: 32.25, accountingProfit: 4.06, profitTax: 0.41, netProfit: 3.65 });
+  // deductible VAT in 23.83 of products, packaging, COD fee, shipping and returns — not in the 10 € one-off expense
+  assert.deepEqual(taxes(p), { vatOnSales: 6.45, vatOnCosts: 3.97, vatDue: 2.48, netRevenue: 32.25, accountingProfit: 2.39, profitTax: 0.24, netProfit: 2.15 });
+});
+
+test('ad spend is reverse-charged: VAT-neutral when registered, 20% extra cost when not', async () => {
+  await adSpend10();
+  const reg = await profitFixture({ vatRegistered: 1 });
+  assert.equal(reg.adSpend, 10);
+  assert.equal(reg.adVat, 0);
+  assert.equal(reg.accountingProfit, -7.61); // 4.87 − 10 ads − 2.48 VAT due
+  await saveCosts(q, { products: [], settings: { vatRegistered: 0 } });
+  const not = await getProfit(q, { from: today(), to: today() });
+  assert.equal(not.adVat, 2);
+  assert.equal(not.profit, -5.13); // gross figures unchanged
+  assert.equal(not.accountingProfit, -7.13); // self-charged VAT on the ads is a real cost
+  assert.equal(not.netProfit, -7.13);
 });
 
 test('costs without deductible VAT: the whole VAT in sales is due', async () => {
@@ -121,8 +142,8 @@ test('"all shops" sums the tax figures and has no VAT registration of its own', 
   await profitFixture({ vatRegistered: 1 });
   const all = await getProfitAll(q, { from: today(), to: today() });
   assert.equal(all.vatRegistered, null);
-  assert.equal(all.netProfit, 3.65);
-  assert.equal(all.vatDue, 0.81);
+  assert.equal(all.netProfit, 2.15);
+  assert.equal(all.vatDue, 2.48);
   assert.equal(all.yearRevenue, 42.25);
 });
 

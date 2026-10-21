@@ -464,7 +464,7 @@ tr.hl td{background:#fffbe6}
           <label class="check"><input type="checkbox" id="cCostsVat"> Разходите ми са с включено ДДС (приспада се)</label>
           <label>Данък печалба (%)<input type="number" step="0.5" min="0" max="100" id="cTaxPct"></label>
         </div>
-        <p class="muted">10% за фирма (ЕООД/ООД), 15% за ЕТ. Сметките в „Табло“ са ориентировъчни за планиране и не заместват счетоводител: цените се приемат с включено ДДС, рекламният разход от Meta е без ДДС (обратно начисляване). Праг за регистрация по ДДС: 51 130 € облагаем оборот за календарната година.</p>
+        <p class="muted">10% за фирма (ЕООД/ООД), 15% за ЕТ. Сметките в „Табло“ са ориентировъчни за планиране и не заместват счетоводител: цените се приемат с включено ДДС; „Други разходи“ се смятат без ДДС; рекламата от Meta е с обратно начисляване — неутрална за регистрираните, а нерегистрираните си начисляват 20% върху нея без приспадане. Праг за регистрация по ДДС: 51 130 € облагаем оборот за календарната година.</p>
         <button type="button" class="primary" id="cSave">Запази разходите</button> <span class="muted" id="cSaved"></span>
       </div>
       <div class="panel">
@@ -1374,14 +1374,18 @@ tr.hl td{background:#fffbe6}
     var tone = function (v) { return v < 0 ? 'bad' : 'ok'; };
     var out = '';
     if (p.vatRegistered || p.vatDue) {
-      out += card('ДДС за внасяне', money(p.vatDue, 'EUR'), 'в продажбите ' + money(p.vatOnSales, 'EUR') + ' − в разходите ' + money(p.vatOnCosts, 'EUR') + ' · ориентировъчно', p.vatDue > 0 ? 'warn' : 'ok') +
+      var refund = p.vatDue < 0; // more VAT in the costs than in the sales (e.g. a stock-up month)
+      out += card(refund ? 'ДДС за възстановяване' : 'ДДС за внасяне', money(Math.abs(p.vatDue), 'EUR'), 'в продажбите ' + money(p.vatOnSales, 'EUR') + ' − в разходите ' + money(p.vatOnCosts, 'EUR') + ' · ориентировъчно', p.vatDue > 0 ? 'warn' : 'ok') +
         card('Счетоводна печалба', money(p.accountingProfit, 'EUR'), 'без ДДС · ориентировъчно', tone(p.accountingProfit));
     }
-    out += card('Данък печалба', money(p.profitTax, 'EUR'), (p.profitTaxPct != null ? p.profitTaxPct + '% от ' : 'от ') + 'счетоводната печалба · ориентировъчно', 'warn') +
+    if (p.adVat) out += card('ДДС върху рекламата', money(p.adVat, 'EUR'), 'самоначислява се без право на приспадане (чл. 97а) · ориентировъчно', 'warn');
+    out += card('Данък печалба', money(p.profitTax, 'EUR'), (p.profitTaxPct != null ? p.profitTaxPct + '% от ' : 'от ') + 'счетоводната печалба' + (p.profitTaxPct == null ? ', за всеки магазин поотделно' : '') + ' · ориентировъчно', p.profitTax > 0 ? 'warn' : '') +
       card('Чиста печалба', money(p.netProfit, 'EUR'), 'след ДДС и данък печалба · ориентировъчно', tone(p.netProfit));
-    if (p.vatRegistered === false) {
-      var year = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Sofia' }).slice(0, 4);
-      out += card('Оборот ' + year + ' г.', money(p.yearRevenue, 'EUR'), 'праг за ДДС регистрация ' + Math.round(p.vatThreshold).toLocaleString('bg-BG') + ' € за календарната година', p.yearRevenue >= p.vatThreshold * 0.8 ? 'warn' : '');
+    var sh = currentShop !== 'all' && shopById(currentShop);
+    if (p.vatRegistered === false && sh && (sh.currency || 'EUR') === 'EUR') { // the threshold is for EUR turnover
+      var year = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Sofia' }).slice(0, 4), over = p.yearRevenue >= p.vatThreshold;
+      out += card('Оборот ' + year + ' г.', money(p.yearRevenue, 'EUR'), (over ? 'над прага за ДДС регистрация ' : 'праг за ДДС регистрация ') + Math.round(p.vatThreshold).toLocaleString('bg-BG') + ' € за календарната година · ориентировъчно',
+        over ? 'bad' : p.yearRevenue >= p.vatThreshold * 0.8 ? 'warn' : '');
     }
     return out;
   }

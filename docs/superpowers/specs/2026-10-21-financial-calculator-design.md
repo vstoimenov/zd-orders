@@ -17,11 +17,14 @@ threshold. Everything here is **orientation for planning, not accounting** — t
 
 ## Formulas (EUR, registered shops; non-registered → VAT figures are 0)
 - `vatOnSales = itemsRevenue × rate / (100 + rate)` — prices in the shop are gross (incl. VAT).
-- `vatOnCosts = (productCost + packaging + codFee + freeShipping + returns + expenses) × rate / (100 + rate)` when costs
-  include VAT, else 0. Ad spend is excluded: Meta invoices from Ireland are reverse-charged (VAT neutral).
-- `vatDue = vatOnSales − vatOnCosts` (negative = VAT to be refunded).
+- `vatOnCosts = (productCost + packaging + codFee + freeShipping + returns) × rate / (100 + rate)` when costs include VAT,
+  else 0. One-off expenses are taken as VAT-free (mostly foreign SaaS/ads, reverse-charged). Ad spend is excluded: Meta
+  invoices from Ireland are reverse-charged (VAT neutral for a registered shop).
+- `adVat = adSpend × rate / 100` for a shop that is **not** registered (чл. 97а: it self-charges VAT on EU services with no
+  right to deduct — a real cost); 0 when registered.
+- `vatDue = vatOnSales − vatOnCosts` (negative = VAT to be refunded; the card then reads „ДДС за възстановяване“).
 - `netRevenue = itemsRevenue − vatOnSales`.
-- `accountingProfit = profit − vatDue` (the existing profit is gross-vs-gross; removing the VAT balance gives net-vs-net).
+- `accountingProfit = profit − vatDue − adVat` (the existing profit is gross-vs-gross; removing the VAT balance gives net-vs-net).
 - `profitTax = accountingProfit > 0 ? accountingProfit × profitTaxPct / 100 : 0`.
 - `netProfit = accountingProfit − profitTax`.
 - `yearRevenue` = Σ `total` of EUR orders of the shop since 1 January (Sofia), not cancelled/returned — independent of the period.

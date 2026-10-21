@@ -23,7 +23,7 @@ and extra cards in `profitCards`.
 2. `vatRate: 0` or `costsWithVat: 0` never divides by zero / produces NaN; non-registered shops have all VAT figures 0.
 3. „All shops“ sums the new fields and returns `vatRegistered: null`; the threshold card is hidden there.
 4. `yearRevenue` counts the calendar year in Sofia time, excludes cancelled/returned and non-EUR orders, and does not depend on the period.
-5. Saving settings keeps unknown/other keys intact (merge, as today) and rejects `vatRate` outside 0–100.
+5. Saving settings merges with the stored known keys (unsent keys keep their value; unknown keys are dropped, as today) and rejects `vatRate` outside 0–100.
 
 ---
 
