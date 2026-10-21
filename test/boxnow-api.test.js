@@ -1,7 +1,7 @@
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  BOXNOW_HOSTS, BOXNOW_STAGE_LOCKER, boxnowCall, clearBoxnowTokens, getProfile, buildDelivery, createDelivery, cancelParcel, labelPdf, shipmentStatuses,
+  BOXNOW_HOSTS, BOXNOW_STAGE_LOCKER, boxnowCall, confirmAnyApm, clearBoxnowTokens, getProfile, buildDelivery, createDelivery, cancelParcel, labelPdf, shipmentStatuses,
 } from '../lib/boxnow-api.js';
 
 const live = { username: 'cid', password: 'sec', demo: false };
@@ -72,7 +72,7 @@ test('buildDelivery: COD order from a warehouse to the chosen locker, phones in 
   assert.equal(r.orderNumber, '6f1c2a9e-1', 'the same number on every try, so BOX NOW refuses a second parcel (P410)');
   assert.equal(buildDelivery({ ...order, waybillAttempt: 1 }, warehouse, {}).orderNumber, '6f1c2a9e-2', 'a new number only after a cancelled parcel');
   assert.deepEqual({ ...r, orderNumber: 'N' }, {
-    orderNumber: 'N', invoiceValue: '22.57', paymentMode: 'cod', amountToBeCollected: '22.57', allowReturn: true,
+    orderNumber: 'N', invoiceValue: '22.57', paymentMode: 'cod', amountToBeCollected: '22.57', allowReturn: false, // BOX NOW's guide: always false
     origin: { locationId: 'W1', contactName: 'Профитбранд', contactNumber: '+359899111222', contactEmail: 'shop@x.bg' },
     destination: { locationId: '1840', contactName: 'Мария Иванова', contactNumber: '+359888123456', contactEmail: 'm@x.bg' },
     items: [{ id: `${r.orderNumber}-1`, name: '1 × Книга', value: '22.57', weight: 1 }],
@@ -173,4 +173,12 @@ test('statuses ask for cash-on-delivery parcels first, skip a parcel BOX NOW fai
 test('a disabled BOX NOW account says so at login', async () => {
   const f = boxnow({ '/api/v1/auth-sessions': () => reply(403, { code: 'X403', message: 'Account disabled' }) });
   await assert.rejects(boxnowCall(live, { path: '/api/v1/origins' }, f.impl), /спрян/);
+});
+
+test('after the shop drops a parcel in a locker it tells BOX NOW (the profile needs the confirmation)', async () => {
+  const f = boxnow({ ':confirm-anyapm-delivery': () => reply(200, {}) });
+  await confirmAnyApm(live, '4182565522', f.impl);
+  assert.deepEqual([f.calls.at(-1).method, f.calls.at(-1).path], ['POST', '/api/v1/parcels/4182565522:confirm-anyapm-delivery']);
+  const g = boxnow({ ':confirm-anyapm-delivery': () => reply(400, { code: 'P430', message: 'already' }) });
+  await assert.rejects(confirmAnyApm(live, '1', g.impl), /още не е в автомата|вече е потвърдена/);
 });

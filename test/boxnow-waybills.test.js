@@ -7,7 +7,7 @@ import { insertOrder, listOrders } from '../lib/orders-repo.js';
 import { getSecret, saveIntegration } from '../lib/integrations-repo.js';
 import { signSession } from '../lib/auth.js';
 import { clearBoxnowTokens } from '../lib/boxnow-api.js';
-import { saveBoxnow, boxnowStatus, createWaybill, cancelWaybill, previewWaybill, waybillDefaults, syncBoxnowStatuses } from '../lib/waybills.js';
+import { saveBoxnow, boxnowStatus, createWaybill, cancelWaybill, previewWaybill, waybillDefaults, syncBoxnowStatuses, confirmDrop } from '../lib/waybills.js';
 import waybillsApi from '../lib/admin/waybills.js';
 import integrationsApi from '../lib/admin/integrations.js';
 
@@ -185,4 +185,25 @@ test('test mode: the waybill goes to BOX NOW\'s test locker and the window says 
   const f = boxnowApi();
   await withFetch(f.impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} }));
   assert.equal(f.calls.find((c) => c.path === '/api/v1/delivery-requests').body.destination.locationId, '5365');
+});
+
+test('sending from a locker: the waybill waits for the drop; „Пуснах я в автомата“ confirms it at BOX NOW once', async () => {
+  await connect({ originType: 'any-apm', size: '2' });
+  const id = await addOrder();
+  const f = boxnowApi();
+  const w = await withFetch(f.impl, () => createWaybill(q, { orderId: id, scopeShopId: SHOP, input: {} }));
+  assert.equal(w.needsDrop, true, 'the window says the parcel must be dropped in a locker');
+  assert.equal(f.calls.find((c) => c.path === '/api/v1/delivery-requests').body.items[0].compartmentSize, 2);
+  let o = await orderById(id);
+  assert.match(o.shipment.status, /автомат/);
+  const c = boxnowApi({ ':confirm-anyapm-delivery': () => reply(200, {}) });
+  await withFetch(c.impl, () => confirmDrop(q, { orderId: id, scopeShopId: SHOP }));
+  assert.ok(c.calls.some((x) => x.path.endsWith(':confirm-anyapm-delivery')));
+  o = await orderById(id);
+  assert.equal(o.shipment.status, 'Пусната в автомат ✓');
+  await assert.rejects(confirmDrop(q, { orderId: id, scopeShopId: SHOP }), /вече/);
+  const wh = await addOrder();
+  await withFetch(boxnowApi().impl, () => saveBoxnow(q, SHOP, { ...body }));
+  const w2 = await withFetch(boxnowApi().impl, () => createWaybill(q, { orderId: wh, scopeShopId: SHOP, input: {} }));
+  assert.equal(w2.needsDrop, undefined, 'from a warehouse BOX NOW collects: nothing to confirm');
 });

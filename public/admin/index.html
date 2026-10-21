@@ -872,7 +872,6 @@ tr.hl td{background:#fffbe6}
           <label>Имейл на подателя<input type="email" id="bEmail" maxlength="120" placeholder="ползва се и за клиенти без имейл"></label>
           <label>Тегло по подразбиране (кг)<input type="text" inputmode="decimal" id="bWeight" value="1"></label>
           <label style="grid-column:1/-1">Описание по подразбиране<input type="text" id="bDesc" maxlength="100" placeholder="по подразбиране — продуктите от поръчката"></label>
-          <label class="check"><input type="checkbox" id="bReturn" checked> Неполучените пратки се връщат към мен</label>
           <label class="check"><input type="checkbox" id="bActive" checked> Активни товарителници</label>
         </div>
         <div class="actions"><button type="button" class="primary" id="bSaveWb">Запази товарителниците</button><button type="button" class="ghost" id="bSync">Провери статусите</button></div>
@@ -1156,6 +1155,7 @@ tr.hl td{background:#fffbe6}
           ? '<span class="dup" title="Обадете се или пишете на клиента, преди пратката да се върне">📦 ' + w.atOfficeDay + '-и ден в офиса — звъннете</span>' + (o.phoneNorm ? ' <a href="tel:' + esc(o.phoneNorm) + '">📞 ' + esc(o.phoneNorm) + '</a>' : '')
           : '<span class="muted">📦 ' + (w.atOfficeDay === 1 ? 'пристигна в офиса днес' : 'в офиса от ' + w.atOfficeDay + ' дни') + '</span>') : '') +
         '<br>' + (w.pdf ? '<a href="' + esc(pdfHref(w.pdf)) + '" target="_blank" rel="noopener">PDF за печат</a> · ' : '') +
+        (o.courier === 'boxnow' && w.status && w.status.indexOf('Пуснете') === 0 ? '<a href="#" data-wbdrop="' + i + '">📦 Пуснах я в автомата</a> · ' : '') +
         '<a href="#" data-wbcancel="' + i + '">Анулирай</a></span>';
     }
     if (o.waybillState === 'unknown') {
@@ -1250,6 +1250,11 @@ tr.hl td{background:#fffbe6}
       return;
     }
     if (btn.getAttribute('data-wbcancel') != null) { e.preventDefault(); cancelWaybill(orders[btn.getAttribute('data-wbcancel')], btn); return; }
+    if (btn.getAttribute('data-wbdrop') != null) {
+      e.preventDefault(); btn.textContent = 'Потвърждавам…';
+      wb({ action: 'drop', id: orders[btn.getAttribute('data-wbdrop')].id }).then(function () { load(page); }).catch(function (err) { btn.textContent = '📦 Пуснах я в автомата'; if (err.message !== 'auth') alert(err.message); });
+      return;
+    }
     var i = btn.getAttribute('data-copy');
     if (i == null) return;
     var text = orders[i].waybill;
@@ -1715,7 +1720,7 @@ tr.hl td{background:#fffbe6}
     $('bOrigin').innerHTML = a.sender ? '<option value="' + esc(a.originType === 'any-apm' ? 'any-apm' : a.originId) + '">' + esc(a.sender.text) + '</option>' : '<option value="">— натиснете „Зареди профила“ —</option>';
     $('bSize').value = String(a.size || 2); $('bName').value = a.senderName || ''; $('bPhone').value = a.senderPhone || ''; $('bEmail').value = a.senderEmail || '';
     $('bWeight').value = String(a.weight == null ? 1 : a.weight).replace('.', ','); $('bDesc').value = a.description || '';
-    $('bReturn').checked = a.allowReturn !== false; $('bActive').checked = a.active !== false;
+    $('bActive').checked = a.active !== false;
     boxnowOriginToggle();
     $('boxnowModal').hidden = false;
   });
@@ -1737,7 +1742,7 @@ tr.hl td{background:#fffbe6}
     var b = boxnowCreds(), origin = $('bOrigin').value;
     b.action = 'save_boxnow'; b.originType = origin === 'any-apm' ? 'any-apm' : 'warehouse'; b.originId = origin === 'any-apm' ? '' : origin; b.size = $('bSize').value;
     b.senderName = $('bName').value; b.senderPhone = $('bPhone').value; b.senderEmail = $('bEmail').value; b.weight = $('bWeight').value; b.description = $('bDesc').value;
-    b.allowReturn = $('bReturn').checked; b.active = $('bActive').checked;
+    b.active = $('bActive').checked;
     $('bWbInfo').textContent = 'Проверявам профила в BOX NOW…';
     busy($('bSaveWb'), integ(b)).then(function (d) {
       $('bSecret').value = '';
@@ -2535,7 +2540,8 @@ tr.hl td{background:#fffbe6}
     busy($('wbCreate'), wb(b)).then(function (w) {
       $('wbInfo').innerHTML = '✓ Товарителница <b>' + esc(w.number) + '</b>' + (w.price != null ? ' (' + esc(money(w.price, w.currency)) + ')' : '') +
         (w.pdf ? ' · <a href="' + esc(pdfHref(w.pdf)) + '" target="_blank" rel="noopener">PDF за печат</a>' : '') +
-        (w.pickup === 'ordered' ? '<br>✓ Поръчан е куриер да вземе пратката.' : '') + (w.pickupError ? '<br><span class="err">' + esc(w.pickupError) + '</span>' : '');
+        (w.pickup === 'ordered' ? '<br>✓ Поръчан е куриер да вземе пратката.' : '') + (w.pickupError ? '<br><span class="err">' + esc(w.pickupError) + '</span>' : '') +
+        (w.needsDrop ? '<br>📦 Залепете етикета, пуснете пратката в автомат на BOX NOW и после натиснете „Пуснах я в автомата“ при поръчката.' : '');
       $('wbCreate').disabled = true; dashLoaded = false; load(page);
     }).catch(function (e) { showErr('wbInfo', e); });
   });
