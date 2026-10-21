@@ -4,7 +4,7 @@ import { makeTestQuery } from './helpers/pglite.js';
 import { fakeReq, fakeRes, json } from './helpers/http.js';
 import { setQueryForTests } from '../lib/db.js';
 import { insertOrder, updateStatus } from '../lib/orders-repo.js';
-import { getCosts, saveCosts, addExpense, deleteExpense, getProfit } from '../lib/costs.js';
+import { getCosts, saveCosts, addExpense, deleteExpense, getProfit, getProfitAll } from '../lib/costs.js';
 import { signSession } from '../lib/auth.js';
 import costsApi from '../lib/admin/costs.js';
 
@@ -31,12 +31,18 @@ test('getCosts lists every sold product with its saved unit cost', async () => {
   await saveCosts(q, { products: [{ name: 'Книга', unitCost: 4.2 }], settings: { packaging: 0.5, codFeePct: 1.5, freeShippingEcont: 3.55, freeShippingSpeedy: 2.48, freeShippingBoxnow: 3.1, returnCost: 7 } });
   const c = await getCosts(q);
   assert.deepEqual(c.products, [{ name: 'Книга', unitCost: 4.2, soldQty: 3 }, { name: 'Бонус', unitCost: 0, soldQty: 1 }]);
-  assert.deepEqual(c.settings, { packaging: 0.5, codFeePct: 1.5, freeShippingEcont: 3.55, freeShippingSpeedy: 2.48, freeShippingBoxnow: 3.1, returnCost: 7 });
+  assert.deepEqual(c.settings, {
+    packaging: 0.5, codFeePct: 1.5, freeShippingEcont: 3.55, freeShippingSpeedy: 2.48, freeShippingBoxnow: 3.1, returnCost: 7,
+    vatRegistered: 0, vatRate: 20, costsWithVat: 1, profitTaxPct: 10, // tax defaults until the shop sets them
+  });
 });
 
 test('saveCosts rejects negative or non-numeric values', async () => {
   await assert.rejects(saveCosts(q, { products: [{ name: 'Книга', unitCost: -1 }], settings: {} }), /invalid/);
   await assert.rejects(saveCosts(q, { products: [], settings: { packaging: 'abc' } }), /invalid/);
+  await assert.rejects(saveCosts(q, { products: [], settings: { vatRate: 120 } }), /invalid/);
+  await assert.rejects(saveCosts(q, { products: [], settings: { profitTaxPct: -1 } }), /invalid/);
+  await assert.rejects(saveCosts(q, { products: [], settings: { vatRegistered: 2 } }), /invalid/);
 });
 
 test('expenses are added, listed newest first and deleted', async () => {
@@ -60,7 +66,64 @@ test('getProfit applies product costs, packaging, COD fee, free shipping, return
   assert.deepEqual(p, {
     currency: 'EUR', itemsRevenue: 38.7, productCost: 12, packaging: 1.5, codFee: 0.85, freeShipping: 2.48, returns: 7,
     expenses: 10, otherCosts: 21.83, adSpend: 0, profitBeforeAds: 4.87, profit: 4.87, margin: 0.1258,
+    // not registered for VAT: no VAT figures, 10% profit tax on the whole profit
+    vatRegistered: false, profitTaxPct: 10, vatOnSales: 0, vatOnCosts: 0, vatDue: 0, netRevenue: 38.7,
+    accountingProfit: 4.87, profitTax: 0.49, netProfit: 4.38, yearRevenue: 42.25, vatThreshold: 51130,
   });
+});
+
+/** the fixture of the profit test: 38.70 items, 33.83 costs with VAT, profit 4.87 */
+async function profitFixture(settings) {
+  await saveCosts(q, { products: [{ name: 'Книга', unitCost: 4 }], settings: { packaging: 0.5, codFeePct: 2, freeShippingEcont: 3.55, freeShippingSpeedy: 2.48, returnCost: 7, ...settings } });
+  await add();
+  await add({ items: [{ name: 'Книга', qty: 2, price: 25.8 }], total: 25.8, courier: 'speedy' });
+  await add({}, 'returned');
+  await addExpense(q, { spentOn: today(), name: 'Реклама извън Meta', amount: 10 });
+  return getProfit(q, { from: today(), to: today() });
+}
+const taxes = (p) => ({ vatOnSales: p.vatOnSales, vatOnCosts: p.vatOnCosts, vatDue: p.vatDue, netRevenue: p.netRevenue, accountingProfit: p.accountingProfit, profitTax: p.profitTax, netProfit: p.netProfit });
+
+test('a VAT-registered shop sees the VAT in sales and in costs, the accounting profit and the profit tax', async () => {
+  const p = await profitFixture({ vatRegistered: 1, vatRate: 20, costsWithVat: 1, profitTaxPct: 10 });
+  assert.equal(p.vatRegistered, true);
+  assert.equal(p.profit, 4.87); // the gross profit is unchanged
+  assert.deepEqual(taxes(p), { vatOnSales: 6.45, vatOnCosts: 5.64, vatDue: 0.81, netRevenue: 32.25, accountingProfit: 4.06, profitTax: 0.41, netProfit: 3.65 });
+});
+
+test('costs without deductible VAT: the whole VAT in sales is due', async () => {
+  const p = await profitFixture({ vatRegistered: 1, vatRate: 20, costsWithVat: 0 });
+  assert.deepEqual(taxes(p), { vatOnSales: 6.45, vatOnCosts: 0, vatDue: 6.45, netRevenue: 32.25, accountingProfit: -1.58, profitTax: 0, netProfit: -1.58 });
+});
+
+test('a VAT rate of 0 and a loss period give zeros, never NaN or a negative tax', async () => {
+  const p = await profitFixture({ vatRegistered: 1, vatRate: 0, profitTaxPct: 15 });
+  assert.deepEqual(taxes(p), { vatOnSales: 0, vatOnCosts: 0, vatDue: 0, netRevenue: 38.7, accountingProfit: 4.87, profitTax: 0.73, netProfit: 4.14 });
+  await saveCosts(q, { products: [{ name: 'Книга', unitCost: 100 }] });
+  const loss = await getProfit(q, { from: today(), to: today() });
+  assert.ok(loss.accountingProfit < 0);
+  assert.equal(loss.profitTax, 0);
+  assert.equal(loss.netProfit, loss.accountingProfit);
+});
+
+test('yearRevenue counts this calendar year of the shop only, whatever the period', async () => {
+  await add({ total: 20 });
+  await add({ total: 5 }, 'cancelled');
+  await add({ total: 7 }, 'returned');
+  await add({ total: 9, currency: 'USD', cbOrderId: 'test:usd' });
+  const old = await add({ total: 100 });
+  await q(`update zd.orders set created_at = created_at - interval '1 year' where id = $1::uuid`, [old.id]);
+  const p = await getProfit(q, { from: '2020-01-01', to: '2020-01-02' });
+  assert.equal(p.yearRevenue, 20);
+  assert.equal(p.itemsRevenue, 0);
+});
+
+test('"all shops" sums the tax figures and has no VAT registration of its own', async () => {
+  await profitFixture({ vatRegistered: 1 });
+  const all = await getProfitAll(q, { from: today(), to: today() });
+  assert.equal(all.vatRegistered, null);
+  assert.equal(all.netProfit, 3.65);
+  assert.equal(all.vatDue, 0.81);
+  assert.equal(all.yearRevenue, 42.25);
 });
 
 test('the costs API needs the admin cookie and round-trip', async () => {
