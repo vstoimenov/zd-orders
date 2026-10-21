@@ -748,6 +748,7 @@ tr.hl td{background:#fffbe6}
         <div class="fgrid">
           <label id="eOfficeWrap">Офис на Еконт<input type="text" id="eOffice" list="eOffices" placeholder="започнете да пишете град или офис"><datalist id="eOffices"></datalist></label>
           <label id="eAddressWrap" hidden>Адрес от профила<select id="eAddress"><option value="">— натиснете „Зареди профила“ —</option></select></label>
+          <label>Изплащане на наложения платеж<select id="ePay"><option value="">По подразбиране в e-Econt</option></select><span class="muted">Шаблоните са от профила ви в e-Econt (в брой в офис / по банка). Зареждат се с „Зареди профила“.</span></label>
           <label>Име на подателя<input type="text" id="eSenderName" maxlength="80" placeholder="по подразбиране — от профила"></label>
           <label>Упълномощено лице<input type="text" id="eSenderAgent" maxlength="80" placeholder="задължително, ако профилът е на фирма"></label>
           <label>Телефон на подателя<input type="tel" id="eSenderPhone" maxlength="30" placeholder="0888…"></label>
@@ -1796,6 +1797,7 @@ tr.hl td{background:#fffbe6}
     [].forEach.call(document.querySelectorAll('input[name="eSenderType"]'), function (r) { r.checked = r.value === type; });
     $('eOffice').value = e.sender && e.sender.type === 'office' ? e.sender.officeCode + ' · ' + e.sender.text : '';
     $('eAddress').innerHTML = e.sender && e.sender.type === 'address' ? '<option value="' + esc(e.sender.addressId) + '">' + esc(e.sender.text) + '</option>' : '<option value="">— натиснете „Зареди профила“ —</option>';
+    $('ePay').innerHTML = '<option value="">По подразбиране в e-Econt</option>' + (e.cdPayOption ? '<option value="' + esc(e.cdPayOption.num) + '" selected>' + esc(e.cdPayOption.text) + '</option>' : '');
     $('eSenderName').value = e.senderName || '';
     $('eSenderPhone').value = e.senderPhone || '';
     $('eSenderAgent').value = e.senderAgent || '';
@@ -1829,6 +1831,8 @@ tr.hl td{background:#fffbe6}
       $('eProfile').textContent = 'Профил: ' + p.name + ' ✓' + (p.company ? ' · фирма — попълнете упълномощено лице' : '');
       $('eAddress').innerHTML = p.addresses.length ? p.addresses.map(function (a) { return '<option value="' + esc(a.id) + '"' + (a.id === keep ? ' selected' : '') + '>' + esc(a.text) + '</option>'; }).join('') : '<option value="">Профилът няма адреси — добавете в e-Econt или изпращайте от офис</option>';
       if (!$('eSenderPhone').value && p.phones[0]) $('eSenderPhone').value = p.phones[0];
+      var keepPay = $('ePay').value;
+      $('ePay').innerHTML = '<option value="">По подразбиране в e-Econt</option>' + (p.payOptions || []).map(function (o) { return '<option value="' + esc(o.num) + '"' + (o.num === keepPay ? ' selected' : '') + '>' + esc(o.text) + '</option>'; }).join('');
     }).catch(function (e) { showErr('eProfile', e); });
   });
   $('eClient').addEventListener('change', function () { $('eLoad').click(); }); // each profile has its own addresses and phones
@@ -1837,7 +1841,7 @@ tr.hl td{background:#fffbe6}
     b.action = 'save_econt'; b.senderType = econtSenderType();
     b.senderOfficeCode = ($('eOffice').value.match(/^\s*(\d+)/) || [])[1] || '';
     b.senderAddressId = $('eAddress').value; b.senderName = $('eSenderName').value; b.senderAgent = $('eSenderAgent').value; b.senderPhone = $('eSenderPhone').value;
-    b.payer = $('ePayer').value; b.weight = $('eWeight').value; b.description = $('eDesc').value; b.review = $('eReview').checked; b.active = $('eActive').checked;
+    b.payer = $('ePayer').value; b.weight = $('eWeight').value; b.description = $('eDesc').value; b.review = $('eReview').checked; b.active = $('eActive').checked; b.cdPayOptionNum = $('ePay').value;
     $('eInfo').textContent = 'Проверявам профила в Еконт…';
     busy($('eSave'), integ(b)).then(function (d) {
       $('ePass').value = '';

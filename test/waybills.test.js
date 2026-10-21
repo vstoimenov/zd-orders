@@ -261,7 +261,7 @@ test('integrations: econt settings through the admin, status shows them without 
   let res = fakeRes();
   await withFetch(econt().impl, () => integrationsApi(fakeReq({ method: 'POST', url: '/api/admin/integrations', headers: { cookie: cookie() }, body: { action: 'econt_profile', username: 'shop-user', password: 'pa55' } }), res));
   assert.equal(res.statusCode, 200);
-  assert.deepEqual(json(res).profile, { clientId: '', profiles: [{ id: '', name: 'ЕТ Консулт', company: false }], name: 'ЕТ Консулт', company: false, phones: ['359883525008'], addresses: [{ id: '77', text: 'София 1000, бул. Гешов 2' }] });
+  assert.deepEqual(json(res).profile, { clientId: '', profiles: [{ id: '', name: 'ЕТ Консулт', company: false }], payOptions: [], name: 'ЕТ Консулт', company: false, phones: ['359883525008'], addresses: [{ id: '77', text: 'София 1000, бул. Гешов 2' }] });
   res = fakeRes();
   await withFetch(econt().impl, () => integrationsApi(fakeReq({ method: 'POST', url: '/api/admin/integrations', headers: { cookie: cookie() }, body: { action: 'save_econt', ...settingsBody } }), res));
   assert.equal(res.statusCode, 200);
@@ -528,4 +528,17 @@ test('the sender pays the courier unless the shop chose otherwise; the window wa
   assert.deepEqual([d2.payer, d2.shippingInOrder, d2.cod, d2.codItems, d2.codTotal], ['receiver', 2.57, 20, 20, 22.57], 'the customer pays the courier at the office: cash on delivery = the items only, never shipping twice');
   const flat = await addOrder({ total: 20 });
   assert.equal((await waybillDefaults(q, { orderId: flat, scopeShopId: SHOP })).shippingInOrder, 0);
+});
+
+test('the shop picks how Econt pays out the cash on delivery (a template from its e-Econt profile)', async () => {
+  const withPay = { profiles: [{ ...PROFILE.profiles[0], cdPayOptions: [{ num: 'CD41012', method: 'bank', IBAN: 'BG18RZBB91550123456789', bankCurrency: 'EUR' }, { num: 'CD41027', method: 'office', officeCode: '1032' }] }] };
+  const f = econt({ getClientProfiles: () => reply(200, withPay) });
+  assert.deepEqual((await withFetch(f.impl, () => econtProfile(q, SHOP, settingsBody))).payOptions.map((o) => o.num), ['CD41012', 'CD41027']);
+  await withFetch(f.impl, () => saveEcont(q, SHOP, { ...settingsBody, cdPayOptionNum: 'CD41012' }));
+  assert.deepEqual((await econtStatus(q, SHOP)).cdPayOption, { num: 'CD41012', text: 'По банка · IBAN …6789 (EUR)' });
+  await withFetch(f.impl, () => saveEcont(q, SHOP, { ...settingsBody, password: '', weight: '2' })); // a later save without choosing again
+  assert.equal((await econtStatus(q, SHOP)).cdPayOption.num, 'CD41012', 'the choice stays');
+  await assert.rejects(withFetch(f.impl, () => saveEcont(q, SHOP, { ...settingsBody, cdPayOptionNum: 'CD99999' })), /изплащане/);
+  await withFetch(f.impl, () => saveEcont(q, SHOP, { ...settingsBody, cdPayOptionNum: '' }));
+  assert.equal((await econtStatus(q, SHOP)).cdPayOption, null, 'back to e-Econt\'s default');
 });

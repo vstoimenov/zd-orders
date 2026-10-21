@@ -186,3 +186,20 @@ test('atOfficeFromEcont: the first arrival at the receiver office, only while no
   assert.equal(atOfficeFromEcont({ receiverOfficeCode: '', trackingEvents: [ev('office', '1107', '2026-10-10T09:00:00+03:00')] }), null, 'address delivery');
   assert.equal(atOfficeFromEcont({ trackingEvents: [{ ...ev('office', '5803', '2026-10-11T10:00:00+03:00'), isReceipt: true }], receiverOfficeCode: '5803' }), null, 'return receipts do not count');
 });
+
+test('getProfile lists the e-Econt pay-out templates for cash on delivery; buildLabel sends the chosen one', async () => {
+  const r = recorder(reply(200, { profiles: [{ client: { name: 'ЕТ Консулт', phones: ['359883525008'] }, addresses: [], cdPayOptions: [
+    { num: 'CD41012', method: 'bank', IBAN: 'BG18RZBB91550123456789', bankCurrency: 'EUR' },
+    { num: 'CD41027', method: 'office', officeCode: '1032' },
+    { num: 'CD41025', method: 'address', address: { city: { name: 'Бургас' } } },
+  ] }] }));
+  const p = await getProfile(creds, r.impl);
+  assert.deepEqual(p.payOptions, [
+    { num: 'CD41012', text: 'По банка · IBAN …6789 (EUR)' },
+    { num: 'CD41027', text: 'В брой в офис на Еконт 1032' },
+    { num: 'CD41025', text: 'На адрес · Бургас' },
+  ]);
+  assert.deepEqual(buildLabel(order, { ...settings, cdPayOption: { num: 'CD41012' } }, {}).services.cdPayOptions, { num: 'CD41012' });
+  assert.equal(buildLabel(order, { ...settings, cdPayOption: { num: 'CD41012' } }, { cod: '0' }).services?.cdPayOptions, undefined, 'no cash on delivery, nothing to pay out');
+  assert.equal(buildLabel(order, settings, {}).services?.cdPayOptions, undefined, 'none chosen: e-Econt\'s default');
+});
