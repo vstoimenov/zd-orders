@@ -31,8 +31,13 @@ h1{font:800 clamp(27px,7.6vw,36px)/1.14 Unbounded,sans-serif;margin:20px 0 12px;
 h1 em{font-style:normal;color:var(--y)}
 .lead{color:var(--muted);font-size:16px;line-height:1.55;margin:0 0 18px}
 .save{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;margin:0 0 18px}
-.save label{display:block;color:var(--muted);font-size:13.5px;font-weight:600}
-.save input{width:100%;margin:14px 0 6px;accent-color:var(--y);height:28px}
+.save>label{display:block;color:var(--muted);font-size:13.5px;font-weight:600}
+.stepper{display:flex;align-items:center;gap:12px;margin:12px 0 6px}
+.stepper input[type=range]{flex:1;min-width:0;margin:0;accent-color:var(--y);height:28px}
+/* the − and + are real switches the finger touches: the only thing iPhone lets a page vibrate for */
+.pm{position:relative;flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:#2a2924;border:1px solid var(--line);color:var(--y);font:800 24px/1 Manrope;overflow:hidden;cursor:pointer;user-select:none;-webkit-user-select:none}
+.pm:active{background:#36352e}
+.pm input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
 .rl{display:flex;justify-content:space-between;font-size:12.5px;color:var(--dim)}
 .rl b{color:var(--ink);font-weight:700}
 .save small{display:block;margin-top:14px;color:var(--muted);font-size:13px}
@@ -71,7 +76,11 @@ body.ended .live{display:none}
     <div class="live">
       <div class="save">
         <label for="shops">Колко магазина имаш?</label>
-        <input id="shops" type="range" min="1" max="10" value="3" step="1">
+        <div class="stepper">
+          <label class="pm">−<input type="checkbox" switch id="less" aria-label="Един магазин по-малко"></label>
+          <input id="shops" type="range" min="1" max="10" value="3" step="1">
+          <label class="pm">+<input type="checkbox" switch id="more" aria-label="Един магазин повече"></label>
+        </div>
         <div class="rl"><span>1</span><b id="n">3 магазина</b><span>10+</span></div>
         <small>Спестяваш</small>
         <span class="v" id="v">159 €</span>
@@ -121,6 +130,13 @@ body.ended .live{display:none}
   var last = r.value;
   function tick() { if (navigator.vibrate) navigator.vibrate(8); }
   r.addEventListener('input', function () { calc(); if (r.value !== last) { last = r.value; tick(); } });
+  function step(d) {
+    var v = Math.min(10, Math.max(1, Number(r.value) + d));
+    if (String(v) === r.value) return;
+    r.value = v; last = r.value; calc(); tick();
+  }
+  document.getElementById('less').addEventListener('change', function () { step(-1); });
+  document.getElementById('more').addEventListener('change', function () { step(1); });
   calc();
   // the owner can switch the offer off; any network trouble keeps the page as it is
   if (window.fetch) {
