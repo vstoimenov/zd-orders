@@ -1044,7 +1044,9 @@ tr.hl td{background:#fffbe6}
         if (!d) return;
         var moved = d.delivered + d.returned;
         b.textContent = d.checked ? '✓ Проверени ' + d.checked + (moved ? ' · ' + d.delivered + ' доставени, ' + d.returned + ' върнати' : '') : '✓ Няма изпратени пратки за проверка';
-        if (d.errors && d.errors.length) alert('Някои куриери не отговориха:\n' + d.errors.join('\n'));
+        var notes = (d.errors || []).slice();
+        if (d.skipped && d.skipped.length) notes.push('Не стигна време за: ' + d.skipped.join(', ') + ' — натиснете пак след малко.');
+        if (notes.length) alert('Някои куриери не бяха проверени:\n' + notes.join('\n'));
         load(page);
       })
       .catch(function () { b.textContent = was; alert('Куриерите не отговориха. Опитайте пак след малко.'); })

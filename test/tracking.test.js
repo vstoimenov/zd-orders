@@ -5,7 +5,7 @@ import { fakeReq, fakeRes, json } from './helpers/http.js';
 import { setQueryForTests } from '../lib/db.js';
 import { insertOrder, listOrders } from '../lib/orders-repo.js';
 import { signSession } from '../lib/auth.js';
-import { saveEcont, syncEcontStatuses } from '../lib/waybills.js';
+import { saveEcont, syncEcontStatuses, syncShopStatuses, cancelWaybill } from '../lib/waybills.js';
 import ordersApi from '../lib/admin/orders.js';
 import router from '../api/admin/[route].js';
 
@@ -33,6 +33,7 @@ function econt(statusFor = () => null) {
     const path = new URL(url).pathname;
     const body = JSON.parse(init.body);
     if (path.includes('getClientProfiles')) return reply(200, PROFILE);
+    if (path.includes('deleteLabels')) return reply(200, { results: [{ shipmentNum: body.shipmentNumbers[0], error: null }] });
     if (path.includes('getShipmentStatuses')) {
       calls.push(body.shipmentNumbers);
       return reply(200, { shipmentStatuses: body.shipmentNumbers.map((num) => ({ status: { shipmentNumber: num, trackingEvents: [], shortDeliveryStatus: 'В Плевен', ...(statusFor(num) || {}) } })) });
@@ -226,6 +227,68 @@ test('"Обнови статусите" checks the shop\'s shipped parcels now',
   const res = fakeRes();
   await withFetch(f.impl, () => ordersApi(fakeReq({ method: 'POST', url: `/api/admin/orders?shop=${SHOP}`, headers: { cookie: owner }, body: JSON.stringify({ action: 'refresh_statuses' }) }), res));
   assert.equal(res.statusCode, 200);
-  assert.deepEqual(json(res), { ok: true, checked: 1, delivered: 1, returned: 0, errors: [] });
+  assert.deepEqual(json(res), { ok: true, checked: 1, delivered: 1, returned: 0, errors: [], skipped: [] });
   assert.equal((await listOrders(q)).rows.find((o) => o.id === id).status, 'delivered');
+});
+
+/* ---- review fixes ---- */
+test('a failing courier is not asked again for 30 minutes, and parallel opens ask once', async () => {
+  await connect();
+  const id = await addOrder();
+  await ship(id);
+  const t = await tokenFor(id);
+  let calls = 0;
+  const down = async (url) => { if (String(url).includes('getShipmentStatuses')) calls++; throw new TypeError('fetch failed'); };
+  await withFetch(down, () => page(t));
+  await withFetch(down, () => page(t));
+  assert.equal(calls, 1, 'the failed check still waits out the 30 minutes');
+  const other = await addOrder();
+  await ship(other);
+  const t2 = await tokenFor(other);
+  const f = econt();
+  await withFetch(f.impl, () => Promise.all([page(t2), page(t2), page(t2)]));
+  assert.equal(f.calls.length, 1);
+});
+
+test('shop notes kept in the courier text (drop it in a locker, order a pickup) stay for the shop and never reach the buyer', async () => {
+  await connect();
+  const id = await addOrder();
+  const note = 'Куриер не е поръчан — поръчайте вземане в MySpeedy';
+  await ship(id);
+  await q(`update zd.orders set waybill_status = $2 where id = $1::uuid`, [id, note]);
+  const p = await withFetch(econt(() => ({ shortDeliveryStatus: 'Приета в офис' })).impl, async () => page(await tokenFor(id)));
+  assert.equal(p.tracking.courierText, '');
+  assert.equal((await q(`select waybill_status from zd.orders where id = $1::uuid`, [id]))[0].waybill_status, note);
+  await withFetch(econt(() => ({ shortDeliveryStatus: 'Приета в офис' })).impl, () => syncEcontStatuses(q, SHOP));
+  assert.equal((await q(`select waybill_status from zd.orders where id = $1::uuid`, [id]))[0].waybill_status, note);
+});
+
+test('a test waybill on a real order is not shown to the buyer and gets no tracking message', async () => {
+  const id = await addOrder();
+  await q(`update zd.orders set waybill_number = '1051604331075', waybill_courier = 'econt', waybill_demo = true, waybill_created_at = now() where id = $1::uuid`, [id]);
+  const p = await page(await tokenFor(id));
+  assert.equal(p.tracking.stage, 'placed');
+  assert.equal(p.tracking.number, '');
+  const r = await call({ method: 'POST', url: `/api/admin/confirmadmin?shop=${SHOP}`, cookie: owner, body: { action: 'track', id } });
+  assert.equal(r.statusCode, 400);
+});
+
+test('a cancelled waybill forgets its office day and movement time', async () => {
+  await connect();
+  const id = await addOrder();
+  await ship(id, `, waybill_at_office_since = now() - interval '5 days', waybill_status_changed_at = now() - interval '5 days'`);
+  await withFetch(econt().impl, () => cancelWaybill(q, { orderId: id, scopeShopId: SHOP }));
+  const [o] = await q(`select waybill_at_office_since, waybill_status_changed_at from zd.orders where id = $1::uuid`, [id]);
+  assert.equal(o.waybill_at_office_since, null);
+  assert.equal(o.waybill_status_changed_at, null);
+});
+
+test('"Обнови статусите" stops starting couriers after its time budget and says which were skipped', async () => {
+  await connect();
+  const id = await addOrder();
+  await ship(id);
+  const f = econt();
+  const r = await withFetch(f.impl, () => syncShopStatuses(q, SHOP, { deadline: Date.now() - 1 }));
+  assert.equal(f.calls.length, 0);
+  assert.deepEqual(r, { checked: 0, delivered: 0, returned: 0, errors: [], skipped: ['Еконт'] });
 });
