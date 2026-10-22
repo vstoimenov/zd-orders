@@ -56,7 +56,7 @@ test('the owner logs in with the password only, as before; a client with email +
   assert.equal(res.statusCode, 200);
   assert.deepEqual(json(await call({ url: '/api/admin/me', cookie: cookieOf(res) })), { role: 'owner' });
   const c = await clientWith([SHOP_A]);
-  assert.deepEqual(json(await call({ url: '/api/admin/me', cookie: c })), { role: 'client', email: 'a@client.bg', name: 'Клиент' });
+  assert.deepEqual(json(await call({ url: '/api/admin/me', cookie: c })), { role: 'client', email: 'a@client.bg', name: 'Клиент', plan: 'standard', freeUntil: null });
   res = await call({ method: 'POST', url: '/api/admin/login', body: { email: 'a@client.bg', password: 'wrong' } });
   assert.equal(res.statusCode, 401);
   res = await call({ method: 'POST', url: '/api/admin/login', body: { email: 'A@Client.BG', password: 'client-pass-1' } });

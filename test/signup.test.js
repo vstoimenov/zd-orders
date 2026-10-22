@@ -35,7 +35,7 @@ test('the owner makes a registration link; with it anyone registers and is logge
   const res = await call({ method: 'POST', url: '/api/admin/signup', body: form(code) });
   assert.equal(res.statusCode, 200);
   const me = json(await call({ url: '/api/admin/me', cookie: cookieOf(res) }));
-  assert.deepEqual(me, { role: 'client', email: 'ivan@shop.bg', name: 'Иван Петров' });
+  assert.deepEqual(me, { role: 'client', email: 'ivan@shop.bg', name: 'Иван Петров', plan: 'standard', freeUntil: null });
   assert.deepEqual(json(await call({ url: '/api/admin/shops', cookie: cookieOf(res) })).shops, []);
   const users = json(await call({ url: '/api/admin/users', cookie: owner })).users;
   assert.equal(users[0].email, 'ivan@shop.bg');
@@ -91,4 +91,61 @@ test('the owner\'s phone hears about every new registration', async () => {
   assert.match(sent[0].p.title, /Нова регистрация/);
   assert.match(sent[0].p.body, /Иван Петров · ivan@shop\.bg/);
   assert.equal(sent[0].p.url, '/admin/#clients');
+});
+
+/* ---- the hidden event offer (ordyx.eu/oferta → /admin/?offer=1) ---- */
+const offerForm = (patch = {}) => ({ offer: true, name: 'Мария', email: 'maria@shop.bg', password: 'maria-pass-123', website: '', ...patch });
+const dayDiff = (a, b) => Math.round((new Date(a) - new Date(b)) / 864e5);
+
+test('the offer is on by default: no code needed, the account gets 3 months free on the unlimited plan', async () => {
+  assert.deepEqual(json(await call({ url: '/api/admin/signup?offer=1' })), { ok: true, offer: { active: true, months: 3 } });
+  const res = await call({ method: 'POST', url: '/api/admin/signup', body: offerForm() });
+  assert.equal(res.statusCode, 200);
+  const me = json(await call({ url: '/api/admin/me', cookie: cookieOf(res) }));
+  assert.equal(me.plan, 'unlimited');
+  const months = (await q(`select free_until = created_at + interval '3 months' as exact from zd.users where email = 'maria@shop.bg'`))[0].exact;
+  assert.equal(months, true);
+  assert.ok(dayDiff(me.freeUntil, new Date()) >= 89 && dayDiff(me.freeUntil, new Date()) <= 92);
+  const [u] = json(await call({ url: '/api/admin/users', cookie: owner })).users;
+  assert.equal(u.plan, 'unlimited');
+  assert.equal(u.source, 'offer');
+  assert.equal(u.freeUntil, me.freeUntil);
+});
+
+test('the owner switches the offer off and on; off → the offer link is refused, the normal link still works', async () => {
+  assert.deepEqual(json(await call({ url: '/api/admin/users', cookie: owner })).offer, { active: true, link: 'https://ordyx.eu/oferta' });
+  assert.equal((await call({ method: 'POST', url: '/api/admin/users', cookie: owner, body: { action: 'offer_off' } })).statusCode, 200);
+  assert.equal(json(await call({ url: '/api/admin/users', cookie: owner })).offer.active, false);
+  const status = await call({ url: '/api/admin/signup?offer=1' });
+  assert.equal(status.statusCode, 400);
+  assert.match(json(status).error, /не е активна/);
+  const refused = await call({ method: 'POST', url: '/api/admin/signup', body: offerForm() });
+  assert.equal(refused.statusCode, 400);
+  assert.match(json(refused).error, /не е активна/);
+  const code = await signupLink();
+  assert.equal((await call({ method: 'POST', url: '/api/admin/signup', body: form(code) })).statusCode, 200);
+  await call({ method: 'POST', url: '/api/admin/users', cookie: owner, body: { action: 'offer_on' } });
+  assert.equal((await call({ method: 'POST', url: '/api/admin/signup', body: offerForm() })).statusCode, 200);
+});
+
+test('a normal registration never gets the offer, even when it asks for it', async () => {
+  const code = await signupLink();
+  const res = await call({ method: 'POST', url: '/api/admin/signup', body: form(code, { offer: true }) });
+  assert.equal(res.statusCode, 200);
+  const me = json(await call({ url: '/api/admin/me', cookie: cookieOf(res) }));
+  assert.equal(me.plan, 'standard');
+  assert.equal(me.freeUntil, null);
+});
+
+test('only the owner switches the offer', async () => {
+  const reg = await call({ method: 'POST', url: '/api/admin/signup', body: offerForm() });
+  assert.equal((await call({ method: 'POST', url: '/api/admin/users', cookie: cookieOf(reg), body: { action: 'offer_off' } })).statusCode, 403);
+});
+
+test('an offer account may add more than 10 shops (normal clients keep 10)', async () => {
+  const reg = await call({ method: 'POST', url: '/api/admin/signup', body: offerForm() });
+  let last;
+  for (let i = 0; i < 11; i++) last = await call({ method: 'POST', url: '/api/admin/shops', cookie: cookieOf(reg), body: { name: `О${i}`, domain: `offer${i}-shop.bg` } });
+  assert.equal(last.statusCode, 200);
+  assert.equal(json(await call({ url: '/api/admin/shops', cookie: cookieOf(reg) })).shops.length, 11);
 });
