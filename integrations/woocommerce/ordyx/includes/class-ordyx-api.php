@@ -133,7 +133,7 @@ class Ordyx_Api {
 
     /** The shop's office list from Ordyx (cached a day): to check the chosen office when the order is placed. */
     public static function offices($courier) {
-        $key = 'ordyx_offices_' . $courier;
+        $key = 'ordyx_offices_' . $courier . '_' . substr(md5(self::base()), 0, 8); // per Ordyx host: a dev setup switching hosts never checks against a stale list
         $cached = get_transient($key);
         if (is_array($cached)) return $cached;
         $res = wp_remote_get(self::base() . '/api/offices?courier=' . rawurlencode($courier), ['timeout' => 4]);
