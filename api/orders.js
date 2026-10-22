@@ -6,10 +6,13 @@ import { cbConfig, cbKnowsOrder, confirmKeptAside, startOrder } from '../lib/cb-
 import { trafficSourceFor } from '../lib/visits.js';
 import { setCors, readJson, send, clientIp } from '../lib/http.js';
 import { allowedShopOrigin } from '../lib/shops.js';
+import { keyedOrders } from '../lib/external-orders.js';
 
 const RATE_LIMIT = 20; // orders per IP per 10 minutes (generous: shared mobile IPs / CGNAT)
 
 export default async function handler(req, res) {
+  // a shop's own server (WooCommerce plugin, custom site) with its key
+  if (/^Bearer\s/i.test(String(req.headers.authorization || ''))) return keyedOrders(req, res);
   const allowed = await allowedShopOrigin(getQuery(), req).catch(() => null);
   const origin = allowed?.origin || null;
   setCors(res, origin);
