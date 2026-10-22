@@ -1,0 +1,9 @@
+{
+  "version": "1.0.0",
+  "api": 1,
+  "tested": "7.1",
+  "requires": "6.4",
+  "requires_php": "7.4",
+  "download": "https://app.ordyx.eu/integrations/ordyx-woocommerce.zip",
+  "changelog": "1.0.0: първа версия — избор на офис/автомат в чекаута, поръчките в Ordyx, товарителница и проследяване обратно в WooCommerce."
+}
