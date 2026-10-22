@@ -941,7 +941,19 @@ tr.hl td{background:#fffbe6}
       <div class="dbody">
         <div class="demo-banner" id="wbDemo" hidden>Тестов режим — пратката не е истинска и поръчката не сменя статуса си.</div>
         <div class="tip" id="wbRoute"></div>
-        <div class="fgrid">
+        <div id="wbPick" hidden>
+          <div class="muted" style="margin-bottom:8px">Поръчката дойде без наш куриер. Изберете с кого и накъде да я изпратите — после се прави товарителницата.</div>
+          <div class="fgrid">
+            <label>Куриер<select id="wbPickCourier"></select></label>
+            <label>Как<select id="wbPickHow"><option value="office">До офис / автомат</option><option value="address">До адрес</option></select></label>
+            <label id="wbPickOfficeWrap" style="grid-column:1/-1">Офис или автомат<input type="text" id="wbPickOffice" list="wbPickOffices" placeholder="започнете да пишете град или офис"><datalist id="wbPickOffices"></datalist></label>
+            <label id="wbPickCityWrap" hidden>Град<input type="text" id="wbPickCity" maxlength="80"></label>
+            <label id="wbPickPostWrap" hidden>Пощенски код<input type="text" id="wbPickPost" maxlength="12"></label>
+            <label id="wbPickAddrWrap" hidden style="grid-column:1/-1">Адрес<input type="text" id="wbPickAddr" maxlength="200"></label>
+          </div>
+          <div class="actions"><button type="button" class="primary" id="wbPickSave">Запази и продължи</button><span class="muted" id="wbPickErr"></span></div>
+        </div>
+        <div class="fgrid" id="wbFields">
           <label>Наложен платеж<input type="text" inputmode="decimal" id="wbCod"></label>
           <label>Тегло (кг)<input type="text" inputmode="decimal" id="wbWeight"></label>
           <label id="wbPacksWrap">Брой пакети<input type="number" min="1" max="10" id="wbPacks"></label>
@@ -1211,7 +1223,7 @@ tr.hl td{background:#fffbe6}
       return '<span class="wb warn">⚠️ Не е ясно дали товарителницата е създадена — проверете в <a href="' + site[0] + '" target="_blank" rel="noopener">' + site[1] + '</a>.<br><a href="#" data-wbrelease="' + i + '">Освободи (няма товарителница)</a></span>';
     }
     if (o.waybillState === 'creating') return '<span class="wb muted">Товарителницата се създава…</span>';
-    return ['econt', 'speedy', 'boxnow'].indexOf(o.courier) >= 0 && ['new', 'confirmed', 'shipped'].indexOf(o.status) >= 0 ? '<button type="button" class="wbbtn" data-wb="' + i + '">Създай товарителница</button>' : '';
+    return ['econt', 'speedy', 'boxnow', 'other'].indexOf(o.courier) >= 0 && ['new', 'confirmed', 'shipped'].indexOf(o.status) >= 0 ? '<button type="button" class="wbbtn" data-wb="' + i + '">Създай товарителница</button>' : '';
   }
   function render() {
     $('count').textContent = total + (total === 1 ? ' поръчка' : ' поръчки');
@@ -2611,6 +2623,49 @@ tr.hl td{background:#fffbe6}
   }
   $('wbPayer').addEventListener('change', function () { wbPayerWarn(true); });
   var WB_COURIER = { econt: ['Еконт', 'E', 'econt.com'], speedy: ['Спиди', 'S', 'speedy.bg'], boxnow: ['BOX NOW', 'BN', 'boxnow.bg'] };
+  /* the order came without one of our couriers (WooCommerce „само поръчките“, a custom site): pick the route first */
+  var wbPickOffices = [];
+  function showRoutePick(d) {
+    $('wbTitle').textContent = 'Товарителница — изберете куриер';
+    $('wbFields').hidden = true; $('wbCalc').hidden = true; $('wbCreate').hidden = true; $('wbPick').hidden = false; $('wbPickErr').textContent = ''; $('wbRoute').hidden = true;
+    $('wbInfo').textContent = '';
+    if (!d.couriers.length) { $('wbPickErr').innerHTML = '<span class="err">Няма свързан куриер.</span> <a href="#integrations">Свържете в Интеграции</a>'; $('wbPickSave').disabled = true; return; }
+    $('wbPickSave').disabled = false;
+    $('wbPickCourier').innerHTML = d.couriers.map(function (c) { return '<option value="' + esc(c.key) + '" data-address="' + (c.address ? 1 : 0) + '">' + esc(c.name) + '</option>'; }).join('');
+    $('wbPickCity').value = wbOrder.city || ''; $('wbPickPost').value = wbOrder.postCode || ''; $('wbPickAddr').value = wbOrder.addressText || '';
+    routeHowChanged(); routeCourierChanged();
+  }
+  function routeHowChanged() {
+    var addr = $('wbPickHow').value === 'address';
+    $('wbPickOfficeWrap').hidden = addr; $('wbPickCityWrap').hidden = !addr; $('wbPickPostWrap').hidden = !addr; $('wbPickAddrWrap').hidden = !addr;
+  }
+  function routeCourierChanged() {
+    var opt = $('wbPickCourier').selectedOptions[0], courier = $('wbPickCourier').value;
+    $('wbPickHow').options[1].disabled = !opt || opt.getAttribute('data-address') !== '1';
+    if ($('wbPickHow').options[1].disabled) { $('wbPickHow').value = 'office'; routeHowChanged(); }
+    $('wbPickOffice').value = ''; wbPickOffices = [];
+    fetch('/api/offices?courier=' + encodeURIComponent(courier)).then(function (r) { return r.json(); }).then(function (d) {
+      wbPickOffices = d.offices || [];
+      $('wbPickOffices').innerHTML = wbPickOffices.map(function (o) { return '<option value="' + esc(econtOfficeLabel(o)) + '">'; }).join('');
+    }).catch(function () {});
+  }
+  $('wbPickHow').addEventListener('change', routeHowChanged);
+  $('wbPickCourier').addEventListener('change', routeCourierChanged);
+  $('wbPickSave').addEventListener('click', function () {
+    var courier = $('wbPickCourier').value, body = { action: 'route', id: wbOrder.id, courier: courier };
+    if ($('wbPickHow').value === 'address') { body.city = $('wbPickCity').value; body.postCode = $('wbPickPost').value; body.addressText = $('wbPickAddr').value; }
+    else {
+      var typed = $('wbPickOffice').value.trim(), hit = null;
+      for (var i = 0; i < wbPickOffices.length; i++) if (econtOfficeLabel(wbPickOffices[i]) === typed) { hit = wbPickOffices[i]; break; }
+      if (!hit) { $('wbPickErr').textContent = 'Изберете офис от списъка.'; return; }
+      body.officeId = hit.id;
+    }
+    $('wbPickErr').textContent = '';
+    busy($('wbPickSave'), wb(body)).then(function (d) {
+      var o = wbOrder; o.courier = d.courier; o.deliveryType = d.deliveryType; o.officeId = d.officeId; o.officeText = d.officeText; o.city = d.city; o.postCode = d.postCode; o.addressText = d.addressText;
+      render(); $('wbCreate').hidden = false; openWaybill(o);
+    }).catch(function (e) { $('wbPickErr').textContent = e.message; });
+  });
   function openWaybill(o) {
     wbOrder = o;
     var k = WB_COURIER[o.courier] ? o.courier : 'econt', bn = k === 'boxnow';
@@ -2624,7 +2679,9 @@ tr.hl td{background:#fffbe6}
     $('wbInfo').textContent = 'Зареждам…'; $('wbRoute').textContent = '';
     $('wbCreate').disabled = true; $('wbCalc').disabled = true; $('wbDemo').hidden = true;
     $('wbModal').hidden = false;
+    $('wbPick').hidden = true; $('wbFields').hidden = false; $('wbCreate').hidden = false; $('wbRoute').hidden = false;
     wb({ action: 'defaults', id: o.id }).then(function (d) {
+      if (d.needsRoute) { showRoutePick(d); return; }
       if (!d.connected) {
         $('wbInfo').innerHTML = '<span class="err">' + esc(wbCourierName) + ' не е свързан за този магазин.</span> <a href="#integrations" id="wbGoInt">Свържете го в Интеграции → ' + esc(wbCourierName) + '</a>.';
         return;

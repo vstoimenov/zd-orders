@@ -70,6 +70,8 @@ for (const [visitor, source] of [['v1', 'facebook'], ['v2', 'facebook'], ['v3', 
 }
 await q(`update zd.orders set traffic_source = 'facebook' where cb_order_id in ('L1', 'L2')`);
 await q(`insert into zd.ad_spend (platform, account_id, day, spend, impressions, clicks, purchases, purchase_value, currency) values ('meta', '1234567890', $1::date, 18.4, 5200, 96, 2, 63.64, 'EUR')`, [today]);
+// an order a WooCommerce site sent without one of our couriers („само поръчките“)
+await insertOrder(q, { ...base, cbOrderId: 'adhdbg.eu:wc-41', name: 'Калина Георгиева', phone: '0888777111', phoneNorm: '+359888777111', deliveryType: 'other', courier: 'other', officeId: '', officeText: 'Flat rate shipping', city: 'Пловдив', postCode: '', items: [{ name: 'Тениска — M, черна', qty: 1, price: 29.9 }], total: 29.9 });
 // a shipped parcel on its 5th day at the receiver's office
 await q(`update zd.orders set status = 'shipped', waybill_number = '1051600000099', waybill_courier = 'econt', waybill_status = 'Пристигнала в офис', waybill_created_at = now() - interval '7 days', waybill_at_office_since = now() - interval '4 days' where id = (select id from zd.orders where delivery_type = 'econt_office' order by created_at desc limit 1)`);
 // abandoned carts: one open, one with an opted-out number (shown 1 h after they were typed)

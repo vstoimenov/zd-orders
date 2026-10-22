@@ -6,7 +6,7 @@ import { setQueryForTests } from '../lib/db.js';
 import { insertOrder, listOrders } from '../lib/orders-repo.js';
 import { getIntegration, getSecret, saveIntegration } from '../lib/integrations-repo.js';
 import { signSession } from '../lib/auth.js';
-import { saveEcont, econtStatus, createWaybill, cancelWaybill, previewWaybill, syncEcontStatuses, waybillDefaults, releaseWaybill, econtProfile } from '../lib/waybills.js';
+import { saveEcont, econtStatus, createWaybill, cancelWaybill, previewWaybill, syncEcontStatuses, waybillDefaults, releaseWaybill, econtProfile, assignRoute } from '../lib/waybills.js';
 import ordersApi from '../lib/admin/orders.js';
 import waybillsApi from '../lib/admin/waybills.js';
 import integrationsApi from '../lib/admin/integrations.js';
@@ -552,4 +552,27 @@ test('an Econt-to-address order gets a label with the receiver address and the w
   const label = f.calls.at(-1).body.label;
   assert.deepEqual(label.receiverAddress, { city: { country: { code3: 'BGR' }, name: 'Варна', postCode: '9000' }, other: 'ул. Тайна 5' });
   assert.equal(label.receiverOfficeCode, undefined);
+});
+
+test('an order that came without a courier: the shop picks the courier and office (or address) before the waybill', async () => {
+  await connect();
+  const id = await addOrder({ deliveryType: 'other', courier: 'other', officeId: '', officeText: 'Flat rate', city: 'София', postCode: '', addressText: '' });
+  const d0 = await waybillDefaults(q, { orderId: id, scopeShopId: SHOP });
+  assert.equal(d0.needsRoute, true);
+  assert.deepEqual(d0.couriers, [{ key: 'econt', name: 'Еконт', address: true }]); // only the connected couriers
+  await assert.rejects(assignRoute(q, { orderId: id, scopeShopId: SHOP, input: {} }), /Изберете куриер/);
+  await assert.rejects(assignRoute(q, { orderId: id, scopeShopId: SHOP, input: { courier: 'econt', officeId: 'econt:9999' } }), /офис/i);
+  const o = await assignRoute(q, { orderId: id, scopeShopId: SHOP, input: { courier: 'econt', officeId: 'econt:1107' } });
+  assert.equal(o.deliveryType, 'econt_office');
+  assert.equal(o.officeId, 'econt:1107');
+  assert.equal(o.officeText, 'Офис Младост, София (1107)');
+  const d = await waybillDefaults(q, { orderId: id, scopeShopId: SHOP });
+  assert.equal(d.connected, true);
+  assert.equal(d.officeText, 'Офис Младост, София (1107)');
+  const addr = await addOrder({ deliveryType: 'other', courier: 'other', officeId: '', officeText: 'Local pickup', city: '', addressText: '' });
+  const a = await assignRoute(q, { orderId: addr, scopeShopId: SHOP, input: { courier: 'econt', city: 'Варна', postCode: '9000', addressText: 'ул. Тайна 5' } });
+  assert.equal(a.deliveryType, 'econt_address');
+  assert.equal(a.city, 'Варна');
+  await q(`update zd.orders set waybill_number = '1055' where id = $1::uuid`, [addr]);
+  await assert.rejects(assignRoute(q, { orderId: addr, scopeShopId: SHOP, input: { courier: 'econt', officeId: 'econt:1107' } }), /товарителница/);
 });
