@@ -10,6 +10,7 @@ import { insertOrder, saveNekorekten, updateStatus } from '../lib/orders-repo.js
 import { saveIntegration } from '../lib/integrations-repo.js';
 import adminRouter from '../api/admin/[route].js';
 import officesApi from '../api/offices.js';
+import ordersApi from '../api/orders.js';
 import { demoFetch } from '../lib/demo/fakes.js';
 
 process.env.ADMIN_PASSWORD = 'local-test';
@@ -120,10 +121,22 @@ await insertOrder(q, { ...base, cbOrderId: 'L6', name: 'Ивана Петров�
 // a sample client who sees only "Книги за деца" (local only): local-client@example.com / client-pass-1
 { const { createClient, acceptInvite } = await import('../lib/users.js'); const c = await createClient(q, { email: 'local-client@example.com', name: 'Клиент Книги', shopIds: [kids.id] }); await acceptInvite(q, c.token, 'client-pass-1'); }
 
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
+// a local WooCommerce (dev/woo-env) posts orders here with a fixed key into its own shop
+const [woo] = await q(`insert into zd.shops (name, domain, approved, currency) values ('Woo тест', 'localhost', true, 'EUR') returning id`);
+await saveIntegration(q, 'api', { config: { keyId: 'LOCALLOCAL', createdAt: new Date().toISOString() }, secret: 'ordyx_live_LOCALLOCAL_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', shopId: woo.id });
+await saveIntegration(q, 'boxnow', { config: { checkout: true }, shopId: woo.id });
+await saveIntegration(q, 'econt', { config: { username: 'iasp-dev', demo: true, profileName: 'ЕТ КОНСУЛТ - ИВАН КИРЯЗОВ', profileCompany: true, senderAgent: 'Иван Кирязов', sender: { type: 'office', officeCode: '1107', addressId: '', address: null, text: 'Офис София Младост, София' }, senderPhone: '0888888888', payer: 'sender', weight: 1, description: '', review: false, active: true, connectedAt: new Date().toISOString() }, secret: JSON.stringify({ username: 'iasp-dev', password: '1Asp-dev' }), shopId: woo.id });
+
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.json': 'application/json', '.zip': 'application/zip' };
 http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
   if (url === '/api/offices') return officesApi(Object.assign(req, { query: Object.fromEntries(new URL(req.url, 'http://x').searchParams) }), res);
+  if (url === '/api/orders') {
+    let body = '';
+    for await (const c of req) body += c;
+    req.body = body || undefined;
+    return ordersApi(req, res);
+  }
   if (url.startsWith('/api/admin/')) {
     let body = '';
     for await (const c of req) body += c;
