@@ -542,3 +542,14 @@ test('the shop picks how Econt pays out the cash on delivery (a template from it
   await withFetch(f.impl, () => saveEcont(q, SHOP, { ...settingsBody, cdPayOptionNum: '' }));
   assert.equal((await econtStatus(q, SHOP)).cdPayOption, null, 'back to e-Econt\'s default');
 });
+
+test('an Econt-to-address order gets a label with the receiver address and the window shows the address', async () => {
+  const f = await connect();
+  const id = await addOrder({ deliveryType: 'econt_address', officeId: '', officeText: '', city: 'Варна', postCode: '9000', addressText: 'ул. Тайна 5' });
+  const d = await waybillDefaults(q, { orderId: id, scopeShopId: SHOP });
+  assert.equal(d.officeText, 'ул. Тайна 5, Варна');
+  await withFetch(f.impl, () => previewWaybill(q, { orderId: id, scopeShopId: SHOP, input: { weight: 1 } }));
+  const label = f.calls.at(-1).body.label;
+  assert.deepEqual(label.receiverAddress, { city: { country: { code3: 'BGR' }, name: 'Варна', postCode: '9000' }, other: 'ул. Тайна 5' });
+  assert.equal(label.receiverOfficeCode, undefined);
+});

@@ -79,6 +79,13 @@ test('buildLabel: sender address, sender pays, review, typed values win', () => 
   assert.deepEqual(label.services, { payAfterAccept: true }, 'no COD when 0');
 });
 
+test('buildLabel: Econt to an address — the receiver address replaces the office', () => {
+  const label = buildLabel({ ...order, deliveryType: 'econt_address', officeId: '', officeText: '', city: 'Варна', postCode: '9000', addressText: 'ул. Тайна 5, ап. 3' }, settings, {});
+  assert.equal(label.receiverOfficeCode, undefined);
+  assert.deepEqual(label.receiverAddress, { city: { country: { code3: 'BGR' }, name: 'Варна', postCode: '9000' }, other: 'ул. Тайна 5, ап. 3' });
+  assert.throws(() => buildLabel({ ...order, deliveryType: 'econt_address', officeId: '', city: '', addressText: 'ул. Х' }, settings, {}), /адрес/);
+});
+
 test('buildLabel refuses what Econt would refuse, in Bulgarian', () => {
   assert.throws(() => buildLabel({ ...order, courier: 'speedy', officeId: 'speedy:5' }, settings, {}), /не е до офис на Еконт/);
   assert.throws(() => buildLabel(order, { ...settings, sender: null }, {}), /изберете откъде изпращате/i);
