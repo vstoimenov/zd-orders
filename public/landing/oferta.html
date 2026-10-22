@@ -117,7 +117,20 @@ body.ended .live{display:none}
     document.getElementById('v').textContent = (3 * m) + ' €';
     document.getElementById('d').textContent = '3 × ' + m + ' € на месец по редовна цена';
   }
-  r.addEventListener('input', calc);
+  // a light tick on every step, like setting an alarm: Android vibrates; iOS 18+ ticks when a hidden switch is toggled
+  var tickSwitch = null, last = r.value;
+  function tick() {
+    if (navigator.vibrate) { navigator.vibrate(8); return; }
+    if (!tickSwitch) {
+      tickSwitch = document.createElement('label');
+      tickSwitch.setAttribute('aria-hidden', 'true');
+      tickSwitch.style.cssText = 'position:fixed;left:-9999px;width:1px;height:1px;overflow:hidden';
+      tickSwitch.innerHTML = '<input type="checkbox" switch tabindex="-1">';
+      document.body.appendChild(tickSwitch);
+    }
+    tickSwitch.click();
+  }
+  r.addEventListener('input', function () { calc(); if (r.value !== last) { last = r.value; tick(); } });
   calc();
   // the owner can switch the offer off; any network trouble keeps the page as it is
   if (window.fetch) {
