@@ -266,6 +266,8 @@
 
   var API = '';
   var root = null, cities = null, offices = { econt: null, speedy: null, boxnow: null };
+  // another platform (the WooCommerce plugin) mounted the picker itself: no ConvertBuilder fields, choices go to its onChange
+  var standalone = null;
   var state = {
     type: '', econt: null, econtFallback: false, econtCity: '', econtText: '',
     speedy: null, speedyFallback: false, speedyCity: '', speedyText: '',
@@ -397,8 +399,17 @@
     return best ? best.postCode : '0000';
   }
 
+  /** What is chosen now, for another platform: the same fields the order gets (office id/text, city, post code, address) and what is missing. */
+  function currentValue() {
+    var sel = selection(), f = formatSelection(sel);
+    return {
+      type: sel.type || '', officeId: f ? f.officeId : '', officeText: f ? f.address : '', city: f ? f.city : '',
+      postCode: f ? (f.zip || zipFor(f.city)) : '', addressText: sel.type === 'speedy_address' ? clean(sel.street) : '', error: validateSelection(sel)
+    };
+  }
   /** Copies the choice into ConvertBuilder's own fields so its validation and order see it. Returns true if it had to click a shipping radio. */
   function sync() {
+    if (standalone) { try { standalone.onChange(currentValue()); } catch (e) { /* the host's handler must not break the picker */ } return false; }
     var f = formatSelection(selection());
     setField('shippingAddress', f ? f.address : '');
     setField('shippingCity', f ? f.city : '');
@@ -420,7 +431,8 @@
 
   function render() {
     [].forEach.call(root.querySelectorAll('.zdo-opt'), function (l) { l.classList.toggle('is-on', l.querySelector('input').value === state.type); });
-    [].forEach.call(root.querySelectorAll('.zdo-panel'), function (p) { p.classList.toggle('is-on', p.getAttribute('data-for') === state.type); });
+    if (standalone) fillPrices();
+    else [].forEach.call(root.querySelectorAll('.zdo-panel'), function (p) { p.classList.toggle('is-on', p.getAttribute('data-for') === state.type); });
     ['econt', 'speedy', 'boxnow'].forEach(function (c) {
       var picked = state[c], fallback = state[c + 'Fallback'];
       el(c + '-picked').innerHTML = picked && !fallback ? pickedHtml(picked) : '';
@@ -601,7 +613,7 @@
   /** Asked once per page: is BOX NOW switched on for this shop, and what delivery-time lines to show. */
   function loadShopInfo() {
     boxnowPending = true;
-    getJson('/api/offices?courier=shop&host=' + encodeURIComponent(location.host)).then(function (d) {
+    getJson('/api/offices?courier=shop&host=' + encodeURIComponent(standalone && standalone.host ? standalone.host : location.host)).then(function (d) {
       shopInfo = d || null; boxnowOn = Boolean(d && d.boxnow);
     }, function () {}).then(function () {
       boxnowPending = false;
@@ -611,6 +623,15 @@
   }
   var NO_SHIPPING_GRACE_MS = 3000; // ConvertBuilder may still be loading its methods (slow phones)
   function fillPrices() {
+    if (standalone) { // the host platform shows its own methods and prices: only the asked-for panel, BOX NOW only when the shop switched it on
+      [].forEach.call(root.querySelectorAll('.zdo-opt input'), function (r) { r.closest('.zdo-opt').hidden = true; });
+      var ok = state.type && (state.type !== 'boxnow_locker' || boxnowOn || boxnowPending);
+      [].forEach.call(root.querySelectorAll('.zdo-panel'), function (p) { p.classList.toggle('is-on', ok && p.getAttribute('data-for') === state.type); });
+      var note = root.querySelector('.zdo-none');
+      note.hidden = ok || !state.type;
+      note.textContent = 'BOX NOW не е включен за този магазин.';
+      return;
+    }
     var o = shippingOptions(), view = shippingView(o.labels, { boxnow: boxnowOn });
     TYPES.forEach(function (t) {
       var i = pickOptionIndex(o.labels, t);
@@ -855,6 +876,48 @@
       }
     } catch (e) { /* statistics must never disturb the shop */ }
   }
+
+  /**
+   * Another platform mounts the picker: OrdyxPicker.mount(el, { api, host, type, onChange }) → { value(), setType(type), destroy() }.
+   * type: econt_office | speedy_office | speedy_address | boxnow_locker (the platform shows its own shipping methods and prices);
+   * onChange gets { type, officeId, officeText, city, postCode, addressText, error } on every change; value() the same now.
+   */
+  function mountStandalone(target, opts) {
+    opts = opts || {};
+    if (root) destroyStandalone();
+    API = opts.api || API || (SCRIPT && SCRIPT.src ? new URL(SCRIPT.src).origin : 'https://app.ordyx.eu');
+    standalone = { host: opts.host || location.host, onChange: typeof opts.onChange === 'function' ? opts.onChange : function () {} };
+    if (!document.querySelector('style[data-zdo]')) { var style = document.createElement('style'); style.setAttribute('data-zdo', '1'); style.textContent = CSS; document.head.appendChild(style); }
+    root = document.createElement('div');
+    root.className = 'zdo zdo-standalone';
+    root.innerHTML = TEMPLATE;
+    root.querySelector('.zdo-title').hidden = true;
+    target.appendChild(root);
+    mountedAt = Date.now();
+    [].forEach.call(root.querySelectorAll('[data-logo]'), function (img) { img.src = logoFor(API, img.getAttribute('data-logo')); img.onerror = function () { img.remove(); }; });
+    loadShopInfo();
+    bind();
+    var handle = {
+      value: currentValue,
+      setType: function (type) {
+        state.type = TYPES.indexOf(type) >= 0 ? type : '';
+        render(); showError('');
+        var courier = officeCourier(state.type);
+        if (courier && !state[courier]) loadOffices(courier).then(function () { renderOfficeList(courier); }, function () { officesFailed(courier); });
+        if (state.type === 'speedy_address') loadCities().then(renderCityList, function () {});
+        sync();
+      },
+      showError: showError,
+      destroy: destroyStandalone
+    };
+    handle.setType(opts.type || '');
+    return handle;
+  }
+  function destroyStandalone() {
+    if (root && root.parentNode) root.parentNode.removeChild(root);
+    root = null; standalone = null; state.type = '';
+  }
+  if (typeof window !== 'undefined') window.OrdyxPicker = { mount: mountStandalone };
 
   function boot() {
     API = SCRIPT && SCRIPT.src ? new URL(SCRIPT.src).origin : 'https://zd-orders.vercel.app';
