@@ -115,6 +115,27 @@
           "value": "public, max-age=0, must-revalidate"
         }
       ]
+    },
+    {
+      "source": "/p/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        }
+      ]
     }
   ],
   "rewrites": [
@@ -175,6 +196,10 @@
         }
       ],
       "destination": "/landing/index.html"
+    },
+    {
+      "source": "/p/:t",
+      "destination": "/confirm/index.html"
     },
     {
       "source": "/kurier.js",

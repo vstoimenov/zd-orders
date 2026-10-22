@@ -817,7 +817,7 @@ tr.hl td{background:#fffbe6}
       <div class="dbody">
         <div class="bubble" id="cfMsg">Зареждам…</div>
         <div class="actions" style="margin-top:12px"><a class="primary" id="cfWa" target="_blank" rel="noopener" style="text-decoration:none;padding:10px 16px;border-radius:12px">Отвори WhatsApp</a><a class="ghost" id="cfSms" style="text-decoration:none;padding:10px 16px;border-radius:12px;border:1px solid var(--line)">Изпрати SMS</a><button type="button" class="ghost" id="cfCopy">Копирай текста</button></div>
-        <div class="muted" style="margin-top:10px">Отваря WhatsApp/SMS на вашето устройство с готовото съобщение — натиснете „Изпрати“ там. Когато клиентът отговори през линка, статусът се сменя сам.</div>
+        <div class="muted" style="margin-top:10px" id="cfHint">Отваря WhatsApp/SMS на вашето устройство с готовото съобщение — натиснете „Изпрати“ там. Когато клиентът отговори през линка, статусът се сменя сам.</div>
       </div>
     </div>
   </div>
@@ -1023,9 +1023,33 @@ tr.hl td{background:#fffbe6}
     return '<button type="button" class="pill' + (s[0] === '' ? ' on' : '') + '" data-pill="' + s[0] + '">' + s[1] + '</button>';
   }).join('') + '<button type="button" class="pill" data-pill="at_office" id="atOfficePill" hidden>📦 Чакат в офис</button>' +
     '<button type="button" class="pill" data-pill="to_pack" id="toPackPill">📦 За пакетиране</button>' +
+    '<button type="button" class="pill" data-pill="problems" id="problemsPill" hidden title="В офиса от 4-ия ден или без движение при куриера 3+ дни">⚠️ Проблемни</button>' +
+    '<button type="button" class="ghost" id="refreshWb" title="Пита куриерите за всички изпратени пратки сега">↻ Обнови статусите</button>' +
     '<button type="button" class="ghost" id="slipAll" title="Лист за всяка поръчка за пакетиране, с QR код">🖨 Листове за пакетиране</button>';
   $('fPills').insertAdjacentHTML('beforebegin', '<div id="scanBar" hidden></div>');
   function setToPack(n) { $('toPackPill').textContent = '📦 За пакетиране' + (n != null ? ': ' + n : ''); }
+  /** shipped parcels that need a look; the pill stays while it is the chosen filter */
+  function setProblems(n) {
+    var p = $('problemsPill');
+    p.hidden = !n && $('fStatus').value !== 'problems';
+    p.textContent = '⚠️ Проблемни' + (n != null ? ': ' + n : '');
+    p.classList.toggle('due', n > 0);
+  }
+  $('refreshWb').addEventListener('click', function () {
+    var b = $('refreshWb'), was = b.textContent;
+    b.disabled = true; b.textContent = '↻ Питам куриерите…';
+    fetch(withShop(API + 'orders'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'refresh_statuses' }) })
+      .then(function (r) { if (r.status === 401) { showLogin(); return null; } if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (d) {
+        if (!d) return;
+        var moved = d.delivered + d.returned;
+        b.textContent = d.checked ? '✓ Проверени ' + d.checked + (moved ? ' · ' + d.delivered + ' доставени, ' + d.returned + ' върнати' : '') : '✓ Няма изпратени пратки за проверка';
+        if (d.errors && d.errors.length) alert('Някои куриери не отговориха:\n' + d.errors.join('\n'));
+        load(page);
+      })
+      .catch(function () { b.textContent = was; alert('Куриерите не отговориха. Опитайте пак след малко.'); })
+      .then(function () { b.disabled = false; setTimeout(function () { b.textContent = was; }, 4000); });
+  });
   $('slipAll').addEventListener('click', function () { window.open(withShop(API + 'orders') + '&slip=all', '_blank'); });
   /* ---- the QR code on a packing slip opens one order here ---- */
   var focusOrder = (new URLSearchParams(location.search).get('order') || '').trim();
@@ -1120,7 +1144,7 @@ tr.hl td{background:#fffbe6}
         if (id !== reqId) return;
         if (!d) { showLogin(); return; }
         page = target;
-        orders = d.orders; total = d.total; pageSize = d.pageSize; setAtOffice(d.atOffice); setToPack(d.toPack);
+        orders = d.orders; total = d.total; pageSize = d.pageSize; setAtOffice(d.atOffice); setToPack(d.toPack); setProblems(d.problems);
         if (focusOrder && orders[0] && currentShop !== 'all' && orders[0].shopId !== currentShop && shopById(orders[0].shopId)) {
           // a scanned slip of another shop: the phone switches to that shop, so the buttons act on the right one
           currentShop = orders[0].shopId;
@@ -1174,6 +1198,8 @@ tr.hl td{background:#fffbe6}
         (w.atOfficeDay ? '<br>' + (w.atOfficeDay >= 4
           ? '<span class="dup" title="Обадете се или пишете на клиента, преди пратката да се върне">📦 ' + w.atOfficeDay + '-и ден в офиса — звъннете</span>' + (o.phoneNorm ? ' <a href="tel:' + esc(o.phoneNorm) + '">📞 ' + esc(o.phoneNorm) + '</a>' : '')
           : '<span class="muted">📦 ' + (w.atOfficeDay === 1 ? 'пристигна в офиса днес' : 'в офиса от ' + w.atOfficeDay + ' дни') + '</span>') : '') +
+        (o.quietDays >= 3 ? '<br><span class="dup" title="Куриерът не е сменил статуса — проверете при него или звъннете на клиента">⏸ без движение ' + o.quietDays + ' дни</span>' : '') +
+        (!w.demo && o.phone && ['shipped', 'delivered'].indexOf(o.status) >= 0 ? '<br><button type="button" data-track="' + i + '">💬 Проследяване</button>' : '') +
         '<br>' + (w.pdf ? '<a href="' + esc(pdfHref(w.pdf)) + '" target="_blank" rel="noopener">PDF за печат</a> · ' : '') +
         (o.courier === 'boxnow' && w.status && w.status.indexOf('Пуснете') === 0 ? '<a href="#" data-wbdrop="' + i + '">📦 Пуснах я в автомата</a> · ' : '') +
         '<a href="#" data-wbcancel="' + i + '">Анулирай</a></span>';
@@ -1262,6 +1288,7 @@ tr.hl td{background:#fffbe6}
     if (btn.getAttribute('data-unpack') != null) { e.preventDefault(); setPacked(orders[btn.getAttribute('data-unpack')], false, btn); return; }
     if (btn.getAttribute('data-slip') != null) { window.open(withShop(API + 'orders') + '&slip=' + encodeURIComponent(orders[btn.getAttribute('data-slip')].id), '_blank'); return; }
     if (btn.getAttribute('data-confirm') != null) { openConfirm(orders[btn.getAttribute('data-confirm')]); return; }
+    if (btn.getAttribute('data-track') != null) { openConfirm(orders[btn.getAttribute('data-track')], 'track'); return; }
     if (btn.getAttribute('data-wb') != null) { openWaybill(orders[btn.getAttribute('data-wb')]); return; }
     if (btn.getAttribute('data-wbrelease') != null) {
       e.preventDefault();
@@ -1975,17 +2002,22 @@ tr.hl td{background:#fffbe6}
   $('waDisconnect').addEventListener('click', function () { if (window.confirm('Да изключа ли WhatsApp? Автоматичните съобщения спират.')) waAct({ action: 'wa_disconnect' }, $('waDisconnect'), 'Изключено.'); });
 
   /* ---- потвърждение на поръчка от клиента (WhatsApp/SMS от вашия телефон + личен линк) ---- */
-  function openConfirm(o) {
+  function openConfirm(o, kind) {
+    var track = kind === 'track';
+    $('cfTitle').textContent = track ? 'Проследяване за клиента' : 'Потвърждение от клиента';
+    $('cfHint').textContent = track ? 'Отваря WhatsApp/SMS на вашето устройство с готовото съобщение — натиснете „Изпрати“ там. Линкът показва на клиента къде е пратката, с часове и офиса.'
+      : 'Отваря WhatsApp/SMS на вашето устройство с готовото съобщение — натиснете „Изпрати“ там. Когато клиентът отговори през линка, статусът се сменя сам.';
     $('cfWho').textContent = (o.name || 'Клиент') + ' · ' + o.phone;
     $('cfMsg').textContent = 'Зареждам…';
     $('cfWa').removeAttribute('href'); $('cfSms').removeAttribute('href');
     $('confirmModal').hidden = false;
-    fetch(withShop(API + 'confirmadmin'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'link', id: o.id }) })
+    fetch(withShop(API + 'confirmadmin'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: track ? 'track' : 'link', id: o.id }) })
       .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); })
       .then(function (d) {
         $('cfMsg').textContent = d.message;
         if (d.whatsapp) $('cfWa').setAttribute('href', d.whatsapp);
         if (d.sms) $('cfSms').setAttribute('href', d.sms);
+        if (track) return;
         o.confirmation = o.confirmation || {}; if (!o.confirmation.sent) { o.confirmation.sent = true; render(); }
       })
       .catch(function (e) { $('cfMsg').textContent = e.message; });

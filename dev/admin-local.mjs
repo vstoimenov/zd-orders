@@ -71,7 +71,7 @@ for (const [visitor, source] of [['v1', 'facebook'], ['v2', 'facebook'], ['v3', 
 await q(`update zd.orders set traffic_source = 'facebook' where cb_order_id in ('L1', 'L2')`);
 await q(`insert into zd.ad_spend (platform, account_id, day, spend, impressions, clicks, purchases, purchase_value, currency) values ('meta', '1234567890', $1::date, 18.4, 5200, 96, 2, 63.64, 'EUR')`, [today]);
 // a shipped parcel on its 5th day at the receiver's office
-await q(`update zd.orders set status = 'shipped', waybill_number = '1051600000099', waybill_courier = 'econt', waybill_status = 'Пристигнала в офис', waybill_created_at = now() - interval '7 days', waybill_at_office_since = now() - interval '4 days' where id = (select id from zd.orders order by created_at desc limit 1)`);
+await q(`update zd.orders set status = 'shipped', waybill_number = '1051600000099', waybill_courier = 'econt', waybill_status = 'Пристигнала в офис', waybill_created_at = now() - interval '7 days', waybill_at_office_since = now() - interval '4 days' where id = (select id from zd.orders where delivery_type = 'econt_office' order by created_at desc limit 1)`);
 // abandoned carts: one open, one with an opted-out number (shown 1 h after they were typed)
 {
   const { captureCart } = await import('../lib/abandoned.js');
@@ -95,6 +95,8 @@ await saveIntegration(q, 'convertbuilder', { config: { domain: 'adhdbg.eu', stor
 await q(`insert into zd.offices (id, courier, code, name, city, address) values
   ('econt:1107', 'econt', '1107', 'Офис София Младост', 'София', 'бул. Александър Малинов 1'),
   ('econt:1127', 'econt', '1127', 'Офис София Лозенец', 'София', 'ул. Златовръх 1')`);
+await q(`insert into zd.offices (id, courier, code, name, city, address, lat, lng, hours) values
+  ('econt:4002', 'econt', '4002', 'Пловдив Тракия', 'Пловдив', 'бул. Освобождение 12', 42.1418, 24.7853, 'пн–пт 09:00–18:00 · сб 09:00–15:00')`);
 await insertOrder(q, { ...base, cbOrderId: 'L4', name: 'Георги Димитров', phone: '0888555666', phoneNorm: '+359888555666', officeId: 'econt:1127', officeText: 'ЕКОНТ – офис София Лозенец (1127)', city: 'София', postCode: '1000', items: [{ name: 'Да се заобичаме с думи', qty: 1, price: 18.5 }], total: 22.57 });
 await saveIntegration(q, 'econt', {
   config: { username: 'iasp-dev', demo: true, profileName: 'ЕТ КОНСУЛТ - ИВАН КИРЯЗОВ', profileCompany: true, senderAgent: 'Иван Кирязов', sender: { type: 'office', officeCode: '1107', addressId: '', address: null, text: 'Офис София Младост, София' },
