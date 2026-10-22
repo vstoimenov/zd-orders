@@ -125,16 +125,16 @@ class Ordyx_Api {
             'items'          => $items,
             'total'          => round((float) $order->get_total(), 2),
             'currency'       => $order->get_currency(),
-            'paid'           => $order->is_paid(),
+            'paid'           => $order->get_payment_method() !== 'cod' && $order->is_paid(), // a COD order is never "paid" here, whatever its status
             'payment_method' => $order->get_payment_method() === 'cod' ? 'cod' : 'card',
             'page_url'       => (string) $order->get_created_via(),
         ];
     }
 
     /** The shop's office list from Ordyx (cached a day): to check the chosen office when the order is placed. */
-    public static function offices($courier) {
+    public static function offices($courier, $fresh = false) {
         $key = 'ordyx_offices_' . $courier . '_' . substr(md5(self::base()), 0, 8); // per Ordyx host: a dev setup switching hosts never checks against a stale list
-        $cached = get_transient($key);
+        $cached = $fresh ? false : get_transient($key);
         if (is_array($cached)) return $cached;
         $res = wp_remote_get(self::base() . '/api/offices?courier=' . rawurlencode($courier), ['timeout' => 4]);
         if (is_wp_error($res) || (int) wp_remote_retrieve_response_code($res) !== 200) return null;

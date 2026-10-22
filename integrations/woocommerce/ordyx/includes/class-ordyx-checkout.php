@@ -44,8 +44,10 @@ class Ordyx_Checkout {
     public static function check($type, $office_id) {
         if (!in_array($type, Ordyx_Api::OFFICE_TYPES, true)) return '';
         if ($office_id === '') return $type === 'boxnow_locker' ? 'Моля, изберете автомат на BOX NOW.' : 'Моля, изберете офис или автомат за доставка.';
-        $courier = explode(':', $office_id)[0];
+        $courier = ['econt_office' => 'econt', 'speedy_office' => 'speedy', 'boxnow_locker' => 'boxnow'][$type];
+        if (strpos($office_id, $courier . ':') !== 0) return 'Избраният офис не е на този куриер — изберете отново от списъка.';
         $ids = Ordyx_Api::offices($courier);
+        if (is_array($ids) && !isset($ids[$office_id])) $ids = Ordyx_Api::offices($courier, true); // a new office/locker: look again before refusing
         if (is_array($ids) && !isset($ids[$office_id])) return 'Избраният офис не е намерен — изберете отново от списъка.';
         return '';
     }

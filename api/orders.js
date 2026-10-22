@@ -27,6 +27,7 @@ export default async function handler(req, res) {
   const token = process.env.ORDER_TOKEN;
   if (!token || !body || body.token !== token) return send(res, 401, { error: 'token' });
   const v = validateOrder(body);
+  if (v.ok && /^(wc|ext)-/i.test(v.order.cbOrderId)) return send(res, 400, { error: 'reserved id' }); // those come only with a shop key
   if (!v.ok) {
     console.warn('[orders] rejected', body.cb_order_id, v.error);
     return send(res, 400, { error: v.error });

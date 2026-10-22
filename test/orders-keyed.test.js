@@ -4,11 +4,13 @@ import { makeTestQuery } from './helpers/pglite.js';
 import { fakeReq, fakeRes, json } from './helpers/http.js';
 import { setQueryForTests } from '../lib/db.js';
 import { makeShopKey, keyStatus, resetKeyLimitsForTests } from '../lib/shop-keys.js';
+import { insertOrder, listOrders } from '../lib/orders-repo.js';
 import { saveSubscription, setPushSenderForTests } from '../lib/push.js';
 import orders from '../api/orders.js';
 
 process.env.INTEGRATIONS_SECRET = 'test-secret';
 process.env.ORDER_TOKEN = 'tok';
+process.env.ALLOWED_ORIGINS = 'https://a-shop.bg';
 process.env.VAPID_PUBLIC_KEY = 'B'; process.env.VAPID_PRIVATE_KEY = 'p';
 const SHOP = '00000000-0000-4000-8000-000000000001';
 const SHOP_B = '00000000-0000-4000-8000-0000000000b2';
@@ -148,4 +150,54 @@ test('a key may send at most 600 requests an hour', async () => {
   let last;
   for (let i = 0; i < 601; i++) last = await call(key, { method: 'GET', site: null });
   assert.equal(last.statusCode, 429);
+});
+
+/* ---- review fixes ---- */
+test('a cash-on-delivery order stays cash on delivery when re-sent after the shop marked it paid', async () => {
+  const { key } = await makeShopKey(q, SHOP);
+  await call(key, { body: order({ payment_method: 'cod', paid: false }) });
+  await call(key, { body: order({ payment_method: 'cod', paid: true }) }); // WooCommerce: processing → is_paid() true
+  assert.equal((await rows())[0].payment_method, 'cod');
+  await call(key, { body: order({ payment_method: 'card', paid: true }) });
+  assert.equal((await rows())[0].payment_method, 'cod', 'never cod → card on an update');
+  await call(key, { body: order({ external_id: 18, payment_method: 'card', paid: true }) });
+  assert.equal((await rows())[1].payment_method, 'card');
+});
+
+test('the public widget path cannot take a WooCommerce or API id', async () => {
+  const res = fakeRes();
+  await orders(fakeReq({ method: 'POST', url: '/api/orders', headers: { origin: 'https://a-shop.bg', 'x-forwarded-for': '7.7.7.7' },
+    body: JSON.stringify({ token: 'tok', cb_order_id: 'wc-50', name: 'X', phone: '0888123456', delivery_type: 'econt_office', office_text: 'офис', items: [], total: 1 }) }), res);
+  assert.equal(res.statusCode, 400);
+  assert.equal((await rows()).length, 0);
+});
+
+test('a keyed send onto an order of another source is refused with 409, not silently locked', async () => {
+  await insertOrder(q, { cbOrderId: 'a-shop.bg:wc-7', name: 'Друг', phone: '0888123456', phoneNorm: '+359888123456', email: '', deliveryType: 'econt_office', courier: 'econt',
+    officeId: '', officeText: 'офис', city: '', postCode: '', addressText: '', items: [], total: 1, currency: 'EUR', paymentMethod: 'cod', pageUrl: '', ip: '1', shopId: SHOP });
+  const { key } = await makeShopKey(q, SHOP);
+  const res = await call(key, { body: order({ external_id: 7 }) });
+  assert.equal(res.statusCode, 409);
+});
+
+test('a re-send keeps the courier and office the shop chose in Ordyx for an order that came without one', async () => {
+  const { key } = await makeShopKey(q, SHOP);
+  await call(key, { body: order({ external_id: 40, delivery_type: 'other', office_id: '', office_text: 'Flat rate', city: 'София', address_text: '' }) });
+  await q(`update zd.orders set delivery_type = 'econt_office', courier = 'econt', office_id = 'econt:1107', office_text = 'Офис Младост, София (1107)' where cb_order_id = 'a-shop.bg:wc-40'`);
+  await call(key, { body: order({ external_id: 40, delivery_type: 'other', office_id: '', office_text: 'Flat rate', city: 'София', address_text: '', total: 40 }) });
+  const [o] = await rows();
+  assert.equal(o.delivery_type, 'econt_office');
+  assert.equal(o.office_id, 'econt:1107');
+  assert.equal(Number(o.total), 40);
+});
+
+test('"cancelled in WooCommerce after shipping" shows on the order for the admin', async () => {
+  const { key } = await makeShopKey(q, SHOP);
+  await call(key, { body: order() });
+  await q(`update zd.orders set waybill_number = '1056', status = 'shipped'`);
+  await call(key, { body: { source: 'woocommerce', external_id: 17, status: 'cancelled' } });
+  assert.equal((await listOrders(q)).rows[0].externalStatus, 'cancelled');
+  sent.length = 0;
+  await call(key, { body: { source: 'woocommerce', external_id: 17, status: 'cancelled' } });
+  assert.equal(sent.length, 0, 'told once');
 });

@@ -5,7 +5,8 @@ import { makeTestQuery } from './helpers/pglite.js';
 import { setQueryForTests } from '../lib/db.js';
 import { makeShopKey, noteKeyUse, keyStatus } from '../lib/shop-keys.js';
 import { upsertExternalOrder, insertOrder, listOrders } from '../lib/orders-repo.js';
-import { notifySite } from '../lib/woo-callback.js';
+import { notifySite, retryCallbacks } from '../lib/woo-callback.js';
+import { answerConfirm, confirmLink } from '../lib/confirm.js';
 import { saveEcont, createWaybill } from '../lib/waybills.js';
 
 process.env.INTEGRATIONS_SECRET = 'test-secret';
@@ -113,4 +114,35 @@ test('creating a live waybill calls the site; a slow site does not fail the wayb
   assert.equal(calls.length, 1);
   assert.equal(calls[0].body.event, 'shipped');
   assert.equal(calls[0].body.wcId, '18');
+});
+
+/* ---- review fixes ---- */
+test('a buyer refusing the order on the confirmation page cancels it in WooCommerce too', async () => {
+  const id = await wooOrder(21);
+  const { link } = await confirmLink(q, { orderId: id, scopeShopId: SHOP });
+  const f = site();
+  await withFetch(f.impl, () => answerConfirm(q, new URL(link).searchParams.get('t'), 'no'));
+  assert.equal(f.calls.length, 1);
+  assert.equal(JSON.parse(f.calls[0].init.body).event, 'cancelled');
+});
+
+test('a callback the site did not take waits on the order and the nightly job retries it', async () => {
+  const id = await wooOrder(22);
+  await shipped(id);
+  await withFetch(site({ status: 500 }).impl, () => notifySite(q, id, 'shipped'));
+  assert.equal((await q(`select site_notify from zd.orders where id = $1::uuid`, [id]))[0].site_notify, 'shipped');
+  const f = site();
+  const r = await withFetch(f.impl, () => retryCallbacks(q));
+  assert.deepEqual(r, { retried: 1, delivered: 1 });
+  assert.equal(JSON.parse(f.calls[0].init.body).event, 'shipped');
+  assert.equal((await q(`select site_notify from zd.orders where id = $1::uuid`, [id]))[0].site_notify, '');
+});
+
+test('a site that redirects is reported, never followed with a changed method', async () => {
+  const id = await wooOrder(23);
+  await shipped(id);
+  const f = site({ status: 301 });
+  assert.equal(await withFetch(f.impl, () => notifySite(q, id, 'shipped')), false);
+  assert.equal(f.calls[0].init.redirect, 'manual');
+  assert.match((await keyStatus(q, SHOP)).lastError, /пренасочва/);
 });

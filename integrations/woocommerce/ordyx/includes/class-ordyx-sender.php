@@ -12,6 +12,8 @@ class Ordyx_Sender {
         add_action('woocommerce_checkout_order_processed', [__CLASS__, 'on_new_order'], 20, 1);
         add_action('woocommerce_store_api_checkout_order_processed', function ($order) { self::on_new_order($order->get_id()); }, 20, 1);
         add_action('woocommerce_payment_complete', [__CLASS__, 'on_paid'], 20, 1);
+        add_action('woocommerce_order_status_processing', [__CLASS__, 'on_paid_status'], 20, 1); // bank transfer / cheque marked paid by hand
+        add_action('woocommerce_order_status_completed', [__CLASS__, 'on_paid_status'], 20, 1);
         add_action('woocommerce_order_status_cancelled', [__CLASS__, 'on_cancelled'], 20, 1);
         add_action('woocommerce_order_status_refunded', [__CLASS__, 'on_cancelled'], 20, 1);
         add_action('ordyx_retry', [__CLASS__, 'retry']);
@@ -36,16 +38,23 @@ class Ordyx_Sender {
         self::send($order, 5);
     }
 
+    /** A non-COD order the shop marked paid by hand (bank transfer, cheque): woocommerce_payment_complete does not fire then. */
+    public static function on_paid_status($order_id) {
+        $order = wc_get_order($order_id);
+        if (!$order || $order->get_meta('_ordyx_sent_at') || $order->get_meta('_ordyx_pending') !== 'awaiting_payment') return;
+        if ($order->get_payment_method() !== 'cod' && !$order->is_paid()) return;
+        self::send($order, 8);
+    }
+
     public static function on_cancelled($order_id) {
         $order = wc_get_order($order_id);
         if (!$order || $order->get_meta('_ordyx_by_ordyx')) return; // Ordyx cancelled it: nothing to tell it
-        if (!$order->get_meta('_ordyx_sent_at')) { // never reached Ordyx: just stop trying
-            $order->delete_meta_data('_ordyx_pending');
-            $order->save();
-            return;
-        }
+        $order->delete_meta_data('_ordyx_pending');
+        $order->save();
+        // a send that timed out may still have landed in Ordyx: tell it whenever a send was tried; "not found" is fine
+        if (!$order->get_meta('_ordyx_sent_at') && !(int) $order->get_meta('_ordyx_attempts')) return;
         $r = Ordyx_Api::cancel_order($order);
-        $order->add_order_note($r['ok'] ? 'Ordyx: отказът е предаден' : 'Ordyx: отказът не стигна — ' . $r['error']);
+        $order->add_order_note($r['ok'] || $r['status'] === 404 ? 'Ordyx: отказът е предаден' : 'Ordyx: отказът не стигна — ' . $r['error']);
     }
 
     /** One try now; a failure queues the order for the cron. */
@@ -68,9 +77,9 @@ class Ordyx_Sender {
         return false;
     }
 
-    /** Orders still to be sent (newest first). */
-    public static function pending($limit = 50) {
-        return wc_get_orders(['limit' => $limit, 'orderby' => 'date', 'order' => 'DESC', 'meta_key' => '_ordyx_pending', 'meta_value' => 'retry']);
+    /** Orders still to be sent (newest first): failed sends, or (with $awaiting) non-COD orders waiting to be paid. */
+    public static function pending($limit = 50, $awaiting = false) {
+        return wc_get_orders(['limit' => $limit, 'orderby' => 'date', 'order' => 'DESC', 'meta_key' => '_ordyx_pending', 'meta_value' => $awaiting ? 'awaiting_payment' : 'retry']);
     }
 
     public static function retry() {

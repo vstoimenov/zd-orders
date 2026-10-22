@@ -40,6 +40,7 @@ class Ordyx_Settings {
         $mode = Ordyx_Api::mode();
         $ping = get_option('ordyx_last_ping');
         $pending = Ordyx_Sender::pending(30);
+        $awaiting = Ordyx_Sender::pending(30, true);
         ?>
         <div class="wrap">
           <h1>Ordyx</h1>
@@ -61,8 +62,7 @@ class Ordyx_Settings {
                 <td><label><input type="radio" name="ordyx_mode" value="checkout" <?php checked($mode, 'checkout'); ?>> <b>Ordyx в чекаута</b> — изборът на офис/автомат на Ordyx (добавете методите на Ordyx в WooCommerce → Settings → Shipping)</label><br>
                   <label><input type="radio" name="ordyx_mode" value="orders" <?php checked($mode, 'orders'); ?>> <b>Само поръчките</b> — чекаутът остава както е; поръчките влизат в Ordyx</label></td></tr>
               <tr><th scope="row">След товарителница</th>
-                <td><label><input type="checkbox" name="ordyx_complete_on_ship" value="yes" <?php checked(Ordyx_Api::complete_on_ship()); ?>> Поръчката става „Completed“, когато Ordyx направи товарителницата</label>
-                  <input type="hidden" name="ordyx_complete_on_ship_sent" value="1"></td></tr>
+                <td><input type="hidden" name="ordyx_complete_on_ship" value="no"><label><input type="checkbox" name="ordyx_complete_on_ship" value="yes" <?php checked(Ordyx_Api::complete_on_ship()); ?>> Поръчката става „Completed“, когато Ordyx направи товарителницата</label></td></tr>
             </table>
             <?php submit_button('Запази'); ?>
           </form>
@@ -80,6 +80,16 @@ class Ordyx_Settings {
               <tr><td><a href="<?php echo esc_url($o->get_edit_order_url()); ?>">#<?php echo esc_html($o->get_order_number()); ?></a> · <?php echo esc_html($o->get_formatted_billing_full_name()); ?></td>
                 <td><?php echo esc_html((string) $o->get_meta('_ordyx_error')); ?></td><td><?php echo (int) $o->get_meta('_ordyx_attempts'); ?></td>
                 <td><a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=ordyx_resend&order=' . $o->get_id()), 'ordyx_resend')); ?>">Изпрати пак</a></td></tr>
+            <?php endforeach; ?></tbody></table>
+          <?php endif; ?>
+          <?php if ($awaiting): ?>
+            <h2>Поръчки, които чакат плащане</h2>
+            <p class="description">Поръчки с карта или банков превод отиват в Ordyx, щом бъдат платени (или ги маркирате като „Processing“).</p>
+            <table class="widefat striped"><thead><tr><th>Поръчка</th><th>Плащане</th><th></th></tr></thead><tbody>
+            <?php foreach ($awaiting as $o): ?>
+              <tr><td><a href="<?php echo esc_url($o->get_edit_order_url()); ?>">#<?php echo esc_html($o->get_order_number()); ?></a> · <?php echo esc_html($o->get_formatted_billing_full_name()); ?></td>
+                <td><?php echo esc_html($o->get_payment_method_title()); ?></td>
+                <td><a class="button" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=ordyx_resend&order=' . $o->get_id()), 'ordyx_resend')); ?>">Изпрати като платена</a></td></tr>
             <?php endforeach; ?></tbody></table>
           <?php endif; ?>
           <p class="description" style="margin-top:20px">Плъгин Ordyx <?php echo esc_html(ORDYX_VERSION); ?> · <a href="https://ordyx.eu" target="_blank" rel="noopener">ordyx.eu</a></p>

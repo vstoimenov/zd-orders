@@ -9,6 +9,7 @@ import { metaConfig, syncMeta } from '../../lib/meta.js';
 import { listShops } from '../../lib/shops.js';
 import { anonymiseOld } from '../../lib/abandoned.js';
 import { econtStatus, syncEcontStatuses, speedyStatus, syncSpeedyStatuses, boxnowStatus, syncBoxnowStatuses } from '../../lib/waybills.js';
+import { retryCallbacks } from '../../lib/woo-callback.js';
 
 /** Vercel Cron calls this daily with `Authorization: Bearer $CRON_SECRET`. */
 export default async function handler(req, res) {
@@ -57,6 +58,12 @@ export default async function handler(req, res) {
     await q(`delete from zd.settings where key like 'visit_salt:%' and key < 'visit_salt:' || to_char(current_date - 2, 'YYYY-MM-DD')`);
   } catch (err) {
     console.error('[cron] visits cleanup failed', err);
+  }
+  // callbacks to shops' own sites (WooCommerce) that did not get through
+  try {
+    result.siteCallbacks = await retryCallbacks(q);
+  } catch (err) {
+    console.error('[cron] site callbacks failed', err);
   }
   // abandoned carts: personal details go after 30 days, the figures stay
   try {

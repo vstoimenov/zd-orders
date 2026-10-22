@@ -1253,6 +1253,7 @@ tr.hl td{background:#fffbe6}
       return '<tr class="st-' + esc(o.status) + (focusOrder && o.id === focusOrder ? ' hl' : '') + '">' +
         '<td data-label="Дата">' + esc(date) + '</td>' +
         '<td data-label="Клиент"><b>' + esc(o.name || '—') + '</b>' + (o.isDuplicate ? '<span class="dup" title="Същият телефон в последните 24 ч">дубликат?</span>' : '') +
+          (o.externalStatus === 'cancelled' ? '<span class="dup" title="Магазинът (WooCommerce) я отказа, след като беше изпратена — проверете при куриера">⚠️ отказана в WooCommerce</span>' : '') +
           (o.cbCheck === 'pending' ? '<span class="dup" title="Модулът я изпрати, но ConvertBuilder още не я показва. Докато не я потвърди, няма автоматично съобщение, известие, наличности и не влиза в таблото. Ако е истинска, ще се оправи сама до минути.">непотвърдена от магазина</span>' : '') +
           '<br><a href="tel:' + esc(o.phone) + '">' + esc(o.phone) + '</a>' + (o.email ? '<br><span class="muted">' + esc(o.email) + '</span>' : '') +
           '<br>' + nkBadge(o) + (currentShop === 'all' && shopById(o.shopId) ? '<br><span class="shoptag">' + esc(shopById(o.shopId).display) + '</span>' : '') + '</td>' +
