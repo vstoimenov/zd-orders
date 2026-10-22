@@ -54,10 +54,13 @@ test('the admin gets a WhatsApp message with the customer\'s personal confirmati
 test('the customer opens the link, sees the order and confirms it: the order is confirmed and the shop hears about it', async () => {
   const t = tokenOf(json(await linkFor(orderId)).link);
   const page = json(await call({ url: `/api/admin/confirm?t=${t}` }));
-  assert.deepEqual(page, {
-    ok: true, shop: 'Магазин А', name: 'Мария', items: [{ name: 'Книга', qty: 2 }], total: 22.57, currency: 'EUR',
+  const { tracking, createdAt, ...rest } = page;
+  assert.deepEqual(rest, {
+    ok: true, shop: 'Магазин А', name: 'Мария', items: [{ name: 'Книга', qty: 2 }], total: 22.57, currency: 'EUR', cod: true,
     delivery: 'ЕКОНТ – офис Плевен (5803)', answer: '', canAnswer: true,
   });
+  assert.ok(createdAt);
+  assert.equal(tracking.stage, 'placed');
   assert.ok(!JSON.stringify(page).includes('888'), 'no phone on the public page');
   const res = await call({ method: 'POST', url: '/api/admin/confirm', body: { t, answer: 'yes' } });
   assert.equal(res.statusCode, 200);
@@ -124,7 +127,7 @@ test('if the order is sent meanwhile, the customer\'s answer is refused and nobo
   assert.equal(o.status, 'shipped');
 });
 
-test('the public page shows no street address and, once closed, no order details', async () => {
+test('the public page shows no street address, before or after the order is closed', async () => {
   const addr = (await insertOrder(q, {
     cbOrderId: 'a-shop.bg:8', name: 'Петър Петров', phone: '0888222222', phoneNorm: '+359888222222', email: '', deliveryType: 'speedy_address', courier: 'speedy',
     officeId: '', officeText: 'СПИДИ – адрес: ул. Тайна 5, ап. 3', city: 'Варна', postCode: '9000', addressText: 'ул. Тайна 5, ап. 3', items: [{ name: 'Книга', qty: 1, price: 10 }],
@@ -139,7 +142,10 @@ test('the public page shows no street address and, once closed, no order details
   await call({ method: 'POST', url: '/api/admin/confirm', body: { t, answer: 'yes' } });
   await q(`update zd.orders set status = 'shipped' where id = $1`, [addr]);
   const closed = json(await call({ url: `/api/admin/confirm?t=${t}` }));
-  assert.deepEqual(closed, { ok: true, shop: 'Магазин А', answer: 'yes', canAnswer: false });
+  assert.equal(closed.canAnswer, false);
+  assert.equal(closed.answer, 'yes');
+  assert.equal(closed.tracking.stage, 'shipped');
+  assert.ok(!JSON.stringify(closed).includes('Тайна') && !JSON.stringify(closed).includes('888'));
 });
 
 test('answering the same again does not notify again', async () => {
