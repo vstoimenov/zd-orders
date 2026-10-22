@@ -19,7 +19,7 @@
 <link rel="icon" href="https://app.ordyx.eu/admin/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#0d0d0d;--ink2:#1a1a18;--paper:#f4f2ec;--card:#fff;--line:#e4e1d8;--muted:#5f5d57;--y:#ffd21f;--y2:#f5c400;--ysoft:#fff6cc;--ok:#15803d;--bad:#b91c1c;--r:18px}
 *{box-sizing:border-box}
@@ -45,7 +45,7 @@ section{padding:88px 0}
 .nav .wrap{display:flex;align-items:center;gap:22px;height:66px}
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
 .logo svg{width:30px;height:30px}
-.logo b{font-family:Unbounded,sans-serif;font-weight:600;letter-spacing:.05em;font-size:19px}
+.logo b{font-family:Unbounded,sans-serif;font-weight:800;letter-spacing:-.02em;font-size:21px}
 .nav nav{display:flex;gap:22px;margin-left:auto;font-weight:600;font-size:15px}
 .nav nav a{text-decoration:none;opacity:.8}.nav nav a:hover{opacity:1}
 .nav .btn{min-height:42px;padding:0 18px;font-size:15px;box-shadow:none}
@@ -64,7 +64,7 @@ section{padding:88px 0}
 .admin-back{position:absolute;right:-80px;top:40px;width:560px;height:420px;border-radius:16px;background:#f4f2ec;box-shadow:0 30px 80px rgba(0,0,0,.5);overflow:hidden;transform:rotate(-2deg)}
 .admin-back .bar{height:38px;background:#0b0b0a;display:flex;align-items:center;gap:8px;padding:0 14px}
 .admin-back .bar svg{width:18px;height:18px}
-.admin-back .bar b{font-family:Unbounded;font-size:12px;color:#fff;letter-spacing:.05em}
+.admin-back .bar b{font-family:Unbounded;font-weight:800;font-size:12px;color:#fff;letter-spacing:-.01em}
 .admin-back .rows{padding:14px;display:flex;flex-direction:column;gap:8px}
 .arow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--ink)}
 .arow b{font-size:13px}
@@ -265,8 +265,8 @@ footer a{color:#e9e7df;text-decoration:none}
 <header class="nav">
   <div class="wrap">
     <a class="logo" href="#top" aria-label="Ordyx — начало">
-      <svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="#ffd21f"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="none" stroke="#0d0d0d" stroke-width="5"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40" stroke="#0d0d0d" stroke-width="5"/></svg>
-      <b>ORDYX</b>
+      <svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 60,24 40,24" fill="#FFEFA8"/><polygon points="70,4 96,30 76,40 60,24" fill="#FFDD4D"/><polygon points="96,30 96,70 76,60 76,40" fill="#F4C200"/><polygon points="96,70 70,96 60,76 76,60" fill="#D6A400"/><polygon points="70,96 30,96 40,76 60,76" fill="#C49500"/><polygon points="30,96 4,70 24,60 40,76" fill="#DDAC00"/><polygon points="4,70 4,30 24,40 24,60" fill="#FFD21F"/><polygon points="4,30 30,4 40,24 24,40" fill="#FFF3C7"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="#FFD84A"/><polygon points="40,24 60,24 67,31 33,31" fill="#FFF0B3" opacity=".7"/><g fill="none" stroke="#0d0d0c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40"/></g></svg>
+      <b>ordyx</b>
     </a>
     <nav aria-label="Основно меню"><a href="#how">Как работи</a><a href="#prices">Цени</a><a href="#faq">ЧЗВ</a><a href="https://app.ordyx.eu/admin/">Вход</a></nav>
     <a class="btn" data-cta href="#">Започни безплатно</a>
@@ -286,7 +286,7 @@ footer a{color:#e9e7df;text-decoration:none}
     </div>
     <div class="stage" aria-hidden="true">
       <div class="admin-back">
-        <div class="bar"><svg viewBox="0 0 100 100"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="#ffd21f"/></svg><b>ORDYX</b><span style="margin-left:auto;font-size:11px;color:#0d0d0d;background:#ffd21f;border-radius:999px;padding:2px 10px;font-weight:800">3 нови поръчки</span></div>
+        <div class="bar"><svg viewBox="0 0 100 100"><polygon points="30,4 70,4 60,24 40,24" fill="#FFEFA8"/><polygon points="70,4 96,30 76,40 60,24" fill="#FFDD4D"/><polygon points="96,30 96,70 76,60 76,40" fill="#F4C200"/><polygon points="96,70 70,96 60,76 76,60" fill="#D6A400"/><polygon points="70,96 30,96 40,76 60,76" fill="#C49500"/><polygon points="30,96 4,70 24,60 40,76" fill="#DDAC00"/><polygon points="4,70 4,30 24,40 24,60" fill="#FFD21F"/><polygon points="4,30 30,4 40,24 24,40" fill="#FFF3C7"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="#FFD84A"/><polygon points="40,24 60,24 67,31 33,31" fill="#FFF0B3" opacity=".7"/><g fill="none" stroke="#0d0d0c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40"/></g></svg><b>ordyx</b><span style="margin-left:auto;font-size:11px;color:#0d0d0d;background:#ffd21f;border-radius:999px;padding:2px 10px;font-weight:800">3 нови поръчки</span></div>
         <div class="rows" id="adminRows"></div>
       </div>
       <div class="phone"><div class="screen"><div class="notch"></div>
@@ -474,7 +474,7 @@ footer a{color:#e9e7df;text-decoration:none}
     <span class="eyebrow rv">Защо Ordyx</span>
     <h2 class="h2 rv">Направено от търговец за търговци</h2>
     <div class="story rv">
-      <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="#ffd21f"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="none" stroke="#0d0d0d" stroke-width="5"/></svg></div>
+      <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 60,24 40,24" fill="#FFEFA8"/><polygon points="70,4 96,30 76,40 60,24" fill="#FFDD4D"/><polygon points="96,30 96,70 76,60 76,40" fill="#F4C200"/><polygon points="96,70 70,96 60,76 76,60" fill="#D6A400"/><polygon points="70,96 30,96 40,76 60,76" fill="#C49500"/><polygon points="30,96 4,70 24,60 40,76" fill="#DDAC00"/><polygon points="4,70 4,30 24,40 24,60" fill="#FFD21F"/><polygon points="4,30 30,4 40,24 24,40" fill="#FFF3C7"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="#FFD84A"/><polygon points="40,24 60,24 67,31 33,31" fill="#FFF0B3" opacity=".7"/><g fill="none" stroke="#0d0d0c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40"/></g></svg></div>
       <div>
         <p>Ordyx започна като инструмент за собствения ни онлайн магазин. Писахме офисите на ръка, преписвахме товарителници и не знаехме колко ни остава след рекламата.</p>
         <p style="color:var(--muted);margin:0">Направихме си едно място за всичко след „Поръчай“. Сега го даваме и на други магазини — със същите неща, които ползваме всеки ден.</p>
@@ -549,7 +549,7 @@ footer a{color:#e9e7df;text-decoration:none}
 
 <footer>
   <div class="wrap">
-    <a class="logo" href="#top"><svg viewBox="0 0 100 100" style="width:26px;height:26px" aria-hidden="true"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="#ffd21f"/></svg><b style="color:#fff">ORDYX</b></a>
+    <a class="logo" href="#top"><svg viewBox="0 0 100 100" style="width:26px;height:26px" aria-hidden="true"><polygon points="30,4 70,4 60,24 40,24" fill="#FFEFA8"/><polygon points="70,4 96,30 76,40 60,24" fill="#FFDD4D"/><polygon points="96,30 96,70 76,60 76,40" fill="#F4C200"/><polygon points="96,70 70,96 60,76 76,60" fill="#D6A400"/><polygon points="70,96 30,96 40,76 60,76" fill="#C49500"/><polygon points="30,96 4,70 24,60 40,76" fill="#DDAC00"/><polygon points="4,70 4,30 24,40 24,60" fill="#FFD21F"/><polygon points="4,30 30,4 40,24 24,40" fill="#FFF3C7"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="#FFD84A"/><polygon points="40,24 60,24 67,31 33,31" fill="#FFF0B3" opacity=".7"/><g fill="none" stroke="#0d0d0c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40"/></g></svg><b style="color:#fff">ordyx</b></a>
     <span>ordyx.eu · <a href="mailto:stoimenov@profitbrand.online">stoimenov@profitbrand.online</a></span>
     <span><a href="https://app.ordyx.eu/admin/">Вход</a> · <a href="https://app.ordyx.eu/demo" target="_blank" rel="noopener">Демо</a> · <a href="/terms">Общи условия</a> · <a href="/privacy">Поверителност</a> · <a href="/data-deletion">Изтриване на данни</a></span>
     <span>от ProfitBrand</span>
@@ -592,7 +592,7 @@ footer a{color:#e9e7df;text-decoration:none}
 
   /* hero: phone notifications + admin rows */
   var ORDERS = [['Варна', 'Георги П.', 64, 'СПИДИ – автомат Варна'], ['Плевен', 'Мария И.', 28.28, 'ЕКОНТ – офис Плевен'], ['София', 'Елена С.', 41.8, 'ЕКОНТ – офис Младост'], ['Бургас', 'Иван Д.', 33.9, 'СПИДИ – офис Бургас'], ['Русе', 'Деси К.', 19.9, 'ЕКОНТ – офис Русе']];
-  var MARK = '<svg viewBox="0 0 100 100"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="#ffd21f"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="none" stroke="#0d0d0d" stroke-width="6"/></svg>';
+  var MARK = '<svg viewBox="0 0 100 100"><polygon points="30,4 70,4 60,24 40,24" fill="#FFEFA8"/><polygon points="70,4 96,30 76,40 60,24" fill="#FFDD4D"/><polygon points="96,30 96,70 76,60 76,40" fill="#F4C200"/><polygon points="96,70 70,96 60,76 76,60" fill="#D6A400"/><polygon points="70,96 30,96 40,76 60,76" fill="#C49500"/><polygon points="30,96 4,70 24,60 40,76" fill="#DDAC00"/><polygon points="4,70 4,30 24,40 24,60" fill="#FFD21F"/><polygon points="4,30 30,4 40,24 24,40" fill="#FFF3C7"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="#FFD84A"/><polygon points="40,24 60,24 67,31 33,31" fill="#FFF0B3" opacity=".7"/><g fill="none" stroke="#0d0d0c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40"/></g></svg>';
   var oi = 0;
   function tick() {
     var o = ORDERS[oi % ORDERS.length]; oi++;

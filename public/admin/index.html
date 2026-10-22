@@ -21,7 +21,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Ordyx">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600&amp;text=ORDYX&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@800&amp;text=ordyx&amp;display=swap">
 <style>
 :root{
   --bg:#f4f4f1;--card:#fff;--line:#e6e4dc;--ink:#14140f;--muted:#6d6c66;
@@ -44,6 +44,9 @@ button:disabled{opacity:.55;cursor:default}
 
 /* вход */
 form#signupForm{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--side);padding:16px}
+.offerbox{background:#fff6cc;border:1px solid #f1d75c;color:#3d3300;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.45;margin:0 0 12px}
+.whoami .free{display:block;margin-top:6px;color:var(--accent);font-weight:600}
+.whoami .free.warn{color:#ffb4a8}
 .logincard a{color:var(--accent)}
 .trap{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 form#inviteForm{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--side);padding:16px}
@@ -60,7 +63,7 @@ form#login{min-height:100vh;display:flex;align-items:center;justify-content:cent
 .logincard{width:100%;max-width:360px;background:#141412;border:1px solid var(--side-line);border-radius:18px;padding:30px 28px;display:flex;flex-direction:column;gap:12px;color:var(--side-text)}
 .brand{display:flex;align-items:center;gap:10px}
 .brand .omark{width:30px;height:30px;flex:none}
-.brand span{font-family:Unbounded,Inter,system-ui,sans-serif;font-weight:600;font-size:19px;letter-spacing:.04em;color:#fff}
+.brand span{font-family:Unbounded,Inter,system-ui,sans-serif;font-weight:800;font-size:21px;letter-spacing:-.02em;color:#fff}
 .side .brand{padding:18px 20px 0}
 .logincard h1{font-size:22px;margin:6px 0 4px}
 .logincard input{background:#0b0b0a;color:var(--side-text);border-color:#2c2c27}
@@ -172,6 +175,7 @@ tr.st-new{background:#fffbeb}
 .ibody .muted{margin-top:2px}
 .icard .primary,.icard .ghost{white-space:nowrap;font-size:13px;padding:8px 14px}
 .ghost{background:#fff;border:1px solid var(--line);font-weight:600}
+a.btnlink{display:inline-block;padding:9px 12px;border-radius:10px;text-decoration:none;color:var(--ink)}
 .modal{position:fixed;inset:0;z-index:50;background:rgba(10,10,8,.55);display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;overflow-y:auto}
 .dialog{width:100%;max-width:880px;background:#fff;border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.25)}
 .dhead{display:flex;align-items:center;gap:16px;padding:22px 26px;border-bottom:1px solid var(--line)}
@@ -285,8 +289,9 @@ tr.hl td{background:#fffbe6}
 <body>
 <form id="signupForm" hidden>
   <div class="logincard">
-    <div class="brand"><svg class="omark" viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="var(--accent)"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="none" stroke="#141412" stroke-width="4"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40" stroke="#141412" stroke-width="4"/></svg><span>ORDYX</span></div>
+    <div class="brand"><svg class="omark" viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 60,24 40,24" fill="#FFEFA8"/><polygon points="70,4 96,30 76,40 60,24" fill="#FFDD4D"/><polygon points="96,30 96,70 76,60 76,40" fill="#F4C200"/><polygon points="96,70 70,96 60,76 76,60" fill="#D6A400"/><polygon points="70,96 30,96 40,76 60,76" fill="#C49500"/><polygon points="30,96 4,70 24,60 40,76" fill="#DDAC00"/><polygon points="4,70 4,30 24,40 24,60" fill="#FFD21F"/><polygon points="4,30 30,4 40,24 24,40" fill="#FFF3C7"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="#FFD84A"/><polygon points="40,24 60,24 67,31 33,31" fill="#FFF0B3" opacity=".7"/><g fill="none" stroke="#0d0d0c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40"/></g></svg><span>ordyx</span></div>
     <h1>Регистрация</h1>
+    <div class="offerbox" id="suOffer" hidden>🎟️ <b>Скрита оферта:</b> 3 месеца безплатно на най-високия план — без лимит на магазини и поръчки.</div>
     <p>Офиси на Еконт и Спиди в чекаута, поръчките на едно място, товарителници и известия.</p>
     <input type="text" id="suName" placeholder="Име и фамилия" autocomplete="name" maxlength="80" required>
     <input type="email" id="suEmail" placeholder="Имейл" autocomplete="email" maxlength="160" required>
@@ -300,7 +305,7 @@ tr.hl td{background:#fffbe6}
 </form>
 <form id="inviteForm" hidden>
   <div class="logincard">
-    <div class="brand"><svg class="omark" viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="var(--accent)"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="none" stroke="#141412" stroke-width="4"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40" stroke="#141412" stroke-width="4"/></svg><span>ORDYX</span></div>
+    <div class="brand"><svg class="omark" viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 60,24 40,24" fill="#FFEFA8"/><polygon points="70,4 96,30 76,40 60,24" fill="#FFDD4D"/><polygon points="96,30 96,70 76,60 76,40" fill="#F4C200"/><polygon points="96,70 70,96 60,76 76,60" fill="#D6A400"/><polygon points="70,96 30,96 40,76 60,76" fill="#C49500"/><polygon points="30,96 4,70 24,60 40,76" fill="#DDAC00"/><polygon points="4,70 4,30 24,40 24,60" fill="#FFD21F"/><polygon points="4,30 30,4 40,24 24,40" fill="#FFF3C7"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="#FFD84A"/><polygon points="40,24 60,24 67,31 33,31" fill="#FFF0B3" opacity=".7"/><g fill="none" stroke="#0d0d0c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40"/></g></svg><span>ordyx</span></div>
     <h1>Задайте парола</h1>
     <p id="invWho"></p>
     <input type="password" id="invPw" placeholder="Нова парола (поне 8 знака)" autocomplete="new-password" minlength="8" required>
@@ -311,7 +316,7 @@ tr.hl td{background:#fffbe6}
 </form>
 <form id="login" hidden>
   <div class="logincard">
-    <div class="brand"><svg class="omark" viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="var(--accent)"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="none" stroke="#141412" stroke-width="4"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40" stroke="#141412" stroke-width="4"/></svg><span>ORDYX</span></div>
+    <div class="brand"><svg class="omark" viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 60,24 40,24" fill="#FFEFA8"/><polygon points="70,4 96,30 76,40 60,24" fill="#FFDD4D"/><polygon points="96,30 96,70 76,60 76,40" fill="#F4C200"/><polygon points="96,70 70,96 60,76 76,60" fill="#D6A400"/><polygon points="70,96 30,96 40,76 60,76" fill="#C49500"/><polygon points="30,96 4,70 24,60 40,76" fill="#DDAC00"/><polygon points="4,70 4,30 24,40 24,60" fill="#FFD21F"/><polygon points="4,30 30,4 40,24 24,40" fill="#FFF3C7"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="#FFD84A"/><polygon points="40,24 60,24 67,31 33,31" fill="#FFF0B3" opacity=".7"/><g fill="none" stroke="#0d0d0c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40"/></g></svg><span>ordyx</span></div>
     <h1>Вход</h1>
     <input type="email" id="loginEmail" placeholder="Имейл (клиенти)" autocomplete="username">
     <input type="password" id="pw" placeholder="Парола" autocomplete="current-password" required>
@@ -321,7 +326,7 @@ tr.hl td{background:#fffbe6}
 </form>
 <div id="app" class="app" hidden>
   <aside class="side" id="side">
-    <div class="brand"><svg class="omark" viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="var(--accent)"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="none" stroke="var(--side)" stroke-width="4"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40" stroke="var(--side)" stroke-width="4"/></svg><span>ORDYX</span></div>
+    <div class="brand"><svg class="omark" viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 60,24 40,24" fill="#FFEFA8"/><polygon points="70,4 96,30 76,40 60,24" fill="#FFDD4D"/><polygon points="96,30 96,70 76,60 76,40" fill="#F4C200"/><polygon points="96,70 70,96 60,76 76,60" fill="#D6A400"/><polygon points="70,96 30,96 40,76 60,76" fill="#C49500"/><polygon points="30,96 4,70 24,60 40,76" fill="#DDAC00"/><polygon points="4,70 4,30 24,40 24,60" fill="#FFD21F"/><polygon points="4,30 30,4 40,24 24,40" fill="#FFF3C7"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="#FFD84A"/><polygon points="40,24 60,24 67,31 33,31" fill="#FFF0B3" opacity=".7"/><g fill="none" stroke="#0d0d0c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40"/></g></svg><span>ordyx</span></div>
     <button type="button" class="shop" id="shopBtn" aria-haspopup="true" aria-expanded="false"><span class="avatar" id="shopInitial">М</span><b id="shopName">Моят магазин</b><span class="caret">▾</span></button>
     <div class="shopmenu" id="shopMenu" hidden></div>
     <nav class="nav">
@@ -604,6 +609,12 @@ tr.hl td{background:#fffbe6}
         <div class="muted" style="margin-bottom:10px">Пратете го на хора, които искат да ползват системата — регистрират се сами и попадат в „Първи стъпки“. Магазините им чакат вашето „Одобри“, преди чекаутът им да праща поръчки. Нов линк спира стария.</div>
         <div class="linkbox" id="suLinkBox" hidden><input type="text" id="suLink" readonly><button type="button" class="ghost" id="suCopy">Копирай</button></div>
         <div class="actions"><button type="button" class="primary" id="suNew">Създай линк</button><button type="button" class="ghost" id="suOff" hidden>Изключи регистрацията</button><span class="muted" id="suInfo"></span></div>
+      </div>
+      <div class="panel" id="ofPanel">
+        <h2 style="margin-top:0">Скрита оферта (визитки и събития)</h2>
+        <div class="muted" style="margin-bottom:10px">Който отвори линка, се регистрира сам и получава <b>3 месеца безплатно на най-високия план</b> — без лимит на магазини и поръчки. Линкът е един за всички събития и не се показва в Google. Изключете я, ако визитките стигнат до грешни хора — страницата ще каже, че офертата е приключила.</div>
+        <div class="linkbox"><input type="text" id="ofLink" readonly value="https://ordyx.eu/oferta"><button type="button" class="ghost" id="ofCopy">Копирай</button></div>
+        <div class="actions"><button type="button" class="ghost" id="ofToggle">Изключи офертата</button><a class="ghost btnlink" href="/brand/qr-oferta.png" download>⬇ QR код (PNG)</a><a class="ghost btnlink" href="/brand/qr-oferta.svg" download>⬇ QR код (SVG)</a><span class="muted" id="ofInfo"></span></div>
       </div>
       <div class="panel"><table id="cTable"></table></div>
     </section>
@@ -2220,17 +2231,30 @@ tr.hl td{background:#fffbe6}
       role = d ? d.role : null;
       $('navClients').hidden = role !== 'owner';
       $('whoami').hidden = role !== 'client';
-      if (role === 'client') $('whoami').innerHTML = '<b>' + esc(d.name || 'Клиент') + '</b>' + esc(d.email);
+      if (role === 'client') $('whoami').innerHTML = '<b>' + esc(d.name || 'Клиент') + '</b>' + esc(d.email) + freeLine(d.freeUntil);
     }).catch(function () {});
   }
   function shopName(id) { var s = shopById(id); return s ? s.display : '—'; }
+  function day(iso) { return new Date(iso).toLocaleDateString('bg-BG', { timeZone: 'Europe/Sofia', day: '2-digit', month: '2-digit', year: 'numeric' }); }
+  /** the client's free period (event offer): the end date, and the days left in its last week */
+  function freeLine(iso) {
+    if (!iso) return '';
+    var left = Math.ceil((new Date(iso) - Date.now()) / 864e5);
+    if (left <= 0) return '<span class="free warn">Безплатният период изтече на ' + esc(day(iso)) + '</span>';
+    return '<span class="free' + (left <= 7 ? ' warn' : '') + '">🎟️ Безплатно до ' + esc(day(iso)) + (left <= 7 ? ' · остават ' + left + (left === 1 ? ' ден' : ' дни') : '') + '</span>';
+  }
   function loadClients() {
     $('cTable').innerHTML = '<tr><td class="muted">Зареждам…</td></tr>';
     return fetch(API + 'users', { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); }).then(function (d) {
       clientsData = d.users || [];
-      renderSignup(d.signup);
+      renderSignup(d.signup); renderOffer(d.offer);
       $('cTable').innerHTML = table(['Клиент', 'Магазини', 'Състояние', 'Последен вход', ''], clientsData.map(function (u, i) {
         var state = !u.active ? '<span class="badge bad">спрян</span>' : u.hasPassword ? '<span class="badge ok">активен</span>' : '<span class="badge">чака парола</span>';
+        if (u.freeUntil) {
+          var over = new Date(u.freeUntil) < new Date();
+          state += '<br><span class="badge' + (over ? ' bad' : ' ok') + '">🎟️ ' + (over ? 'изтекло на ' : 'безплатно до ') + esc(day(u.freeUntil)) + '</span>' +
+            (u.source === 'offer' ? '<br><span class="muted">скрита оферта · регистрация ' + esc(day(u.createdAt)) + '</span>' : '');
+        }
         var pending = (u.pendingShops || []).map(function (sh) {
           return '<br><span class="badge">чака одобрение</span> ' + esc(sh.name || sh.domain) + ' <span class="muted">' + esc(sh.domain) + '</span> <button type="button" class="ghost" data-approve="' + esc(sh.id) + '">Одобри</button>';
         }).join('');
@@ -2245,6 +2269,21 @@ tr.hl td{background:#fffbe6}
     return fetch(API + 'users', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); });
   }
+  var offerOn = true;
+  function renderOffer(of) {
+    offerOn = !of || of.active !== false;
+    $('ofToggle').textContent = offerOn ? 'Изключи офертата' : 'Включи офертата';
+    $('ofInfo').innerHTML = offerOn ? '<span class="badge ok">активна</span>' : '<span class="badge bad">изключена</span>';
+  }
+  $('ofToggle').addEventListener('click', function () {
+    if (offerOn && !window.confirm('Да изключа ли скритата оферта? Линкът от визитките ще казва, че е приключила.')) return;
+    busy($('ofToggle'), usersApi({ action: offerOn ? 'offer_off' : 'offer_on' })).then(loadClients).catch(function (e) { alert(e.message); });
+  });
+  $('ofCopy').addEventListener('click', function () {
+    var t = $('ofLink').value;
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { $('ofCopy').textContent = 'Копирано ✓'; setTimeout(function () { $('ofCopy').textContent = 'Копирай'; }, 1500); });
+    else $('ofLink').select();
+  });
   function renderSignup(su) {
     $('suLinkBox').hidden = !su; $('suOff').hidden = !su;
     $('suNew').textContent = su ? 'Нов линк' : 'Създай линк';
@@ -2866,21 +2905,23 @@ tr.hl td{background:#fffbe6}
   /* ---- линк от собственика: клиентът си задава парола ---- */
   var inviteToken = new URLSearchParams(location.search).get('invite');
   var signupCode = new URLSearchParams(location.search).get('signup');
+  var offerSignup = !signupCode && Boolean(new URLSearchParams(location.search).get('offer')); // ordyx.eu/oferta
   function dropInvite() { var p = new URLSearchParams(location.search); p.delete('invite'); try { history.replaceState(null, '', location.pathname + (p.toString() ? '?' + p : '') + location.hash); } catch (e) { /* old browser */ } }
-  if (signupCode && !inviteToken && !DEMO) {
+  if ((signupCode || offerSignup) && !inviteToken && !DEMO) {
     $('signupForm').hidden = false;
-    fetch(API + 'signup?code=' + encodeURIComponent(signupCode)).then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Невалиден линк'); }); })
+    fetch(API + (offerSignup ? 'signup?offer=1' : 'signup?code=' + encodeURIComponent(signupCode))).then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Невалиден линк'); }); })
+      .then(function () { $('suOffer').hidden = !offerSignup; })
       .catch(function (e) { $('suErr').textContent = e.message; $('suBtn').disabled = true; });
     $('signupForm').addEventListener('submit', function (e) {
       e.preventDefault();
       $('suErr').textContent = '';
       if ($('suPw').value !== $('suPw2').value) { $('suErr').textContent = 'Паролите не съвпадат.'; return; }
       busy($('suBtn'), fetch(API + 'signup', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: signupCode, name: $('suName').value, email: $('suEmail').value, password: $('suPw').value, website: $('suWebsite').value }) })
+        body: JSON.stringify({ code: offerSignup ? undefined : signupCode, offer: offerSignup || undefined, name: $('suName').value, email: $('suEmail').value, password: $('suPw').value, website: $('suWebsite').value }) })
         .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
         .then(function () {
           $('signupForm').hidden = true;
-          var p = new URLSearchParams(location.search); p.delete('signup');
+          var p = new URLSearchParams(location.search); p.delete('signup'); p.delete('offer');
           try { history.replaceState(null, '', location.pathname + (p.toString() ? '?' + p : '') + '#start'); } catch (e2) { location.hash = '#start'; }
           load(1);
         })
