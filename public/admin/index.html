@@ -403,7 +403,7 @@ tr.hl td{background:#fffbe6}
         <div class="igrid">
           <div class="icard"><div class="tile cb">CB<img src="https://www.google.com/s2/favicons?domain=convertbuilder.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>ConvertBuilder</b> <span class="chip" id="iCbChip"></span><div class="muted">E-commerce платформа и builder интеграция</div><div class="muted" id="iCbLine"></div></div><button type="button" class="primary" id="iCbOpen">+ Свържи</button></div>
           <div class="icard"><div class="tile shopify">S<img src="https://www.google.com/s2/favicons?domain=shopify.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Shopify</b> <span class="chip">скоро</span><div class="muted">Онлайн магазин платформа</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
-          <div class="icard"><div class="tile woo">W<img src="https://www.google.com/s2/favicons?domain=woocommerce.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>WooCommerce</b> <span class="chip">скоро</span><div class="muted">Магазин върху WordPress</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
+          <div class="icard"><div class="tile woo">W<img src="https://www.google.com/s2/favicons?domain=woocommerce.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>WooCommerce</b> <span class="chip" id="iWooChip">не е свързан</span><div class="muted">Магазин върху WordPress</div><div class="muted" id="iWooLine"></div></div><button type="button" class="primary" id="iWooOpen">+ Свържи</button></div>
           <div class="icard"><div class="tile opencart">OC<img src="https://www.google.com/s2/favicons?domain=opencart.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>OpenCart</b> <span class="chip">скоро</span><div class="muted">Магазин с отворен код</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
         </div>
       </div>
@@ -861,6 +861,25 @@ tr.hl td{background:#fffbe6}
           <div class="actions"><button type="button" class="primary" id="nTplSave">Запази текста</button><button type="button" class="ghost" id="nTplTest">Изпрати проба с този текст</button><span class="muted" id="nTplInfo"></span></div>
         </div>
         <div class="muted" id="nTplPick" hidden style="margin-top:14px">За да промените текста на известието, изберете магазин горе вляво.</div>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="wooModal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="wooTitle">
+      <div class="dhead"><div class="tile woo">W<img src="https://www.google.com/s2/favicons?domain=woocommerce.com&amp;sz=128" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></div><div><h2 id="wooTitle">WooCommerce <span class="chip" id="iWooChip2"></span></h2><div class="muted" style="font-size:15px">Поръчките от вашия WordPress магазин влизат в Ordyx</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div class="tip">💡 Три стъпки:<br>
+          1. Свалете плъгина и го инсталирайте в WordPress (Plugins → Add New → Upload).<br>
+          2. Направете ключ тук и го поставете в WooCommerce → Settings → Ordyx.<br>
+          3. В WooCommerce → Settings → Shipping добавете методите на Ordyx (Еконт, Спиди, BOX NOW) с вашите цени — или изберете „Само поръчките“, ако оставяте сегашния си плъгин за куриери.</div>
+        <div class="actions" style="margin:10px 0"><a class="primary btnlink" href="/integrations/ordyx-woocommerce.zip" download style="background:var(--accent)">⬇ Свали плъгина (zip)</a><span class="muted" id="wooVersion"></span></div>
+        <h3 style="margin:14px 0 6px">Ключ на магазина</h3>
+        <div class="muted" id="wooKeyInfo"></div>
+        <div class="linkbox" id="wooKeyBox" hidden><input type="text" id="wooKey" readonly><button type="button" class="ghost" id="wooKeyCopy">Копирай</button></div>
+        <div class="muted" id="wooKeyOnce" hidden>Ключът се показва само сега — копирайте го в WordPress. Ако го загубите, направете нов.</div>
+        <div class="actions"><button type="button" class="primary" id="wooKeyNew">Направи ключ</button></div>
+        <h3 style="margin:14px 0 6px">Състояние</h3>
+        <div class="muted" id="wooStatus"></div>
       </div>
     </div>
   </div>
@@ -1721,8 +1740,39 @@ tr.hl td{background:#fffbe6}
       .then(function (d) { setShop(d.shop); $('iShopInfo').textContent = 'Запазено ✓'; setTimeout(function () { $('iShopInfo').textContent = ''; }, 2000); })
       .catch(function (e) { showErr('iShopInfo', e); });
   });
+  var lastWoo = {};
+  function renderWoo(w) {
+    lastWoo = w || {};
+    var on = Boolean(lastWoo.hasKey);
+    chip('iWooChip', on, 'свързан', 'не е свързан'); chip('iWooChip2', on, 'Свързан', 'Не е свързан');
+    $('iWooOpen').textContent = on ? 'Настройки' : '+ Свържи';
+    $('iWooOpen').className = on ? 'ghost' : 'primary';
+    $('iWooLine').textContent = on ? (lastWoo.lastOrderAt ? 'последна поръчка ' + when(lastWoo.lastOrderAt) : 'чака първата поръчка') + (lastWoo.mode === 'orders' ? ' · само поръчките' : '') : '';
+    $('wooKeyInfo').textContent = on ? 'Има ключ (' + lastWoo.keyId + '), направен на ' + when(lastWoo.createdAt) + '. Нов ключ спира стария веднага.' : 'Още няма ключ за този магазин.';
+    $('wooKeyNew').textContent = on ? 'Нов ключ' : 'Направи ключ';
+    var mode = { checkout: 'Ordyx в чекаута', orders: 'Само поръчките' }[lastWoo.mode] || '';
+    $('wooStatus').innerHTML = !on ? '—' :
+      '<div>Плъгин: ' + (lastWoo.pluginVersion ? 'версия ' + esc(lastWoo.pluginVersion) + (mode ? ' · режим „' + esc(mode) + '“' : '') + ' · видян ' + esc(when(lastWoo.lastSeenAt)) : 'още не се е свързал') + '</div>' +
+      '<div>Последна поръчка: ' + esc(when(lastWoo.lastOrderAt)) + '</div>' +
+      (lastWoo.restUrl ? '<div>Сайт: ' + esc(lastWoo.restUrl) + '</div>' : '') +
+      (lastWoo.lastError ? '<div class="err">Последна грешка: ' + esc(lastWoo.lastError) + '</div>' : '');
+  }
+  $('iWooOpen').addEventListener('click', function () { $('wooKeyBox').hidden = true; $('wooKeyOnce').hidden = true; $('wooModal').hidden = false; });
+  $('wooKeyNew').addEventListener('click', function () {
+    if (lastWoo.hasKey && !window.confirm('Нов ключ? Старият спира да работи веднага и трябва да поставите новия в WordPress.')) return;
+    busy($('wooKeyNew'), integ({ action: 'woo_key' })).then(function (d) {
+      $('wooKey').value = d.key; $('wooKeyBox').hidden = false; $('wooKeyOnce').hidden = false;
+      loadIntegrations();
+    }).catch(function (e) { alert(e.message); });
+  });
+  $('wooKeyCopy').addEventListener('click', function () {
+    var t = $('wooKey').value;
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { $('wooKeyCopy').textContent = 'Копирано ✓'; setTimeout(function () { $('wooKeyCopy').textContent = 'Копирай'; }, 1500); });
+    else $('wooKey').select();
+  });
   function renderIntegrations(s) {
     setShop(s.shop);
+    renderWoo(s.woocommerce);
     var cb = s.convertbuilder;
     chip('iCbChip', cb.connected, 'Свързан', cb.configured ? 'Неактивен' : 'Не е свързан');
     chip('iCbChip2', cb.connected, 'Свързан', cb.configured ? 'Неактивен' : 'Не е свързан');

@@ -8,6 +8,8 @@ import { insertOrder, listOrders, upsertCbOrder } from '../lib/orders-repo.js';
 import { getIntegration, saveIntegration, getSecret } from '../lib/integrations-repo.js';
 import { mapOrder } from '../lib/convertbuilder.js';
 import { signSession } from '../lib/auth.js';
+import { createClient, acceptInvite, clientSession } from '../lib/users.js';
+import { shopByKey } from '../lib/shop-keys.js';
 import webhook from '../api/cb/webhook.js';
 import integrationsApi from '../lib/admin/integrations.js';
 
@@ -319,4 +321,31 @@ test('a redirecting domain (www → bare) is reported instead of a misleading ke
   const { cbRequest } = await import('../lib/convertbuilder.js');
   const fetchImpl = async () => ({ ok: false, status: 301, headers: new Headers({ location: 'https://adhdbg.eu/api/site/orders?limit=1' }), json: async () => ({}) });
   await assert.rejects(cbRequest({ domain: 'www.adhdbg.eu', apiKey: 'K' }, '/orders?limit=1', { fetchImpl }), /въведете adhdbg\.eu/);
+});
+
+test('WooCommerce: the owner makes a shop key once; the status never shows it; a client only for their own shop', async () => {
+  const SHOP = '00000000-0000-4000-8000-000000000001';
+  let res = fakeRes();
+  await integrationsApi(fakeReq({ method: 'POST', url: '/api/admin/integrations', headers: { cookie: cookie() }, body: JSON.stringify({ action: 'woo_key' }) }), res);
+  assert.equal(res.statusCode, 200);
+  const { key } = json(res);
+  assert.match(key, /^ordyx_live_/);
+  assert.equal((await shopByKey(q, key)).shopId, SHOP);
+  res = fakeRes();
+  await integrationsApi(fakeReq({ url: '/api/admin/integrations', headers: { cookie: cookie() } }), res);
+  const st = json(res).woocommerce;
+  assert.equal(st.hasKey, true);
+  assert.ok(st.keyId && st.createdAt);
+  assert.ok(!JSON.stringify(json(res)).includes(key));
+  const [{ id: other }] = await q(`insert into zd.shops (name, domain) values ('Б', 'b-shop.bg') returning id`);
+  const { id, token } = await createClient(q, { email: 'c@x.bg', shopIds: [other] });
+  const u = await acceptInvite(q, token, 'client-pass-1');
+  const c = `zdo_admin=${clientSession('secret', { id, session_version: u.session_version })}`;
+  res = fakeRes();
+  await integrationsApi(fakeReq({ method: 'POST', url: `/api/admin/integrations?shop=${SHOP}`, headers: { cookie: c }, body: JSON.stringify({ action: 'woo_key' }) }), res);
+  assert.notEqual(res.statusCode, 200);
+  res = fakeRes();
+  await integrationsApi(fakeReq({ method: 'POST', url: `/api/admin/integrations?shop=${other}`, headers: { cookie: c }, body: JSON.stringify({ action: 'woo_key' }) }), res);
+  assert.equal(res.statusCode, 200);
+  assert.equal((await shopByKey(q, json(res).key)).shopId, other);
 });
