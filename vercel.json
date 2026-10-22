@@ -102,6 +102,19 @@
           "value": "no-referrer"
         }
       ]
+    },
+    {
+      "source": "/(oferta|landing/oferta.html)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
     }
   ],
   "rewrites": [
@@ -114,6 +127,16 @@
         }
       ],
       "destination": "/landing/data-deletion.html"
+    },
+    {
+      "source": "/oferta",
+      "has": [
+        {
+          "type": "host",
+          "value": "ordyx.eu"
+        }
+      ],
+      "destination": "/landing/oferta.html"
     },
     {
       "source": "/terms",
