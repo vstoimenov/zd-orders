@@ -175,6 +175,7 @@ test('queueCancel tells the warehouse about a sent order and clears the sent mar
 
 test('retryDue sends due and waiting orders oldest first within its budget, skips a shop after one failure, and countDue agrees', async () => {
   await connect();
+  await q(`update zd.integrations set config = config || '{"connectedAt":"2020-01-01T00:00:00.000Z"}' where provider = 'fulfilment'`);
   const a = await order(); await setStatus(a, 'confirmed');
   const b = await order(); await setStatus(b, 'confirmed');
   await q(`update zd.orders set fulfil_notify = 'order', created_at = now() - interval '1 day' where id = $1::uuid`, [a]);
