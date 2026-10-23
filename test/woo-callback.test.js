@@ -146,3 +146,50 @@ test('a site that redirects is reported, never followed with a changed method', 
   assert.equal(f.calls[0].init.redirect, 'manual');
   assert.match((await keyStatus(q, SHOP)).lastError, /пренасочва/);
 });
+
+/* ---- custom sites: webhooks ---- */
+const apiOrder = async (extId = 31) => (await upsertExternalOrder(q, { ...base, cbOrderId: `a-shop.bg:ext-${extId}`, source: 'api' })).id;
+
+test('an order sent by a custom site with a webhook on the shop domain gets the same signed POST at that exact URL', async () => {
+  await noteKeyUse(q, SHOP, { webhookUrl: 'https://a-shop.bg/hooks/ordyx' });
+  const id = await apiOrder();
+  await shipped(id);
+  const f = site();
+  assert.equal(await withFetch(f.impl, () => notifySite(q, id, 'shipped')), true);
+  assert.equal(f.calls[0].url, 'https://a-shop.bg/hooks/ordyx');
+  const b = JSON.parse(f.calls[0].init.body);
+  assert.equal(b.event, 'shipped');
+  assert.equal(b.externalId, '31');
+  assert.equal(b.wcId, undefined);
+  assert.equal(b.number, '1055278971773');
+});
+
+test('a webhook on another host is refused; no webhook → nothing is sent and nothing waits', async () => {
+  await noteKeyUse(q, SHOP, { webhookUrl: 'https://evil.example/x' });
+  const id = await apiOrder(32);
+  await shipped(id);
+  const f = site();
+  assert.equal(await withFetch(f.impl, () => notifySite(q, id, 'shipped')), false);
+  assert.equal(f.calls.length, 0);
+  await noteKeyUse(q, SHOP, { webhookUrl: '' });
+  const id2 = await apiOrder(33);
+  await shipped(id2);
+  assert.equal(await withFetch(f.impl, () => notifySite(q, id2, 'shipped')), false);
+  assert.equal((await q(`select site_notify from zd.orders where id = $1::uuid`, [id2]))[0].site_notify, '');
+});
+
+test('a failed webhook of a custom site is retried by the nightly job too', async () => {
+  await noteKeyUse(q, SHOP, { webhookUrl: 'https://a-shop.bg/hooks/ordyx' });
+  const id = await apiOrder(34);
+  await shipped(id);
+  await withFetch(site({ status: 503 }).impl, () => notifySite(q, id, 'shipped'));
+  const f = site();
+  assert.deepEqual(await withFetch(f.impl, () => retryCallbacks(q)), { retried: 1, delivered: 1 });
+});
+
+test('siteInfo takes a webhook URL (https only) and keeps it apart from the WooCommerce REST URL', async () => {
+  const { siteInfo } = await import('../lib/shop-keys.js');
+  assert.equal(siteInfo(JSON.stringify({ webhookUrl: 'https://a-shop.bg/h' })).webhookUrl, 'https://a-shop.bg/h');
+  assert.equal(siteInfo(JSON.stringify({ webhookUrl: 'http://a-shop.bg/h' })).webhookUrl, '');
+  assert.equal(siteInfo(JSON.stringify({ restUrl: 'https://a-shop.bg/wp-json/' })).webhookUrl, '');
+});
