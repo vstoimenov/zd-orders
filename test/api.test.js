@@ -137,7 +137,7 @@ test('GET /api/cron/refresh requires the secret and stores Econt data', async ()
   try {
     res = fakeRes(); await refresh(fakeReq({ headers: { authorization: 'Bearer cron' } }), res);
   } finally { globalThis.fetch = realFetch; }
-  assert.deepEqual(json(res), { offices: { upserted: 1, removed: 0 }, cities: { upserted: 1, removed: 0 }, speedy: { upserted: 1, removed: 0 }, boxnow: { upserted: 1, removed: 0 }, visitsDeleted: 0, abandoned: { anonymised: 0, deleted: 0 }, siteCallbacks: { retried: 0, delivered: 0 } });
+  assert.deepEqual(json(res), { offices: { upserted: 1, removed: 0 }, cities: { upserted: 1, removed: 0 }, speedy: { upserted: 1, removed: 0 }, boxnow: { upserted: 1, removed: 0 }, visitsDeleted: 0, abandoned: { anonymised: 0, deleted: 0 }, siteCallbacks: { retried: 0, delivered: 0 }, fulfilment: { retried: 0, sent: 0 } });
   const [sp] = await q("select name, city, is_automat from zd.offices where id = 'speedy:190'");
   assert.deepEqual(sp, { name: 'АЙТОС - КИРИЛ И МЕТОДИЙ (УЛ.)', city: 'Айтос', is_automat: false });
   const [pc] = await q("select post_code from zd.offices where id = 'speedy:190'");

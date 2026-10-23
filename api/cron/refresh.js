@@ -10,6 +10,7 @@ import { listShops } from '../../lib/shops.js';
 import { anonymiseOld } from '../../lib/abandoned.js';
 import { econtStatus, syncEcontStatuses, speedyStatus, syncSpeedyStatuses, boxnowStatus, syncBoxnowStatuses } from '../../lib/waybills.js';
 import { retryCallbacks } from '../../lib/woo-callback.js';
+import { retryDue } from '../../lib/fulfilment.js';
 
 /** Vercel Cron calls this daily with `Authorization: Bearer $CRON_SECRET`. */
 export default async function handler(req, res) {
@@ -64,6 +65,12 @@ export default async function handler(req, res) {
     result.siteCallbacks = await retryCallbacks(q);
   } catch (err) {
     console.error('[cron] site callbacks failed', err);
+  }
+  // orders still to go to shops' fulfilment warehouses
+  try {
+    result.fulfilment = await retryDue(q);
+  } catch (err) {
+    console.error('[cron] fulfilment retry failed', err);
   }
   // abandoned carts: personal details go after 30 days, the figures stay
   try {
