@@ -186,6 +186,16 @@
       "destination": "/landing/oferta.html"
     },
     {
+      "source": "/dev",
+      "has": [
+        {
+          "type": "host",
+          "value": "ordyx.eu"
+        }
+      ],
+      "destination": "/landing/dev.html"
+    },
+    {
       "source": "/terms",
       "has": [
         {

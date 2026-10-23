@@ -918,11 +918,37 @@
     root = null; standalone = null; state.type = '';
   }
   if (typeof window !== 'undefined') window.OrdyxPicker = { mount: mountStandalone };
+
+  /**
+   * The picker in any form, with no code: <div data-ordyx-picker data-type="econt_office" data-into="#office" data-city="#city"
+   * data-zip="#zip" data-office-id="#office_id"></div>. data-type is a fixed type or "select:#how" (a <select> whose option values
+   * are Ordyx types; the picker follows it). The chosen point is written into those inputs; nothing is written until a choice is made.
+   */
+  function fieldsOf(el) {
+    var pick = function (attr) { var sel = el.getAttribute(attr); return sel ? document.querySelector(sel) : null; };
+    return { into: pick('data-into'), city: pick('data-city'), zip: pick('data-zip'), id: pick('data-office-id') };
+  }
+  function put(input, value) { if (input && input.value !== value) { input.value = value; input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); } }
+  function mountDeclared(el) {
+    var f = fieldsOf(el), typeAttr = el.getAttribute('data-type') || 'econt_office', sel = null;
+    if (/^select:/.test(typeAttr)) { sel = document.querySelector(typeAttr.slice(7)); typeAttr = sel ? sel.value : ''; }
+    var handle = mountStandalone(el, {
+      api: API, host: el.getAttribute('data-host') || location.host, type: typeAttr,
+      onChange: function (v) {
+        if (!v.officeText && !v.addressText) return; // nothing chosen yet: leave the site's fields alone
+        put(f.into, v.officeText); put(f.city, v.city); put(f.zip, v.postCode); put(f.id, v.officeId);
+      }
+    });
+    if (sel) sel.addEventListener('change', function () { handle.setType(sel.value); });
+    el.ordyxPicker = handle;
+  }
+  function mountDeclaredAll() { [].forEach.call(document.querySelectorAll('[data-ordyx-picker]'), function (el) { if (!el.ordyxPicker) mountDeclared(el); }); }
   if (typeof window !== 'undefined' && window.__ZDO_NO_BOOT__) return; // only the picker is wanted (the Ordyx admin)
 
   function boot() {
     API = SCRIPT && SCRIPT.src ? new URL(SCRIPT.src).origin : 'https://zd-orders.vercel.app';
     trackVisit();
+    if (document.querySelector('[data-ordyx-picker]')) { mountDeclaredAll(); return; } // a custom site's form, not ConvertBuilder
     var tries = 0;
     (function attempt() { if (!mount() && ++tries < 40) setTimeout(attempt, 250); })();
   }

@@ -1,0 +1,59 @@
+<!doctype html>
+<!-- The picker inside a custom site's own order form, with no code: python3 -m http.server 8765 → http://localhost:8765/dev/harness-form.html -->
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ordyx picker — a custom form</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 520px; margin: 24px auto; padding: 0 16px; color: #222; }
+  label { display: block; margin: 0 0 12px; font-size: 14px; }
+  input, select { font-size: 16px; padding: 8px 10px; width: 100%; box-sizing: border-box; }
+  #out { background: #f4f4f1; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font: 12px/1.4 ui-monospace, monospace; white-space: pre-wrap; }
+</style>
+<script>
+  var FIX_OFFICES = [
+    { id: 'econt:4001', code: '4001', name: 'Пловдив Център', city: 'Пловдив', postCode: '4000', address: 'ул. Гладстон 1', isAutomat: false, lat: 42.1419, lng: 24.7497, hours: 'пн–пт 09:00–18:00' },
+    { id: 'econt:1001', code: '1001', name: 'Лозенец', city: 'София', postCode: '1000', address: 'ул. Бяла черква 2', isAutomat: false, lat: 42.6734, lng: 23.3191, hours: '' }
+  ];
+  var FIX_SPEEDY = [{ id: 'speedy:79', code: '79', name: 'ПЛОВДИВ - ОФИС', city: 'Пловдив', postCode: '', address: '', isAutomat: false }];
+  var FIX_CITIES = [{ id: 1, name: 'Варна', postCode: '9000', region: 'Варна', hasOffice: true }];
+  window.__zdoLogoBase = 'https://kurier.profitbrand.online/logos/';
+  var realFetch = window.fetch.bind(window);
+  window.fetch = function (url, init) {
+    var raw = url; url = typeof url === 'string' ? url : (url && url.url) || String(url);
+    var reply = function (status, data) { return Promise.resolve(new Response(JSON.stringify(data), { status: status })); };
+    if (url.indexOf('courier=shop') > -1) return reply(200, { boxnow: false, eta: { econt: '1–2 работни дни', speedy: '', boxnow: '' } });
+    if (url.indexOf('/api/offices') > -1) return reply(200, { offices: url.indexOf('courier=speedy') > -1 ? FIX_SPEEDY : FIX_OFFICES });
+    if (url.indexOf('/api/cities') > -1) return reply(200, { cities: FIX_CITIES });
+    if (url.indexOf('/api/visit') > -1) return reply(200, {});
+    return realFetch(raw, init);
+  };
+</script>
+<!-- exactly what a site puts in: one script tag … -->
+<script src="/public/checkout.js" defer></script>
+</head>
+<body>
+<h1>Поръчка (форма на сайта)</h1>
+<form id="order" onsubmit="event.preventDefault(); document.getElementById('out').textContent = JSON.stringify(Object.fromEntries(new FormData(this)), null, 2);">
+  <label>Име<input name="name" value="Мария Иванова"></label>
+  <label>Телефон<input name="phone" value="0888123456"></label>
+  <label>Доставка
+    <select id="how" name="delivery_type">
+      <option value="econt_office">Еконт – офис / автомат</option>
+      <option value="speedy_office">Спиди – офис / автомат</option>
+      <option value="speedy_address">Спиди – до адрес</option>
+    </select>
+  </label>
+  <!-- … and one div with the fields it should fill -->
+  <div data-ordyx-picker data-type="select:#how" data-into="#office" data-city="#city" data-zip="#zip" data-office-id="#office_id"></div>
+  <label>Офис / адрес<input id="office" name="office_text" readonly></label>
+  <label>Град<input id="city" name="city"></label>
+  <label>Пощенски код<input id="zip" name="post_code"></label>
+  <input type="hidden" id="office_id" name="office_id">
+  <button type="submit">Поръчай</button>
+</form>
+<h2 style="font-size:14px">Какво би изпратил сайтът</h2>
+<div id="out">—</div>
+</body>
+</html>
