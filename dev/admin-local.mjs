@@ -21,8 +21,24 @@ process.env.INTEGRATIONS_SECRET = 'local-integrations-secret';
 // local only: pretend a Meta app exists and answer Facebook's Graph API with sample data (no real calls leave this machine)
 process.env.META_APP_ID = 'local-app'; process.env.META_APP_SECRET = 'local-secret';
 const realFetch = globalThis.fetch;
+// local only: „📞 Потвърди“ without a real call — the fake agent "answers yes" after a few seconds (signed like the real one).
+// To ring a real phone from here, start with VOICE_CALL_URL and VOICE_CALL_SECRET of the agent's server set.
+if (!process.env.VOICE_CALL_URL) { process.env.VOICE_CALL_URL = 'http://voice.local/ordyx/call'; process.env.VOICE_CALL_SECRET = 'local-voice'; }
+async function fakeVoiceCall(init) {
+  const { createHmac } = await import('node:crypto');
+  const { order_id: orderId, customer_name: name } = JSON.parse(init.body);
+  console.log(`[voice] local fake: "calling" ${name} — answers "да" in 5 s`);
+  setTimeout(() => {
+    const body = JSON.stringify({ order_id: orderId, answer: 'yes', transcript: 'да' });
+    const ts = String(Math.floor(Date.now() / 1000));
+    realFetch('http://localhost:8766/api/admin/voice', { method: 'POST', body, headers: { 'Content-Type': 'application/json', 'X-Ordyx-Time': ts,
+      'X-Ordyx-Signature': createHmac('sha256', process.env.VOICE_CALL_SECRET).update(`${ts}.${body}`).digest('hex') } }).catch(() => {});
+  }, 5000);
+  return { ok: true, status: 200, json: async () => ({ ok: true, room: 'ordyx-local' }) };
+}
 globalThis.fetch = async (url, init) => {
   const u = new URL(String(url));
+  if (u.hostname === 'voice.local') return fakeVoiceCall(init);
   if (u.hostname === 'api.speedy.bg') return fakeSpeedy(u.pathname.replace('/v1/', ''), JSON.parse(init.body));
   if (u.hostname.endsWith('.boxnow.bg') && u.hostname.startsWith('api-')) return demoFetch(realFetch)(url, init); // sample BOX NOW Partner API
   if (u.hostname !== 'graph.facebook.com') return realFetch(url, init);
