@@ -169,7 +169,7 @@ tr.st-new{background:#fffbeb}
 .icard{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
 .tile{position:relative;overflow:hidden;width:48px;height:48px;flex:none;border-radius:12px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;font-weight:800;font-size:15px}
 .tile img{position:absolute;inset:9px;width:calc(100% - 18px);height:calc(100% - 18px);object-fit:contain;background:#fff}
-.tile.cb{color:#0b6bcb}.tile.shopify{color:#5e8e3e}.tile.woo{color:#7f54b3}.tile.opencart{color:#1f9bd1}.tile.google{color:#1a73e8}.tile.tiktok{color:#111}.tile.meta{color:#1877f2}.tile.econt{color:#1d4f91}.tile.speedy{color:#d4141c}.tile.nk{color:#c81e1e}.tile.boxnow{color:#44c2a0}.tile.pigeon{color:#e4572e}
+.tile.cb{color:#0b6bcb}.tile.shopify{color:#5e8e3e}.tile.woo{color:#7f54b3}.tile.ful{color:#b45309;font-size:13px}.tile.opencart{color:#1f9bd1}.tile.google{color:#1a73e8}.tile.tiktok{color:#111}.tile.meta{color:#1877f2}.tile.econt{color:#1d4f91}.tile.speedy{color:#d4141c}.tile.nk{color:#c81e1e}.tile.boxnow{color:#44c2a0}.tile.pigeon{color:#e4572e}
 .ibody{flex:1;min-width:0}
 .ibody b{font-size:15px}
 .ibody .muted{margin-top:2px}
@@ -405,6 +405,7 @@ tr.hl td{background:#fffbe6}
           <div class="icard"><div class="tile cb">CB<img src="https://www.google.com/s2/favicons?domain=convertbuilder.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>ConvertBuilder</b> <span class="chip" id="iCbChip"></span><div class="muted">E-commerce платформа и builder интеграция</div><div class="muted" id="iCbLine"></div></div><button type="button" class="primary" id="iCbOpen">+ Свържи</button></div>
           <div class="icard"><div class="tile shopify">S<img src="https://www.google.com/s2/favicons?domain=shopify.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Shopify</b> <span class="chip">скоро</span><div class="muted">Онлайн магазин платформа</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
           <div class="icard"><div class="tile woo">W<img src="https://www.google.com/s2/favicons?domain=woocommerce.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>WooCommerce и собствени сайтове</b> <span class="chip" id="iWooChip">не е свързан</span><div class="muted">Плъгин за WordPress · <a href="https://ordyx.eu/dev" target="_blank" rel="noopener">API за програмисти</a></div><div class="muted" id="iWooLine"></div></div><button type="button" class="primary" id="iWooOpen">+ Свържи</button></div>
+          <div class="icard"><div class="tile ful">FUL</div><div class="ibody"><b>Fulfilment склад</b> <span class="chip" id="iFulChip">не е свързан</span><div class="muted">Поръчките отиват при склада ви, той връща товарителницата · <a href="https://ordyx.eu/dev#fulfilment" target="_blank" rel="noopener">за програмисти</a></div><div class="muted" id="iFulLine"></div></div><button type="button" class="primary" id="iFulOpen">+ Свържи</button></div>
           <div class="icard"><div class="tile opencart">OC<img src="https://www.google.com/s2/favicons?domain=opencart.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>OpenCart</b> <span class="chip">скоро</span><div class="muted">Магазин с отворен код</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
         </div>
       </div>
@@ -931,6 +932,26 @@ tr.hl td{background:#fffbe6}
       </div>
     </div>
   </div>
+  <div class="modal" id="fulModal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="fulTitle">
+      <div class="dhead"><div class="tile ful">FUL</div><div><h2 id="fulTitle">Fulfilment склад <span class="chip" id="iFulChip2"></span></h2><div class="muted" style="font-size:15px">Складът получава готовите поръчки, опакова ги и връща товарителницата</div></div><button type="button" class="x" data-close="fulModal" aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div class="tip">💡 Складът дава адрес, на който приема поръчки; вие му давате ключа отдолу. Форматът е описан на <a href="https://ordyx.eu/dev#fulfilment" target="_blank" rel="noopener">страницата за програмисти</a>. Работите с конкретен фулфилмънт център? <a href="mailto:stoimenov@profitbrand.online?subject=Ordyx%20fulfilment">Пишете ни</a> — ще направим интеграцията.</div>
+        <div class="fgrid"><label>Адрес на склада (https)<input type="url" id="fulUrl" placeholder="https://sklad.bg/ordyx" autocomplete="off"></label>
+          <label>Изпращай към склада<select id="fulSendOn"><option value="confirmed">при потвърждение от клиента (препоръчано)</option><option value="new">веднага при постъпване</option></select></label></div>
+        <div class="muted">Ако магазинът не ползва потвърждение, изберете „веднага“ — иначе поръчките не тръгват. Платените с карта тръгват и без потвърждение.</div>
+        <div class="actions"><button type="button" class="primary" id="fulSave">Запази</button><button type="button" class="ghost" id="fulTest">Тествай връзката</button><span class="muted" id="fulInfo"></span></div>
+        <h3 style="margin:14px 0 6px">Ключ за склада</h3>
+        <div class="muted" id="fulKeyInfo"></div>
+        <div class="linkbox" id="fulKeyBox" hidden><input type="text" id="fulKey" readonly><button type="button" class="ghost" id="fulKeyCopy">Копирай</button></div>
+        <div class="muted" id="fulKeyOnce" hidden>Ключът се показва само сега — дайте го на склада. Ако го загубите, направете нов.</div>
+        <div class="actions"><button type="button" class="primary" id="fulKeyNew">Направи ключ</button></div>
+        <h3 style="margin:14px 0 6px">Състояние</h3>
+        <div class="muted" id="fulStatus"></div>
+        <div class="actions" id="fulActions" hidden><button type="button" class="ghost" id="fulResend">Изпрати неизпратените</button><button type="button" class="ghost" id="fulPause">Спри изпращането</button><button type="button" class="ghost del" id="fulDelete">Изтрий връзката</button></div>
+      </div>
+    </div>
+  </div>
   <div class="modal" id="boxnowModal" hidden>
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="boxnowTitle">
       <div class="dhead"><div class="tile boxnow">BN<img src="https://www.google.com/s2/favicons?domain=boxnow.bg&amp;sz=128" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></div><div><h2 id="boxnowTitle">BOX NOW <span class="chip" id="iBoxnowChip2"></span></h2><div class="muted" style="font-size:15px">Доставка до автомат на BOX NOW в чекаута</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
@@ -1225,7 +1246,7 @@ tr.hl td{background:#fffbe6}
         if (id !== reqId) return;
         if (!d) { showLogin(); return; }
         page = target;
-        orders = d.orders; total = d.total; pageSize = d.pageSize; setAtOffice(d.atOffice); setToPack(d.toPack); setProblems(d.problems);
+        orders = d.orders; total = d.total; pageSize = d.pageSize; setAtOffice(d.atOffice); setToPack(d.toPack); setProblems(d.problems); fulOn = Boolean(d.warehouse);
         if (focusOrder && orders[0] && currentShop !== 'all' && orders[0].shopId !== currentShop && shopById(orders[0].shopId)) {
           // a scanned slip of another shop: the phone switches to that shop, so the buttons act on the right one
           currentShop = orders[0].shopId;
@@ -1273,7 +1294,7 @@ tr.hl td{background:#fffbe6}
   function shipmentCell(o, i) {
     var w = o.shipment;
     if (w) {
-      return '<span class="wb">📦 ' + (w.trackUrl ? '<a href="' + esc(w.trackUrl) + '" target="_blank" rel="noopener" title="Проследи пратката">' + esc(w.number) + '</a>' : esc(w.number)) + (w.demo ? '<span class="tag">тест</span>' : '') +
+      return '<span class="wb">📦 ' + (w.trackUrl ? '<a href="' + esc(w.trackUrl) + '" target="_blank" rel="noopener" title="Проследи пратката">' + esc(w.number) + '</a>' : esc(w.number)) + (w.demo ? '<span class="tag">тест</span>' : '') + (w.external ? '<span class="tag" title="Товарителницата е направена от склада">от склада</span>' : '') +
         (w.price != null ? ' · ' + esc(w.price.toFixed(2)) + ' ' + esc(cur(w.currency)) : '') +
         (w.status ? '<br><span class="muted">' + esc(w.status) + '</span>' : '') +
         (w.atOfficeDay ? '<br>' + (w.atOfficeDay >= 4
@@ -1281,15 +1302,16 @@ tr.hl td{background:#fffbe6}
           : '<span class="muted">📦 ' + (w.atOfficeDay === 1 ? 'пристигна в офиса днес' : 'в офиса от ' + w.atOfficeDay + ' дни') + '</span>') : '') +
         (o.quietDays >= 3 ? '<br><span class="dup" title="Куриерът не е сменил статуса — проверете при него или звъннете на клиента">⏸ без движение ' + o.quietDays + ' дни</span>' : '') +
         (!w.demo && o.phone && ['shipped', 'delivered'].indexOf(o.status) >= 0 ? '<br><button type="button" data-track="' + i + '">💬 Проследяване</button>' : '') +
-        '<br>' + (w.pdf ? '<a href="' + esc(pdfHref(w.pdf)) + '" target="_blank" rel="noopener">PDF за печат</a> · ' : '') +
+        (w.external ? '</span>' : '<br>' + (w.pdf ? '<a href="' + esc(pdfHref(w.pdf)) + '" target="_blank" rel="noopener">PDF за печат</a> · ' : '') +
         (o.courier === 'boxnow' && w.status && w.status.indexOf('Пуснете') === 0 ? '<a href="#" data-wbdrop="' + i + '">📦 Пуснах я в автомата</a> · ' : '') +
-        '<a href="#" data-wbcancel="' + i + '">Анулирай</a></span>';
+        '<a href="#" data-wbcancel="' + i + '">Анулирай</a></span>');
     }
     if (o.waybillState === 'unknown') {
       var site = o.courier === 'speedy' ? ['https://www.myspeedy.bg', 'MySpeedy'] : o.courier === 'boxnow' ? ['https://boxnow.bg', 'Partner Portal на BOX NOW'] : ['https://ee.econt.com', 'e-Econt'];
       return '<span class="wb warn">⚠️ Не е ясно дали товарителницата е създадена — проверете в <a href="' + site[0] + '" target="_blank" rel="noopener">' + site[1] + '</a>.<br><a href="#" data-wbrelease="' + i + '">Освободи (няма товарителница)</a></span>';
     }
     if (o.waybillState === 'creating') return '<span class="wb muted">Товарителницата се създава…</span>';
+    if (fulOn || (o.fulfilment && o.fulfilment.sentAt)) return o.fulfilment && o.fulfilment.sentAt ? '<span class="wb muted">📦 при склада от ' + esc(when(o.fulfilment.sentAt)) + '</span>' : (o.fulfilment && o.fulfilment.pending ? '<span class="wb dup" title="Складът още не е приел поръчката — вижте Интеграции → Fulfilment склад">⏳ чака склада</span>' : '');
     return ['econt', 'speedy', 'boxnow', 'other'].indexOf(o.courier) >= 0 && ['new', 'confirmed', 'shipped'].indexOf(o.status) >= 0 ? '<button type="button" class="wbbtn" data-wb="' + i + '">Създай товарителница</button>' : '';
   }
   function render() {
@@ -1926,6 +1948,58 @@ tr.hl td{background:#fffbe6}
       loadIntegrations();
     }).catch(function (e) { alert(e.message); });
   });
+  var lastFul = {}, fulOn = false;
+  function renderFul(f) {
+    lastFul = f || {};
+    var on = Boolean(lastFul.enabled), has = Boolean(lastFul.url || lastFul.hasKey);
+    chip('iFulChip', on, 'свързан', has ? 'спрян' : 'не е свързан'); chip('iFulChip2', on, 'Свързан', has ? 'Спрян' : 'Не е свързан');
+    $('iFulOpen').textContent = has ? 'Настройки' : '+ Свържи';
+    $('iFulOpen').className = has ? 'ghost' : 'primary';
+    $('iFulLine').textContent = on ? (lastFul.due ? lastFul.due + ' чакат изпращане' : (lastFul.lastSentAt ? 'последна поръчка ' + when(lastFul.lastSentAt) : 'чака първата поръчка')) : '';
+    if (!$('fulUrl').value) $('fulUrl').value = lastFul.url || '';
+    $('fulSendOn').value = lastFul.sendOn || 'confirmed';
+    $('fulKeyInfo').textContent = lastFul.hasKey ? 'Има ключ (' + lastFul.keyId + '), направен на ' + when(lastFul.createdAt) + '. Нов ключ спира стария веднага.' : 'Още няма ключ — направете го и го дайте на склада.';
+    $('fulKeyNew').textContent = lastFul.hasKey ? 'Нов ключ' : 'Направи ключ';
+    $('fulStatus').innerHTML = !has ? '—' :
+      '<div>Изпращане: ' + (on ? 'включено' : 'спряно') + ' · ' + (lastFul.sendOn === 'new' ? 'веднага при постъпване' : 'при потвърждение') + '</div>' +
+      '<div>Последно изпратена: ' + esc(when(lastFul.lastSentAt)) + ' · последно получена от склада: ' + esc(when(lastFul.lastReceivedAt)) + '</div>' +
+      (lastFul.due ? '<div><b>' + lastFul.due + '</b> поръчки чакат да тръгнат към склада.</div>' : '') +
+      (lastFul.lastError ? '<div class="err">Последна грешка: ' + esc(lastFul.lastError) + '</div>' : '');
+    $('fulActions').hidden = !has;
+    $('fulResend').hidden = !(on && lastFul.due); $('fulResend').textContent = 'Изпрати неизпратените (' + (lastFul.due || 0) + ')';
+    $('fulPause').hidden = !on;
+  }
+  $('iFulOpen').addEventListener('click', function () { $('fulKeyBox').hidden = true; $('fulKeyOnce').hidden = true; $('fulInfo').textContent = ''; $('fulModal').hidden = false; });
+  $('fulSave').addEventListener('click', function () {
+    busy($('fulSave'), integ({ action: 'ful_save', url: $('fulUrl').value.trim(), sendOn: $('fulSendOn').value }))
+      .then(function () { $('fulInfo').textContent = 'Запазено ✓'; loadIntegrations(); }).catch(function (e) { showErr('fulInfo', e); });
+  });
+  $('fulTest').addEventListener('click', function () {
+    busy($('fulTest'), integ({ action: 'ful_test' })).then(function () { $('fulInfo').textContent = 'Връзката работи ✓'; }).catch(function (e) { showErr('fulInfo', e); });
+  });
+  $('fulKeyNew').addEventListener('click', function () {
+    if (lastFul.hasKey && !window.confirm('Нов ключ? Старият спира да работи веднага и трябва да дадете новия на склада.')) return;
+    busy($('fulKeyNew'), integ({ action: 'ful_key' })).then(function (d) {
+      $('fulKey').value = d.key; $('fulKeyBox').hidden = false; $('fulKeyOnce').hidden = false;
+      loadIntegrations();
+    }).catch(function (e) { showErr('fulInfo', e); });
+  });
+  $('fulKeyCopy').addEventListener('click', function () {
+    var t = $('fulKey').value;
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { $('fulKeyCopy').textContent = 'Копирано ✓'; setTimeout(function () { $('fulKeyCopy').textContent = 'Копирай'; }, 1500); });
+    else $('fulKey').select();
+  });
+  $('fulResend').addEventListener('click', function () {
+    busy($('fulResend'), integ({ action: 'ful_resend' })).then(function (d) { $('fulInfo').textContent = 'Изпратени ' + d.result.sent + ' от ' + d.result.retried; loadIntegrations(); }).catch(function (e) { showErr('fulInfo', e); });
+  });
+  $('fulPause').addEventListener('click', function () {
+    if (!window.confirm('Да спра ли изпращането към склада? Поръчките, които вече са при него, се довършват; новите остават за Ordyx.')) return;
+    busy($('fulPause'), integ({ action: 'ful_pause' })).then(function () { loadIntegrations(); }).catch(function (e) { showErr('fulInfo', e); });
+  });
+  $('fulDelete').addEventListener('click', function () {
+    if (!window.confirm('Да изтрия ли връзката със склада и ключа? Складът спира да получава поръчки и да праща отчети.')) return;
+    busy($('fulDelete'), integ({ action: 'ful_disconnect' })).then(function () { $('fulUrl').value = ''; $('fulModal').hidden = true; loadIntegrations(); }).catch(function (e) { showErr('fulInfo', e); });
+  });
   $('wooKeyCopy').addEventListener('click', function () {
     var t = $('wooKey').value;
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { $('wooKeyCopy').textContent = 'Копирано ✓'; setTimeout(function () { $('wooKeyCopy').textContent = 'Копирай'; }, 1500); });
@@ -1934,6 +2008,7 @@ tr.hl td{background:#fffbe6}
   function renderIntegrations(s) {
     setShop(s.shop);
     renderWoo(s.woocommerce);
+    renderFul(s.fulfilment);
     var cb = s.convertbuilder;
     chip('iCbChip', cb.connected, 'Свързан', cb.configured ? 'Неактивен' : 'Не е свързан');
     chip('iCbChip2', cb.connected, 'Свързан', cb.configured ? 'Неактивен' : 'Не е свързан');

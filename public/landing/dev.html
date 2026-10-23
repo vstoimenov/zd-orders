@@ -38,7 +38,7 @@ footer{margin:48px 0 30px;color:var(--muted);font-size:14px}
 <main class="wrap">
 <h1>Ordyx за програмисти</h1>
 <p class="lead">Собствен сайт се свързва с Ordyx по три начина, които се комбинират: изборът на офис/автомат в неговата форма (без код), API за поръчки с ключ и уебхуци за товарителниците. За WooCommerce има <a href="https://ordyx.eu/#integrations">готов плъгин</a>.</p>
-<div class="toc"><a href="#picker">1. Избор на офис във формата</a><a href="#key">2. Ключ</a><a href="#orders">3. Поръчки</a><a href="#webhooks">4. Уебхуци</a><a href="#errors">5. Грешки и лимити</a></div>
+<div class="toc"><a href="#picker">1. Избор на офис във формата</a><a href="#key">2. Ключ</a><a href="#orders">3. Поръчки</a><a href="#webhooks">4. Уебхуци</a><a href="#errors">5. Грешки и лимити</a><a href="#fulfilment">6. Fulfilment склад</a></div>
 
 <h2 id="picker">1. Изборът на офис във вашата форма</h2>
 <p>Един скрипт и един <code>div</code> с указание кои полета да попълни. Клиентът търси офис или автомат на Еконт, Спиди или BOX NOW, вижда най-близките с „Намери ме“, карта и работно време; избраното се записва във вашите полета.</p>
@@ -149,6 +149,34 @@ X-Ordyx-Signature: 3f1a…   (HMAC-SHA256 с ключа над "timestamp.body",
 <tr><td>429</td><td>Над 600 заявки на час с този ключ.</td></tr>
 <tr><td>500</td><td>Грешка при нас — опитайте пак по-късно със същия <code>external_id</code>.</td></tr></table>
 <p>Офисите и автоматите (за собствен избор на офис): <code>GET https://app.ordyx.eu/api/offices?courier=econt|speedy|boxnow</code> — публично, кеширано.</p>
+
+<h2 id="fulfilment">6. Fulfilment склад</h2>
+<p>Ако стоката ви е при фулфилмънт склад, Ordyx праща готовите поръчки на негов адрес и той връща товарителницата. Настройва се от <b>Интеграции → Fulfilment склад</b>: адрес (https) и ключ <code>ordyx_ful_…</code>, който складът пази. Един и същ ключ подписва това, което Ordyx праща, и удостоверява това, което складът връща. Работите с конкретен фулфилмънт център? <a href="mailto:stoimenov@profitbrand.online?subject=Ordyx%20fulfilment">Пишете ни</a> — ще направим интеграцията.</p>
+<h3>Ordyx → склад</h3>
+<p>POST на адреса на склада при всяка поръчка, готова за изпращане (потвърдена от клиента; платените с карта — веднага; или всички веднага, по избор на магазина). Подписът е както при <a href="#webhooks">уебхуците</a>: <code>X-Ordyx-Timestamp</code> и <code>X-Ordyx-Signature</code> = HMAC-SHA256 с ключа над <code>"timestamp.body"</code>. Отговорете 2xx до 5 секунди; иначе Ordyx опитва пак (при отваряне на поръчките и нощем).</p>
+<pre><code>{ "api": 1, "event": "order", "duplicate": true,          ← duplicate само при същия телефон в 24 ч
+  "order": {
+    "id": "7c9e…-uuid", "number": "moiat-magazin.bg:ext-10452", "created_at": "2026-10-23T10:00:00.000Z", "status": "confirmed",
+    "customer": { "name": "Мария Иванова", "phone": "+359888123456", "email": "m@x.bg" },
+    "delivery": { "type": "econt_office", "courier": "econt",
+      "office": { "id": "econt:1127", "code": "1127", "text": "Плевен Център, Плевен (1127)" }, "address": null },
+    "items": [ { "sku": "T-M-B", "name": "Тениска — M, черна", "qty": 2, "price": 15 } ],
+    "total": 34.4, "currency": "EUR", "payment": { "method": "cod", "cod_amount": 34.4 },
+    "tracking_page": "https://app.ordyx.eu/p/…" } }</code></pre>
+<p><code>delivery.type</code>: <code>econt_office</code>, <code>econt_address</code>, <code>speedy_office</code>, <code>speedy_address</code>, <code>boxnow_locker</code>, <code>other</code>. При доставка до адрес <code>address</code> е <code>{ "city", "post_code", "street" }</code>, а <code>office</code> е <code>null</code>; при <code>other</code> и двете са <code>null</code>, а <code>delivery.text</code> носи описанието. Липсващ <code>sku</code> се допълва от наличностите в Ordyx по име на продукта.</p>
+<p>При отказ на поръчка, която складът вече има: <code>{ "api": 1, "event": "cancelled", "order": { "id", "number" } }</code>. При „Тествай връзката“: <code>{ "api": 1, "event": "ping" }</code> — отговорете 2xx.</p>
+<h3>Склад → Ordyx</h3>
+<pre><code>POST https://app.ordyx.eu/api/fulfilment
+Authorization: Bearer ordyx_ful_…
+Content-Type: application/json
+
+{ "order_id": "7c9e…-uuid", "event": "shipped",
+  "waybill": { "courier": "speedy", "number": "59000012345", "track_url": "https://…" } }</code></pre>
+<table><tr><th>event</th><th>Какво прави Ordyx</th></tr>
+<tr><td><code>shipped</code></td><td>Записва товарителницата (<code>courier</code>: econt, speedy, boxnow или other; <code>number</code> до 40 знака; <code>track_url</code> по избор, https), поръчката става „изпратена“, клиентът я проследява от страницата си, сайтът на магазина получава своя уебхук. Повторно <code>shipped</code> поправя номера.</td></tr>
+<tr><td><code>delivered</code> / <code>returned</code></td><td>Поръчката става доставена / върната (само от „изпратена“; иначе <code>applied: false</code>).</td></tr>
+<tr><td><code>cancelled</code></td><td>Складът не може да изпълни поръчката — тя се отказва (само докато не е изпратена).</td></tr></table>
+<p>Отговори: <code>{ "ok": true, "status": "shipped" }</code>; 400 с <code>error</code> при невалидно поле или непознато събитие; 401 при невалиден ключ; 404 при чужда поръчка; 429 над 600 заявки на час. <code>GET</code> със същия ключ връща <code>{ "ok": true, "shop": "…" }</code> — проверка на връзката.</p>
 <footer>Въпроси: <a href="mailto:stoimenov@profitbrand.online">stoimenov@profitbrand.online</a> · <a href="https://ordyx.eu/">ordyx.eu</a></footer>
 </main>
 </body>
