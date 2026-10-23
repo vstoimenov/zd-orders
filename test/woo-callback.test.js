@@ -193,3 +193,15 @@ test('siteInfo takes a webhook URL (https only) and keeps it apart from the WooC
   assert.equal(siteInfo(JSON.stringify({ webhookUrl: 'http://a-shop.bg/h' })).webhookUrl, '');
   assert.equal(siteInfo(JSON.stringify({ restUrl: 'https://a-shop.bg/wp-json/' })).webhookUrl, '');
 });
+
+test('the nightly retry stops within its time budget and skips a shop after its first failure', async () => {
+  await noteKeyUse(q, SHOP, { webhookUrl: 'https://a-shop.bg/hooks/ordyx' });
+  const ids = [];
+  for (let i = 0; i < 4; i++) { const id = await apiOrder(40 + i); await shipped(id); await q(`update zd.orders set site_notify = 'shipped' where id = $1::uuid`, [id]); ids.push(id); }
+  const f = site({ hang: true });
+  const t0 = Date.now();
+  const r = await withFetch(f.impl, () => retryCallbacks(q, { budgetMs: 6000 }));
+  assert.ok(Date.now() - t0 < 9000, 'one hanging call, then the shop is skipped');
+  assert.equal(f.calls.length, 1);
+  assert.equal(r.delivered, 0);
+});

@@ -916,6 +916,9 @@
   function destroyStandalone() {
     if (root && root.parentNode) root.parentNode.removeChild(root);
     root = null; standalone = null; state.type = '';
+    // the next mount is a new customer: forget the choice, keep the downloaded office lists
+    ['econt', 'speedy', 'boxnow'].forEach(function (c) { state[c] = null; state[c + 'Fallback'] = false; state[c + 'City'] = ''; state[c + 'Text'] = ''; });
+    state.geo = null; state.addrCity = ''; state.addrPost = ''; state.addrStreet = '';
   }
   if (typeof window !== 'undefined') window.OrdyxPicker = { mount: mountStandalone };
 
@@ -926,29 +929,39 @@
    */
   function fieldsOf(el) {
     var pick = function (attr) { var sel = el.getAttribute(attr); return sel ? document.querySelector(sel) : null; };
-    return { into: pick('data-into'), city: pick('data-city'), zip: pick('data-zip'), id: pick('data-office-id') };
+    return { into: pick('data-into'), city: pick('data-city'), zip: pick('data-zip'), id: pick('data-office-id'), address: pick('data-address') };
   }
-  function put(input, value) { if (input && input.value !== value) { input.value = value; input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); } }
+  /** writes through the native setter, so frameworks that watch the input (React, Vue) see the change too */
+  function put(input, value) {
+    if (!input || input.value === value) return;
+    var desc = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value');
+    if (desc && desc.set) desc.set.call(input, value); else input.value = value;
+    input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true }));
+  }
   function mountDeclared(el) {
-    var f = fieldsOf(el), typeAttr = el.getAttribute('data-type') || 'econt_office', sel = null;
+    var f = fieldsOf(el), typeAttr = el.getAttribute('data-type') || 'econt_office', sel = null, wrote = false;
     if (/^select:/.test(typeAttr)) { sel = document.querySelector(typeAttr.slice(7)); typeAttr = sel ? sel.value : ''; }
     var handle = mountStandalone(el, {
       api: API, host: el.getAttribute('data-host') || location.host, type: typeAttr,
       onChange: function (v) {
-        if (!v.officeText && !v.addressText) return; // nothing chosen yet: leave the site's fields alone
-        put(f.into, v.officeText); put(f.city, v.city); put(f.zip, v.postCode); put(f.id, v.officeId);
+        var has = Boolean(v.officeText || v.addressText);
+        if (!has && !wrote) return; // nothing chosen yet: leave the site's fields alone
+        // a choice, or the previous choice gone (the type changed): the site's fields follow — an old office never stays behind
+        put(f.into, has ? v.officeText : ''); put(f.city, has ? v.city : ''); put(f.zip, has ? v.postCode : ''); put(f.id, has ? v.officeId : ''); put(f.address, has ? v.addressText : '');
+        wrote = has;
       }
     });
     if (sel) sel.addEventListener('change', function () { handle.setType(sel.value); });
     el.ordyxPicker = handle;
   }
-  function mountDeclaredAll() { [].forEach.call(document.querySelectorAll('[data-ordyx-picker]'), function (el) { if (!el.ordyxPicker) mountDeclared(el); }); }
+  /** one picker per page (the widget keeps one selection); extra data-ordyx-picker divs are left empty */
+  function mountDeclaredAll() { var el = document.querySelector('[data-ordyx-picker]'); if (el && !el.ordyxPicker) mountDeclared(el); }
   if (typeof window !== 'undefined' && window.__ZDO_NO_BOOT__) return; // only the picker is wanted (the Ordyx admin)
 
   function boot() {
     API = SCRIPT && SCRIPT.src ? new URL(SCRIPT.src).origin : 'https://zd-orders.vercel.app';
     trackVisit();
-    if (document.querySelector('[data-ordyx-picker]')) { mountDeclaredAll(); return; } // a custom site's form, not ConvertBuilder
+    if (document.querySelector('[data-ordyx-picker]')) mountDeclaredAll(); // a custom site's form; ConvertBuilder pages still get their checkout below
     var tries = 0;
     (function attempt() { if (!mount() && ++tries < 40) setTimeout(attempt, 250); })();
   }

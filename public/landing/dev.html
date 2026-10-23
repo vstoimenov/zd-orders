@@ -50,16 +50,18 @@ footer{margin:48px 0 30px;color:var(--muted);font-size:14px}
   &lt;option value="speedy_address"&gt;Спиди – до адрес&lt;/option&gt;
 &lt;/select&gt;
 &lt;div data-ordyx-picker data-type="select:#how"
-     data-into="#office" data-city="#city" data-zip="#zip" data-office-id="#office_id"&gt;&lt;/div&gt;
+     data-into="#office" data-city="#city" data-zip="#zip" data-office-id="#office_id" data-address="#address"&gt;&lt;/div&gt;
 &lt;input id="office" name="office_text" readonly&gt;
 &lt;input id="city" name="city"&gt; &lt;input id="zip" name="post_code"&gt;
-&lt;input type="hidden" id="office_id" name="office_id"&gt;</code></pre>
+&lt;input type="hidden" id="office_id" name="office_id"&gt; &lt;input type="hidden" id="address" name="address_text"&gt;</code></pre>
 <table><tr><th>Атрибут</th><th>Какво прави</th></tr>
 <tr><td><code>data-type</code></td><td>Фиксиран тип (<code>econt_office</code>, <code>speedy_office</code>, <code>boxnow_locker</code>, <code>speedy_address</code>) или <code>select:#id</code> — следва избора в този <code>&lt;select&gt;</code>, чиито стойности са същите типове.</td></tr>
 <tr><td><code>data-into</code></td><td>Полето за текста на избора, напр. „ЕКОНТ – офис Плевен Център (1127), ул. Левски 5“. Изпратете го като <code>office_text</code>.</td></tr>
 <tr><td><code>data-city</code>, <code>data-zip</code></td><td>Град и пощенски код на офиса (или въведените при адрес).</td></tr>
 <tr><td><code>data-office-id</code></td><td>Идентификаторът на офиса, напр. <code>econt:1127</code>. Изпратете го като <code>office_id</code> — така товарителницата се прави без преписване.</td></tr>
+<tr><td><code>data-address</code></td><td>При доставка до адрес: улицата, която клиентът написа. Изпратете я като <code>address_text</code> (задължителна за <code>*_address</code>).</td></tr>
 <tr><td><code>data-host</code></td><td>По желание: домейнът на магазина, ако формата е на друг домейн (решава дали BOX NOW е включен).</td></tr></table>
+<p>Един избор на страница (при смяна на типа старият офис се изчиства от полетата). Скриптът праща и анонимна статистика за посещение към Ordyx (без бисквитки и IP) — споменете го в политиката си за поверителност.</p>
 <p>С JavaScript: <code>OrdyxPicker.mount(el, { type, onChange })</code> връща <code>{ value(), setType(type), destroy() }</code>; <code>onChange</code> получава <code>{ type, officeId, officeText, city, postCode, addressText, error }</code>.</p>
 
 <h2 id="key">2. Ключът на магазина</h2>
@@ -94,7 +96,7 @@ X-Ordyx-Site: {"webhookUrl":"https://moiat-magazin.bg/ordyx-webhook"}
   "paid": false
 }</code></pre>
 <table><tr><th>Поле</th><th>Значение</th></tr>
-<tr><td><code>external_id</code></td><td>Номерът на поръчката при вас (до 40 знака). Същият номер втори път <b>обновява</b> поръчката, докато няма товарителница — никога дубликат.</td></tr>
+<tr><td><code>external_id</code></td><td>Номерът на поръчката при вас: до 40 знака от <code>A–Z a–z 0–9 _ -</code> (без „#“ и интервали). Същият номер втори път <b>обновява</b> поръчката, докато няма товарителница — никога дубликат.</td></tr>
 <tr><td><code>delivery_type</code></td><td><code>econt_office</code>, <code>econt_address</code>, <code>speedy_office</code>, <code>speedy_address</code>, <code>boxnow_locker</code> или <code>other</code> (куриерът се избира в Ordyx при товарителницата).</td></tr>
 <tr><td><code>office_id</code>, <code>office_text</code></td><td>От избора на офис. При адрес: <code>city</code> + <code>address_text</code> (+ <code>post_code</code>).</td></tr>
 <tr><td><code>items[].price</code></td><td>Цената, която клиентът плаща за брой (с ДДС). Доставката е в <code>total</code>.</td></tr>
@@ -102,7 +104,7 @@ X-Ordyx-Site: {"webhookUrl":"https://moiat-magazin.bg/ordyx-webhook"}
 <p>Отговор: <code>{"ok":true,"inserted":true,"updated":false,"locked":false}</code>. <code>locked: true</code> = вече има товарителница и промяната не е приложена.</p>
 <h3>Отказ</h3>
 <pre><code>{ "source": "api", "external_id": "10452", "status": "cancelled" }</code></pre>
-<p>Преди товарителница поръчката се отказва (и наличността се връща); след товарителница Ordyx я пази и известява магазина.</p>
+<p>Отговор: <code>{"ok":true,"cancelled":true}</code> (или <code>false</code>, когато вече е изпратена — Ordyx я пази и известява магазина; 404, ако няма такава поръчка). Преди товарителница наличността се връща.</p>
 <h3>PHP</h3>
 <pre><code>$ch = curl_init('https://app.ordyx.eu/api/orders');
 curl_setopt_array($ch, [
@@ -144,7 +146,8 @@ X-Ordyx-Signature: 3f1a…   (HMAC-SHA256 с ключа над "timestamp.body",
 <tr><td>401</td><td>Невалиден или сменен ключ.</td></tr>
 <tr><td>403</td><td>Магазинът още чака одобрение в Ordyx.</td></tr>
 <tr><td>409</td><td>Номерът е зает от поръчка на друг източник.</td></tr>
-<tr><td>429</td><td>Над 600 заявки на час с този ключ.</td></tr></table>
+<tr><td>429</td><td>Над 600 заявки на час с този ключ.</td></tr>
+<tr><td>500</td><td>Грешка при нас — опитайте пак по-късно със същия <code>external_id</code>.</td></tr></table>
 <p>Офисите и автоматите (за собствен избор на офис): <code>GET https://app.ordyx.eu/api/offices?courier=econt|speedy|boxnow</code> — публично, кеширано.</p>
 <footer>Въпроси: <a href="mailto:stoimenov@profitbrand.online">stoimenov@profitbrand.online</a> · <a href="https://ordyx.eu/">ordyx.eu</a></footer>
 </main>

@@ -1368,6 +1368,8 @@ tr.hl td{background:#fffbe6}
     if (!$('noTotal').getAttribute('data-touched')) $('noTotal').value = sum ? sum.toFixed(2).replace('.', ',') : '';
   }
   function openNewOrder() {
+    if (noPicker) { noPicker.destroy(); noPicker = null; } // a fresh picker: the previous customer's office never carries over
+    noChoice = null;
     ['noName', 'noPhone', 'noEmail', 'noCity', 'noPost', 'noAddress', 'noOtherText', 'noTotal'].forEach(function (id) { $(id).value = ''; });
     $('noTotal').removeAttribute('data-touched'); $('noErr').textContent = ''; $('noPay').value = 'cod';
     $('noItems').querySelector('tbody').innerHTML = noItemRow();

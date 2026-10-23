@@ -114,15 +114,56 @@ test('a client creates and imports only into their own shop; "all shops" is refu
   const { id, token } = await createClient(q, { email: 'c@x.bg', shopIds: [other] });
   const u = await acceptInvite(q, token, 'client-pass-1');
   const c = `zdo_admin=${clientSession('secret', { id, session_version: u.session_version })}`;
-  assert.notEqual((await post({ action: 'create', order: manual() }, c, SHOP)).statusCode, 200);
+  assert.equal((await post({ action: 'create', order: manual() }, c, SHOP)).statusCode, 400);
   assert.equal((await post({ action: 'create', order: manual() }, c, other)).statusCode, 200);
   assert.equal((await q(`select shop_id from zd.orders`))[0].shop_id, other);
-  assert.notEqual((await post({ action: 'import', csv: CSV, confirm: true }, owner, 'all')).statusCode, 200);
+  assert.equal((await post({ action: 'import', csv: CSV, confirm: true }, owner, 'all')).statusCode, 400);
 });
 
-test('createManualOrder refuses more than 500 rows of CSV and files over 1 MB', async () => {
+test('previewImport refuses more than 500 rows and files over 1 MB', async () => {
   const big = 'Име;Телефон\r\n' + Array.from({ length: 501 }, (_, i) => `К${i};088800${String(i).padStart(4, '0')}\r\n`).join('');
   await assert.rejects(previewImport(q, { shopId: SHOP, domain: 'a-shop.bg', csv: big }), /500/);
   await assert.rejects(previewImport(q, { shopId: SHOP, domain: 'a-shop.bg', csv: 'x'.repeat(1024 * 1024 + 1) }), /1 MB/);
-  assert.equal(typeof createManualOrder, 'function');
+});
+
+/* ---- review fixes ---- */
+const HEAD = '\uFEFFИме;Телефон;Офис;Артикули;Сума;Плащане\r\n';
+const row = (office, items, total, pay, phone = '0888123456') => `Клиент;${phone};${office};"${items}";${total};${pay}\r\n`;
+const prev = (csv) => previewImport(q, { shopId: SHOP, domain: 'a-shop.bg', csv });
+
+test('payment column: cash on delivery unless it clearly says paid', async () => {
+  const p = await prev(HEAD + row('x', 'Книга', '10', 'неплатена') + row('x', 'Книга', '10', 'платеж при доставка') + row('x', 'Книга', '10', 'платена') + row('x', 'Книга', '10', 'card') + row('x', 'Книга', '10', 'да') + row('x', 'Книга', '10', ''));
+  assert.deepEqual(p.rows.map((r) => r.order.paymentMethod), ['cod', 'cod', 'card', 'card', 'card', 'cod']);
+});
+
+test('an office is matched by its code only when the courier is named; the code must belong to that courier', async () => {
+  const p = await prev(HEAD + row('ЕКОНТ – офис Плевен Център (1127)', 'Книга', '10', '') + row('СПИДИ – офис Плевен (1127)', 'Книга', '10', '') + row('ул. Витоша 10 (2)', 'Книга', '10', '') + row('Speedy office ПЛОВДИВ (79)', 'Книга', '10', ''));
+  assert.deepEqual(p.rows.map((r) => [r.order.deliveryType, r.order.officeId]), [['econt_office', 'econt:1127'], ['other', ''], ['other', ''], ['speedy_office', 'speedy:79']]);
+});
+
+test('a missing, empty or zero total is refused; amounts with currency signs and spaces are read', async () => {
+  await assert.rejects(prev('\uFEFFИме;Телефон;Артикули\r\nК;0888123456;Книга\r\n'), /Сума/);
+  const p = await prev(HEAD + row('x', 'Книга', '', '') + row('x', 'Книга', '0', '') + row('x', 'Книга', '30,30 лв', '') + row('x', 'Книга', '€1 234.50', ''));
+  assert.equal(p.rows[0].ok, false); assert.match(p.rows[0].error, /сума/i);
+  assert.equal(p.rows[1].ok, false);
+  assert.equal(p.rows[2].order.total, 30.3);
+  assert.equal(p.rows[3].order.total, 1234.5);
+  const res = await post({ action: 'create', order: manual({ total: '' }) });
+  assert.equal(res.statusCode, 400);
+  assert.match(json(res).error, /сума/i);
+});
+
+test('items: the Cyrillic х counts as ×, commas stay inside a name, ; and new lines split', async () => {
+  const p = await prev(HEAD + row('x', 'Книга х2; Тениска M, черна\n3 x Стикери', '10', ''));
+  assert.deepEqual(p.rows[0].order.items, [{ name: 'Книга', qty: 2, price: 0 }, { name: 'Тениска M, черна', qty: 1, price: 0 }, { name: 'Стикери', qty: 3, price: 0 }]);
+});
+
+test('an unclosed quote is reported as such', async () => {
+  await assert.rejects(prev(HEAD + 'К;0888123456;x;"Книга;10;\r\nДруг;0888123457;x;Книга;10;\r\n'), /кавички/);
+});
+
+test('manual and CSV orders take the shop\'s currency', async () => {
+  await q(`update zd.shops set currency = 'BGN' where id = $1`, [SHOP]);
+  await post({ action: 'create', order: manual() });
+  assert.equal((await listOrders(q)).rows[0].currency, 'BGN');
 });

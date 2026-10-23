@@ -46,11 +46,12 @@
     </select>
   </label>
   <!-- … and one div with the fields it should fill -->
-  <div data-ordyx-picker data-type="select:#how" data-into="#office" data-city="#city" data-zip="#zip" data-office-id="#office_id"></div>
+  <div data-ordyx-picker data-type="select:#how" data-into="#office" data-city="#city" data-zip="#zip" data-office-id="#office_id" data-address="#address"></div>
   <label>Офис / адрес<input id="office" name="office_text" readonly></label>
   <label>Град<input id="city" name="city"></label>
   <label>Пощенски код<input id="zip" name="post_code"></label>
   <input type="hidden" id="office_id" name="office_id">
+  <input type="hidden" id="address" name="address_text">
   <button type="submit">Поръчай</button>
 </form>
 <h2 style="font-size:14px">Какво би изпратил сайтът</h2>
