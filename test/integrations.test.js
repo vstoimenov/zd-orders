@@ -349,3 +349,50 @@ test('WooCommerce: the owner makes a shop key once; the status never shows it; a
   assert.equal(res.statusCode, 200);
   assert.equal((await shopByKey(q, json(res).key)).shopId, other);
 });
+
+/* ---- fulfilment warehouse ---- */
+test('fulfilment: save enables, the key is shown once, test pings the warehouse, pause and delete behave', async () => {
+  const SHOP = '00000000-0000-4000-8000-000000000001';
+  const post = async (body) => { const res = fakeRes(); await integrationsApi(fakeReq({ method: 'POST', url: '/api/admin/integrations', headers: { cookie: cookie() }, body: JSON.stringify(body) }), res); return res; };
+  const status = async () => { const res = fakeRes(); await integrationsApi(fakeReq({ url: '/api/admin/integrations', headers: { cookie: cookie() } }), res); return json(res).fulfilment; };
+  assert.deepEqual((await status()).enabled, false);
+  let res = await post({ action: 'ful_save', url: 'http://sklad.bg/hook' });
+  assert.equal(res.statusCode, 400);
+  res = await post({ action: 'ful_save', url: 'https://sklad.bg/hook', sendOn: 'new' });
+  assert.equal(res.statusCode, 200);
+  assert.equal(json(res).fulfilment.enabled, true); assert.equal(json(res).fulfilment.sendOn, 'new');
+  res = await post({ action: 'ful_key' });
+  const { key } = json(res);
+  assert.match(key, /^ordyx_ful_/);
+  assert.equal((await status()).hasKey, true);
+  const calls = [];
+  res = await withFetch((url, init) => { calls.push({ url, init }); return Promise.resolve({ ok: true, status: 200, json: async () => ({}) }); }, () => post({ action: 'ful_test' }));
+  assert.equal(res.statusCode, 200); assert.equal(json(res).ok, true);
+  assert.equal(calls[0].url, 'https://sklad.bg/hook');
+  assert.deepEqual(JSON.parse(calls[0].init.body), { api: 1, event: 'ping' });
+  assert.equal(calls[0].init.headers['X-Ordyx-Signature'], createHmac('sha256', key).update(`${calls[0].init.headers['X-Ordyx-Timestamp']}.${calls[0].init.body}`).digest('hex'));
+  res = await withFetch(() => Promise.resolve({ ok: false, status: 500, json: async () => ({}) }), () => post({ action: 'ful_test' }));
+  assert.equal(res.statusCode, 400); assert.match(json(res).error, /500/);
+  res = await post({ action: 'ful_pause' });
+  assert.equal(res.statusCode, 200); assert.equal((await status()).enabled, false); assert.equal((await status()).hasKey, true);
+  await q(`insert into zd.orders (cb_order_id, name, phone, phone_norm, email, delivery_type, courier, office_id, office_text, city, post_code, address_text, items, total, currency, payment_method, page_url, user_agent, ip, shop_id, status, fulfil_sent_at)
+    values ('t:f1', 'Иван', '0888', '+359888', '', 'econt_office', 'econt', 'econt:1', 'x', 'София', '', '', '[]', 10, 'EUR', 'cod', '', '', '', $1::uuid, 'confirmed', now())`, [SHOP]);
+  res = await post({ action: 'ful_disconnect' });
+  assert.equal(res.statusCode, 400); assert.match(json(res).error, /1 поръчки са при склада/);
+  await q(`update zd.orders set waybill_number = '1', status = 'shipped'`);
+  res = await post({ action: 'ful_disconnect' });
+  assert.equal(res.statusCode, 200); assert.equal((await status()).hasKey, false);
+});
+
+test('fulfilment: the status counts waiting orders and „Изпрати неизпратените“ sends them', async () => {
+  const SHOP = '00000000-0000-4000-8000-000000000001';
+  const post = async (body) => { const res = fakeRes(); await integrationsApi(fakeReq({ method: 'POST', url: '/api/admin/integrations', headers: { cookie: cookie() }, body: JSON.stringify(body) }), res); return res; };
+  const status = async () => { const res = fakeRes(); await integrationsApi(fakeReq({ url: '/api/admin/integrations', headers: { cookie: cookie() } }), res); return json(res).fulfilment; };
+  await post({ action: 'ful_save', url: 'https://sklad.bg/hook' }); await post({ action: 'ful_key' });
+  await insertOrder(q, { cbOrderId: 'f-1', name: 'А', phone: '0888123456', phoneNorm: '+359888123456', email: '', deliveryType: 'econt_office', courier: 'econt', officeId: 'econt:1', officeText: 'x', city: 'София', postCode: '', addressText: '', items: [{ name: 'К', qty: 1, price: 1 }], total: 1, currency: 'EUR', paymentMethod: 'cod', pageUrl: '', shopId: SHOP });
+  await q(`update zd.orders set status = 'confirmed' where cb_order_id = 'f-1'`);
+  assert.equal((await status()).due, 1);
+  const res = await withFetch(() => Promise.resolve({ ok: true, status: 200, json: async () => ({}) }), () => post({ action: 'ful_resend' }));
+  assert.equal(res.statusCode, 200); assert.deepEqual(json(res).result, { retried: 1, sent: 1 });
+  assert.equal((await status()).due, 0);
+});
