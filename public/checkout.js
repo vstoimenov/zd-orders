@@ -918,6 +918,7 @@
     root = null; standalone = null; state.type = '';
   }
   if (typeof window !== 'undefined') window.OrdyxPicker = { mount: mountStandalone };
+  if (typeof window !== 'undefined' && window.__ZDO_NO_BOOT__) return; // only the picker is wanted (the Ordyx admin)
 
   function boot() {
     API = SCRIPT && SCRIPT.src ? new URL(SCRIPT.src).origin : 'https://zd-orders.vercel.app';

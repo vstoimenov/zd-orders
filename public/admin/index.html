@@ -628,7 +628,7 @@ tr.hl td{background:#fffbe6}
       <div class="tablecard"><table id="invTable"></table></div>
     </section>
     <section id="ordersView" hidden>
-      <div class="pagehead"><div><h1>Поръчки</h1><div class="sub" id="count"></div></div><button type="button" class="primary" id="csv">Експорт CSV</button></div>
+      <div class="pagehead"><div><h1>Поръчки</h1><div class="sub" id="count"></div></div><div class="actions" style="margin:0"><button type="button" class="primary" id="noNew">+ Нова поръчка</button><button type="button" class="ghost" id="imOpen">Импорт от CSV</button><button type="button" class="ghost" id="csv">Експорт CSV</button></div></div>
       <form class="toolbar" id="filters">
         <input type="search" id="fQ" class="search" placeholder="Търси по име или телефон…">
         <input type="date" id="fFrom" title="От дата">
@@ -818,6 +818,45 @@ tr.hl td{background:#fffbe6}
         <div class="bubble" id="cfMsg">Зареждам…</div>
         <div class="actions" style="margin-top:12px"><a class="primary" id="cfWa" target="_blank" rel="noopener" style="text-decoration:none;padding:10px 16px;border-radius:12px">Отвори WhatsApp</a><a class="ghost" id="cfSms" style="text-decoration:none;padding:10px 16px;border-radius:12px;border:1px solid var(--line)">Изпрати SMS</a><button type="button" class="ghost" id="cfCopy">Копирай текста</button></div>
         <div class="muted" style="margin-top:10px" id="cfHint">Отваря WhatsApp/SMS на вашето устройство с готовото съобщение — натиснете „Изпрати“ там. Когато клиентът отговори през линка, статусът се сменя сам.</div>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="newOrderModal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="noTitle" style="max-width:720px">
+      <div class="dhead"><div class="tile" style="color:#111;background:var(--accent)">🧾</div><div><h2 id="noTitle">Нова поръчка</h2><div class="muted" style="font-size:15px">По телефона, от съобщение или от друг сайт — влиза като всяка друга поръчка</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div class="fgrid">
+          <label>Име и фамилия<input type="text" id="noName" maxlength="120"></label>
+          <label>Телефон<input type="tel" id="noPhone" maxlength="40" placeholder="0888 123 456"></label>
+          <label>Имейл (по желание)<input type="email" id="noEmail" maxlength="160"></label>
+          <label>Доставка<select id="noType"><option value="econt_office">Еконт – офис / автомат</option><option value="speedy_office">Спиди – офис / автомат</option><option value="boxnow_locker">BOX NOW – автомат</option><option value="econt_address">Еконт – до адрес</option><option value="speedy_address">Спиди – до адрес</option><option value="other">Друго (вземане от място, друг куриер)</option></select></label>
+        </div>
+        <div id="noPick"></div>
+        <div class="fgrid" id="noAddr" hidden>
+          <label>Град<input type="text" id="noCity" maxlength="80"></label>
+          <label>Пощенски код<input type="text" id="noPost" maxlength="12"></label>
+          <label style="grid-column:1/-1">Адрес<input type="text" id="noAddress" maxlength="200"></label>
+        </div>
+        <div class="fgrid" id="noOther" hidden><label style="grid-column:1/-1">Как се доставя<input type="text" id="noOtherText" maxlength="300" placeholder="напр. Вземане от магазина · Гложене, Ралица"></label></div>
+        <h3 style="margin:0 0 6px">Артикули</h3>
+        <table id="noItems"><thead><tr><th>Артикул</th><th style="width:70px">Бр.</th><th style="width:110px">Цена</th><th></th></tr></thead><tbody></tbody></table>
+        <div class="actions" style="margin:6px 0 14px"><button type="button" class="ghost" id="noAddItem">+ Артикул</button></div>
+        <div class="fgrid">
+          <label>Общо за плащане (с доставката)<input type="text" inputmode="decimal" id="noTotal"></label>
+          <label>Плащане<select id="noPay"><option value="cod">Наложен платеж</option><option value="card">Платена (карта / банка)</option></select></label>
+        </div>
+        <div class="actions"><button type="button" class="primary" id="noSave">Запиши поръчката</button><span class="err" id="noErr"></span></div>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="importModal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="imTitle" style="max-width:860px">
+      <div class="dhead"><div class="tile" style="color:#111;background:var(--accent)">📄</div><div><h2 id="imTitle">Импорт от CSV</h2><div class="muted" style="font-size:15px">Таблица от Excel/Google Sheets, записана като CSV — до 500 реда</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div class="tip">Първият ред са заглавията: <b>Име; Телефон; Имейл; Град; Офис/Адрес; Артикули; Сума; Плащане</b> (редът няма значение, разпознаваме и английски). Офис с код в скоби, напр. „Еконт – офис Плевен Център (1127)“, се разпознава автоматично; иначе куриерът се избира при товарителницата. Артикули: „Книга ×2; Стикери“. Същият файл втори път не прави дубликати.</div>
+        <div class="actions" style="margin:12px 0"><input type="file" id="imFile" accept=".csv,text/csv"><span class="muted" id="imInfo"></span></div>
+        <div id="imPreview"></div>
+        <div class="actions"><button type="button" class="primary" id="imGo" hidden>Импортирай</button><span class="err" id="imErr"></span><span class="muted" id="imDone"></span></div>
       </div>
     </div>
   </div>
@@ -1286,6 +1325,115 @@ tr.hl td{background:#fffbe6}
   });
   $('filters').addEventListener('submit', function (e) { e.preventDefault(); clearFocus(); snapshot(); load(1); });
   $('csv').addEventListener('click', function () { location.href = withShop(API + 'orders?' + filters() + '&format=csv'); });
+
+  /* ---- нова поръчка на ръка (същият избор на офис като в чекаута) ---- */
+  var noPicker = null, noPickerLoading = null;
+  function loadPicker() {
+    if (window.OrdyxPicker) return Promise.resolve();
+    if (noPickerLoading) return noPickerLoading;
+    window.__ZDO_NO_BOOT__ = true; // the widget is used as a picker here, not as a checkout
+    noPickerLoading = new Promise(function (resolve, reject) {
+      var sc = document.createElement('script'); sc.src = '/checkout.js'; sc.async = true;
+      sc.onload = function () { window.OrdyxPicker ? resolve() : reject(new Error('picker')); }; sc.onerror = function () { reject(new Error('picker')); };
+      document.head.appendChild(sc);
+    });
+    return noPickerLoading;
+  }
+  var OFFICE_TYPES = ['econt_office', 'speedy_office', 'boxnow_locker'], ADDRESS_TYPES = ['econt_address', 'speedy_address'];
+  var noChoice = null;
+  function noTypeChanged() {
+    var t = $('noType').value, office = OFFICE_TYPES.indexOf(t) >= 0;
+    $('noAddr').hidden = ADDRESS_TYPES.indexOf(t) < 0; $('noOther').hidden = t !== 'other'; $('noPick').hidden = !office;
+    if (!office) { if (noPicker) noPicker.setType(''); noChoice = null; return; }
+    var sh = shopById(currentShop);
+    loadPicker().then(function () {
+      if (!noPicker) noPicker = window.OrdyxPicker.mount($('noPick'), { api: '', host: sh ? sh.domain : location.host, type: t, onChange: function (v) { noChoice = v; } });
+      else noPicker.setType(t);
+    }).catch(function () { $('noErr').textContent = 'Изборът на офис не се зареди — опитайте пак.'; });
+  }
+  function noItemRow(it) {
+    it = it || {};
+    return '<tr><td><input type="text" class="no-name" maxlength="200" value="' + esc(it.name || '') + '" placeholder="напр. Книга"></td>' +
+      '<td><input type="number" class="no-qty" min="1" max="999" value="' + esc(it.qty || 1) + '"></td>' +
+      '<td><input type="text" class="no-price" inputmode="decimal" value="' + esc(it.price != null ? it.price : '') + '" placeholder="0,00"></td>' +
+      '<td><button type="button" class="del no-del" title="Махни">×</button></td></tr>';
+  }
+  function noItems() {
+    return [].map.call(document.querySelectorAll('#noItems tbody tr'), function (tr) {
+      return { name: tr.querySelector('.no-name').value, qty: tr.querySelector('.no-qty').value, price: String(tr.querySelector('.no-price').value).replace(',', '.') };
+    }).filter(function (it) { return it.name.trim(); });
+  }
+  function noSum() {
+    var sum = noItems().reduce(function (n, it) { return n + (Number(it.price) || 0) * (Number(it.qty) || 1); }, 0);
+    if (!$('noTotal').getAttribute('data-touched')) $('noTotal').value = sum ? sum.toFixed(2).replace('.', ',') : '';
+  }
+  function openNewOrder() {
+    ['noName', 'noPhone', 'noEmail', 'noCity', 'noPost', 'noAddress', 'noOtherText', 'noTotal'].forEach(function (id) { $(id).value = ''; });
+    $('noTotal').removeAttribute('data-touched'); $('noErr').textContent = ''; $('noPay').value = 'cod';
+    $('noItems').querySelector('tbody').innerHTML = noItemRow();
+    $('noType').value = 'econt_office';
+    $('newOrderModal').hidden = false;
+    noTypeChanged();
+  }
+  $('noNew').addEventListener('click', openNewOrder);
+  $('noType').addEventListener('change', noTypeChanged);
+  $('noAddItem').addEventListener('click', function () { $('noItems').querySelector('tbody').insertAdjacentHTML('beforeend', noItemRow()); });
+  $('noItems').addEventListener('click', function (e) { if (e.target.classList.contains('no-del')) { e.target.closest('tr').remove(); noSum(); } });
+  $('noItems').addEventListener('input', noSum);
+  $('noTotal').addEventListener('input', function () { $('noTotal').setAttribute('data-touched', '1'); });
+  $('noSave').addEventListener('click', function () {
+    var t = $('noType').value, order = {
+      name: $('noName').value, phone: $('noPhone').value, email: $('noEmail').value, delivery_type: t, items: noItems(),
+      total: String($('noTotal').value).replace(',', '.'), payment_method: $('noPay').value,
+    };
+    if (OFFICE_TYPES.indexOf(t) >= 0) {
+      if (!noChoice || !noChoice.officeId) { $('noErr').textContent = noChoice && noChoice.error ? noChoice.error : 'Изберете офис или автомат.'; return; }
+      order.office_id = noChoice.officeId;
+    } else if (ADDRESS_TYPES.indexOf(t) >= 0) { order.city = $('noCity').value; order.post_code = $('noPost').value; order.address_text = $('noAddress').value; }
+    else order.office_text = $('noOtherText').value;
+    $('noErr').textContent = '';
+    busy($('noSave'), fetch(withShop(API + 'orders'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', order: order }) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (r.status === 401) { showLogin(); throw new Error('auth'); } if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
+      .then(function () { $('newOrderModal').hidden = true; load(1); })
+      .catch(function (e) { if (e.message !== 'auth') $('noErr').textContent = e.message; });
+  });
+
+  /* ---- импорт от CSV: преглед, после запис ---- */
+  var imCsv = null;
+  function imPost(confirm) {
+    return fetch(withShop(API + 'orders'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'import', csv: imCsv, csvBase64: true, confirm: confirm }) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (r.status === 401) { showLogin(); throw new Error('auth'); } if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); });
+  }
+  $('imOpen').addEventListener('click', function () {
+    imCsv = null; $('imFile').value = ''; $('imPreview').innerHTML = ''; $('imGo').hidden = true; $('imErr').textContent = ''; $('imDone').textContent = ''; $('imInfo').textContent = '';
+    $('importModal').hidden = false;
+  });
+  $('imFile').addEventListener('change', function () {
+    var f = $('imFile').files[0]; if (!f) return;
+    $('imErr').textContent = ''; $('imDone').textContent = ''; $('imGo').hidden = true; $('imPreview').innerHTML = '<div class="muted">Чета файла…</div>';
+    var fr = new FileReader();
+    fr.onload = function () {
+      imCsv = String(fr.result).split(',')[1] || ''; // base64: the server tells UTF-8 from Windows-1251 itself
+      imPost(false).then(function (d) {
+        $('imInfo').textContent = f.name + ' · ' + d.summary.total + ' реда · ' + (d.encoding === 'windows-1251' ? 'Windows-1251' : 'UTF-8');
+        $('imPreview').innerHTML = '<table>' + table(['Ред', 'Клиент', 'Доставка', 'Артикули', 'Сума', 'Плащане', 'Състояние'], d.rows.map(function (r) {
+          var o = r.order || {};
+          return [String(r.row), r.ok ? esc(o.name) + '<br><span class="muted">' + esc(o.phone) + '</span>' : '—', r.ok ? esc(o.officeText) + (o.city ? '<br><span class="muted">' + esc(o.city) + '</span>' : '') : '—',
+            r.ok ? esc((o.items || []).map(function (it) { return it.qty + ' × ' + it.name; }).join(', ')) : '—', r.ok ? esc(Number(o.total).toFixed(2)) : '—', r.ok ? (o.paymentMethod === 'card' ? 'платена' : 'НП') : '—',
+            r.ok ? '<span class="badge ok">ще се запише</span>' : '<span class="badge bad">' + esc(r.error) + '</span>'];
+        })) + '</table>';
+        $('imGo').hidden = !d.summary.ok; $('imGo').textContent = 'Импортирай ' + d.summary.ok + (d.summary.ok === 1 ? ' поръчка' : ' поръчки') + (d.summary.skipped ? ' (' + d.summary.skipped + ' ще се пропуснат)' : '');
+      }).catch(function (e) { if (e.message !== 'auth') { $('imPreview').innerHTML = ''; $('imErr').textContent = e.message; } });
+    };
+    fr.readAsDataURL(f);
+  });
+  $('imGo').addEventListener('click', function () {
+    busy($('imGo'), imPost(true)).then(function (d) {
+      $('imGo').hidden = true;
+      $('imDone').textContent = 'Готово: ' + d.inserted + ' нови, ' + d.updated + ' обновени, ' + d.skipped + ' пропуснати.' + (d.errors.length ? ' ' + d.errors.join('; ') : '');
+      load(1);
+    }).catch(function (e) { if (e.message !== 'auth') $('imErr').textContent = e.message; });
+  });
   $('prev').addEventListener('click', function () { load(page - 1); });
   $('next').addEventListener('click', function () { load(page + 1); });
   $('rows').addEventListener('change', function (e) {
