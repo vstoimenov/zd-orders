@@ -339,6 +339,7 @@ tr.hl td{background:#fffbe6}
       <a href="#costs" data-view="costs"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>Финанси</a>
       <div class="sec">Отчети</div>
       <a href="#campaigns" data-view="campaigns"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>Кампании</a>
+      <a href="#calls" data-view="calls"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.8 2z"/></svg>Обаждания</a>
       <a href="#inventory" data-view="inventory"><svg viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/></svg>Наличности</a>
       <div class="sec">Система</div>
       <a href="#clients" data-view="clients" id="navClients" hidden><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Клиенти</a>
@@ -617,6 +618,14 @@ tr.hl td{background:#fffbe6}
         <div class="actions"><button type="button" class="ghost" id="ofToggle">Изключи офертата</button><a class="ghost btnlink" href="/brand/qr-oferta.png" download>⬇ QR код (PNG)</a><a class="ghost btnlink" href="/brand/qr-oferta.svg" download>⬇ QR код (SVG)</a><span class="muted" id="ofInfo"></span></div>
       </div>
       <div class="panel"><table id="cTable"></table></div>
+    </section>
+    <section id="callsView" hidden>
+      <div class="pagehead"><div><h1>Обаждания</h1><div class="sub">Гласов агент, който звъни на клиента и пита дали потвърждава поръчката</div></div></div>
+      <div class="tip">📞 При всяка поръчка в <a href="#orders">Поръчки</a> има бутон <b>„Обади се“</b>. Агентът казва името на клиента, продуктите, сумата и срока за доставка и пита за потвърждение. Отговор „да“ потвърждава поръчката както линкът за потвърждение; „не“, неясен отговор или невдигнат телефон се записват в поръчката и получавате известие.</div>
+      <div class="grid2">
+        <div class="panel"><h3 style="margin:0 0 6px">Кредити <span class="chip">скоро</span></h3><div class="muted" style="font-size:14px">Обажданията се плащат на кредити, отделно от плана. Тук ще виждате баланса, изразходваното по месеци и ще зареждате кредити.</div></div>
+        <div class="panel"><h3 style="margin:0 0 6px">Настройки <span class="chip">скоро</span></h3><div class="muted" style="font-size:14px">Автоматично обаждане при нова поръчка, часове за звънене и повторен опит при невдигнат телефон.</div></div>
+      </div>
     </section>
     <section id="inventoryView" hidden>
       <div class="pagehead"><div><h1>Наличности</h1><div class="sub">Намаляват автоматично с всяка поръчка</div></div><button type="button" class="primary" id="invNew">+ Създай продукт</button></div>
@@ -1652,7 +1661,7 @@ tr.hl td{background:#fffbe6}
       .catch(function () { $('dCards').innerHTML = '<div class="err">Грешка при зареждане на таблото. Опитайте пак.</div>'; });
   }
   /* ---- навигация: страницата е в адреса (#orders, #dash, …) ---- */
-  var VIEWS = { orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции', clients: 'Клиенти', start: 'Първи стъпки', campaigns: 'Кампании', abandoned: 'Изоставени', buyers: 'Купувачи' };
+  var VIEWS = { orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции', clients: 'Клиенти', start: 'Първи стъпки', campaigns: 'Кампании', calls: 'Обаждания', abandoned: 'Изоставени', buyers: 'Купувачи' };
   function viewFromHash() { var v = location.hash.slice(1); return Object.prototype.hasOwnProperty.call(VIEWS, v) ? v : 'orders'; }
   function showView(view) {
     if (view === 'clients' && role !== 'owner') view = 'orders'; // only the owner manages clients
