@@ -1275,7 +1275,7 @@ tr.hl td{background:#fffbe6}
           }
           loadShops().catch(function () {}).then(loadMe).then(function () {
             if (role === 'client' && !location.hash && !shops.length) location.hash = '#start'; // a new client starts with the guide
-            showView(viewFromHash()); afterFacebook();
+            showView(viewFromHash()); afterFacebook(); afterWhatsApp();
           });
         }
       })
@@ -2233,7 +2233,7 @@ tr.hl td{background:#fffbe6}
   });
 
   /* ---- WhatsApp Business (Embedded Signup на Meta) ---- */
-  var lastWa = {}, fbReady = null, waSignup = null;
+  var lastWa = {};
   function renderWa(w) {
     lastWa = w;
     var label = w.connected ? (w.templateStatus === 'APPROVED' ? (w.autoConfirm ? 'Автоматично ✓' : 'Свързан') : 'Чака шаблон') : (w.ready ? 'Не е свързан' : 'скоро');
@@ -2250,34 +2250,12 @@ tr.hl td{background:#fffbe6}
     $('waTplInfo').textContent = w.templateStatus ? 'Състояние: ' + ({ APPROVED: 'одобрен ✓', PENDING: 'чака одобрение от Meta', REJECTED: 'отхвърлен — пишете на платформата' }[w.templateStatus] || w.templateStatus) : 'Още не е изпратен.';
     $('waInfo').innerHTML = w.lastError ? '<span class="err">' + esc(w.lastError) + '</span>' : '';
   }
-  function loadFb(appId) {
-    if (fbReady) return fbReady;
-    fbReady = new Promise(function (resolve, reject) {
-      window.fbAsyncInit = function () { window.FB.init({ appId: appId, autoLogAppEvents: true, xfbml: false, version: 'v25.0' }); resolve(window.FB); };
-      var sc = document.createElement('script'); sc.async = true; sc.defer = true; sc.crossOrigin = 'anonymous'; sc.src = 'https://connect.facebook.net/en_US/sdk.js';
-      sc.onerror = function () { fbReady = null; reject(new Error('Не успях да заредя Facebook — проверете блокерите за реклами')); };
-      document.head.appendChild(sc);
-    });
-    return fbReady;
-  }
-  // Meta reports the chosen WhatsApp account and number through a window message
-  window.addEventListener('message', function (e) {
-    var host = ''; try { host = new URL(e.origin).hostname; } catch (err) { return; }
-    if (!/(^|\.)facebook\.com$/.test(host)) return;
-    try { var d = JSON.parse(e.data); if (d.type === 'WA_EMBEDDED_SIGNUP') waSignup = d; } catch (err) { /* other messages */ }
-  });
-  var waCfg = null, waFB = null;
-  // Facebook is loaded when the window opens: the login popup must open right in the tap (browsers block it later)
+  // „Свържи WhatsApp“: no popup — the admin goes to Meta's Embedded Signup page and comes back here with the result (wa=ok / wa_error)
   $('iWaOpen').addEventListener('click', function () {
     $('waModal').hidden = false;
-    if (lastWa.connected || waFB) return;
-    if (!lastWa.ready) { $('waConnect').disabled = true; $('waConnectInfo').textContent = 'Свързването с бутон още не е пуснато от Meta — ползвайте ръчното по-долу.'; return; }
-    $('waConnect').disabled = true; $('waConnectInfo').textContent = 'Зареждам Facebook…';
-    integ({ action: 'wa_config' }).then(function (c) {
-      if (!c.ready) throw new Error('WhatsApp още не е настроен на платформата.');
-      waCfg = c;
-      return loadFb(c.appId).then(function (FB) { waFB = FB; $('waConnect').disabled = false; $('waConnectInfo').textContent = ''; });
-    }).catch(function (err) { showErr('waConnectInfo', err); });
+    if (lastWa.connected) return;
+    $('waConnect').disabled = !lastWa.ready;
+    $('waConnectInfo').textContent = lastWa.ready ? '' : 'Свързването с бутон още не е пуснато от Meta — ползвайте ръчното по-долу.';
   });
   $('waManConnect').addEventListener('click', function () {
     busy($('waManConnect'), integ({ action: 'wa_manual', wabaId: $('waManWaba').value.trim(), phoneNumberId: $('waManPhone').value.trim(), token: $('waManToken').value }))
@@ -2285,27 +2263,21 @@ tr.hl td{background:#fffbe6}
       .catch(function (err) { showErr('waManInfo', err); });
   });
   $('waConnect').addEventListener('click', function () {
-    if (!waFB || !waCfg) { $('waConnectInfo').textContent = 'Още зареждам Facebook — опитайте след секунда.'; return; }
-    $('waConnectInfo').textContent = 'Отварям Facebook…';
-    waSignup = null;
-    (function (c, FB) {
-        FB.login(function (resp) {
-          var code = resp && resp.authResponse && resp.authResponse.code;
-          if (!code) { $('waConnectInfo').textContent = 'Свързването беше прекъснато.'; return; }
-          // the account/number message can arrive a moment after the login callback
-          var tries = 0;
-          (function wait() {
-            if (!waSignup && tries++ < 20) { setTimeout(wait, 250); return; }
-            var d = waSignup && waSignup.data;
-            if (!d || !d.phone_number_id || !d.waba_id) { $('waConnectInfo').textContent = 'Не завършихте стъпките на Meta — опитайте отново.'; return; }
-            $('waConnectInfo').textContent = 'Свързвам…';
-            busy($('waConnect'), integ({ action: 'wa_connect', code: code, wabaId: d.waba_id, phoneNumberId: d.phone_number_id }))
-              .then(function (r) { $('waConnectInfo').textContent = 'Свързано ✓ ' + r.phone; return loadIntegrations(); })
-              .catch(function (err) { showErr('waConnectInfo', err); });
-          })();
-        }, { config_id: c.configId, response_type: 'code', override_default_response_type: true, extras: { setup: {} } });
-    })(waCfg, waFB);
+    if (!lastWa.ready) { $('waConnectInfo').textContent = 'Свързването с бутон още не е пуснато от Meta — ползвайте ръчното по-долу.'; return; }
+    $('waConnectInfo').textContent = 'Отварям Meta…';
+    location.href = withShop(API + 'waconnect?start=1');
   });
+  /* back from Meta: open the WhatsApp window with the result and tidy the address */
+  function afterWhatsApp() {
+    var sp = new URLSearchParams(location.search), err = sp.get('wa_error');
+    if (sp.get('wa') !== 'ok' && !err) return;
+    history.replaceState(null, '', location.pathname + location.hash);
+    loadIntegrations().then(function () {
+      $('waModal').hidden = false;
+      if (err) { $('waConnectInfo').innerHTML = '<span class="err">' + esc(err) + '</span>'; }
+      else $('waInfo').textContent = 'Свързано ✓ — сега изпратете шаблона за одобрение.';
+    });
+  }
   function waAct(body, btn, okText) {
     $('waInfo').textContent = '';
     return busy(btn, integ(body)).then(function (d) { if (okText) $('waInfo').textContent = okText; return loadIntegrations().then(function () { return d; }); }).catch(function (err) { showErr('waInfo', err); });

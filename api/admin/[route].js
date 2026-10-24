@@ -6,6 +6,7 @@ import costs from '../../lib/admin/costs.js';
 import integrations from '../../lib/admin/integrations.js';
 import inventory from '../../lib/admin/inventory.js';
 import meta from '../../lib/admin/meta-oauth.js';
+import waconnect from '../../lib/admin/wa-oauth.js';
 import shops from '../../lib/admin/shops.js';
 import waybills from '../../lib/admin/waybills.js';
 import push from '../../lib/admin/push.js';
@@ -22,7 +23,7 @@ import customers from '../../lib/admin/customers.js';
 import voice from '../../lib/admin/voice.js';
 import { send } from '../../lib/http.js';
 
-const ROUTES = { login, orders, stats, costs, integrations, inventory, meta, shops, waybills, push, me, invite, users, onboarding, signup, campaigns, confirm, confirmadmin, abandoned, customers, voice };
+const ROUTES = { login, orders, waconnect, stats, costs, integrations, inventory, meta, shops, waybills, push, me, invite, users, onboarding, signup, campaigns, confirm, confirmadmin, abandoned, customers, voice };
 const pick = (name) => (typeof name === 'string' && Object.hasOwn(ROUTES, name) ? ROUTES[name] : null);
 
 /** Changes only from our own pages: a request carrying another site's Origin is refused (on top of the SameSite cookie). */
