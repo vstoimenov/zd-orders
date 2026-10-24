@@ -323,3 +323,25 @@ test('manual connect needs all three values and is for the owner only', async ()
     body: JSON.stringify({ action: 'wa_manual', wabaId: '102290129340398', phoneNumberId: '106540352242922', token: 'TEMP-TOKEN' }) }), res);
   assert.equal(res.statusCode, 403);
 });
+
+test('until the platform opens it, "Свържи WhatsApp" is ready for the owner only (clients see „скоро“)', async () => {
+  delete process.env.WHATSAPP_PUBLIC;
+  const owner = fakeRes();
+  await integrationsApi(fakeReq({ url: `/api/admin/integrations?shop=${SHOP}`, headers: { cookie } }), owner);
+  assert.equal(json(owner).whatsapp.ready, true);
+  const c = await createClient(q, { email: 'client2@example.com', name: 'Клиент', shopIds: [SHOP] });
+  await acceptInvite(q, c.token, 'client-pass-1');
+  const [u] = await q(`select id, session_version from zd.users where email = 'client2@example.com'`);
+  const ck = `zdo_admin=${clientSession('secret', { id: u.id, session_version: u.session_version })}`;
+  let res = fakeRes();
+  await integrationsApi(fakeReq({ url: `/api/admin/integrations?shop=${SHOP}`, headers: { cookie: ck } }), res);
+  assert.equal(json(res).whatsapp.ready, false);
+  res = fakeRes();
+  await integrationsApi(fakeReq({ method: 'POST', url: `/api/admin/integrations?shop=${SHOP}`, headers: { cookie: ck }, body: JSON.stringify({ action: 'wa_config' }) }), res);
+  assert.equal(json(res).ready, false);
+  process.env.WHATSAPP_PUBLIC = '1';
+  res = fakeRes();
+  await integrationsApi(fakeReq({ url: `/api/admin/integrations?shop=${SHOP}`, headers: { cookie: ck } }), res);
+  assert.equal(json(res).whatsapp.ready, true);
+  delete process.env.WHATSAPP_PUBLIC;
+});
