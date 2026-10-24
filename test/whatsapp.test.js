@@ -7,6 +7,7 @@ import { setQueryForTests } from '../lib/db.js';
 import { insertOrder, listOrders } from '../lib/orders-repo.js';
 import { getSecret, getIntegration } from '../lib/integrations-repo.js';
 import { signSession } from '../lib/auth.js';
+import { createClient, acceptInvite, clientSession } from '../lib/users.js';
 import { sendOrderConfirmation } from '../lib/whatsapp.js';
 import integrationsApi from '../lib/admin/integrations.js';
 import webhook from '../api/wa/webhook.js';
@@ -93,7 +94,7 @@ test('connecting: the code becomes a business token, the account is checked, web
   assert.equal(secret.pin, calls[5].body.pin);
   const st = json(await (async () => { const res = fakeRes(); await integrationsApi(fakeReq({ url: `/api/admin/integrations?shop=${SHOP}`, headers: { cookie } }), res); return res; })());
   assert.deepEqual({ ...st.whatsapp, connectedAt: undefined }, {
-    connected: true, phone: '+359 88 800 1234', name: 'Магазин А', wabaId: '102290129340398', templateStatus: '', autoConfirm: false, lastError: null, connectedAt: undefined, ready: true,
+    connected: true, phone: '+359 88 800 1234', name: 'Магазин А', wabaId: '102290129340398', manual: false, templateStatus: '', autoConfirm: false, lastError: null, connectedAt: undefined, ready: true,
   });
   assert.ok(!JSON.stringify(st).includes('BUSINESS-TOKEN'));
 });
@@ -293,4 +294,32 @@ test('disconnecting forgets the token and unsubscribes our app', async () => {
   await withFetch(graph({ '/102290129340398/subscribed_apps': () => ok({ success: true }) }), () => post({ action: 'wa_disconnect' }));
   assert.ok(calls.some((c) => c.method === 'DELETE' && c.path === '/102290129340398/subscribed_apps'));
   assert.equal((await getIntegration(q, 'whatsapp', SHOP)).hasSecret, false);
+});
+
+/* ---- owner's manual connect (a test number from the Meta dashboard, before Embedded Signup is available) ---- */
+test('the owner connects a number by hand with its ids and a token: stored sealed, app subscribed, number registered, no Facebook login', async () => {
+  const res = await withFetch(graph(), () => post({ action: 'wa_manual', wabaId: '102290129340398', phoneNumberId: '106540352242922', token: 'TEMP-TOKEN' }));
+  assert.equal(res.statusCode, 200, res.body);
+  assert.equal(json(res).phone, '+359 88 800 1234');
+  assert.equal(calls.some((c) => c.path === '/oauth/access_token'), false);
+  assert.ok(calls.some((c) => c.method === 'POST' && c.path === '/102290129340398/subscribed_apps' && c.auth === 'Bearer TEMP-TOKEN'));
+  assert.ok(calls.some((c) => c.method === 'POST' && c.path === '/106540352242922/register'));
+  const i = await getIntegration(q, 'whatsapp', SHOP);
+  assert.equal(i.config.phoneNumberId, '106540352242922'); assert.equal(i.config.manual, true); assert.equal(i.config.active, true);
+  assert.equal(JSON.parse(await getSecret(q, 'whatsapp', SHOP)).token, 'TEMP-TOKEN');
+  const st = await withFetch(graph(), async () => { const r = fakeRes(); await integrationsApi(fakeReq({ url: `/api/admin/integrations?shop=${SHOP}`, headers: { cookie } }), r); return json(r).whatsapp; });
+  assert.equal(st.connected, true);
+});
+
+test('manual connect needs all three values and is for the owner only', async () => {
+  const missing = await withFetch(graph(), () => post({ action: 'wa_manual', wabaId: '102290129340398', phoneNumberId: '106540352242922' }));
+  assert.equal(missing.statusCode, 400);
+  assert.equal((await getIntegration(q, 'whatsapp', SHOP)).hasSecret, false);
+  const c = await createClient(q, { email: 'client@example.com', name: 'Клиент', shopIds: [SHOP] });
+  await acceptInvite(q, c.token, 'client-pass-1');
+  const [u] = await q(`select id, session_version from zd.users where email = 'client@example.com'`);
+  const res = fakeRes();
+  await integrationsApi(fakeReq({ method: 'POST', url: `/api/admin/integrations?shop=${SHOP}`, headers: { cookie: `zdo_admin=${clientSession('secret', { id: u.id, session_version: u.session_version })}` },
+    body: JSON.stringify({ action: 'wa_manual', wabaId: '102290129340398', phoneNumberId: '106540352242922', token: 'TEMP-TOKEN' }) }), res);
+  assert.equal(res.statusCode, 403);
 });

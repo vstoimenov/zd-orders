@@ -804,6 +804,13 @@ tr.hl td{background:#fffbe6}
         <div id="waConnectBox">
           <div class="tip">💡 Натиснете бутона, влезте с Facebook профила, който управлява бизнеса ви, и следвайте стъпките на Meta: изберете или създайте WhatsApp Business акаунт и добавете номер (<b>номер, който не се ползва в обикновения WhatsApp</b>), потвърдете го с код. Накрая в WhatsApp Manager добавете карта за плащане — Meta таксува директно вас (~0,02 € на съобщение за поръчка).</div>
           <div class="actions"><button type="button" class="primary" id="waConnect">Свържи WhatsApp</button><span class="muted" id="waConnectInfo"></span></div>
+          <div id="waManualBox" hidden>
+            <h3 style="margin:16px 0 6px">Ръчно свързване (собственик, за тест)</h3>
+            <div class="muted" style="margin-bottom:8px">От Meta → приложението → WhatsApp → API Setup: WABA ID (WhatsApp Business Account), Phone number ID на тестовия номер и временен access token. Ключът се пази криптиран.</div>
+            <div class="fgrid"><label>WABA ID<input type="text" id="waManWaba" inputmode="numeric" autocomplete="off"></label><label>Phone number ID<input type="text" id="waManPhone" inputmode="numeric" autocomplete="off"></label></div>
+            <label>Access token<input type="password" id="waManToken" autocomplete="off" placeholder="поставете ключа"></label>
+            <div class="actions"><button type="button" class="ghost" id="waManConnect">Свържи ръчно</button><span class="muted" id="waManInfo"></span></div>
+          </div>
         </div>
         <div id="waManageBox" hidden>
           <h3 style="margin:0 0 6px">1. Шаблон „Потвърдете поръчката“</h3>
@@ -2231,8 +2238,10 @@ tr.hl td{background:#fffbe6}
     lastWa = w;
     var label = w.connected ? (w.templateStatus === 'APPROVED' ? (w.autoConfirm ? 'Автоматично ✓' : 'Свързан') : 'Чака шаблон') : (w.ready ? 'Не е свързан' : 'скоро');
     chip('iWaChip', w.connected, label, label); chip('iWaChip2', w.connected, label, label);
-    $('iWaOpen').disabled = !w.ready && !w.connected;
-    $('iWaOpen').textContent = w.connected ? 'Настройки' : w.ready ? '+ Свържи' : 'Скоро';
+    var ownerManual = role === 'owner' && !w.connected; // the owner can connect a test number by hand before Embedded Signup is available
+    $('iWaOpen').disabled = !w.ready && !w.connected && !ownerManual;
+    $('iWaOpen').textContent = w.connected ? 'Настройки' : w.ready ? '+ Свържи' : ownerManual ? 'Ръчно (тест)' : 'Скоро';
+    $('waManualBox').hidden = !ownerManual;
     $('iWaOpen').className = w.connected || !w.ready ? 'ghost' : 'primary';
     $('iWaLine').textContent = w.connected ? (w.name ? w.name + ' · ' : '') + w.phone + (w.templateStatus ? ' · шаблон: ' + ({ APPROVED: 'одобрен', PENDING: 'чака одобрение', REJECTED: 'отхвърлен' }[w.templateStatus] || w.templateStatus) : '') : '';
     $('waSub').textContent = w.connected ? (w.name || '') + ' · ' + w.phone : 'Свържете вашия WhatsApp Business номер';
@@ -2262,12 +2271,18 @@ tr.hl td{background:#fffbe6}
   $('iWaOpen').addEventListener('click', function () {
     $('waModal').hidden = false;
     if (lastWa.connected || waFB) return;
+    if (!lastWa.ready) { $('waConnect').disabled = true; $('waConnectInfo').textContent = 'Свързването с бутон още не е пуснато от Meta — ползвайте ръчното по-долу.'; return; }
     $('waConnect').disabled = true; $('waConnectInfo').textContent = 'Зареждам Facebook…';
     integ({ action: 'wa_config' }).then(function (c) {
       if (!c.ready) throw new Error('WhatsApp още не е настроен на платформата.');
       waCfg = c;
       return loadFb(c.appId).then(function (FB) { waFB = FB; $('waConnect').disabled = false; $('waConnectInfo').textContent = ''; });
     }).catch(function (err) { showErr('waConnectInfo', err); });
+  });
+  $('waManConnect').addEventListener('click', function () {
+    busy($('waManConnect'), integ({ action: 'wa_manual', wabaId: $('waManWaba').value.trim(), phoneNumberId: $('waManPhone').value.trim(), token: $('waManToken').value }))
+      .then(function (r) { $('waManToken').value = ''; $('waManInfo').textContent = 'Свързано ✓ ' + r.phone; return loadIntegrations(); })
+      .catch(function (err) { showErr('waManInfo', err); });
   });
   $('waConnect').addEventListener('click', function () {
     if (!waFB || !waCfg) { $('waConnectInfo').textContent = 'Още зареждам Facebook — опитайте след секунда.'; return; }
