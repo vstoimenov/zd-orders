@@ -33,7 +33,7 @@ test('validateOrder normalizes a valid Econt order', () => {
     deliveryType: 'econt_office', courier: 'econt', officeId: 'econt:7538',
     officeText: 'ЕКОНТ – офис Айдемир (7538), ул. София 7', city: 'Айдемир', postCode: '7538', addressText: '',
     items: [{ name: 'Да се заобичаме с думи', qty: 1, price: 18.5 }], total: 22.57, currency: 'EUR',
-    paymentMethod: 'cod', pageUrl: 'https://x/checkout',
+    paymentMethod: 'cod', pageUrl: 'https://x/checkout', invoice: {},
   });
 });
 

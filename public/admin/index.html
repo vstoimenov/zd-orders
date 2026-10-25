@@ -877,6 +877,14 @@ tr.hl td{background:#fffbe6}
           <label>Общо за плащане (с доставката)<input type="text" inputmode="decimal" id="noTotal"></label>
           <label>Плащане<select id="noPay"><option value="cod">Наложен платеж</option><option value="card">Платена (карта / банка)</option></select></label>
         </div>
+        <label class="check" style="display:flex;gap:8px;align-items:center;margin:4px 0 8px"><input type="checkbox" id="noInvOn"> Иска фактура</label>
+        <div class="fgrid" id="noInv" hidden>
+          <label>Фирма<input type="text" id="noInvCompany" maxlength="160"></label>
+          <label>ЕИК / Булстат<input type="text" id="noInvEik" maxlength="13" inputmode="numeric"></label>
+          <label>ДДС номер (ако има)<input type="text" id="noInvVat" maxlength="12"></label>
+          <label>МОЛ<input type="text" id="noInvMol" maxlength="120"></label>
+          <label style="grid-column:1/-1">Адрес по регистрация<input type="text" id="noInvAddress" maxlength="200"></label>
+        </div>
         <div class="actions"><button type="button" class="primary" id="noSave">Запиши поръчката</button><span class="err" id="noErr"></span></div>
       </div>
     </div>
@@ -1353,7 +1361,7 @@ tr.hl td{background:#fffbe6}
         '<td data-label="Артикули">' + items + '</td>' +
         '<td data-label="Сума"><b>' + o.total.toFixed(2) + ' ' + esc(o.currency) + '</b></td>' +
         '<td data-label="Статус"><select data-status="' + i + '">' + opts + '</select></td>' +
-        '<td>' + packedCell(o, i) + (['new', 'confirmed'].indexOf(o.status) >= 0 && !o.shipment && !o.waybillState && !(o.fulfilment && o.fulfilment.sentAt) ? '<button type="button" data-dl="' + i + '" title="Друг офис, автомат или адрес">📍 Доставка</button>' : '') + (o.deliveryChangedBy === 'customer' ? '<span class="tag" title="Клиентът смени доставката от страницата на поръчката">📍 сменена от клиента</span>' : '') + (['new', 'confirmed'].indexOf(o.status) >= 0 && o.phone ? '<button type="button" data-confirm="' + i + '">💬 Потвърди</button>' + (DEMO ? '' : '<button type="button" data-call="' + i + '" title="Гласов агент звъни на клиента и пита дали потвърждава">📞 Потвърди</button>') : '') + confirmBadge(o) +
+        '<td>' + packedCell(o, i) + (['new', 'confirmed'].indexOf(o.status) >= 0 && !o.shipment && !o.waybillState && !(o.fulfilment && o.fulfilment.sentAt) ? '<button type="button" data-dl="' + i + '" title="Друг офис, автомат или адрес">📍 Доставка</button>' : '') + (o.deliveryChangedBy === 'customer' ? '<span class="tag" title="Клиентът смени доставката от страницата на поръчката">📍 сменена от клиента</span>' : '') + invoiceCell(o, i) + (['new', 'confirmed'].indexOf(o.status) >= 0 && o.phone ? '<button type="button" data-confirm="' + i + '">💬 Потвърди</button>' + (DEMO ? '' : '<button type="button" data-call="' + i + '" title="Гласов агент звъни на клиента и пита дали потвърждава">📞 Потвърди</button>') : '') + confirmBadge(o) +
           shipmentCell(o, i) + '<button type="button" data-slip="' + i + '" title="Лист за пакетиране с QR код">🖨 Лист</button><button type="button" data-copy="' + i + '">Копирай за товарителница</button><button type="button" class="del" data-del="' + i + '" title="Изтрий поръчката от системата">Изтрий</button></td>' +
         '</tr>';
     }).join('') || '<tr><td colspan="7" class="muted">Няма поръчки.</td></tr>';
@@ -1423,7 +1431,8 @@ tr.hl td{background:#fffbe6}
   function openNewOrder() {
     if (noPicker) { noPicker.destroy(); noPicker = null; } // a fresh picker: the previous customer's office never carries over
     noChoice = null;
-    ['noName', 'noPhone', 'noEmail', 'noCity', 'noPost', 'noAddress', 'noOtherText', 'noTotal'].forEach(function (id) { $(id).value = ''; });
+    ['noName', 'noPhone', 'noEmail', 'noCity', 'noPost', 'noAddress', 'noOtherText', 'noTotal', 'noInvCompany', 'noInvEik', 'noInvVat', 'noInvMol', 'noInvAddress'].forEach(function (id) { $(id).value = ''; });
+    $('noInvOn').checked = false; $('noInv').hidden = true;
     $('noTotal').removeAttribute('data-touched'); $('noErr').textContent = ''; $('noPay').value = 'cod';
     $('noItems').querySelector('tbody').innerHTML = noItemRow();
     $('noType').value = 'econt_office';
@@ -1431,6 +1440,7 @@ tr.hl td{background:#fffbe6}
     noTypeChanged();
   }
   $('noNew').addEventListener('click', openNewOrder);
+  $('noInvOn').addEventListener('change', function () { $('noInv').hidden = !$('noInvOn').checked; });
   $('noType').addEventListener('change', noTypeChanged);
   $('noAddItem').addEventListener('click', function () { $('noItems').querySelector('tbody').insertAdjacentHTML('beforeend', noItemRow()); });
   $('noItems').addEventListener('click', function (e) { if (e.target.classList.contains('no-del')) { e.target.closest('tr').remove(); noSum(); } });
@@ -1440,6 +1450,7 @@ tr.hl td{background:#fffbe6}
     var t = $('noType').value, order = {
       name: $('noName').value, phone: $('noPhone').value, email: $('noEmail').value, delivery_type: t, items: noItems(),
       total: String($('noTotal').value).replace(',', '.'), payment_method: $('noPay').value,
+      invoice: $('noInvOn').checked ? { company: $('noInvCompany').value, eik: $('noInvEik').value, vat: $('noInvVat').value, mol: $('noInvMol').value, address: $('noInvAddress').value } : undefined,
     };
     if (OFFICE_TYPES.indexOf(t) >= 0) {
       if (!noChoice || !noChoice.officeId) { $('noErr').textContent = noChoice && noChoice.error ? noChoice.error : 'Изберете офис или автомат.'; return; }
@@ -1536,6 +1547,13 @@ tr.hl td{background:#fffbe6}
       return;
     }
     if (btn.getAttribute('data-wbcancel') != null) { e.preventDefault(); cancelWaybill(orders[btn.getAttribute('data-wbcancel')], btn); return; }
+    if (btn.getAttribute('data-invcopy') != null) {
+      e.preventDefault();
+      var txt = invoiceText(orders[btn.getAttribute('data-invcopy')].invoice || {});
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(function () { btn.textContent = 'Копирано ✓'; setTimeout(function () { btn.textContent = 'Копирай'; }, 1500); });
+      else window.prompt('Копирайте:', txt);
+      return;
+    }
     if (btn.getAttribute('data-wbdrop') != null) {
       e.preventDefault(); btn.textContent = 'Потвърждавам…';
       wb({ action: 'drop', id: orders[btn.getAttribute('data-wbdrop')].id }).then(function () { load(page); }).catch(function (err) { btn.textContent = '📦 Пуснах я в автомата'; if (err.message !== 'auth') alert(err.message); });
@@ -2339,6 +2357,15 @@ tr.hl td{background:#fffbe6}
       .then(function () { $('dlModal').hidden = true; load(page); })
       .catch(function (e) { if (e.message !== 'auth') $('dlErr').textContent = e.message; });
   });
+  function invoiceText(inv) {
+    return ['Фирма: ' + (inv.company || ''), 'ЕИК: ' + (inv.eik || ''), inv.vat ? 'ДДС №: ' + inv.vat : '', inv.mol ? 'МОЛ: ' + inv.mol : '', inv.address ? 'Адрес: ' + inv.address : ''].filter(Boolean).join('\n');
+  }
+  function invoiceCell(o, i) {
+    var inv = o.invoice || {};
+    if (!inv.company && !inv.eik) return '';
+    return '<div class="muted" style="margin:6px 0">🧾 Фактура: ' + esc(inv.company || '') + (inv.eik ? ' · ЕИК ' + esc(inv.eik) : '') + (inv.invalid ? ' <span class="dup" title="ЕИК или ДДС номерът не изглежда правилен — проверете">⚠️ проверете</span>' : '') +
+      ' <a href="#" data-invcopy="' + i + '">Копирай</a></div>';
+  }
   function voiceCall(o, btn) {
     if (!window.confirm('Гласовият агент ще се обади на ' + (o.name || 'клиента') + ' (' + o.phone + ') и ще попита дали потвърждава поръчката.\n\nПри „да“ поръчката става „Потвърдена“ сама. Да звънне ли?')) return;
     var was = btn.textContent;

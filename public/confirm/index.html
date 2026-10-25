@@ -151,13 +151,22 @@ button:disabled{opacity:.6;cursor:default}
       else picker.setType(t2);
     }).catch(function () { document.getElementById('chgErr').textContent = 'Изборът на офис не се зареди — опитайте пак.'; });
   }
+  function invoiceBox(d, open, done) {
+    var inv = d.invoice || {};
+    if (done) return '<div class="okmsg">✓ Данните за фактура са записани</div>';
+    if (!d.canInvoice) return inv.company ? '<div class="muted" style="margin:0 0 12px">🧾 Фактура за ' + esc(inv.company) + '</div>' : '';
+    if (!open) return '<button type="button" class="link" data-inv="open">🧾 ' + (inv.company ? 'Фактура за ' + esc(inv.company) + ' — промени' : 'Искам фактура') + '</button>';
+    var f = function (k, ph, max) { return '<input id="inv_' + k + '" placeholder="' + ph + '" maxlength="' + max + '" value="' + esc(inv[k] || '') + '">'; };
+    return '<div class="chg"><b>Данни за фактура</b>' + f('company', 'Фирма', 160) + f('eik', 'ЕИК / Булстат', 13) + f('vat', 'ДДС номер (ако има)', 12) + f('mol', 'МОЛ', 120) + f('address', 'Адрес по регистрация', 200) +
+      '<button type="button" class="yes" data-inv="save" style="margin-top:8px">Запази</button><button type="button" class="link" data-inv="close">Откажи</button><div class="err" id="invErr"></div></div>';
+  }
   function render(d, justAnswered, chg) {
     cur = d;
     if (picker) { picker.destroy(); picker = null; }
     var head = '<div class="shop">' + esc(d.shop) + '</div><h1>' + (d.name ? 'Здравейте, ' + esc(d.name) + '!' : 'Здравейте!') + '</h1>' +
       '<div class="muted">Поръчка от ' + esc(when(d.createdAt)) + ' · ' + esc(money(d.total, d.currency)) + (d.cod ? ' с наложен платеж' : '') + '</div>';
     var thanks = justAnswered === 'yes' ? '<div class="state end"><span class="ic">✅</span><div><b>Благодарим! Поръчката е потвърдена.</b><span class="muted">' + esc(d.shop) + ' ще я изпрати скоро.</span></div></div>' : '';
-    card.innerHTML = head + askBox(d) + changeBox(d, chg === 'open', chg === 'done') + (thanks || stateBox(d)) + officeBox(d.tracking) + contact(d) + '<h2>Къде е поръчката</h2>' + timeline(d) +
+    card.innerHTML = head + askBox(d) + changeBox(d, chg === 'open', chg === 'done') + invoiceBox(d, chg === 'inv', chg === 'invdone') + (thanks || stateBox(d)) + officeBox(d.tracking) + contact(d) + '<h2>Къде е поръчката</h2>' + timeline(d) +
       '<h2>Какво поръча</h2><ul class="items">' + d.items.map(function (it) { return '<li><span>' + esc(it.name) + '</span><span>× ' + esc(it.qty) + '</span></li>'; }).join('') + '</ul>' +
       '<div class="total"><span>Общо' + (d.cod ? ' (с наложен платеж)' : '') + '</span><span>' + esc(money(d.total, d.currency)) + '</span></div>' +
       '<div class="foot">Страницата се обновява, когато я отвориш отново.</div>';
@@ -168,6 +177,18 @@ button:disabled{opacity:.6;cursor:default}
       .then(function (d) { render(d, justAnswered, chg); });
   }
   card.addEventListener('change', function (e) { if (e.target.id === 'chgType') typeChanged(); });
+  card.addEventListener('click', function (e) {
+    var c = e.target.getAttribute && e.target.getAttribute('data-inv'); if (!c) return;
+    if (c === 'open') { render(cur, null, 'inv'); return; }
+    if (c === 'close') { render(cur); return; }
+    var body = { t: t, action: 'invoice' };
+    ['company', 'eik', 'vat', 'mol', 'address'].forEach(function (k) { body[k] = document.getElementById('inv_' + k).value; });
+    e.target.disabled = true;
+    fetch(API, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (x) { if (!r.ok) throw new Error(x.error || 'Грешка'); return x; }); })
+      .then(function () { return load(null, 'invdone'); })
+      .catch(function (x) { document.getElementById('invErr').textContent = x.message; e.target.disabled = false; });
+  });
   card.addEventListener('click', function (e) {
     var c = e.target.getAttribute && e.target.getAttribute('data-chg'); if (!c) return;
     if (c === 'open') { render(cur, null, 'open'); typeChanged(); return; }

@@ -271,3 +271,10 @@ test('each option shows its courier logo from our own domain and the shop\'s del
   assert.equal(core.etaFor(info, 'boxnow_locker'), 'до 24 часа');
   assert.equal(core.etaFor(null, 'econt_office'), '', 'nothing before the shop info arrived');
 });
+
+test('buildOrderPayload sends invoice details only when the buyer asked for an invoice', () => {
+  const detail = { id: '9', total: 10, order: { items: [{ name: 'К', quantity: 1, price: 10 }] } };
+  const sel = { type: 'econt_office', office: OFFICES[0] };
+  assert.equal(plain(core.buildOrderPayload(detail, sel, {}, '')).invoice, undefined);
+  assert.deepEqual(plain(core.buildOrderPayload(detail, sel, { invoice: { company: 'Ф ООД', eik: '206123456' } }, '')).invoice, { company: 'Ф ООД', eik: '206123456' });
+});

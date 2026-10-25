@@ -213,7 +213,8 @@
       total: Number(detail.total != null ? detail.total : order.total) || 0,
       currency: clean(detail.currency || order.currency || 'EUR'),
       payment_method: clean(order.paymentType),
-      page_url: pageUrl
+      page_url: pageUrl,
+      invoice: fields.invoice || undefined
     };
   }
 
@@ -289,6 +290,7 @@
     '.zdo-opt-text{display:flex;flex-direction:column;gap:2px;min-width:0}.zdo-opt-text small{font-size:13px;color:#7a6a6f}.zdo-opt-text small:empty{display:none}',
     '.zdo-tool svg{vertical-align:-4px;margin-right:6px}',
     '.zdo-panel{display:none;margin:-2px 0 10px}.zdo-panel.is-on{display:block}',
+    '.zdo-inv{margin:10px 0 0}.zdo-inv-on{display:flex;gap:8px;align-items:center;font-size:15px;cursor:pointer;margin:0 0 8px}.zdo-inv-on input{width:18px;height:18px}',
     '.zdo-input{display:block;width:100%!important;height:46px!important;padding:0 12px!important;margin:0 0 8px!important;border:1.5px solid #d9c3ca!important;border-radius:8px!important;font-size:16px!important;background:#fff!important;color:#222!important}',
     '.zdo-list{max-height:260px;overflow-y:auto;border-radius:8px}',
     '.zdo-list:not(:empty){border:1px solid #e8d3da;margin:-4px 0 8px}',
@@ -339,7 +341,16 @@
       '<input class="zdo-input" data-role="addr-street" type="text" placeholder="Улица, номер, блок, вход, етаж, апартамент">' +
     '</div>' +
     officePanel('boxnow', 'boxnow_locker', 'BOX NOW', true) +
-    '<div class="zdo-error" role="alert"></div>';
+    '<div class="zdo-error" role="alert"></div>' +
+    // invoice details: only on a checkout, off by default (a platform's own form asks for them itself)
+    '<div class="zdo-inv"><label class="zdo-inv-on"><input type="checkbox" data-role="inv-on"> Искам фактура</label>' +
+      '<div data-role="inv-fields" hidden>' +
+        '<input class="zdo-input" data-inv="company" type="text" maxlength="160" placeholder="Фирма">' +
+        '<input class="zdo-input" data-inv="eik" type="text" inputmode="numeric" maxlength="13" placeholder="ЕИК / Булстат">' +
+        '<input class="zdo-input" data-inv="vat" type="text" maxlength="12" placeholder="ДДС номер (ако има)">' +
+        '<input class="zdo-input" data-inv="mol" type="text" maxlength="120" placeholder="МОЛ">' +
+        '<input class="zdo-input" data-inv="address" type="text" maxlength="200" placeholder="Адрес по регистрация">' +
+      '</div></div>';
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function el(role) { return root.querySelector('[data-role="' + role + '"]'); }
@@ -657,6 +668,7 @@
 
   function bind() {
     root.addEventListener('change', function (e) {
+      if (e.target.getAttribute('data-role') === 'inv-on') { el('inv-fields').hidden = !e.target.checked; return; }
       if (e.target.name !== 'zdo-type') return;
       state.type = e.target.value;
       render(); sync(); showError('');
@@ -754,9 +766,17 @@
     window.WebPlatform.checkoutInterceptor = mine;
   }
 
+  /** The invoice details typed under the picker (only when „Искам фактура“ is ticked). */
+  function readInvoice() {
+    var on = root && el('inv-on');
+    if (!on || !on.checked) return undefined;
+    var out = {};
+    [].forEach.call(root.querySelectorAll('[data-inv]'), function (i) { out[i.getAttribute('data-inv')] = clean(i.value); });
+    return out;
+  }
   function readFields() {
     var dummy = document.querySelector('input[id^="shippingPhone_"][id$="_dummy"]');
-    return { name: val('name'), email: val('email'), phone: val('shippingPhone') || (dummy ? dummy.value : ''), address: val('shippingAddress'), city: val('shippingCity'), zip: val('shippingZipCode') };
+    return { name: val('name'), email: val('email'), phone: val('shippingPhone') || (dummy ? dummy.value : ''), address: val('shippingAddress'), city: val('shippingCity'), zip: val('shippingZipCode'), invoice: readInvoice() };
   }
 
   /** platform.events.order_completed fires after ConvertBuilder accepted the order, before its thank-you redirect. */
@@ -892,6 +912,7 @@
     root.className = 'zdo zdo-standalone';
     root.innerHTML = TEMPLATE;
     root.querySelector('.zdo-title').hidden = true;
+    root.querySelector('.zdo-inv').hidden = true; // the platform's own form asks for invoice details
     target.appendChild(root);
     mountedAt = Date.now();
     [].forEach.call(root.querySelectorAll('[data-logo]'), function (img) { img.src = logoFor(API, img.getAttribute('data-logo')); img.onerror = function () { img.remove(); }; });

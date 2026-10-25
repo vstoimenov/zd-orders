@@ -58,7 +58,7 @@ test('the customer opens the link, sees the order and confirms it: the order is 
   assert.deepEqual(rest, {
     ok: true, shop: 'Магазин А', name: 'Мария', items: [{ name: 'Книга', qty: 2 }], total: 22.57, currency: 'EUR', cod: true,
     delivery: 'ЕКОНТ – офис Плевен (5803)', answer: '', canAnswer: true,
-    canChangeDelivery: true, deliveryType: 'econt_office', shopDomain: 'a-shop.bg', boxnow: false,
+    invoice: {}, canInvoice: true, canChangeDelivery: true, deliveryType: 'econt_office', shopDomain: 'a-shop.bg', boxnow: false,
   });
   assert.ok(createdAt);
   assert.equal(tracking.stage, 'placed');

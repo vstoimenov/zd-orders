@@ -100,7 +100,8 @@ X-Ordyx-Site: {"webhookUrl":"https://moiat-magazin.bg/ordyx-webhook"}
 <tr><td><code>delivery_type</code></td><td><code>econt_office</code>, <code>econt_address</code>, <code>speedy_office</code>, <code>speedy_address</code>, <code>boxnow_locker</code> или <code>other</code> (куриерът се избира в Ordyx при товарителницата).</td></tr>
 <tr><td><code>office_id</code>, <code>office_text</code></td><td>От избора на офис. При адрес: <code>city</code> + <code>address_text</code> (+ <code>post_code</code>).</td></tr>
 <tr><td><code>items[].price</code></td><td>Цената, която клиентът плаща за брой (с ДДС). Доставката е в <code>total</code>.</td></tr>
-<tr><td><code>payment_method</code>, <code>paid</code></td><td><code>cod</code> = наложен платеж (сумата се събира от куриера). Всичко друго + <code>paid: true</code> = платена, товарителницата е без наложен платеж. Поръчка с карта изпращайте чак когато е платена.</td></tr></table>
+<tr><td><code>payment_method</code>, <code>paid</code></td><td><code>cod</code> = наложен платеж (сумата се събира от куриера). Всичко друго + <code>paid: true</code> = платена, товарителницата е без наложен платеж. Поръчка с карта изпращайте чак когато е платена.</td></tr>
+<tr><td><code>invoice</code></td><td>По избор, ако купувачът иска фактура: <code>{ "company", "eik", "vat", "mol", "address" }</code>. Поръчката никога не се отказва заради тези данни — грешен ЕИК се приема и магазинът вижда „проверете“.</td></tr></table>
 <p>Отговор: <code>{"ok":true,"inserted":true,"updated":false,"locked":false}</code>. <code>locked: true</code> = вече има товарителница и промяната не е приложена.</p>
 <h3>Отказ</h3>
 <pre><code>{ "source": "api", "external_id": "10452", "status": "cancelled" }</code></pre>
