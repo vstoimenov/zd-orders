@@ -45,6 +45,10 @@ button:disabled{opacity:.6;cursor:default}
 .ask{border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:6px}
 .err{color:var(--bad);margin-top:10px}
 .foot{margin-top:16px;text-align:center;font-size:12px;color:#a3a29b}
+.chg{border:1px solid var(--line);border-radius:12px;padding:12px;margin:0 0 14px;background:var(--soft)}
+.chg select,.chg input{width:100%;font:inherit;padding:10px;border:1px solid var(--line);border-radius:10px;margin:6px 0;background:#fff}
+.link{background:none;border:0;padding:6px 0;width:auto;color:#111;text-decoration:underline;font-weight:700;font-size:13.5px}
+.okmsg{color:var(--ok);font-weight:700;margin:8px 0}
 </style>
 </head>
 <body>
@@ -115,20 +119,69 @@ button:disabled{opacity:.6;cursor:default}
     return '<div class="ask"><div class="where">📦 Доставка: ' + esc(d.delivery) + '</div>' +
       '<button class="yes" data-a="yes">✓ Потвърждавам поръчката</button><button class="no" data-a="no">Отказвам поръчката</button><div class="err" id="err"></div></div>';
   }
-  function render(d, justAnswered) {
+  var cur = null, picker = null, choice = null;
+  var KINDS = [['econt_office', 'Еконт – офис или автомат'], ['speedy_office', 'Спиди – офис или автомат'], ['boxnow_locker', 'BOX NOW – автомат'],
+    ['econt_address', 'Еконт – до адрес'], ['speedy_address', 'Спиди – до адрес']];
+  function changeBox(d, open, done) {
+    if (!d.canChangeDelivery) return '';
+    if (done) return '<div class="okmsg">✓ Доставката е сменена</div>';
+    if (!open) return '<button type="button" class="link" data-chg="open">📍 Смени офиса или адреса</button>';
+    var kinds = KINDS.filter(function (k) { return k[0] !== 'boxnow_locker' || d.boxnow; });
+    var sel = kinds.some(function (k) { return k[0] === d.deliveryType; }) ? d.deliveryType : kinds[0][0];
+    return '<div class="chg"><b>Къде да пристигне пратката</b><select id="chgType">' + kinds.map(function (k) { return '<option value="' + k[0] + '"' + (k[0] === sel ? ' selected' : '') + '>' + k[1] + '</option>'; }).join('') + '</select>' +
+      '<div id="chgPick"></div><div id="chgAddr" hidden><input id="chgCity" placeholder="Град" maxlength="80"><input id="chgPost" placeholder="Пощенски код" maxlength="12"><input id="chgStreet" placeholder="Улица, номер, вход, етаж" maxlength="200"></div>' +
+      '<button type="button" class="yes" data-chg="save" style="margin-top:8px">Запази</button><button type="button" class="link" data-chg="close">Откажи</button><div class="err" id="chgErr"></div></div>';
+  }
+  function loadPicker() {
+    if (window.OrdyxPicker) return Promise.resolve();
+    window.__ZDO_NO_BOOT__ = true;
+    return new Promise(function (resolve, reject) {
+      var sc = document.createElement('script'); sc.src = '/checkout.js'; sc.async = true;
+      sc.onload = function () { window.OrdyxPicker ? resolve() : reject(new Error('picker')); }; sc.onerror = function () { reject(new Error('picker')); };
+      document.head.appendChild(sc);
+    });
+  }
+  function typeChanged() {
+    var t2 = document.getElementById('chgType').value, addr = /_address$/.test(t2);
+    document.getElementById('chgAddr').hidden = !addr; document.getElementById('chgPick').hidden = addr;
+    choice = null;
+    if (addr) { if (picker) picker.setType(''); return; }
+    loadPicker().then(function () {
+      if (!picker) picker = window.OrdyxPicker.mount(document.getElementById('chgPick'), { api: '', host: cur.shopDomain || location.host, type: t2, onChange: function (v) { choice = v; } });
+      else picker.setType(t2);
+    }).catch(function () { document.getElementById('chgErr').textContent = 'Изборът на офис не се зареди — опитайте пак.'; });
+  }
+  function render(d, justAnswered, chg) {
+    cur = d;
+    if (picker) { picker.destroy(); picker = null; }
     var head = '<div class="shop">' + esc(d.shop) + '</div><h1>' + (d.name ? 'Здравейте, ' + esc(d.name) + '!' : 'Здравейте!') + '</h1>' +
       '<div class="muted">Поръчка от ' + esc(when(d.createdAt)) + ' · ' + esc(money(d.total, d.currency)) + (d.cod ? ' с наложен платеж' : '') + '</div>';
     var thanks = justAnswered === 'yes' ? '<div class="state end"><span class="ic">✅</span><div><b>Благодарим! Поръчката е потвърдена.</b><span class="muted">' + esc(d.shop) + ' ще я изпрати скоро.</span></div></div>' : '';
-    card.innerHTML = head + askBox(d) + (thanks || stateBox(d)) + officeBox(d.tracking) + contact(d) + '<h2>Къде е поръчката</h2>' + timeline(d) +
+    card.innerHTML = head + askBox(d) + changeBox(d, chg === 'open', chg === 'done') + (thanks || stateBox(d)) + officeBox(d.tracking) + contact(d) + '<h2>Къде е поръчката</h2>' + timeline(d) +
       '<h2>Какво поръча</h2><ul class="items">' + d.items.map(function (it) { return '<li><span>' + esc(it.name) + '</span><span>× ' + esc(it.qty) + '</span></li>'; }).join('') + '</ul>' +
       '<div class="total"><span>Общо' + (d.cod ? ' (с наложен платеж)' : '') + '</span><span>' + esc(money(d.total, d.currency)) + '</span></div>' +
       '<div class="foot">Страницата се обновява, когато я отвориш отново.</div>';
   }
-  function load(justAnswered) {
+  function load(justAnswered, chg) {
     return fetch(API + '?t=' + encodeURIComponent(t), { credentials: 'same-origin' })
       .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Линкът не е валиден'); return d; }); })
-      .then(function (d) { render(d, justAnswered); });
+      .then(function (d) { render(d, justAnswered, chg); });
   }
+  card.addEventListener('change', function (e) { if (e.target.id === 'chgType') typeChanged(); });
+  card.addEventListener('click', function (e) {
+    var c = e.target.getAttribute && e.target.getAttribute('data-chg'); if (!c) return;
+    if (c === 'open') { render(cur, null, 'open'); typeChanged(); return; }
+    if (c === 'close') { render(cur); return; }
+    var t2 = document.getElementById('chgType').value, err = document.getElementById('chgErr'), body = { t: t, action: 'delivery', courier: t2.split('_')[0] };
+    if (/_address$/.test(t2)) { body.city = document.getElementById('chgCity').value; body.postCode = document.getElementById('chgPost').value; body.addressText = document.getElementById('chgStreet').value; }
+    else if (!choice || !choice.officeId) { err.textContent = (choice && choice.error) || 'Изберете офис или автомат.'; return; }
+    else body.officeId = choice.officeId;
+    e.target.disabled = true;
+    fetch(API, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (x) { if (!r.ok) throw new Error(x.error || 'Грешка'); return x; }); })
+      .then(function () { return load(null, 'done'); })
+      .catch(function (x) { err.textContent = x.message; e.target.disabled = false; });
+  });
   card.addEventListener('click', function (e) {
     var a = e.target.getAttribute && e.target.getAttribute('data-a'); if (!a) return;
     if (a === 'no' && !window.confirm('Сигурни ли сте, че отказвате поръчката?')) return;

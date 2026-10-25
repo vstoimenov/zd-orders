@@ -838,6 +838,21 @@ tr.hl td{background:#fffbe6}
       </div>
     </div>
   </div>
+  <div class="modal" id="dlModal" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlTitle" style="max-width:560px">
+      <div class="dhead"><div class="tile" style="color:#111;background:var(--accent)">📍</div><div><h2 id="dlTitle">Смени доставката</h2><div class="muted" style="font-size:15px" id="dlSub"></div></div><button type="button" class="x" data-close="dlModal" aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <div class="fgrid"><label style="grid-column:1/-1">Доставка<select id="dlType"><option value="econt_office">Еконт – офис / автомат</option><option value="speedy_office">Спиди – офис / автомат</option><option value="boxnow_locker">BOX NOW – автомат</option><option value="econt_address">Еконт – до адрес</option><option value="speedy_address">Спиди – до адрес</option></select></label></div>
+        <div id="dlPick"></div>
+        <div class="fgrid" id="dlAddr" hidden>
+          <label>Град<input type="text" id="dlCity" maxlength="80"></label>
+          <label>Пощенски код<input type="text" id="dlPost" maxlength="12"></label>
+          <label style="grid-column:1/-1">Адрес<input type="text" id="dlAddress" maxlength="200"></label>
+        </div>
+        <div class="actions"><button type="button" class="primary" id="dlSave">Запази</button><span class="muted" id="dlErr"></span></div>
+      </div>
+    </div>
+  </div>
   <div class="modal" id="newOrderModal" hidden>
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="noTitle" style="max-width:720px">
       <div class="dhead"><div class="tile" style="color:#111;background:var(--accent)">🧾</div><div><h2 id="noTitle">Нова поръчка</h2><div class="muted" style="font-size:15px">По телефона, от съобщение или от друг сайт — влиза като всяка друга поръчка</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
@@ -1338,7 +1353,7 @@ tr.hl td{background:#fffbe6}
         '<td data-label="Артикули">' + items + '</td>' +
         '<td data-label="Сума"><b>' + o.total.toFixed(2) + ' ' + esc(o.currency) + '</b></td>' +
         '<td data-label="Статус"><select data-status="' + i + '">' + opts + '</select></td>' +
-        '<td>' + packedCell(o, i) + (['new', 'confirmed'].indexOf(o.status) >= 0 && o.phone ? '<button type="button" data-confirm="' + i + '">💬 Потвърди</button>' + (DEMO ? '' : '<button type="button" data-call="' + i + '" title="Гласов агент звъни на клиента и пита дали потвърждава">📞 Потвърди</button>') : '') + confirmBadge(o) +
+        '<td>' + packedCell(o, i) + (['new', 'confirmed'].indexOf(o.status) >= 0 && !o.shipment && !o.waybillState && !(o.fulfilment && o.fulfilment.sentAt) ? '<button type="button" data-dl="' + i + '" title="Друг офис, автомат или адрес">📍 Доставка</button>' : '') + (o.deliveryChangedBy === 'customer' ? '<span class="tag" title="Клиентът смени доставката от страницата на поръчката">📍 сменена от клиента</span>' : '') + (['new', 'confirmed'].indexOf(o.status) >= 0 && o.phone ? '<button type="button" data-confirm="' + i + '">💬 Потвърди</button>' + (DEMO ? '' : '<button type="button" data-call="' + i + '" title="Гласов агент звъни на клиента и пита дали потвърждава">📞 Потвърди</button>') : '') + confirmBadge(o) +
           shipmentCell(o, i) + '<button type="button" data-slip="' + i + '" title="Лист за пакетиране с QR код">🖨 Лист</button><button type="button" data-copy="' + i + '">Копирай за товарителница</button><button type="button" class="del" data-del="' + i + '" title="Изтрий поръчката от системата">Изтрий</button></td>' +
         '</tr>';
     }).join('') || '<tr><td colspan="7" class="muted">Няма поръчки.</td></tr>';
@@ -1511,6 +1526,7 @@ tr.hl td{background:#fffbe6}
     if (btn.getAttribute('data-slip') != null) { window.open(withShop(API + 'orders') + '&slip=' + encodeURIComponent(orders[btn.getAttribute('data-slip')].id), '_blank'); return; }
     if (btn.getAttribute('data-confirm') != null) { openConfirm(orders[btn.getAttribute('data-confirm')]); return; }
     if (btn.getAttribute('data-call') != null) { voiceCall(orders[btn.getAttribute('data-call')], btn); return; }
+    if (btn.getAttribute('data-dl') != null) { openDelivery(orders[btn.getAttribute('data-dl')]); return; }
     if (btn.getAttribute('data-track') != null) { openConfirm(orders[btn.getAttribute('data-track')], 'track'); return; }
     if (btn.getAttribute('data-wb') != null) { openWaybill(orders[btn.getAttribute('data-wb')]); return; }
     if (btn.getAttribute('data-wbrelease') != null) {
@@ -2290,6 +2306,39 @@ tr.hl td{background:#fffbe6}
 
   /* ---- потвърждение на поръчка от клиента (WhatsApp/SMS от вашия телефон + личен линк) ---- */
   /* ---- потвърждение по телефона: гласов агент звъни; при „да“ поръчката става „Потвърдена“ сама ---- */
+  /* ---- смяна на доставката (поръчка без товарителница) ---- */
+  var dlOrder = null, dlPicker = null, dlChoice = null;
+  function dlTypeChanged() {
+    var t = $('dlType').value, addr = /_address$/.test(t);
+    $('dlAddr').hidden = !addr; $('dlPick').hidden = addr; dlChoice = null;
+    if (addr) { if (dlPicker) dlPicker.setType(''); return; }
+    var sh = shopById(dlOrder.shopId);
+    loadPicker().then(function () {
+      if (!dlPicker) dlPicker = window.OrdyxPicker.mount($('dlPick'), { api: '', host: sh ? sh.domain : location.host, type: t, onChange: function (v) { dlChoice = v; } });
+      else dlPicker.setType(t);
+    }).catch(function () { $('dlErr').textContent = 'Изборът на офис не се зареди — опитайте пак.'; });
+  }
+  function openDelivery(o) {
+    dlOrder = o;
+    if (dlPicker) { dlPicker.destroy(); dlPicker = null; }
+    $('dlSub').textContent = (o.name || 'Клиент') + ' · сега: ' + (o.officeText || '—');
+    $('dlType').value = $('dlType').querySelector('option[value="' + o.deliveryType + '"]') ? o.deliveryType : 'econt_office';
+    $('dlCity').value = o.city || ''; $('dlPost').value = o.postCode || ''; $('dlAddress').value = o.addressText || ''; $('dlErr').textContent = '';
+    $('dlModal').hidden = false;
+    dlTypeChanged();
+  }
+  $('dlType').addEventListener('change', dlTypeChanged);
+  $('dlSave').addEventListener('click', function () {
+    var t = $('dlType').value, body = { action: 'delivery', id: dlOrder.id, courier: t.split('_')[0] };
+    if (/_address$/.test(t)) { body.city = $('dlCity').value; body.postCode = $('dlPost').value; body.addressText = $('dlAddress').value; }
+    else if (!dlChoice || !dlChoice.officeId) { $('dlErr').textContent = (dlChoice && dlChoice.error) || 'Изберете офис или автомат.'; return; }
+    else body.officeId = dlChoice.officeId;
+    $('dlErr').textContent = '';
+    busy($('dlSave'), fetch(withShop(API + 'orders'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (r.status === 401) { showLogin(); throw new Error('auth'); } if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
+      .then(function () { $('dlModal').hidden = true; load(page); })
+      .catch(function (e) { if (e.message !== 'auth') $('dlErr').textContent = e.message; });
+  });
   function voiceCall(o, btn) {
     if (!window.confirm('Гласовият агент ще се обади на ' + (o.name || 'клиента') + ' (' + o.phone + ') и ще попита дали потвърждава поръчката.\n\nПри „да“ поръчката става „Потвърдена“ сама. Да звънне ли?')) return;
     var was = btn.textContent;
