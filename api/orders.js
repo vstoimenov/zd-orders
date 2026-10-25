@@ -49,7 +49,7 @@ export default async function handler(req, res) {
     // anyone can post to this public endpoint: with a ConvertBuilder connection the order is kept aside until ConvertBuilder confirms it
     const cfg = await cbConfig(q, allowed.shopId).catch(() => null);
     const r = await insertOrder(q, { ...v.order, cbOrderId, ip, userAgent: userAgent.slice(0, 300), trafficSource, shopId: allowed.shopId, cbCheck: cfg ? 'pending' : '' });
-    if (r.id && r.inserted) await saveInvoice(q, r.id, v.order.invoice).catch((err) => console.error('[orders] invoice', err.message));
+    if (r.id) await saveInvoice(q, r.id, v.order.invoice, { onlyIfEmpty: true }).catch((err) => console.error('[orders] invoice', err.message));
     let start = r.inserted && !cfg;
     if (r.inserted && cfg) {
       let known = false;

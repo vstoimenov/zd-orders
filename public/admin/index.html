@@ -3113,7 +3113,7 @@ tr.hl td{background:#fffbe6}
     var demo = $('wbCreate').getAttribute('data-demo') === '1';
     if (!demo && !window.confirm('Да създам ли истинска товарителница в ' + wbCourierName + ' за ' + (wbOrder.name || 'клиента') + '?\n\nПратката ще се таксува според условията ви при куриера. Поръчката ще стане „Изпратена“.')) return;
     $('wbInfo').textContent = 'Създавам товарителницата…';
-    var b = wbInput(); b.action = 'create'; b.expectDemo = demo;
+    var b = wbInput(); b.action = 'create'; b.expectDemo = demo; b.deliveryChangedAt = wbOrder.deliveryChangedAt || null; // refused if the customer moved it meanwhile
     busy($('wbCreate'), wb(b)).then(function (w) {
       $('wbInfo').innerHTML = '✓ Товарителница <b>' + esc(w.number) + '</b>' + (w.price != null ? ' (' + esc(money(w.price, w.currency)) + ')' : '') +
         (w.pdf ? ' · <a href="' + esc(pdfHref(w.pdf)) + '" target="_blank" rel="noopener">PDF за печат</a>' : '') +

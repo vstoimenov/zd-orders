@@ -179,7 +179,8 @@ test('„Направи поръчка“ from an abandoned cart links the cart 
   const [c] = await q(`select order_id, recovered_at from zd.abandoned_carts where id = $1::uuid`, [cart]);
   assert.equal(c.order_id, json(res).id); assert.ok(c.recovered_at);
   const again = await call(body(cart));
-  assert.equal(again.statusCode, 200);
+  assert.equal(again.statusCode, 400, 'a cart already turned into an order is refused');
+  assert.match(json(again).error, /вече поръча/);
   const [c2] = await q(`select order_id from zd.abandoned_carts where id = $1::uuid`, [cart]);
   assert.equal(c2.order_id, json(res).id, 'the first order stays linked');
   const { listCarts } = await import('../lib/abandoned.js');
