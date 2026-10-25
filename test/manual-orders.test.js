@@ -167,3 +167,30 @@ test('manual and CSV orders take the shop\'s currency', async () => {
   await post({ action: 'create', order: manual() });
   assert.equal((await listOrders(q)).rows[0].currency, 'BGN');
 });
+
+/* ---- an abandoned cart turned into an order ---- */
+test('„Направи поръчка“ from an abandoned cart links the cart to the new order and marks it recovered, once', async () => {
+  const [{ id: cart }] = await q(`insert into zd.abandoned_carts (shop_id, phone_norm, name, items, total, created_at, updated_at)
+    values ($1::uuid, '+359888999000', 'Петя', '[{"name":"Книга","qty":1,"price":20}]', 20, now() - interval '2 hours', now() - interval '2 hours') returning id`, [SHOP]);
+  const body = (cartId) => JSON.stringify({ action: 'create', cartId, order: { name: 'Петя', phone: '0888999000', delivery_type: 'other', office_text: 'По телефона', items: [{ name: 'Книга', qty: 1, price: 20 }], total: '20' } });
+  const call = async (b) => { const res = fakeRes(); await ordersApi(fakeReq({ method: 'POST', url: `/api/admin/orders?shop=${SHOP}`, headers: { cookie: `zdo_admin=${signSession('secret')}` }, body: b }), res); return res; };
+  const res = await call(body(cart));
+  assert.equal(res.statusCode, 200, res.body);
+  const [c] = await q(`select order_id, recovered_at from zd.abandoned_carts where id = $1::uuid`, [cart]);
+  assert.equal(c.order_id, json(res).id); assert.ok(c.recovered_at);
+  const again = await call(body(cart));
+  assert.equal(again.statusCode, 200);
+  const [c2] = await q(`select order_id from zd.abandoned_carts where id = $1::uuid`, [cart]);
+  assert.equal(c2.order_id, json(res).id, 'the first order stays linked');
+  const { listCarts } = await import('../lib/abandoned.js');
+  const [listed] = await listCarts(q, { shopId: SHOP, state: 'all' });
+  assert.equal(listed.orderId, json(res).id);
+});
+
+test('a cart of another shop is never linked', async () => {
+  const [{ id: other }] = await q(`insert into zd.shops (name, domain) values ('Б', 'b-shop.bg') returning id`);
+  const [{ id: cart }] = await q(`insert into zd.abandoned_carts (shop_id, phone_norm, name, items, total) values ($1::uuid, '+359888999000', 'П', '[]', 1) returning id`, [other]);
+  await createManualOrder(q, { shopId: SHOP, domain: 'a-shop.bg', currency: 'EUR', cartId: cart, order: { name: 'П', phone: '0888999000', delivery_type: 'other', office_text: 'x', items: [{ name: 'К', qty: 1, price: 1 }], total: '1' } });
+  const [c] = await q(`select order_id from zd.abandoned_carts where id = $1::uuid`, [cart]);
+  assert.equal(c.order_id, null);
+});

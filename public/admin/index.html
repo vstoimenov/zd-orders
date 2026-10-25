@@ -1432,9 +1432,10 @@ tr.hl td{background:#fffbe6}
     var sum = noItems().reduce(function (n, it) { return n + (Number(it.price) || 0) * (Number(it.qty) || 1); }, 0);
     if (!$('noTotal').getAttribute('data-touched')) $('noTotal').value = sum ? sum.toFixed(2).replace('.', ',') : '';
   }
+  var noCartId = null; // the abandoned cart this order is made from („Направи поръчка“)
   function openNewOrder() {
     if (noPicker) { noPicker.destroy(); noPicker = null; } // a fresh picker: the previous customer's office never carries over
-    noChoice = null;
+    noChoice = null; noCartId = null;
     ['noName', 'noPhone', 'noEmail', 'noCity', 'noPost', 'noAddress', 'noOtherText', 'noTotal', 'noInvCompany', 'noInvEik', 'noInvVat', 'noInvMol', 'noInvAddress'].forEach(function (id) { $(id).value = ''; });
     $('noInvOn').checked = false; $('noInv').hidden = true;
     $('noTotal').removeAttribute('data-touched'); $('noErr').textContent = ''; $('noPay').value = 'cod';
@@ -1444,6 +1445,16 @@ tr.hl td{background:#fffbe6}
     noTypeChanged();
   }
   $('noNew').addEventListener('click', openNewOrder);
+  /** The new order form filled from an abandoned cart; the shop picks the office with the customer on the phone. */
+  function orderFromCart(c) {
+    openNewOrder();
+    noCartId = c.id;
+    $('noName').value = c.name || ''; $('noPhone').value = c.phoneNorm || ''; $('noEmail').value = c.email || '';
+    var items = (c.items || []).filter(function (it) { return it && it.name; });
+    $('noItems').querySelector('tbody').innerHTML = items.length ? items.map(function (it) { return noItemRow({ name: it.name, qty: it.qty || 1, price: it.price != null ? it.price : '' }); }).join('') : noItemRow();
+    $('noTotal').value = c.total ? String(c.total).replace('.', ',') : ''; $('noTotal').setAttribute('data-touched', '1');
+    if (c.deliveryText) $('noErr').textContent = 'В количката: ' + c.deliveryText + ' — изберете офиса или адреса.';
+  }
   $('noInvOn').addEventListener('change', function () { $('noInv').hidden = !$('noInvOn').checked; });
   $('noType').addEventListener('change', noTypeChanged);
   $('noAddItem').addEventListener('click', function () { $('noItems').querySelector('tbody').insertAdjacentHTML('beforeend', noItemRow()); });
@@ -1462,9 +1473,9 @@ tr.hl td{background:#fffbe6}
     } else if (ADDRESS_TYPES.indexOf(t) >= 0) { order.city = $('noCity').value; order.post_code = $('noPost').value; order.address_text = $('noAddress').value; }
     else order.office_text = $('noOtherText').value;
     $('noErr').textContent = '';
-    busy($('noSave'), fetch(withShop(API + 'orders'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', order: order }) })
+    busy($('noSave'), fetch(withShop(API + 'orders'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', order: order, cartId: noCartId || undefined }) })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (r.status === 401) { showLogin(); throw new Error('auth'); } if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
-      .then(function () { $('newOrderModal').hidden = true; load(1); })
+      .then(function () { var fromCart = noCartId; $('newOrderModal').hidden = true; noCartId = null; if (fromCart) loadAbandoned(); else load(1); })
       .catch(function (e) { if (e.message !== 'auth') $('noErr').textContent = e.message; });
   });
 
@@ -1844,6 +1855,7 @@ tr.hl td{background:#fffbe6}
       var items = c.items.map(function (it) { return esc(it.qty + ' × ' + it.name); }).join('<br>') || '<span class="muted">—</span>';
       var state = AB_STATE[c.state] + (c.state === 'reminded' ? ' <span class="muted">(' + esc(c.reminderChannel) + ', ' + when(c.remindedAt) + ')</span>' : '') + (c.state === 'recovered' ? ' <span class="muted">' + when(c.recoveredAt) + '</span>' : '');
       var acts = c.optedOut ? '<span class="muted">отписан от съобщения</span>' : (c.state === 'recovered' ? '' : '<button type="button" class="ghost" data-abremind="' + i + '">💬 Напомни</button>');
+      if (c.state !== 'hidden' && c.state !== 'recovered') acts += ' <button type="button" class="ghost" data-aborder="' + i + '" title="Клиентът каза „да“ по телефона — поръчката се попълва от количката">Направи поръчка</button>';
       if (c.state !== 'hidden' && c.state !== 'recovered') acts += ' <button type="button" class="ghost" data-abhide="' + i + '">Скрий</button>';
       return '<tr><td data-label="Кога">' + when(c.updatedAt) + '</td><td data-label="Клиент"><b>' + esc(c.name || '—') + '</b><br>' + esc(c.phoneNorm) +
         (c.email ? '<br><span class="muted">' + esc(c.email) + '</span>' : '') + (c.deliveryText ? '<br><span class="muted">' + esc(c.deliveryText) + '</span>' : '') +
@@ -1876,6 +1888,7 @@ tr.hl td{background:#fffbe6}
     }
     var b = e.target.closest('button'); if (!b) return;
     if (b.hasAttribute('data-abremind')) abMenu(+b.getAttribute('data-abremind'), 'plain');
+    if (b.hasAttribute('data-aborder')) { orderFromCart(abCarts[b.getAttribute('data-aborder')]); return; }
     if (b.hasAttribute('data-abhide')) busy(b, abCall('abandoned', { action: 'hide', id: abCarts[b.getAttribute('data-abhide')].id })).then(loadAbandoned).catch(function (err) { alert(err.message); });
   });
   $('abTable').addEventListener('change', function (e) { var i = e.target.getAttribute('data-abdisc'); if (i != null) abMenu(+i, e.target.checked ? 'discount' : 'plain'); });
