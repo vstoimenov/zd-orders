@@ -393,6 +393,10 @@ tr.hl td{background:#fffbe6}
         <div class="panel"><h2>Последни поръчки</h2><table id="dRecent"></table></div>
       </div>
       <div class="grid2">
+        <div class="panel"><h2>Куриери и доставка <button type="button" class="ghost" id="dMixCsv" style="float:right;font-size:12px;padding:4px 10px">CSV</button></h2><div class="muted" id="dMixHi" style="margin:-4px 0 8px"></div><table id="dMix"></table></div>
+        <div class="panel"><h2>Потвърждения</h2><table id="dConfirms"></table></div>
+      </div>
+      <div class="grid2">
         <div class="panel"><h2>По вид доставка</h2><table id="dDelivery"></table></div>
         <div class="panel"><h2>По статус</h2><table id="dStatus"></table></div>
       </div>
@@ -1714,7 +1718,30 @@ tr.hl td{background:#fffbe6}
     }));
     $('dDelivery').innerHTML = table(['Доставка', 'Поръчки', 'Оборот'], d.byDelivery.map(function (x) { return [esc(DELIVERY[x.deliveryType] || x.deliveryType), String(x.orders), esc(x.revenue.toFixed(2).replace('.', ','))]; }));
     $('dStatus').innerHTML = table(['Статус', 'Поръчки'], d.byStatus.map(function (x) { return [esc(STATUS_LABEL[x.status] || x.status), String(x.orders)]; }));
+    renderMix(d);
   }
+  var COURIER_BG = { econt: 'Еконт', speedy: 'Спиди', boxnow: 'BOX NOW', other: 'Друг' }, KIND_BG = { office: 'офис', locker: 'автомат', address: 'адрес', other: 'друго' };
+  var CHANNEL_BG = { link: 'Линк (от клиента)', whatsapp: 'WhatsApp бутон', voice: 'Гласов агент', manual: 'Ръчно от магазина', none: 'Без потвърждение' };
+  var lastMix = [];
+  function mixName(r) { return (COURIER_BG[r.courier] || r.courier) + ' · ' + (KIND_BG[r.kind] || r.kind); }
+  function renderMix(d) {
+    lastMix = d.deliveryMix || [];
+    var h = d.deliveryHighlights || {};
+    $('dMixHi').innerHTML = [h.most ? 'Най-много: <b>' + esc(mixName(h.most)) + '</b> (' + pct(h.most.share) + ')' : '', h.fewestReturns ? 'Най-малко връщания: <b>' + esc(mixName(h.fewestReturns)) + '</b> (' + pct(h.fewestReturns.returnRate) + ')' : ''].filter(Boolean).join(' · ');
+    $('dMix').innerHTML = table(['Куриер · доставка', 'Поръчки', 'Дял', 'Доставени', 'Върнати', 'Връщания', 'Оборот'], lastMix.map(function (r) {
+      return [esc(mixName(r)), String(r.orders), pct(r.share), String(r.delivered), String(r.returned), pct(r.returnRate), esc(r.revenue.toFixed(2).replace('.', ','))];
+    }));
+    $('dConfirms').innerHTML = table(['Канал', 'Поръчки', 'Потвърдени', 'Отказани'], (d.confirmations || []).map(function (r) {
+      return [esc(CHANNEL_BG[r.channel] || r.channel), String(r.orders), String(r.confirmed), String(r.cancelled)];
+    }));
+  }
+  $('dMixCsv').addEventListener('click', function () {
+    var rows = [['Куриер', 'Доставка', 'Поръчки', 'Дял %', 'Доставени', 'Върнати', 'Връщания %', 'Оборот']].concat(lastMix.map(function (r) {
+      return [COURIER_BG[r.courier] || r.courier, KIND_BG[r.kind] || r.kind, r.orders, (r.share * 100).toFixed(1), r.delivered, r.returned, r.returnRate == null ? '' : (r.returnRate * 100).toFixed(1), r.revenue.toFixed(2)];
+    }));
+    var csv = '\ufeff' + rows.map(function (r) { return r.map(function (c) { var t = String(c); return /[";\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }).join(';'); }).join('\r\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'kurieri-dostavki.csv'; a.click();
+  });
   function loadDash() {
     var r = periodRange($('dPeriod').value), p = new URLSearchParams({ from: r[0], to: r[1] });
     $('dCards').innerHTML = '<div class="muted">Зареждане…</div>';
