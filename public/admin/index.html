@@ -1114,6 +1114,14 @@ tr.hl td{background:#fffbe6}
             <label class="check"><input type="checkbox" id="iCbActive" checked> Активна интеграция</label>
           </div>
           <div class="actions"><button type="button" class="primary" id="iCbSave">Запази и свържи</button><button type="button" class="ghost" id="iCbTest">Тествай връзката</button></div>
+          <div class="tip" id="iCbNext" hidden>
+            <b>✓ Свързано. Последна стъпка: сложете този код в сайта си</b> — без него в чекаута няма избор на офис или автомат на Еконт/Спиди.
+            <div class="codebox"><code id="iCbSnippet"></code><button type="button" class="ghost" id="iCbCopy">Копирай кода</button></div>
+            <ol style="margin:6px 0 0 18px;padding:0"><li>В ConvertBuilder отворете сайта → <b>Настройки на сайта → „Собствен код“</b>.</li>
+              <li>В <b>„Код за целия сайт“</b>, поле <b>„Body“</b>, поставете кода най-отдолу.</li>
+              <li>Натиснете <b>„Запази“</b>, после <b>„Публикувай“</b>.</li></ol>
+            <div class="muted" style="margin-top:6px">⚠️ Не в „Код за текущата страница“ — там ConvertBuilder понякога трие кода.</div>
+          </div>
           <div class="syncbox">
             <h3>Синхронизация на поръчки</h3>
             <div class="actions">
@@ -3146,7 +3154,7 @@ tr.hl td{background:#fffbe6}
     [].forEach.call(document.querySelectorAll('#cbTabs button'), function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === t); });
     $('tabShop').hidden = t !== 'shop'; $('tabSync').hidden = t !== 'sync';
   }
-  function openCb(tab) { $('cbModal').hidden = false; cbTab(tab); }
+  function openCb(tab) { $('cbModal').hidden = false; $('iCbNext').hidden = true; cbTab(tab); }
   function closeCb() { $('cbModal').hidden = true; loadIntegrations(); }
   $('iCbOpen').addEventListener('click', function () { openCb('shop'); });
   $('iMetaOpen').addEventListener('click', openMeta);
@@ -3240,9 +3248,20 @@ tr.hl td{background:#fffbe6}
     busy($('iCbSave'), integ({ action: 'save_convertbuilder', domain: $('iCbDomain').value, apiKey: $('iCbKey').value, active: $('iCbActive').checked }))
       .then(function (d) {
         $('iCbKey').value = ''; loadIntegrations();
-        alert(d.active ? 'Свързано ✓ В магазина има ' + (d.totalOrders == null ? '?' : d.totalOrders) + ' поръчки.' : 'Интеграцията е изключена.');
+        if (!d.active) { $('iCbNext').hidden = true; $('iCbInfo').textContent = 'Интеграцията е изключена.'; return; }
+        $('iCbInfo').textContent = 'Свързано ✓ В магазина има ' + (d.totalOrders == null ? '?' : d.totalOrders) + ' поръчки.';
+        $('iCbSnippet').textContent = '<script src="' + location.origin + '/kurier.js" defer><\/script>';
+        return fetch(withShop(API + 'onboarding'), { credentials: 'same-origin' }).then(function (r) { return r.json(); })
+          .then(function (o) { if (o && o.snippet) $('iCbSnippet').textContent = o.snippet; }, function () {})
+          .then(function () { $('iCbNext').hidden = false; $('iCbNext').scrollIntoView({ block: 'nearest' }); });
       })
       .catch(function (e) { showErr('iCbInfo', e); });
+  });
+  $('iCbCopy').addEventListener('click', function () {
+    var b = this, t = $('iCbSnippet').textContent;
+    var ok = function () { b.textContent = 'Копирано ✓'; setTimeout(function () { b.textContent = 'Копирай кода'; }, 1500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, function () { window.prompt('Копирайте кода:', t); });
+    else window.prompt('Копирайте кода:', t);
   });
   $('iCbTest').addEventListener('click', function () {
     busy($('iCbTest'), integ({ action: 'test_convertbuilder' }))
