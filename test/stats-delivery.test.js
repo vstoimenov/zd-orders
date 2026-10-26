@@ -26,7 +26,7 @@ const order = async (deliveryType, status = 'new', total = 10) => {
   await q(`update zd.orders set status = $2 where id = $1::uuid`, [id, status]);
   return id;
 };
-const period = () => { const d = new Date().toISOString().slice(0, 10); return { from: d, to: d }; };
+const period = () => { const d = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Sofia' }); return { from: d, to: d }; }; // Sofia's day, as the stats count it
 
 test('the delivery mix: courier × kind with shares, delivered, returned and the return rate', async () => {
   for (let i = 0; i < 6; i++) await order('econt_office', 'delivered');

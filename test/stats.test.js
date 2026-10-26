@@ -126,11 +126,14 @@ test('getStats adds visits, conversion, traffic sources and ad spend', async () 
 });
 
 test('CR only counts orders placed after visit tracking began on that site', async () => {
-  const day = today();
-  await add(); // an order placed before tracking began
-  await q(`update zd.orders set created_at = now() - interval '2 hours'`);
-  await q(`insert into zd.visits (day, site, visitor, source, created_at) values ($1::date, 'live.bg', 'a', 'direct', now() - interval '1 hour'), ($1::date, 'live.bg', 'b', 'direct', now() - interval '30 minutes')`, [day]);
-  await add(); // after tracking began
+  // fixed times early on one Sofia day that has certainly begun (now minus hours can fall on yesterday right after midnight)
+  const day = new Date(Date.now() - 10 * 60e3).toLocaleDateString('sv-SE', { timeZone: 'Europe/Sofia' });
+  const at = (hm) => `${day} ${hm} Europe/Sofia`;
+  const before = await add(); // an order placed before tracking began
+  await q(`update zd.orders set created_at = $2::timestamptz where id = $1::uuid`, [before.id, at('00:05')]);
+  await q(`insert into zd.visits (day, site, visitor, source, created_at) values ($1::date, 'live.bg', 'a', 'direct', $2::timestamptz), ($1::date, 'live.bg', 'b', 'direct', $3::timestamptz)`, [day, at('00:06'), at('00:07')]);
+  const after = await add(); // after tracking began
+  await q(`update zd.orders set created_at = $2::timestamptz where id = $1::uuid`, [after.id, at('00:08')]);
   const s = await getStats(q, { from: day, to: day, shopId: DEFAULT_SHOP });
   assert.equal(s.cards.orders, 2);
   assert.equal(s.cards.visits, 2);
