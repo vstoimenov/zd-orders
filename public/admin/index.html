@@ -190,9 +190,9 @@ a.btnlink{display:inline-block;padding:9px 12px;border-radius:10px;text-decorati
 .kseg button{border:0;background:none;padding:11px;border-radius:10px;font-weight:700;color:var(--muted)}
 .kseg button.on{background:var(--accent);color:#111}
 .tip{background:#fafaf7;border:1px solid var(--line);border-radius:12px;padding:12px 16px;color:var(--muted);margin-bottom:18px}
-.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px;margin-bottom:20px}
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px;margin-bottom:20px}
 .fgrid label{display:flex;flex-direction:column;gap:7px;font-weight:700;font-size:14px}
-.fgrid input,.fgrid select{padding:12px 14px;border-radius:12px;font-weight:400;background:#fafaf7}
+.fgrid input,.fgrid select{min-width:0;padding:12px 14px;border-radius:12px;font-weight:400;background:#fafaf7}
 .fgrid .check{flex-direction:row;align-items:center;gap:10px;font-weight:600}
 .fgrid .check input{width:18px;height:18px}
 .actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
@@ -275,7 +275,7 @@ tr.hl td{background:#fffbe6}
   .pagehead h1{font-size:24px}
   .grid2{grid-template-columns:1fr}
   .igrid{grid-template-columns:1fr}
-  .fgrid{grid-template-columns:1fr}
+  .fgrid{grid-template-columns:minmax(0,1fr)}
   .dhead,.dbody{padding-left:18px;padding-right:18px}
   .icard{flex-wrap:wrap}
 }
@@ -934,7 +934,7 @@ tr.hl td{background:#fffbe6}
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="notifTitle" style="max-width:560px">
       <div class="dhead"><div class="tile" style="color:#111;background:var(--accent)">🔔</div><div><h2 id="notifTitle">Известия за нови поръчки</h2><div class="muted" style="font-size:15px">На този телефон или компютър</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
       <div class="dbody">
-        <div class="tip" id="nIos" hidden>📱 <b>На iPhone:</b> натиснете <b>Сподели</b> (квадратчето със стрелка) → <b>„Добави към началния екран“</b>, после отворете админа <b>от новата иконка „Поръчки“</b> и включете известията оттам. В Safari директно iPhone не позволява известия.</div>
+        <div class="tip" id="nIos" hidden>📱 <b>На iPhone:</b> натиснете <b>Сподели</b> (квадратчето със стрелка) → <b>„Добави към началния екран“</b>, после отворете админа <b>от новата иконка „Ordyx“</b> и включете известията оттам. В Safari директно iPhone не позволява известия.</div>
         <div class="tip" id="nInstall" hidden>💡 За удобство добавете админа на началния екран: в менюто на браузъра → <b>„Инсталиране на приложението“</b> / <b>„Добави към началния екран“</b>.</div>
         <p id="nState" style="font-size:15px;margin:0 0 14px"></p>
         <div class="actions"><button type="button" class="primary" id="nOn">🔔 Включи известия</button><button type="button" class="ghost" id="nTest" hidden>Пробно известие</button><button type="button" class="ghost" id="nOff" hidden>Изключи</button></div>
@@ -1397,6 +1397,7 @@ tr.hl td{background:#fffbe6}
         if (r.ok) { $('pw').value = ''; load(page); }
         else if (r.status === 401 && $('loginEmail').value.trim()) return r.json().catch(function () { return {}; }).then(function (d) { $('loginErr').textContent = d.error || 'Грешен имейл или парола.'; });
         else if (r.status === 401) $('loginErr').textContent = 'Грешна парола.';
+        else if (r.status === 429) return r.json().catch(function () { return {}; }).then(function (d) { $('loginErr').textContent = d.error || 'Твърде много опити — изчакайте минута.'; });
         else $('loginErr').textContent = 'Грешка на сървъра. Опитайте пак.';
       })
       .catch(function () { $('loginErr').textContent = 'Няма връзка със сървъра. Опитайте пак.'; })
@@ -1975,7 +1976,7 @@ tr.hl td{background:#fffbe6}
   });
   function renderShopBtn() {
     var s = currentShop === 'all' ? null : shopById(currentShop);
-    var name = currentShop === 'all' ? 'Всички магазини' : (s ? s.display : 'Моят магазин');
+    var name = currentShop === 'all' ? 'Всички магазини' : (s ? s.display : shops.length ? 'Моят магазин' : 'Добавете магазин');
     $('shopName').textContent = name;
     $('shopInitial').textContent = currentShop === 'all' ? '∑' : (name.trim().charAt(0).toUpperCase() || 'М');
     document.title = name + (DEMO ? ' – Ordyx демо' : ' – Ordyx');
@@ -1991,6 +1992,7 @@ tr.hl td{background:#fffbe6}
     return fetch(API + 'shops', { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); })
       .then(function (d) {
         shops = d.shops || [];
+        if (currentShop === 'all' && !shops.length) currentShop = ''; // e.g. remembered from the demo: a new client has nothing to sum
         if (currentShop !== 'all' && !shopById(currentShop)) currentShop = (shops[0] || {}).id || '';
         renderShopBtn();
       });
@@ -2020,12 +2022,13 @@ tr.hl td{background:#fffbe6}
   });
   $('nsSave').addEventListener('click', function () {
     $('nsErr').textContent = '';
+    var fromGuide = location.hash === '#start';
     busy($('nsSave'), fetch(API + 'shops', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: $('nsName').value, domain: $('nsDomain').value }) })
       .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
       .then(function (d) {
         $('shopModal').hidden = true;
         if (d.shop && d.shop.approved === false) alert('Магазинът е добавен ✓\n\nПоръчките от чекаута на ' + d.shop.domain + ' ще започнат да влизат, след като собственикът на платформата го одобри.');
-        return loadShops().then(function () { location.hash = '#integrations'; chooseShop(d.shop.id); });
+        return loadShops().then(function () { location.hash = fromGuide ? '#start' : '#integrations'; chooseShop(d.shop.id); }); // the guide shows what comes next
       })
       .catch(function (e) { $('nsErr').textContent = e.message; });
   });
@@ -2150,11 +2153,12 @@ tr.hl td{background:#fffbe6}
     var m = s.meta || {};
     chip('iMetaChip', m.connected, 'Свързан', m.configured ? 'Неактивен' : 'Не е свързан');
     chip('iMetaChip2', m.connected, 'Свързан', m.configured ? 'Неактивен' : 'Не е свързан');
-    $('iMetaOpen').textContent = m.configured ? 'Настройки' : '+ Свържи';
-    $('iMetaOpen').className = m.configured ? 'ghost' : 'primary';
+    $('iMetaOpen').textContent = m.open === false ? 'Скоро' : m.configured ? 'Настройки' : '+ Свържи';
+    $('iMetaOpen').className = m.open === false || m.configured ? 'ghost' : 'primary';
+    $('iMetaOpen').disabled = m.open === false; // clients: until Meta approves the app (META_PUBLIC)
     var daysLeft = m.tokenExpiresAt ? Math.floor((Date.parse(m.tokenExpiresAt) - Date.now()) / 864e5) : null;
     $('iMetaLine').textContent = m.accountId ? (m.accountName || 'акаунт') + ' · act_' + m.accountId + ' · ' + (m.currency || '') + ' · синхронизация ' + when(m.lastSyncAt) +
-      (daysLeft != null ? ' · връзката е валидна още ' + Math.max(0, daysLeft) + ' дни' : '') : (m.configured && m.oauth ? 'Влязохте с Facebook — изберете рекламен акаунт' : '');
+      (daysLeft != null ? ' · връзката е валидна още ' + Math.max(0, daysLeft) + ' дни' : '') : m.open === false ? 'Очаква одобрение от Meta — скоро ще свържете рекламите си оттук.' : (m.configured && m.oauth ? 'Влязохте с Facebook — изберете рекламен акаунт' : '');
     var pm = m.partner || {};
     $('iMetaPartnerOn').hidden = !pm.enabled; $('iMetaPartnerOff').hidden = !!pm.enabled;
     $('iMetaBiz').textContent = pm.businessId || '';
@@ -2673,13 +2677,15 @@ tr.hl td{background:#fffbe6}
           '<li>Изберете подател, услуга, откъде изпращате (офис или адресът по договора — тогава куриерът се поръчва автоматично), лице за контакт, печат A4 или A6.</li>' +
           '<li>При всяка поръчка със Спиди — <b>„Създай товарителница“</b>.</li></ol>',
         actions: [{ id: 'integrations', label: 'Отвори Интеграции' }] },
+      d.metaOpen === false && !d.meta ? { title: 'Рекламите от Meta (ROAS, CPA)', optional: true, done: false, state: 'Скоро — очаква одобрение от Meta.',
+        body: '<p>Скоро тук ще свържете рекламния си акаунт с един бутон и таблото ще показва разхода, ROAS и CPA. Ще ви уведомим.</p>' } :
       { title: 'Рекламите от Meta (ROAS, CPA)', optional: true, done: Boolean(d.meta),
         state: d.meta ? 'Свързан ✓' : 'Не е свързан.',
         body: '<ol><li><b>Интеграции → Meta реклами → „+ Свържи“ → „Вход с Facebook“</b>.</li><li>Влезте с профила, който управлява рекламите, и изберете бизнес портфолиото и рекламния акаунт.</li>' +
           '<li>Изберете акаунта от списъка → <b>„Свържи избрания акаунт“</b>. Разходът за последните 30 дни се изтегля веднага, после всяка нощ.</li></ol>',
         actions: [{ id: 'integrations', label: 'Отвори Интеграции' }] },
       { title: 'Известия на телефона за всяка нова поръчка', optional: true, done: false,
-        body: '<ol><li>Отворете този админ на телефона и влезте.</li><li><b>iPhone:</b> бутон Сподели (квадратчето със стрелка) → <b>„Добави към началния екран“</b>, после отворете от новата иконка „Поръчки“. <b>Android (Chrome):</b> менюто ⋮ → <b>„Инсталиране на приложението“</b>.</li>' +
+        body: '<ol><li>Отворете този админ на телефона и влезте.</li><li><b>iPhone:</b> бутон Сподели (квадратчето със стрелка) → <b>„Добави към началния екран“</b>, после отворете от новата иконка „Ordyx“. <b>Android (Chrome):</b> менюто ⋮ → <b>„Инсталиране на приложението“</b>.</li>' +
           '<li>Вляво <b>„🔔 Известия“ → „Включи известия“</b> → разрешете. Идва пробно известие.</li></ol>',
         actions: [{ id: 'notif', label: '🔔 Известия' }] },
       { title: 'Себестойност и наличности (печалба в таблото)', optional: true, done: false,
@@ -2749,10 +2755,11 @@ tr.hl td{background:#fffbe6}
             (u.source === 'offer' ? '<br><span class="muted">скрита оферта · регистрация ' + esc(day(u.createdAt)) + '</span>' : '');
         }
         var pending = (u.pendingShops || []).map(function (sh) {
-          return '<br><span class="badge">чака одобрение</span> ' + esc(sh.name || sh.domain) + ' <span class="muted">' + esc(sh.domain) + '</span> <button type="button" class="ghost" data-approve="' + esc(sh.id) + '">Одобри</button>';
+          return '<br><span class="badge">чака одобрение</span> ' + esc(sh.name || sh.domain) + ' <span class="muted">' + esc(sh.domain) + '</span> <button type="button" class="ghost" data-approve="' + esc(sh.id) + '">Одобри</button> <button type="button" class="ghost" data-reject="' + esc(sh.id) + '" title="Грешен или чужд домейн: магазинът се изтрива (само ако още няма поръчки)">Откажи</button>';
         }).join('');
         return ['<b>' + esc(u.name || '—') + '</b><br><span class="muted">' + esc(u.email) + '</span>',
-          esc(u.shopIds.map(shopName).join(', ') || '—') + pending, state, esc(when(u.lastLoginAt)),
+          // the client's approved shops by name (their own shops are not in the owner's shop list)
+          esc((u.shops || []).filter(function (sh) { return sh.approved; }).map(function (sh) { return sh.name || sh.domain; }).join(', ') || (pending ? '' : '—')) + pending, state, esc(when(u.lastLoginAt)),
           '<button type="button" class="ghost" data-cedit="' + i + '">Магазини</button> <button type="button" class="ghost" data-clink="' + i + '">Нов линк</button> ' +
           '<button type="button" class="ghost" data-cactive="' + i + '">' + (u.active ? 'Спри достъп' : 'Пусни достъп') + '</button>'];
       }));
@@ -2829,6 +2836,11 @@ tr.hl td{background:#fffbe6}
   });
   $('cTable').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
+    if (b.hasAttribute('data-reject')) {
+      if (!window.confirm('Да откажа ли този магазин? Изтрива се (заедно с настройките му) и домейнът се освобождава. Клиентът остава и може да добави правилния домейн.')) return;
+      busy(b, usersApi({ action: 'reject_shop', shopId: b.getAttribute('data-reject') })).then(function () { loadClients(); }).catch(function (err) { alert(err.message); });
+      return;
+    }
     if (b.hasAttribute('data-approve')) {
       if (!window.confirm('Одобрявате ли този магазин? След това поръчките от чекаута на неговия домейн ще влизат при клиента. Проверете, че домейнът наистина е негов.')) return;
       busy(b, usersApi({ action: 'approve_shop', shopId: b.getAttribute('data-approve') })).then(function () { loadShops().catch(function () {}); loadClients(); }).catch(function (err) { alert(err.message); });
@@ -3123,14 +3135,15 @@ tr.hl td{background:#fffbe6}
     // BOX NOW: one parcel per locker, no payer choice or review, price per the shop's BOX NOW contract — a size instead
     $('wbPacksWrap').hidden = bn; $('wbPayerWrap').hidden = bn; $('wbReviewWrap').hidden = bn; $('wbCalc').hidden = bn; $('wbSizeWrap').hidden = !bn;
     $('wbWho').textContent = (o.name || 'Клиент') + ' · ' + o.phone + ' · ' + o.total.toFixed(2) + ' ' + cur(o.currency);
-    $('wbInfo').textContent = 'Зареждам…'; $('wbRoute').textContent = '';
+    $('wbInfo').textContent = ''; $('wbRoute').textContent = 'Зареждам…';
     $('wbCreate').disabled = true; $('wbCalc').disabled = true; $('wbDemo').hidden = true;
     $('wbModal').hidden = false;
     $('wbPick').hidden = true; $('wbFields').hidden = false; $('wbCreate').hidden = false; $('wbRoute').hidden = false;
     wb({ action: 'defaults', id: o.id }).then(function (d) {
       if (d.needsRoute) { showRoutePick(d); return; }
-      if (!d.connected) {
-        $('wbInfo').innerHTML = '<span class="err">' + esc(wbCourierName) + ' не е свързан за този магазин.</span> <a href="#integrations" id="wbGoInt">Свържете го в Интеграции → ' + esc(wbCourierName) + '</a>.';
+      if (!d.connected) { // said at the top, without an empty form under it: on a phone the note at the bottom went unseen
+        $('wbFields').hidden = true; $('wbCreate').hidden = true; $('wbCalc').hidden = true; $('wbInfo').textContent = '';
+        $('wbRoute').innerHTML = '<span class="err">' + esc(wbCourierName) + ' не е свързан за този магазин.</span> <a href="#integrations" id="wbGoInt">Свържете го в Интеграции → ' + esc(wbCourierName) + '</a>.';
         return;
       }
       $('wbDemo').hidden = !d.demo;
@@ -3141,7 +3154,7 @@ tr.hl td{background:#fffbe6}
       if (bn) { $('wbSize').value = d.size ? String(d.size) : (d.sizeRequired ? '2' : ''); $('wbSize').options[0].disabled = Boolean(d.sizeRequired); }
       $('wbInfo').textContent = bn ? 'Цената е по договора ви с BOX NOW.' : ''; $('wbCreate').disabled = false; $('wbCalc').disabled = false;
       $('wbCreate').setAttribute('data-demo', d.demo ? '1' : '');
-    }).catch(function (e) { showErr('wbInfo', e); });
+    }).catch(function (e) { $('wbRoute').textContent = ''; showErr('wbRoute', e); });
   }
   $('wbModal').addEventListener('click', function (e) { if (e.target.id === 'wbGoInt') $('wbModal').hidden = true; });
   function priceText(p) {

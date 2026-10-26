@@ -104,7 +104,9 @@ test('before the owner turns sharing on, a shop gets a clear message; a client c
   assert.equal(r.statusCode, 403);
 });
 
-test('a client links its own shop the same way', async () => {
+test('a client links its own shop the same way (once Meta is open to clients: META_PUBLIC=1)', async (t) => {
+  process.env.META_PUBLIC = '1';
+  t.after(() => { delete process.env.META_PUBLIC; });
   await enable();
   const [{ id: other }] = await q(`insert into zd.shops (name, domain) values ('Б', 'b.bg') returning id`);
   const { id, token } = await createClient(q, { email: 'c@x.bg', shopIds: [other] });

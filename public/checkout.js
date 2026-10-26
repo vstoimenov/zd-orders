@@ -318,7 +318,7 @@
     '.zdo-item:hover,.zdo-item:focus{background:#fdf3f6}.zdo-item small{display:block;color:#7a6a6f}',
     '.zdo-dist{float:right;margin-left:8px;color:#b0426b;font-weight:700;font-size:13px}',
     '.zdo-tools{display:flex;gap:8px;margin:0 0 8px}',
-    '.zdo-tool{flex:1;height:40px;border:1.5px solid #b0426b;border-radius:8px;background:#fff;color:#b0426b;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}',
+    '.zdo-tool{flex:1;min-height:40px;padding:6px 8px;line-height:1.2;display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1.5px solid #b0426b;border-radius:8px;background:#fff;color:#b0426b;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}',
     '.zdo-tool:disabled{opacity:.6;cursor:default}',
     '.zdo-map{position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483000;background:#fff;display:flex;flex-direction:column;font-family:inherit;color:#3a2b2f}',
     '.zdo-map-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #e8d3da;font-size:16px}',

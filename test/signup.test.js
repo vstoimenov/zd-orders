@@ -68,11 +68,13 @@ test('registration checks: a real email, a password of 8+, a used email, the bot
   assert.equal((await q(`select count(*)::int as n from zd.users where email = 'bot@spam.bg'`))[0].n, 0);
 });
 
-test('one address registers only a few accounts', async () => {
+test('a room on one Wi-Fi registers together (30 an hour from one address); a flood is stopped', async () => {
   const code = await signupLink();
-  let last;
-  for (let i = 0; i < 6; i++) last = await call({ method: 'POST', url: '/api/admin/signup', body: form(code, { email: `u${i}@shop.bg` }) });
-  assert.equal(last.statusCode, 429);
+  for (let i = 0; i < 30; i++) {
+    const r = await call({ method: 'POST', url: '/api/admin/signup', body: form(code, { email: `u${i}@shop.bg` }) });
+    assert.equal(r.statusCode, 200, `person ${i + 1}: ${r.body}`);
+  }
+  assert.equal((await call({ method: 'POST', url: '/api/admin/signup', body: form(code, { email: 'u31@shop.bg' }) })).statusCode, 429);
 });
 
 test('only the owner manages the registration link', async () => {
@@ -148,4 +150,11 @@ test('an offer account may add more than 10 shops (normal clients keep 10)', asy
   for (let i = 0; i < 11; i++) last = await call({ method: 'POST', url: '/api/admin/shops', cookie: cookieOf(reg), body: { name: `О${i}`, domain: `offer${i}-shop.bg` } });
   assert.equal(last.statusCode, 200);
   assert.equal(json(await call({ url: '/api/admin/shops', cookie: cookieOf(reg) })).shops.length, 11);
+});
+
+test('two registrations with one email at the same moment: one account, the other gets the Bulgarian „already registered“, never „server“', async () => {
+  const code = await signupLink();
+  const [a, b] = await Promise.all([1, 2].map((n) => call({ method: 'POST', url: '/api/admin/signup', body: form(code), ip: `5.5.5.${n}` })));
+  assert.deepEqual([a.statusCode, b.statusCode].sort(), [200, 400], a.body + ' | ' + b.body);
+  assert.match(json(a.statusCode === 400 ? a : b).error, /вече е регистриран/);
 });

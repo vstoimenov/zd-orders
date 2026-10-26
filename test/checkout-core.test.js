@@ -314,3 +314,8 @@ test('an Econt address is written like a Speedy one and sent with the street', (
 test('our inputs never float: a ConvertBuilder theme that floats every input would collapse the address panel (dokatospish)', () => {
   assert.match(src, /\.zdo-input\{[^}]*float:none!important/);
 });
+
+test('„Намери ме“ / „Виж на картата“ grow with their text instead of spilling out on a narrow form', () => {
+  assert.match(src, /\.zdo-tool\{[^}]*min-height:40px/);
+  assert.doesNotMatch(src, /\.zdo-tool\{[^}]*[^-]height:40px/);
+});
