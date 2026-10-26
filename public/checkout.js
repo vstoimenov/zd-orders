@@ -311,7 +311,7 @@
     '.zdo-tool svg{vertical-align:-4px;margin-right:6px}',
     '.zdo-panel{display:none;margin:-2px 0 10px}.zdo-panel.is-on{display:block}',
     '.zdo-inv{margin:10px 0 0}.zdo-inv-on{display:flex;gap:8px;align-items:center;font-size:15px;cursor:pointer;margin:0 0 8px}.zdo-inv-on input{width:18px;height:18px}',
-    '.zdo-input{display:block;width:100%!important;height:46px!important;padding:0 12px!important;margin:0 0 8px!important;border:1.5px solid #d9c3ca!important;border-radius:8px!important;font-size:16px!important;background:#fff!important;color:#222!important}',
+    '.zdo-input{display:block;float:none!important;width:100%!important;height:46px!important;padding:0 12px!important;margin:0 0 8px!important;border:1.5px solid #d9c3ca!important;border-radius:8px!important;font-size:16px!important;background:#fff!important;color:#222!important}',
     '.zdo-list{max-height:260px;overflow-y:auto;border-radius:8px}',
     '.zdo-list:not(:empty){border:1px solid #e8d3da;margin:-4px 0 8px}',
     '.zdo-item{display:block;width:100%;text-align:left;padding:10px 12px;border:0;border-bottom:1px solid #f1e4e8;background:#fff;font-size:14px;line-height:1.35;cursor:pointer;color:#222}',

@@ -310,3 +310,7 @@ test('an Econt address is written like a Speedy one and sent with the street', (
   const p = plain(core.buildOrderPayload({ id: '1', order: { items: [] } }, sel, {}));
   assert.equal(p.delivery_type, 'econt_address'); assert.equal(p.address_text, 'ул. Х 1'); assert.equal(p.office_text, 'ЕКОНТ – адрес: ул. Х 1');
 });
+
+test('our inputs never float: a ConvertBuilder theme that floats every input would collapse the address panel (dokatospish)', () => {
+  assert.match(src, /\.zdo-input\{[^}]*float:none!important/);
+});
