@@ -202,16 +202,18 @@ async function listAs(status) {
   return json(res);
 }
 
+// n calendar days back in Sofia at midday (SQL): now() minus n×24 h lands on another date around a clock change
+const sofiaDaysAgo = (n) => `((((now() at time zone 'Europe/Sofia')::date - ${n}) + time '12:00') at time zone 'Europe/Sofia')`;
 test('problem parcels: 3+ days at the office or 3+ days without movement; counted next to the pills', async () => {
   const office = await addOrder();
-  await ship(office, `, waybill_at_office_since = now() - interval '4 days'`);
+  await ship(office, `, waybill_at_office_since = ${sofiaDaysAgo(4)}`);
   const quiet = await addOrder();
-  await ship(quiet, `, waybill_status_changed_at = now() - interval '4 days'`);
-  await q(`update zd.orders set waybill_created_at = now() - interval '6 days' where id = $1::uuid`, [quiet]);
+  await ship(quiet, `, waybill_status_changed_at = ${sofiaDaysAgo(4)}`);
+  await q(`update zd.orders set waybill_created_at = ${sofiaDaysAgo(6)} where id = $1::uuid`, [quiet]);
   const fresh = await addOrder();
-  await ship(fresh, `, waybill_status_changed_at = now() - interval '1 day'`);
+  await ship(fresh, `, waybill_status_changed_at = ${sofiaDaysAgo(1)}`);
   const demo = await addOrder();
-  await ship(demo, `, waybill_demo = true, waybill_status_changed_at = now() - interval '9 days'`);
+  await ship(demo, `, waybill_demo = true, waybill_status_changed_at = ${sofiaDaysAgo(9)}`);
   const list = await listAs('problems');
   assert.deepEqual(list.orders.map((o) => o.id).sort(), [office, quiet].sort());
   assert.equal(list.problems, 2);

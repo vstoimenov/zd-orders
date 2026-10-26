@@ -454,7 +454,11 @@ const atOfficeReply = (since) => econt({ getShipmentStatuses: (body) => reply(20
   shipmentNumber: num, receiverOfficeCode: '5803', shortDeliveryStatus: 'В офис',
   trackingEvents: since[num] ? [{ destinationType: 'office', officeCode: '5803', time: since[num] }] : [{ destinationType: 'courier', officeCode: '1107', time: new Date().toISOString() }],
 } })) }) });
-const daysAgo = (d) => new Date(Date.now() - d * 86400e3).toISOString();
+// d calendar days back in Sofia, at midday and never in the future: now minus d×24 h lands on another date around a clock change
+const daysAgo = (d) => {
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Sofia' }).format(new Date());
+  return new Date(Math.min(Date.now(), Date.parse(`${today}T10:00:00Z`) - d * 86400e3)).toISOString();
+};
 
 test('the nightly check records since when a parcel waits at the office; from the 4th day it is due', async () => {
   const [a, b, c] = await shippedAt(['501', '502', '503']);
