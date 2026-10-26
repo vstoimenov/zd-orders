@@ -6,9 +6,14 @@
   var TOKEN = 'zdo_pub_2026_k7q3'; // not a secret — only filters out random spam
   var COURIER_LABEL = { econt_office: 'ЕКОНТ', speedy_office: 'СПИДИ', boxnow_locker: 'BOX NOW' };
   // ConvertBuilder method names differ per store ("До офис ECONT", "Доставка до офис на Еконт"…): match the kind + courier in Latin or Cyrillic
-  var OPTION_PATTERN = { econt_office: /офис.*(econt|еконт)/i, speedy_office: /офис.*(speedy|спиди)/i, speedy_address: /адрес.*(speedy|спиди)/i, boxnow_locker: /box\s*now|бокс\s*нау/i };
+  // …or courier first ("ЕКОНТ Офис", "ЕКОНТ до адрес" — dokatospish.convertbuilder.com)
+  var OPTION_PATTERN = {
+    econt_office: /офис.*(econt|еконт)|(econt|еконт).*офис/i, econt_address: /адрес.*(econt|еконт)|(econt|еконт).*адрес/i,
+    speedy_office: /офис.*(speedy|спиди)|(speedy|спиди).*офис/i, speedy_address: /адрес.*(speedy|спиди)|(speedy|спиди).*адрес/i, boxnow_locker: /box\s*now|бокс\s*нау/i
+  };
   var OFFICE_TYPES = { econt_office: 'econt', speedy_office: 'speedy', boxnow_locker: 'boxnow' }; // type → courier of its office list
-  var TYPE_COURIER = { econt_office: 'econt', speedy_office: 'speedy', speedy_address: 'speedy', boxnow_locker: 'boxnow' };
+  var TYPE_COURIER = { econt_office: 'econt', econt_address: 'econt', speedy_office: 'speedy', speedy_address: 'speedy', boxnow_locker: 'boxnow' };
+  var ADDRESS_LABEL = { econt_address: 'ЕКОНТ', speedy_address: 'СПИДИ' }; // address types → the courier as written in the address
   /** The courier's logo, served from our own domain (never a third-party CDN in a checkout). */
   function logoFor(api, type) { return (window.__zdoLogoBase || api + '/logos/') + TYPE_COURIER[type] + '.svg'; }
   /** The shop's delivery-time line for an option ('' = none); nothing until the shop info has arrived. */
@@ -118,10 +123,10 @@
       if (!sel.fallback || !text || !city) return null;
       return { address: COURIER_LABEL[sel.type] + (sel.type === 'boxnow_locker' ? ' – автомат: ' : ' – офис: ') + text, city: city, zip: '', officeId: '' };
     }
-    if (sel.type === 'speedy_address') {
+    if (ADDRESS_LABEL[sel.type]) {
       var c = clean(sel.city), street = clean(sel.street);
       if (!c || !street) return null;
-      return { address: 'СПИДИ – адрес: ' + street, city: c, zip: sel.postCode || '', officeId: '' };
+      return { address: ADDRESS_LABEL[sel.type] + ' – адрес: ' + street, city: c, zip: sel.postCode || '', officeId: '' };
     }
     return null;
   }
@@ -137,7 +142,7 @@
       }
       return type === 'econt_office' ? 'Моля, изберете офис или автомат на Еконт.' : type === 'boxnow_locker' ? 'Моля, изберете автомат на BOX NOW.' : 'Моля, изберете офис или автомат на Спиди.';
     }
-    if (type === 'speedy_address') {
+    if (ADDRESS_LABEL[type]) {
       if (!clean(sel.city)) return 'Моля, въведете населено място.';
       if (!clean(sel.street)) return 'Моля, въведете адрес за доставка.';
       return '';
@@ -160,7 +165,7 @@
     return m[1] ? m[1] + m[2].replace(',', '.') : m[3].replace(',', '.') + ' ' + m[4];
   }
 
-  var TYPES = ['econt_office', 'speedy_office', 'speedy_address', 'boxnow_locker'];
+  var TYPES = ['econt_office', 'econt_address', 'speedy_office', 'speedy_address', 'boxnow_locker'];
   /**
    * Which of our choices to show from ConvertBuilder's shipping labels: the ones it offers (normal); none offered at all → 'none'
    * (the cart has no shipping method — a message, never made-up choices); only unknown names → 'all' (the shop prices them).
@@ -177,9 +182,9 @@
     if (any) return { mode: 'normal', available: available };
     // only methods we know but may not show (a switched-off BOX NOW): a message; an unknown method among them: the classic choices
     var allKnown = labels.every(function (l) { return TYPES.some(function (t) { return OPTION_PATTERN[t].test(l); }); });
-    if (!labels.length || (known && allKnown)) return { mode: 'none', available: { econt_office: false, speedy_office: false, speedy_address: false, boxnow_locker: false } };
+    if (!labels.length || (known && allKnown)) return { mode: 'none', available: { econt_office: false, econt_address: false, speedy_office: false, speedy_address: false, boxnow_locker: false } };
     // BOX NOW only when the shop offers it by name: a shop without a BOX NOW contract must never get locker orders
-    return { mode: 'all', available: { econt_office: true, speedy_office: true, speedy_address: true, boxnow_locker: false } };
+    return { mode: 'all', available: { econt_office: true, econt_address: false, speedy_office: true, speedy_address: true, boxnow_locker: false } };
   }
 
   /** List label: Speedy names already start with the city ("АЙТОС - …") and may say "(АВТОМАТ)" — don't repeat either. */
@@ -206,7 +211,7 @@
       office_text: f.address,
       city: f.city,
       post_code: f.zip,
-      address_text: sel && sel.type === 'speedy_address' ? clean(sel.street) : '',
+      address_text: sel && ADDRESS_LABEL[sel.type] ? clean(sel.street) : '',
       items: ((order.items && order.items.length ? order.items : detail.items) || []).map(function (it) {
         return { name: clean(it.title || it.name || it.productId || it.id), qty: Number(it.quantity) || 1, price: Number(it.price != null ? it.price : it.item_price) || 0 };
       }),
@@ -349,9 +354,10 @@
     '<div class="zdo-title">Доставка</div>' +
     '<div class="zdo-none" hidden></div>' +
     officePanel('econt', 'econt_office', 'Еконт') +
+    '<label class="zdo-opt"><input type="radio" name="zdo-type" value="econt_address"><img class="zdo-logo" data-logo="econt_address" alt=""><span class="zdo-opt-text"><span>До адрес с <b>Еконт</b></span><small data-eta="econt_address"></small></span><span class="zdo-price" data-price="econt_address"></span></label>' +
     officePanel('speedy', 'speedy_office', 'Спиди') +
     '<label class="zdo-opt"><input type="radio" name="zdo-type" value="speedy_address"><img class="zdo-logo" data-logo="speedy_address" alt=""><span class="zdo-opt-text"><span>До адрес със <b>Спиди</b></span><small data-eta="speedy_address"></small></span><span class="zdo-price" data-price="speedy_address"></span></label>' +
-    '<div class="zdo-panel" data-for="speedy_address">' +
+    '<div class="zdo-panel" data-for="address">' + // one address panel, moved under the chosen address option
       '<input class="zdo-input" data-role="addr-city" type="text" placeholder="Населено място" autocomplete="off"><div class="zdo-list" data-role="city-list"></div>' +
       '<input class="zdo-input" data-role="addr-street" type="text" placeholder="Улица, номер, блок, вход, етаж, апартамент">' +
     '</div>' +
@@ -390,7 +396,7 @@
     if (t === 'econt_office') return { type: t, office: state.econtFallback ? null : state.econt, fallback: state.econtFallback, city: state.econtCity, officeText: state.econtText };
     if (t === 'speedy_office') return { type: t, office: state.speedyFallback ? null : state.speedy, fallback: state.speedyFallback, city: state.speedyCity, officeText: state.speedyText };
     if (t === 'boxnow_locker') return { type: t, office: state.boxnowFallback ? null : state.boxnow, fallback: state.boxnowFallback, city: state.boxnowCity, officeText: state.boxnowText };
-    if (t === 'speedy_address') return { type: t, city: state.addrCity, postCode: state.addrPost, street: state.addrStreet };
+    if (ADDRESS_LABEL[t]) return { type: t, city: state.addrCity, postCode: state.addrPost, street: state.addrStreet };
     return { type: '' };
   }
 
@@ -431,7 +437,7 @@
     var sel = selection(), f = formatSelection(sel);
     return {
       type: sel.type || '', officeId: f ? f.officeId : '', officeText: f ? f.address : '', city: f ? f.city : '',
-      postCode: f ? (f.zip || zipFor(f.city)) : '', addressText: sel.type === 'speedy_address' ? clean(sel.street) : '', error: validateSelection(sel)
+      postCode: f ? (f.zip || zipFor(f.city)) : '', addressText: ADDRESS_LABEL[sel.type] ? clean(sel.street) : '', error: validateSelection(sel)
     };
   }
   /** Copies the choice into ConvertBuilder's own fields so its validation and order see it. Returns true if it had to click a shipping radio. */
@@ -456,10 +462,19 @@
       (o.city ? '<br>' + esc(o.city) : '') + (hoursLine(o) ? '<br>🕒 ' + esc(hoursLine(o)) : '') + ' <button type="button" data-role="change">Смени</button>';
   }
 
+  function panelFor(p, type) { var f = p.getAttribute('data-for'); return f === type || (f === 'address' && !!ADDRESS_LABEL[type]); }
+  /** The shared address panel sits right under the address option that is chosen (Econt or Speedy). */
+  function placeAddressPanel() {
+    if (!ADDRESS_LABEL[state.type]) return;
+    var panel = root.querySelector('.zdo-panel[data-for="address"]'), input = root.querySelector('input[name="zdo-type"][value="' + state.type + '"]');
+    var label = input && input.closest('.zdo-opt');
+    if (panel && label && label.nextSibling !== panel) label.parentNode.insertBefore(panel, label.nextSibling);
+  }
   function render() {
     [].forEach.call(root.querySelectorAll('.zdo-opt'), function (l) { l.classList.toggle('is-on', l.querySelector('input').value === state.type); });
     if (standalone) fillPrices();
-    else [].forEach.call(root.querySelectorAll('.zdo-panel'), function (p) { p.classList.toggle('is-on', p.getAttribute('data-for') === state.type); });
+    else [].forEach.call(root.querySelectorAll('.zdo-panel'), function (p) { p.classList.toggle('is-on', panelFor(p, state.type)); });
+    placeAddressPanel();
     ['econt', 'speedy', 'boxnow'].forEach(function (c) {
       var picked = state[c], fallback = state[c + 'Fallback'];
       el(c + '-picked').innerHTML = picked && !fallback ? pickedHtml(picked) : '';
@@ -653,7 +668,8 @@
     if (standalone) { // the host platform shows its own methods and prices: only the asked-for panel, BOX NOW only when the shop switched it on
       [].forEach.call(root.querySelectorAll('.zdo-opt input'), function (r) { r.closest('.zdo-opt').hidden = true; });
       var ok = state.type && (state.type !== 'boxnow_locker' || boxnowOn || boxnowPending);
-      [].forEach.call(root.querySelectorAll('.zdo-panel'), function (p) { p.classList.toggle('is-on', ok && p.getAttribute('data-for') === state.type); });
+      [].forEach.call(root.querySelectorAll('.zdo-panel'), function (p) { p.classList.toggle('is-on', ok && panelFor(p, state.type)); });
+      placeAddressPanel();
       var note = root.querySelector('.zdo-none');
       note.hidden = ok || !state.type;
       note.textContent = 'BOX NOW не е включен за този магазин.';
@@ -690,7 +706,7 @@
       render(); sync(); showError('');
       var courier = officeCourier(state.type);
       if (courier && !state[courier]) loadOffices(courier).then(function () { renderOfficeList(courier); }, function () { officesFailed(courier); });
-      if (state.type === 'speedy_address') loadCities().then(renderCityList, function () {});
+      if (ADDRESS_LABEL[state.type]) loadCities().then(renderCityList, function () {});
     });
     root.addEventListener('input', function (e) {
       var role = e.target.getAttribute('data-role'), v = e.target.value;
@@ -916,7 +932,7 @@
 
   /**
    * Another platform mounts the picker: OrdyxPicker.mount(el, { api, host, type, onChange }) → { value(), setType(type), destroy() }.
-   * type: econt_office | speedy_office | speedy_address | boxnow_locker (the platform shows its own shipping methods and prices);
+   * type: econt_office | econt_address | speedy_office | speedy_address | boxnow_locker (the platform shows its own shipping methods and prices);
    * onChange gets { type, officeId, officeText, city, postCode, addressText, error } on every change; value() the same now.
    */
   function mountStandalone(target, opts) {
@@ -942,7 +958,7 @@
         render(); showError('');
         var courier = officeCourier(state.type);
         if (courier && !state[courier]) loadOffices(courier).then(function () { renderOfficeList(courier); }, function () { officesFailed(courier); });
-        if (state.type === 'speedy_address') loadCities().then(renderCityList, function () {});
+        if (ADDRESS_LABEL[state.type]) loadCities().then(renderCityList, function () {});
         sync();
       },
       showError: showError,

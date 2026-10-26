@@ -144,9 +144,9 @@ test('a free shipping method shows as "Безплатна"', () => {
 
 test('shippingView: only what ConvertBuilder offers; none at all = a clear message, not three made-up choices', () => {
   const v = plain(core.shippingView(['Доставка до офис на Спиди €2.48', 'Доставка до офис на Еконт €3.55']));
-  assert.deepEqual(v, { mode: 'normal', available: { econt_office: true, speedy_office: true, speedy_address: false, boxnow_locker: false } });
+  assert.deepEqual(v, { mode: 'normal', available: { econt_office: true, econt_address: false, speedy_office: true, speedy_address: false, boxnow_locker: false } });
   assert.equal(plain(core.shippingView([])).mode, 'none');
-  assert.deepEqual(plain(core.shippingView(['Куриер до врата €5.00'])), { mode: 'all', available: { econt_office: true, speedy_office: true, speedy_address: true, boxnow_locker: false } }, 'unknown names: the classic choices, the shop prices them — BOX NOW only when the shop offers it');
+  assert.deepEqual(plain(core.shippingView(['Куриер до врата €5.00'])), { mode: 'all', available: { econt_office: true, econt_address: false, speedy_office: true, speedy_address: true, boxnow_locker: false } }, 'unknown names: the classic choices, the shop prices them — BOX NOW only when the shop offers it');
 });
 
 const locker = { id: 'boxnow:1840', code: '1840', name: 'New Avenue, ул. Проф. Храбър Попов 14, София - 24/7', city: 'София', postCode: '1700', address: 'ул. Проф. арх. Храбър Попов №14', isAutomat: true };
@@ -156,11 +156,11 @@ test('BOX NOW: found by its ConvertBuilder method, shown next to Econt, written 
   assert.equal(core.pickOptionIndex(labels, 'boxnow_locker'), 1);
   assert.equal(core.pickOptionIndex(['До автомат на Бокс Нау 2.99€'], 'boxnow_locker'), 0);
   assert.equal(core.pickOptionIndex(['До офис ECONT 4.07€'], 'boxnow_locker'), -1);
-  assert.deepEqual(plain(core.shippingView(labels)), { mode: 'normal', available: { econt_office: true, speedy_office: false, speedy_address: false, boxnow_locker: false } }, 'not switched on in Ordyx');
-  assert.deepEqual(plain(core.shippingView(labels, { boxnow: true })), { mode: 'normal', available: { econt_office: true, speedy_office: false, speedy_address: false, boxnow_locker: true } });
+  assert.deepEqual(plain(core.shippingView(labels)), { mode: 'normal', available: { econt_office: true, econt_address: false, speedy_office: false, speedy_address: false, boxnow_locker: false } }, 'not switched on in Ordyx');
+  assert.deepEqual(plain(core.shippingView(labels, { boxnow: true })), { mode: 'normal', available: { econt_office: true, econt_address: false, speedy_office: false, speedy_address: false, boxnow_locker: true } });
   assert.equal(plain(core.shippingView(['Автомат BOX NOW 3,50 €'])).mode, 'none', 'only BOX NOW offered but not switched on: no made-up choices');
   assert.equal(plain(core.shippingView(['Автомат BOX NOW 3,50 €'], { boxnow: true })).mode, 'normal');
-  assert.deepEqual(plain(core.shippingView(['Куриер до врата €5.00', 'Автомат BOX NOW 3,50 €'])), { mode: 'all', available: { econt_office: true, speedy_office: true, speedy_address: true, boxnow_locker: false } }, 'an unknown method next to a switched-off BOX NOW: the classic choices as before');
+  assert.deepEqual(plain(core.shippingView(['Куриер до врата €5.00', 'Автомат BOX NOW 3,50 €'])), { mode: 'all', available: { econt_office: true, econt_address: false, speedy_office: true, speedy_address: true, boxnow_locker: false } }, 'an unknown method next to a switched-off BOX NOW: the classic choices as before');
   assert.deepEqual(plain(core.formatSelection({ type: 'boxnow_locker', office: locker })),
     { address: 'BOX NOW – автомат New Avenue, ул. Проф. Храбър Попов 14, София - 24/7 (1840), ул. Проф. арх. Храбър Попов №14', city: 'София', zip: '1700', officeId: 'boxnow:1840' });
   assert.deepEqual(plain(core.formatSelection({ type: 'boxnow_locker', office: null, fallback: true, city: 'Варна', officeText: 'до Лидл' })),
@@ -289,4 +289,24 @@ test('visiblePart: with two checkout copies on the page (the first hidden by Con
   assert.equal(core.visiblePart([hiddenPart]), hiddenPart, 'a single copy is the checkout, shown or not (tiarra: hidden until the cart has items)');
   assert.equal(core.visiblePart([hiddenPart, node('', node('x none', page))]), null, 'several, none shown yet: wait');
   assert.equal(core.visiblePart([]), null);
+});
+
+test('ConvertBuilder method names in either word order: „ЕКОНТ Офис“ is the Econt office, „ЕКОНТ до адрес“ an Econt address (dokatospish)', () => {
+  const labels = ['ЕКОНТ Офис €3.50', 'ЕКОНТ до адрес €4.50'];
+  assert.equal(core.pickOptionIndex(labels, 'econt_office'), 0);
+  assert.equal(core.pickOptionIndex(labels, 'econt_address'), 1);
+  assert.equal(core.pickOptionIndex(labels, 'speedy_office'), -1);
+  assert.equal(core.pickOptionIndex(['Спиди офис'], 'speedy_office'), 0);
+  assert.equal(core.pickOptionIndex(['Speedy до адрес'], 'speedy_address'), 0);
+  assert.equal(core.pickOptionIndex(['До адрес със Спиди'], 'econt_address'), -1);
+  assert.deepEqual(plain(core.shippingView(labels)), { mode: 'normal', available: { econt_office: true, econt_address: true, speedy_office: false, speedy_address: false, boxnow_locker: false } });
+});
+
+test('an Econt address is written like a Speedy one and sent with the street', () => {
+  const sel = { type: 'econt_address', city: 'Плевен', postCode: '5800', street: 'ул. Х 1' };
+  assert.deepEqual(plain(core.formatSelection(sel)), { address: 'ЕКОНТ – адрес: ул. Х 1', city: 'Плевен', zip: '5800', officeId: '' });
+  assert.match(core.validateSelection({ type: 'econt_address', city: 'Плевен', street: '' }), /адрес/);
+  assert.equal(core.validateSelection(sel), '');
+  const p = plain(core.buildOrderPayload({ id: '1', order: { items: [] } }, sel, {}));
+  assert.equal(p.delivery_type, 'econt_address'); assert.equal(p.address_text, 'ул. Х 1'); assert.equal(p.office_text, 'ЕКОНТ – адрес: ул. Х 1');
 });

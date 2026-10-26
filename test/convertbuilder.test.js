@@ -111,3 +111,12 @@ test('ensureWebhook replaces an existing webhook for our target and creates a si
   assert.deepEqual(calls.map((c) => `${c.method} ${new URL(c.url).pathname}`), ['GET /api/site/webhooks', 'DELETE /api/site/webhooks/old', 'POST /api/site/webhooks']);
   assert.deepEqual(JSON.parse(calls[2].body), { target, secret: 'whsec', events: ['order_created', 'order_updated'] });
 });
+
+test('an Econt address order from the checkout is an Econt address, by our text or by the method name', () => {
+  const base = { id: 9, customerName: 'М', items: [], status: 'pending' };
+  const a = mapOrder({ ...base, shippingAddress: { address: 'ЕКОНТ – адрес: ул. Х 1', city: 'Плевен', zipCode: '5800', phone: '0888123456' } }, { store: 's.bg' });
+  assert.equal(a.deliveryType, 'econt_address'); assert.equal(a.courier, 'econt'); assert.equal(a.addressText, 'ул. Х 1');
+  const b = mapOrder({ ...base, shippingName: 'ЕКОНТ до адрес', shippingAddress: { address: 'ул. Y 2', city: 'Варна', phone: '0888123456' } }, { store: 's.bg' });
+  assert.equal(b.deliveryType, 'econt_address'); assert.equal(b.addressText, 'ул. Y 2');
+  assert.equal(mapOrder({ ...base, shippingName: 'ЕКОНТ Офис', shippingAddress: { address: 'ЕКОНТ – офис Плевен (1)' } }, { store: 's.bg' }).deliveryType, 'econt_office');
+});
