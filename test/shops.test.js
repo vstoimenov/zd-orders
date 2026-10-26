@@ -139,3 +139,15 @@ test('a client with no shop creates it from the ConvertBuilder shop form: checko
   assert.equal(s.url, 'https://dokatospish.convertbuilder.com/'); assert.equal(s.email, 'info@example.bg'); assert.equal(s.phone, '+359888123456');
   assert.equal(s.approved, false);
 });
+
+test("a client's shop is theirs: the owner's shop menu and „Всички магазини“ leave it out", async () => {
+  const mine = await createShop(q, { name: 'Мой', domain: 'moi.bg' });
+  const theirs = await createShop(q, { name: 'Негов', domain: 'negov.bg' }, { byClient: true });
+  const ids = json(await call({ url: '/api/admin/shops', headers: admin })).shops.map((s) => s.id);
+  assert.ok(ids.includes(mine.id)); assert.ok(!ids.includes(theirs.id));
+  const { resolveShop } = await import('../lib/shops.js');
+  const all = await resolveShop(q, 'all', { allowAll: true, user: { owner: true } });
+  assert.ok(all.ids.includes(mine.id) && all.ids.includes(DEFAULT_SHOP)); assert.ok(!all.ids.includes(theirs.id));
+  await q(`update zd.shops set approved = true where id = $1`, [theirs.id]);
+  assert.ok(!json(await call({ url: '/api/admin/shops', headers: admin })).shops.some((s) => s.id === theirs.id), 'still theirs after approval');
+});

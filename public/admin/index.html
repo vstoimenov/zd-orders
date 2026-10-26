@@ -2108,7 +2108,7 @@ tr.hl td{background:#fffbe6}
     $('iCbOpen').textContent = cb.configured ? 'Настройки' : '+ Свържи';
     $('iCbOpen').className = cb.configured ? 'ghost' : 'primary';
     $('iCbLine').textContent = cb.domain ? cb.domain + ' · последна синхронизация ' + when(cb.lastSyncAt) : '';
-    if (!$('iCbDomain').value) $('iCbDomain').value = cb.domain || '';
+    $('iCbDomain').value = cb.domain || (s.shop && s.shop.domain !== 'shop.local' ? s.shop.domain : ''); // never another shop's domain left over
     $('iCbKey').placeholder = cb.configured ? '•••••• запазен (въведете нов, за да го смените)' : 'поставете ключа';
     $('iCbActive').checked = cb.active;
     var r = cb.lastSyncResult;

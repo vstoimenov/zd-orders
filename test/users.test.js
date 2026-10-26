@@ -123,7 +123,7 @@ test('a client adds their own shop and may hide only their own', async () => {
   const mine = json(await call({ url: '/api/admin/shops', cookie: c })).shops.map((s) => s.domain).sort();
   assert.deepEqual(mine, ['a-shop.bg', 'new-shop.bg']);
   assert.equal((await call({ method: 'PATCH', url: '/api/admin/shops', cookie: c, body: { id: SHOP_B, hidden: true } })).statusCode, 400);
-  assert.equal(json(await call({ url: '/api/admin/shops', cookie: owner })).shops.length, 3, 'the owner sees every shop');
+  assert.equal(json(await call({ url: '/api/admin/shops', cookie: owner })).shops.length, 2, "a client's own shop is not in the owner's menu");
 });
 
 test('a client\'s "all shops" phone is notified only for their shops', async () => {
