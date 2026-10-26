@@ -626,7 +626,8 @@ tr.hl td{background:#fffbe6}
     </section>
     <section id="callsView" hidden>
       <div class="pagehead"><div><h1>Обаждания</h1><div class="sub">Гласов агент, който звъни на клиента и пита дали потвърждава поръчката</div></div></div>
-      <div class="tip">📞 При всяка поръчка в <a href="#orders">Поръчки</a> има бутон <b>„Обади се“</b>. Агентът казва името на клиента, продуктите, сумата и срока за доставка и пита за потвърждение. Отговор „да“ потвърждава поръчката както линкът за потвърждение; „не“, неясен отговор или невдигнат телефон се записват в поръчката и получавате известие.</div>
+      <div class="panel" id="callsSoon" hidden><h3 style="margin:0 0 6px">Скоро <span class="chip">скоро</span></h3><div class="muted" style="font-size:14px">Гласовият агент ще звъни на клиентите ви и ще потвърждава поръчките вместо вас. Пускаме го скоро — ще ви уведомим.</div></div>
+      <div class="tip" id="callsTip">📞 При всяка поръчка в <a href="#orders">Поръчки</a> има бутон <b>„Обади се“</b>. Агентът казва името на клиента, продуктите, сумата и срока за доставка и пита за потвърждение. Отговор „да“ потвърждава поръчката както линкът за потвърждение; „не“, неясен отговор или невдигнат телефон се записват в поръчката и получавате известие.</div>
       <div class="grid2">
         <div class="panel"><h3 style="margin:0 0 6px">Кредити <span class="chip">скоро</span></h3><div class="muted" style="font-size:14px">Обажданията се плащат на кредити, отделно от плана. Тук ще виждате баланса, изразходваното по месеци и ще зареждате кредити.</div></div>
         <div class="panel"><h3 style="margin:0 0 6px">Настройки <span class="chip">скоро</span></h3><div class="muted" style="font-size:14px">Автоматично обаждане при нова поръчка, часове за звънене и повторен опит при невдигнат телефон.</div></div>
@@ -1373,7 +1374,7 @@ tr.hl td{background:#fffbe6}
         '<td data-label="Артикули">' + items + '</td>' +
         '<td data-label="Сума"><b>' + o.total.toFixed(2) + ' ' + esc(o.currency) + '</b></td>' +
         '<td data-label="Статус"><select data-status="' + i + '">' + opts + '</select></td>' +
-        '<td>' + packedCell(o, i) + (['new', 'confirmed'].indexOf(o.status) >= 0 && !o.shipment && !o.waybillState && !(o.fulfilment && o.fulfilment.sentAt) ? '<button type="button" data-dl="' + i + '" title="Друг офис, автомат или адрес">📍 Доставка</button>' : '') + (o.deliveryChangedBy === 'customer' ? '<span class="tag" title="Клиентът смени доставката от страницата на поръчката">📍 сменена от клиента</span>' : '') + invoiceCell(o, i) + (['new', 'confirmed'].indexOf(o.status) >= 0 && o.phone ? '<button type="button" data-confirm="' + i + '">💬 Потвърди</button>' + (DEMO ? '' : '<button type="button" data-call="' + i + '" title="Гласов агент звъни на клиента и пита дали потвърждава">📞 Потвърди</button>') : '') + confirmBadge(o) +
+        '<td>' + packedCell(o, i) + (['new', 'confirmed'].indexOf(o.status) >= 0 && !o.shipment && !o.waybillState && !(o.fulfilment && o.fulfilment.sentAt) ? '<button type="button" data-dl="' + i + '" title="Друг офис, автомат или адрес">📍 Доставка</button>' : '') + (o.deliveryChangedBy === 'customer' ? '<span class="tag" title="Клиентът смени доставката от страницата на поръчката">📍 сменена от клиента</span>' : '') + invoiceCell(o, i) + (['new', 'confirmed'].indexOf(o.status) >= 0 && o.phone ? '<button type="button" data-confirm="' + i + '">💬 Потвърди</button>' + (DEMO || role !== 'owner' ? '' : '<button type="button" data-call="' + i + '" title="Гласов агент звъни на клиента и пита дали потвърждава">📞 Потвърди</button>') : '') + confirmBadge(o) +
           shipmentCell(o, i) + '<button type="button" data-slip="' + i + '" title="Лист за пакетиране с QR код">🖨 Лист</button><button type="button" data-copy="' + i + '">Копирай за товарителница</button><button type="button" class="del" data-del="' + i + '" title="Изтрий поръчката от системата">Изтрий</button></td>' +
         '</tr>';
     }).join('') || '<tr><td colspan="7" class="muted">Няма поръчки.</td></tr>';
@@ -2698,6 +2699,7 @@ tr.hl td{background:#fffbe6}
     return fetch(API + 'me', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
       role = d ? d.role : null;
       $('navClients').hidden = role !== 'owner';
+      $('callsSoon').hidden = role === 'owner'; $('callsTip').hidden = role !== 'owner'; // calls: the owner only for now
       $('whoami').hidden = role !== 'client';
       if (role === 'client') $('whoami').innerHTML = '<b>' + esc(d.name || 'Клиент') + '</b>' + esc(d.email) + freeLine(d.freeUntil);
     }).catch(function () {});

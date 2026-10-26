@@ -64,7 +64,9 @@ test('📞 needs a login, the setting, an open order — and only within the adm
   await acceptInvite(q, c.token, 'client-pass-1');
   const [u] = await q(`select id, session_version from zd.users where email = 'c@x.bg'`);
   const client = `zdo_admin=${clientSession('secret', u)}`;
+  process.env.VOICE_PUBLIC = '1';
   assert.equal((await call({ url: '/api/admin/voice', cookie: client, body: JSON.stringify({ action: 'call', id: orderId }) })).statusCode, 404);
+  delete process.env.VOICE_PUBLIC;
   await q(`update zd.orders set status = 'shipped' where id = $1::uuid`, [orderId]);
   const shipped = await call({ body: JSON.stringify({ action: 'call', id: orderId }) });
   assert.equal(shipped.statusCode, 400);
@@ -106,4 +108,19 @@ test('a "yes" after the order was sent does not reopen it', async () => {
   await q(`update zd.orders set status = 'shipped' where id = $1::uuid`, [orderId]);
   assert.equal((await call(signed({ order_id: orderId, answer: 'yes' }))).statusCode, 200);
   assert.equal((await statusOf(orderId)).status, 'shipped');
+});
+
+test('📞 is „скоро“ for clients until VOICE_PUBLIC=1: refused before anything is sent, the owner still calls', async () => {
+  delete process.env.VOICE_PUBLIC;
+  const c = await createClient(q, { email: 'own@x.bg', name: 'К', shopIds: [SHOP] });
+  await acceptInvite(q, c.token, 'client-pass-1');
+  const [u] = await q(`select id, session_version from zd.users where email = 'own@x.bg'`);
+  const client = `zdo_admin=${clientSession('secret', u)}`;
+  const res = await call({ cookie: client, body: JSON.stringify({ action: 'call', id: orderId }) });
+  assert.equal(res.statusCode, 403); assert.match(json(res).error, /скоро/i);
+  assert.equal(calls.length, 0);
+  process.env.VOICE_PUBLIC = '1';
+  assert.equal((await call({ cookie: client, body: JSON.stringify({ action: 'call', id: orderId }) })).statusCode, 200);
+  delete process.env.VOICE_PUBLIC;
+  assert.equal((await call({ body: JSON.stringify({ action: 'call', id: orderId }) })).statusCode, 200);
 });
