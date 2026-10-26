@@ -278,3 +278,15 @@ test('buildOrderPayload sends invoice details only when the buyer asked for an i
   assert.equal(plain(core.buildOrderPayload(detail, sel, {}, '')).invoice, undefined);
   assert.deepEqual(plain(core.buildOrderPayload(detail, sel, { invoice: { company: 'Ф ООД', eik: '206123456' } }, '')).invoice, { company: 'Ф ООД', eik: '206123456' });
 });
+
+test('visiblePart: with two checkout copies on the page (the first hidden by ConvertBuilder), the widget goes into the one the customer sees', () => {
+  const node = (cls = '', parent = null, display = '') => ({ parentElement: parent, classList: { contains: (c) => cls.split(' ').includes(c) }, style: { display } });
+  const page = node();
+  const hiddenInfo = node('col12 checkout-info none', page), shownInfo = node('col12 checkout-info', page);
+  const hiddenPart = node('', node('col20', hiddenInfo)), shownPart = node('', node('col20', shownInfo));
+  assert.equal(core.visiblePart([hiddenPart, shownPart]), shownPart);
+  assert.equal(core.visiblePart([node('', node('', page, 'none')), shownPart]), shownPart, 'an inline display:none hides it too');
+  assert.equal(core.visiblePart([hiddenPart]), hiddenPart, 'a single copy is the checkout, shown or not (tiarra: hidden until the cart has items)');
+  assert.equal(core.visiblePart([hiddenPart, node('', node('x none', page))]), null, 'several, none shown yet: wait');
+  assert.equal(core.visiblePart([]), null);
+});

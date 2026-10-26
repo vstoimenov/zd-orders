@@ -256,11 +256,26 @@
     return JSON.stringify({ p: String(loc.pathname || '/').slice(0, 200), s: String(loc.search || '').slice(0, 400), r: String(doc.referrer || '').slice(0, 400) });
   }
 
+  /** The address part of the checkout copy the customer sees. ConvertBuilder can render a second copy hidden with its `none`
+   *  class (or an inline display:none) before the real one (dokatospish.convertbuilder.com, 2026-10-26). Starts above the part:
+   *  our own CSS hides the part itself. null = several copies, none shown yet. */
+  function visiblePart(parts) {
+    if (parts.length === 1) return parts[0]; // one copy is the checkout, even while hidden (an empty store cart)
+    for (var i = 0; i < parts.length; i++) {
+      var shown = true;
+      for (var x = parts[i].parentElement; x && shown; x = x.parentElement) {
+        if ((x.classList && x.classList.contains('none')) || (x.style && x.style.display === 'none')) shown = false;
+      }
+      if (shown) return parts[i];
+    }
+    return null;
+  }
+
   var core = {
     TOKEN: TOKEN, norm: norm, searchOffices: searchOffices, searchCities: searchCities, formatSelection: formatSelection,
     validateSelection: validateSelection, pickOptionIndex: pickOptionIndex, optionPrice: optionPrice, officeLabel: officeLabel,
     buildOrderPayload: buildOrderPayload, visitPayload: visitPayload, shippingView: shippingView, cartFrom: cartFrom, cartPayload: cartPayload, logoFor: logoFor, etaFor: etaFor,
-    distanceM: distanceM, distanceText: distanceText, nearestOffices: nearestOffices, hoursLine: hoursLine,
+    distanceM: distanceM, distanceText: distanceText, nearestOffices: nearestOffices, hoursLine: hoursLine, visiblePart: visiblePart,
     MAP_SCRIPT: MAP_SCRIPT, MAP_CSS: MAP_CSS, MAP_STYLE: MAP_STYLE, markerPoints: markerPoints
   };
   if (typeof window !== 'undefined' && window.__ZDO_TEST__) { window.__zdoCore = core; return; }
@@ -354,7 +369,8 @@
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function el(role) { return root.querySelector('[data-role="' + role + '"]'); }
-  function field(name) { return document.querySelector('[name="' + name + '"]'); }
+  var form = null; // the checkout copy the widget is in: its fields, not a hidden copy's
+  function field(name) { var q = '[name="' + name + '"]'; return (form && form.querySelector(q)) || document.querySelector(q); }
   function val(name) { var f = field(name); return f ? f.value : ''; }
   function getJson(path) { return fetch(API + path).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); }
   function loadOffices(courier) {
@@ -775,7 +791,7 @@
     return out;
   }
   function readFields() {
-    var dummy = document.querySelector('input[id^="shippingPhone_"][id$="_dummy"]');
+    var dummy = (form || document).querySelector('input[id^="shippingPhone_"][id$="_dummy"]');
     return { name: val('name'), email: val('email'), phone: val('shippingPhone') || (dummy ? dummy.value : ''), address: val('shippingAddress'), city: val('shippingCity'), zip: val('shippingZipCode'), invoice: readInvoice() };
   }
 
@@ -827,11 +843,12 @@
     }).observe(box, { childList: true, subtree: true });
   }
 
-  function mount() {
-    var addr = field('shippingAddress');
-    var part = addr && addr.closest('[data-role="address-part"]');
+  function mount(last) {
+    var parts = [].map.call(document.querySelectorAll('[name="shippingAddress"]'), function (a) { return a.closest('[data-role="address-part"]'); }).filter(Boolean);
+    var part = visiblePart(parts) || (last ? parts[0] : null); // wait for the shown copy; in the end take the first, as before
     if (!part || !window.WebPlatform || !document.querySelector('a[data-role="continue"]')) return false;
     if (document.querySelector('.zdo')) return true;
+    form = part.closest('.checkout-info') || part.parentNode;
     var style = document.createElement('style');
     style.textContent = CSS;
     document.head.appendChild(style);
@@ -984,7 +1001,7 @@
     trackVisit();
     if (document.querySelector('[data-ordyx-picker]')) mountDeclaredAll(); // a custom site's form; ConvertBuilder pages still get their checkout below
     var tries = 0;
-    (function attempt() { if (!mount() && ++tries < 40) setTimeout(attempt, 250); })();
+    (function attempt() { if (!mount(tries >= 39) && ++tries < 40) setTimeout(attempt, 250); })();
   }
 
   if (window.WebPlatform && typeof window.WebPlatform.onReady === 'function') window.WebPlatform.onReady(boot);
