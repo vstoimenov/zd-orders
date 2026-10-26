@@ -627,10 +627,15 @@ tr.hl td{background:#fffbe6}
     <section id="callsView" hidden>
       <div class="pagehead"><div><h1>Обаждания</h1><div class="sub">Гласов агент, който звъни на клиента и пита дали потвърждава поръчката</div></div></div>
       <div class="panel" id="callsSoon" hidden><h3 style="margin:0 0 6px">Скоро <span class="chip">скоро</span></h3><div class="muted" style="font-size:14px">Гласовият агент ще звъни на клиентите ви и ще потвърждава поръчките вместо вас. Пускаме го скоро — ще ви уведомим.</div></div>
-      <div class="tip" id="callsTip">📞 При всяка поръчка в <a href="#orders">Поръчки</a> има бутон <b>„Обади се“</b>. Агентът казва името на клиента, продуктите, сумата и срока за доставка и пита за потвърждение. Отговор „да“ потвърждава поръчката както линкът за потвърждение; „не“, неясен отговор или невдигнат телефон се записват в поръчката и получавате известие.</div>
+      <div class="tip" id="callsTip">📞 При всяка поръчка в <a href="#orders">Поръчки</a> има бутон <b>„📞 Потвърди“</b>. Агентът казва името на клиента, продуктите, сумата и срока за доставка и пита за потвърждение. Отговор „да“ потвърждава поръчката както линкът за потвърждение; „не“, неясен отговор или невдигнат телефон се записват в поръчката и получавате известие.</div>
       <div class="grid2">
         <div class="panel"><h3 style="margin:0 0 6px">Кредити <span class="chip">скоро</span></h3><div class="muted" style="font-size:14px">Обажданията се плащат на кредити, отделно от плана. Тук ще виждате баланса, изразходваното по месеци и ще зареждате кредити.</div></div>
-        <div class="panel"><h3 style="margin:0 0 6px">Настройки <span class="chip">скоро</span></h3><div class="muted" style="font-size:14px">Автоматично обаждане при нова поръчка, часове за звънене и повторен опит при невдигнат телефон.</div></div>
+        <div class="panel"><h3 style="margin:0 0 6px">Настройки <span class="chip" id="callsSetChip">скоро</span></h3><div class="muted" id="callsSetSoon" style="font-size:14px">Автоматично обаждане при нова поръчка, часове за звънене и повторен опит при невдигнат телефон.</div>
+          <div id="callsSetOwner" hidden>
+            <label style="display:flex;gap:10px;align-items:center;font-weight:600;cursor:pointer"><input type="checkbox" id="callsAuto"> Автоматично обаждане 1 час след поръчката</label>
+            <div class="muted" style="font-size:14px;margin-top:6px">За избрания магазин. Само нови (непотвърдени) поръчки с телефон, между 9:00 и 20:00 — вечерните се обаждат сутринта. Всяка поръчка веднъж; ако вече сте натиснали „📞 Потвърди“, не се звъни пак.</div>
+            <div class="muted" id="callsAutoInfo" style="font-size:14px;margin-top:6px"></div>
+          </div></div>
       </div>
     </section>
     <section id="inventoryView" hidden>
@@ -1952,6 +1957,22 @@ tr.hl td{background:#fffbe6}
   var NEEDS_SHOP = { costs: 1, inventory: 1, integrations: 1, start: 1, campaigns: 1 };
   function withShop(url) { return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'shop=' + encodeURIComponent(currentShop || ''); }
   function shopById(id) { return shops.filter(function (x) { return x.id === id; })[0]; }
+  /* 📞 the automatic call switch follows the chosen shop */
+  function renderCallsAuto() {
+    var s = currentShop === 'all' ? null : shopById(currentShop);
+    $('callsAuto').checked = Boolean(s && s.voiceAuto); $('callsAuto').disabled = !s;
+    $('callsAutoInfo').textContent = s ? '' : 'Изберете магазин горе вляво.';
+  }
+  $('callsAuto').addEventListener('change', function () {
+    var box = this, s = shopById(currentShop), on = box.checked;
+    if (!s) return;
+    box.disabled = true;
+    fetch(withShop(API + 'voice'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'auto', on: on }) })
+      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); })
+      .then(function (d) { s.voiceAuto = d.voiceAuto; box.checked = d.voiceAuto; $('callsAutoInfo').textContent = d.voiceAuto ? 'Включено ✓ за ' + s.display : 'Изключено за ' + s.display; })
+      .catch(function (e) { box.checked = !on; $('callsAutoInfo').textContent = e.message; })
+      .then(function () { box.disabled = false; });
+  });
   function renderShopBtn() {
     var s = currentShop === 'all' ? null : shopById(currentShop);
     var name = currentShop === 'all' ? 'Всички магазини' : (s ? s.display : 'Моят магазин');
@@ -1959,6 +1980,7 @@ tr.hl td{background:#fffbe6}
     $('shopInitial').textContent = currentShop === 'all' ? '∑' : (name.trim().charAt(0).toUpperCase() || 'М');
     document.title = name + (DEMO ? ' – Ordyx демо' : ' – Ordyx');
     refreshAbBadge();
+    renderCallsAuto();
     $('iMetaFb').setAttribute('href', withShop(API + 'meta?start=1'));
     $('shopMenu').innerHTML = shops.filter(function (x) { return !x.hidden; }).map(function (x) {
       return '<button type="button" data-shop="' + esc(x.id) + '" class="' + (x.id === currentShop ? 'on' : '') + '"><span class="mini">' + esc(x.display.charAt(0).toUpperCase()) + '</span>' + esc(x.display) + '</button>';
@@ -2700,6 +2722,7 @@ tr.hl td{background:#fffbe6}
       role = d ? d.role : null;
       $('navClients').hidden = role !== 'owner';
       $('callsSoon').hidden = role === 'owner'; $('callsTip').hidden = role !== 'owner'; // calls: the owner only for now
+      $('callsSetSoon').hidden = role === 'owner'; $('callsSetChip').hidden = role === 'owner'; $('callsSetOwner').hidden = role !== 'owner';
       $('whoami').hidden = role !== 'client';
       if (role === 'client') $('whoami').innerHTML = '<b>' + esc(d.name || 'Клиент') + '</b>' + esc(d.email) + freeLine(d.freeUntil);
     }).catch(function () {});

@@ -3,7 +3,8 @@ import { fetchEcont, normalizeOffices, normalizeCities, econtPoints } from '../.
 import { fetchSpeedyMap, parseSpeedyOffices, attachPostCodes } from '../../lib/speedy.js';
 import { fetchBoxnowLockers } from '../../lib/boxnow.js';
 import { replaceOffices, replaceCities } from '../../lib/catalog-repo.js';
-import { send, safeEqual } from '../../lib/http.js';
+import { send, safeEqual, searchParams } from '../../lib/http.js';
+import { autoCallDue } from '../../lib/voice-auto.js';
 import { cbConfig, syncOrders } from '../../lib/cb-sync.js';
 import { metaConfig, syncMeta } from '../../lib/meta.js';
 import { listShops } from '../../lib/shops.js';
@@ -14,6 +15,12 @@ import { retryDue } from '../../lib/fulfilment.js';
 
 /** Vercel Cron calls this daily with `Authorization: Bearer $CRON_SECRET`. */
 export default async function handler(req, res) {
+  // pg_cron calls ?job=voice every few minutes with its own secret: only the automatic calls run then
+  if (searchParams(req).get('job') === 'voice') {
+    const tick = process.env.VOICE_TICK_SECRET;
+    if (!tick || !safeEqual(req.headers.authorization || '', `Bearer ${tick}`)) return send(res, 401, { error: 'auth' });
+    try { return send(res, 200, { ok: true, voice: await autoCallDue(getQuery()) }); } catch (err) { console.error('[cron] voice tick failed', err); return send(res, 500, { error: 'server' }); }
+  }
   const secret = process.env.CRON_SECRET;
   if (!secret || !safeEqual(req.headers.authorization || '', `Bearer ${secret}`)) return send(res, 401, { error: 'auth' });
   const q = getQuery();
