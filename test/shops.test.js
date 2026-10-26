@@ -131,3 +131,11 @@ test('the placeholder domain of a fresh install accepts no checkout', async () =
   const res = await checkout('https://shop.local', 31);
   assert.equal(res.statusCode, 403);
 });
+
+test('a client with no shop creates it from the ConvertBuilder shop form: checkout URL in the domain field, all store data kept', async () => {
+  const s = await createShop(q, { name: 'Докато спиш', domain: 'https://dokatospish.convertbuilder.com/checkout', url: 'https://dokatospish.convertbuilder.com/',
+    email: 'info@example.bg', phone: '+359888123456', currency: 'EUR' }, { byClient: true });
+  assert.equal(s.domain, 'dokatospish.convertbuilder.com');
+  assert.equal(s.url, 'https://dokatospish.convertbuilder.com/'); assert.equal(s.email, 'info@example.bg'); assert.equal(s.phone, '+359888123456');
+  assert.equal(s.approved, false);
+});

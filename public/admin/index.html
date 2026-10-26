@@ -1093,7 +1093,7 @@ tr.hl td{background:#fffbe6}
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="cbTitle">
       <div class="dhead"><div class="tile cb">CB<img src="https://www.google.com/s2/favicons?domain=convertbuilder.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div><h2 id="cbTitle">ConvertBuilder <span class="chip" id="iCbChip2"></span></h2><div class="muted" style="font-size:15px">E-commerce платформа и builder интеграция</div></div><button type="button" class="x" id="cbClose" aria-label="Затвори">×</button></div>
       <div class="dbody">
-        <div class="seg"><button type="button" class="on" data-tab="shop">Данни за магазина</button><button type="button" data-tab="sync">Връзка и синхронизация</button></div>
+        <div class="seg" id="cbTabs"><button type="button" class="on" data-tab="shop">Данни за магазина</button><button type="button" data-tab="sync">Връзка и синхронизация</button></div>
         <div id="tabShop">
           <div class="tip">💡 Тези данни описват магазина в панела. API настройките и синхронизацията са в следващата секция.</div>
           <div class="fgrid">
@@ -2000,6 +2000,17 @@ tr.hl td{background:#fffbe6}
   });
   $('pickShops').addEventListener('click', function (e) { var b = e.target.closest('[data-pick]'); if (b) chooseShop(b.getAttribute('data-pick')); });
   $('iShopSave').addEventListener('click', function () {
+    if (!shopById(currentShop)) { // no shop yet (a new client): this form creates it
+      $('iShopInfo').textContent = '';
+      return busy($('iShopSave'), fetch(API + 'shops', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: $('iShopName').value, domain: $('iShopDomain').value, url: $('iShopUrl').value, email: $('iShopEmail').value, phone: $('iShopPhone').value, currency: $('iShopCurrency').value }) })
+        .then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
+        .then(function (d) {
+          if (d.shop && d.shop.approved === false) alert('Магазинът е добавен ✓\n\nСега свържете ConvertBuilder в „Връзка и синхронизация“. Поръчките от ' + d.shop.domain + ' ще започнат да влизат, след като собственикът на платформата одобри магазина.');
+          return loadShops().then(function () { chooseShop(d.shop.id); });
+        })
+        .catch(function (e) { showErr('iShopInfo', e); });
+    }
     busy($('iShopSave'), integ({ action: 'save_shop', domain: $('iShopDomain').readOnly ? undefined : $('iShopDomain').value, name: $('iShopName').value, url: $('iShopUrl').value, email: $('iShopEmail').value, phone: $('iShopPhone').value, currency: $('iShopCurrency').value }))
       .then(function (d) { setShop(d.shop); $('iShopInfo').textContent = 'Запазено ✓'; setTimeout(function () { $('iShopInfo').textContent = ''; }, 2000); })
       .catch(function (e) { showErr('iShopInfo', e); });
@@ -3132,7 +3143,7 @@ tr.hl td{background:#fffbe6}
 
   /* прозорец ConvertBuilder с два раздела */
   function cbTab(t) {
-    [].forEach.call(document.querySelectorAll('.seg button'), function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === t); });
+    [].forEach.call(document.querySelectorAll('#cbTabs button'), function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === t); });
     $('tabShop').hidden = t !== 'shop'; $('tabSync').hidden = t !== 'sync';
   }
   function openCb(tab) { $('cbModal').hidden = false; cbTab(tab); }
@@ -3219,7 +3230,7 @@ tr.hl td{background:#fffbe6}
   [].forEach.call(document.querySelectorAll('.modal:not(#cbModal)'), function (m) {
     m.addEventListener('click', function (e) { if (e.target === m || e.target.hasAttribute('data-close')) m.hidden = true; });
   });
-  document.querySelector('.seg').addEventListener('click', function (e) { var t = e.target.getAttribute('data-tab'); if (t) cbTab(t); });
+  $('cbTabs').addEventListener('click', function (e) { var t = e.target.getAttribute('data-tab'); if (t) cbTab(t); });
   function loadIntegrations() {
     if (!$('iCbFrom').value) $('iCbFrom').value = sofiaDay(-30);
     return integ().then(renderIntegrations).catch(function (e) { showErr('iCbInfo', e); });
