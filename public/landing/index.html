@@ -190,6 +190,37 @@ input[type=range]{width:100%;accent-color:var(--ink);height:28px}
 .fit ul{margin:12px 0 0;padding-left:20px}
 .fit li{margin:6px 0}
 @media (max-width:760px){.fit{grid-template-columns:1fr}}
+/* europe — coming next (list in /couriers-eu.js) */
+.eu-stat{display:inline-flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.eu-stat span{font-weight:800;font-size:14px;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid var(--line)}
+.eu-stat b{font-family:Unbounded;color:var(--y2);margin-right:4px}
+.eu{display:grid;grid-template-columns:1.1fr .9fr;gap:20px;margin-top:28px;align-items:start}
+.eu-list{display:flex;flex-direction:column;gap:18px;background:#fff;border:1px solid var(--line);border-radius:22px;padding:22px}
+.eu-reg small{display:block;font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.eu-reg div{display:flex;flex-wrap:wrap;gap:8px}
+.eu-c{min-height:40px;padding:0 14px 0 10px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font:700 14px Manrope;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.eu-c:hover{border-color:var(--ink)}
+.eu-c.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.eu-c .fl,.eu-panel .fl{line-height:1}
+.eu-c .fl{font-size:18px}
+.eu-panel{background:#fff;border:2px solid var(--ink);border-radius:22px;padding:24px;position:sticky;top:90px;scroll-margin-top:90px}
+.eu-panel h3{font-size:24px;display:flex;align-items:center;gap:10px}
+.eu-panel .fl{font-size:30px}
+.eu-tags{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+.eu-tags span{font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px;background:var(--ysoft);color:#7a5c00}
+.eu-tags span.ok{background:#dcfce7;color:var(--ok)}
+.eu-h{font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px}
+.eu-k{display:flex;flex-direction:column;gap:8px}
+.eu-k .chip{font-size:15px;width:100%}
+.eu-k .chip .lg{position:relative;overflow:hidden;font-size:11px;color:var(--muted)}
+.eu-k .chip .lg img{position:absolute;inset:6px;width:24px;height:24px;background:#f6f5f0}
+.eu-k .chip small{display:block;font-weight:600;font-size:13px;color:var(--muted)}
+.eu-k .chip em{margin-left:auto}
+.eu-k .chip em.ok{background:#dcfce7;color:var(--ok)}
+.eu-tiny{margin:12px 0 0;color:var(--muted);font-size:14px}
+.eu-note{margin:16px 0 0;color:var(--muted);font-size:15px;max-width:760px}
+@media (max-width:900px){.eu{grid-template-columns:1fr}.eu-panel{position:static}}
+@media (max-width:600px){.eu-list{padding:16px;gap:14px}.eu-reg div{gap:6px}.eu-c{min-height:34px;padding:0 10px 0 8px;gap:5px;font-size:13px}.eu-c .fl{font-size:15px}.eu-panel{padding:18px}.eu-panel h3{font-size:21px}}
 /* story */
 .story{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center;margin-top:30px;background:#fff;border:1px solid var(--line);border-radius:26px;padding:30px}
 .story .mark{width:86px;height:86px;border-radius:22px;background:var(--ink);display:grid;place-items:center}
@@ -456,6 +487,21 @@ footer a{color:#e9e7df;text-decoration:none}
   </div>
 </section>
 
+<!-- EUROPE (coming) -->
+<section style="padding-top:0" id="europe">
+  <div class="wrap">
+    <span class="eyebrow rv">Идва скоро</span>
+    <h2 class="h2 rv">Продавай отвъд границата. Със същия наложен платеж.</h2>
+    <p class="lead rv">Днес Ordyx работи с Еконт, Спиди и BOX NOW в България. Следват 24 европейски държави — с местните куриери, които купувачите там познават, и с наложен платеж в тяхната валута. Избери държава и виж кои куриери идват.</p>
+    <div class="eu-stat rv" id="euStat"><span><b>24</b>държави</span><span>наложен платеж в местната валута</span></div>
+    <div class="eu rv">
+      <div class="eu-list" id="euList"></div>
+      <div class="eu-panel" id="euPanel" aria-live="polite"><p class="eu-tiny">Избери държава от списъка.</p></div>
+    </div>
+    <p class="eu-note rv">Включваме държавите една по една. Всяка нова се появява в „Интеграции → Куриери“: избираш държавата и включваш куриерите ѝ — както днес Еконт и Спиди.</p>
+  </div>
+</section>
+
 <!-- FIT -->
 <section style="padding-top:0">
   <div class="wrap">
@@ -463,7 +509,7 @@ footer a{color:#e9e7df;text-decoration:none}
     <h2 class="h2 rv">За теб ли е?</h2>
     <div class="fit">
       <div class="yes rv"><h3 style="font-size:20px">✅ За теб е, ако…</h3><ul><li>продаваш с наложен платеж или до офис</li><li>правиш от 5 до 200 поръчки на ден</li><li>управляваш магазина сам или с малък екип</li><li>искаш да виждаш всичко от телефона</li></ul></div>
-      <div class="no rv"><h3 style="font-size:20px">✋ Не е за теб, ако…</h3><ul><li>имаш собствен склад с ERP система</li><li>пращаш само с международни куриери</li></ul></div>
+      <div class="no rv"><h3 style="font-size:20px">✋ Не е за теб, ако…</h3><ul><li>имаш собствен склад с ERP система</li><li>пращаш само извън България — поне докато не включим <a href="#europe">Европа</a></li></ul></div>
     </div>
   </div>
 </section>
@@ -527,6 +573,7 @@ footer a{color:#e9e7df;text-decoration:none}
     <div class="faq">
       <details class="rv"><summary>Трябва ли ми програмист?</summary><p>Не. Копираш един ред код в настройките на магазина. Водачът „Първи стъпки“ ти показва всяка стъпка с отметки.</p></details>
       <details class="rv"><summary>Работи ли с моя магазин?</summary><p>Ordyx работи с магазини и фунии в ConvertBuilder, с WooCommerce (плъгин) и със собствени сайтове (API). Shopify идва скоро. Ако стоката ти е при фулфилмънт склад, поръчките отиват при него, а той връща товарителницата — работиш с конкретен център? Пиши ни и ще направим интеграцията.</p></details>
+      <details class="rv"><summary>Мога ли да пращам в чужбина?</summary><p>Скоро. Подготвяме 24 европейски държави с местните им куриери и наложен платеж — <a href="#europe">виж списъка</a>. Днес Ordyx прави товарителници за Еконт, Спиди и BOX NOW в България. Ако стоката ти е при фулфилмънт склад, който праща в чужбина, Ordyx вече може да му предава поръчките.</p></details>
       <details class="rv"><summary>Ползвам ли моя договор с Еконт и Спиди?</summary><p>Да. Товарителниците се правят с твоя профил в Еконт и с твоя договор със Спиди — цените и условията остават твоите.</p></details>
       <details class="rv"><summary>Колко струва след пробния период?</summary><p>24 € на месец за един магазин, ако се регистрираш до 30 ноември 2026 г. — заключени завинаги. След това редовната цена е 29 €. Цените са без ДДС.</p></details>
       <details class="rv"><summary>Сигурни ли са данните на клиентите ми (GDPR)?</summary><p>Данните се пазят в Европейския съюз. Ключовете за куриерите и магазина са криптирани. Данните от незавършени поръчки се заличават автоматично след 30 дни. Ти виждаш само своите магазини.</p></details>
@@ -558,6 +605,7 @@ footer a{color:#e9e7df;text-decoration:none}
 
 <div class="mcta" id="mcta"><a class="btn" data-cta href="#">Започни безплатно — 14 дни</a></div>
 
+<script src="/couriers-eu.js"></script>
 <script>
 (function () {
   var SIGNUP = 'https://app.ordyx.eu/admin/?signup=xO7uvr0BirFU_hCbXoAGgnTG';
@@ -589,6 +637,40 @@ footer a{color:#e9e7df;text-decoration:none}
   /* sticky mobile CTA after the hero */
   var hero = document.querySelector('.hero');
   window.addEventListener('scroll', function () { $('mcta').classList.toggle('show', window.scrollY > hero.offsetHeight - 80 && window.scrollY < document.body.scrollHeight - innerHeight - 260); }, { passive: true });
+
+  /* europe: the countries and couriers coming next — the list is shared with the admin (/couriers-eu.js) */
+  var EU = window.ORDYX_EU;
+  if (EU && $('euList')) {
+    $('euStat').innerHTML = '<span><b>' + EU.countries.length + '</b>държави</span><span><b>' + Object.keys(EU.couriers).length + '</b>куриера</span><span>наложен платеж в местната валута</span>';
+    $('euList').innerHTML = EU.regions.map(function (r) {
+      return '<div class="eu-reg"><small>' + esc(r.name) + '</small><div>' + r.countries.map(function (code) {
+        var c = EU.country(code);
+        return '<button type="button" class="eu-c" data-eu="' + code + '" aria-pressed="false"><span class="fl" aria-hidden="true">' + c.flag + '</span>' + esc(c.name) + '</button>';
+      }).join('') + '</div></div>';
+    }).join('');
+    var euChip = function (k, works) {
+      return '<span class="chip"><i class="lg" aria-hidden="true">' + esc(k.short) + (k.domain ? '<img src="https://www.google.com/s2/favicons?domain=' + esc(k.domain) + '&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">' : '') + '</i>' +
+        '<span>' + esc(k.name) + '<small>' + esc(k.about) + '</small></span><em' + (works ? ' class="ok"' : '') + '>' + (works ? 'работи' : 'скоро') + '</em></span>';
+    };
+    var euShow = function (code) {
+      var c = EU.country(code), live = EU.live(code), soon = EU.soon(code);
+      [].forEach.call($('euList').querySelectorAll('[data-eu]'), function (b) { var on = b.getAttribute('data-eu') === code; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+      $('euPanel').innerHTML = '<h3><span class="fl" aria-hidden="true">' + c.flag + '</span>' + esc(c.name) + '</h3>' +
+        '<div class="eu-tags">' + (live.length ? '<span class="ok">✓ Работи днес</span>' : '<span>Скоро</span>') + '<span>Наложен платеж в ' + esc(EU.currencies[c.currency]) + '</span></div>' +
+        (live.length ? '<div class="eu-h">Работи днес</div><div class="eu-k">' + live.map(function (k) { return euChip(k, true); }).join('') + '</div>' : '') +
+        '<div class="eu-h">' + (live.length ? 'Идват скоро' : 'Куриери, които идват') + '</div><div class="eu-k">' + soon.map(function (k) { return euChip(k, false); }).join('') + '</div>' +
+        (soon.every(function (k) { return k.intl; }) && !live.length ? '<p class="eu-tiny">Местните куриери за ' + esc(c.name) + ' ще обявим, когато включим държавата.</p>' : '');
+    };
+    $('euList').addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('[data-eu]') : null;
+      if (!b) return;
+      euShow(b.getAttribute('data-eu'));
+      // on a phone the card sits under the list: bring it up when it is out of sight
+      var r = $('euPanel').getBoundingClientRect();
+      if (innerWidth <= 900 && (r.top > innerHeight - 140 || r.bottom < 0)) $('euPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    euShow('BG');
+  }
 
   /* hero: phone notifications + admin rows */
   var ORDERS = [['Варна', 'Георги П.', 64, 'СПИДИ – автомат Варна'], ['Плевен', 'Мария И.', 28.28, 'ЕКОНТ – офис Плевен'], ['София', 'Елена С.', 41.8, 'ЕКОНТ – офис Младост'], ['Бургас', 'Иван Д.', 33.9, 'СПИДИ – офис Бургас'], ['Русе', 'Деси К.', 19.9, 'ЕКОНТ – офис Русе']];

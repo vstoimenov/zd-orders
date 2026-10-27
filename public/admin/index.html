@@ -165,11 +165,13 @@ tr.st-new{background:#fffbeb}
 .isec-ic{width:34px;height:34px;flex:none;border-radius:10px;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center}
 .isec-ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .isec-head h2{font-size:17px;margin:0;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.icountry{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--muted)}
+.icountry select{width:auto;min-width:0;max-width:220px}
 .igrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .icard{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
 .tile{position:relative;overflow:hidden;width:48px;height:48px;flex:none;border-radius:12px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;font-weight:800;font-size:15px}
 .tile img{position:absolute;inset:9px;width:calc(100% - 18px);height:calc(100% - 18px);object-fit:contain;background:#fff}
-.tile.cb{color:#0b6bcb}.tile.shopify{color:#5e8e3e}.tile.woo{color:#7f54b3}.tile.ful{color:#b45309;font-size:13px}.tile.opencart{color:#1f9bd1}.tile.google{color:#1a73e8}.tile.tiktok{color:#111}.tile.meta{color:#1877f2}.tile.econt{color:#1d4f91}.tile.speedy{color:#d4141c}.tile.nk{color:#c81e1e}.tile.boxnow{color:#44c2a0}.tile.pigeon{color:#e4572e}
+.tile.cb{color:#0b6bcb}.tile.shopify{color:#5e8e3e}.tile.woo{color:#7f54b3}.tile.ful{color:#b45309;font-size:13px}.tile.opencart{color:#1f9bd1}.tile.google{color:#1a73e8}.tile.tiktok{color:#111}.tile.meta{color:#1877f2}.tile.econt{color:#1d4f91}.tile.speedy{color:#d4141c}.tile.nk{color:#c81e1e}.tile.boxnow{color:#44c2a0}
 .ibody{flex:1;min-width:0}
 .ibody b{font-size:15px}
 .ibody .muted{margin-top:2px}
@@ -423,13 +425,14 @@ tr.hl td{background:#fffbe6}
         </div>
       </div>
       <div class="isec">
-        <div class="isec-head"><span class="isec-ic"><svg viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62L18.3 9.38a1 1 0 0 0-.78-.38H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></span><div><h2>Куриери</h2><div class="muted">Офисите и автоматите се обновяват всяка нощ</div></div></div>
+        <div class="isec-head"><span class="isec-ic"><svg viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62L18.3 9.38a1 1 0 0 0-.78-.38H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></span><div><h2>Куриери</h2><div class="muted">Офисите и автоматите се обновяват всяка нощ</div></div><label class="icountry">Държава<select id="iCountry" aria-label="Държава"></select></label></div>
+        <div class="tip" id="iCountryLine" hidden style="margin:0 0 14px"></div>
         <div class="igrid">
-          <div class="icard"><div class="tile econt">E<img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Еконт</b> <span class="chip ok">активен</span><div class="muted">Куриерски услуги и автомати</div><div class="muted" id="iEcont"></div><div class="muted" id="iEcontApiLine"></div></div><button type="button" class="primary" id="iEcontOpen">+ Товарителници</button></div>
-          <div class="icard"><div class="tile speedy">S<img src="https://www.google.com/s2/favicons?domain=speedy.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Спиди</b> <span class="chip ok">активен</span><div class="muted">Експресни куриерски доставки</div><div class="muted" id="iSpeedy"></div><div class="muted" id="iSpeedyApiLine"></div></div><button type="button" class="primary" id="iSpeedyOpen">+ Товарителници</button></div>
-          <div class="icard"><div class="tile boxnow">BN<img src="https://www.google.com/s2/favicons?domain=boxnow.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>BOX NOW</b> <span class="chip" id="iBoxnowChip">изключен</span><div class="muted">Автомати за пратки</div><div class="muted" id="iBoxnow"></div><div class="muted" id="iBoxnowApiLine"></div></div><button type="button" class="primary" id="iBoxnowOpen">+ Включи</button></div>
-          <div class="icard"><div class="tile pigeon">PE<img src="https://www.google.com/s2/favicons?domain=pigeonexpress.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Pigeon Express</b> <span class="chip">скоро</span><div class="muted">Куриерски услуги</div></div><button type="button" class="ghost" disabled>Скоро</button></div>
-          <div class="icard" style="grid-column:1/-1"><div class="tile" style="color:#b0426b"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="ibody" style="flex:1"><b>Срок за доставка в чекаута</b><div class="muted">Ред под всеки куриер, напр. „1–2 работни дни“ (празно = без ред)</div>
+          <div class="icard bg-only"><div class="tile econt">E<img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Еконт</b> <span class="chip ok">активен</span><div class="muted">Куриерски услуги и автомати</div><div class="muted" id="iEcont"></div><div class="muted" id="iEcontApiLine"></div></div><button type="button" class="primary" id="iEcontOpen">+ Товарителници</button></div>
+          <div class="icard bg-only"><div class="tile speedy">S<img src="https://www.google.com/s2/favicons?domain=speedy.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Спиди</b> <span class="chip ok">активен</span><div class="muted">Експресни куриерски доставки</div><div class="muted" id="iSpeedy"></div><div class="muted" id="iSpeedyApiLine"></div></div><button type="button" class="primary" id="iSpeedyOpen">+ Товарителници</button></div>
+          <div class="icard bg-only"><div class="tile boxnow">BN<img src="https://www.google.com/s2/favicons?domain=boxnow.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>BOX NOW</b> <span class="chip" id="iBoxnowChip">изключен</span><div class="muted">Автомати за пратки</div><div class="muted" id="iBoxnow"></div><div class="muted" id="iBoxnowApiLine"></div></div><button type="button" class="primary" id="iBoxnowOpen">+ Включи</button></div>
+          <div id="iCountryCouriers" style="display:contents"></div>
+          <div class="icard bg-only" style="grid-column:1/-1"><div class="tile" style="color:#b0426b"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="ibody" style="flex:1"><b>Срок за доставка в чекаута</b><div class="muted">Ред под всеки куриер, напр. „1–2 работни дни“ (празно = без ред)</div>
             <div class="fgrid" style="margin-top:10px">
               <label>Еконт<input type="text" id="etaEcont" maxlength="40"></label>
               <label>Спиди<input type="text" id="etaSpeedy" maxlength="40"></label>
@@ -1143,6 +1146,7 @@ tr.hl td{background:#fffbe6}
     </div>
   </div>
 </div>
+<script src="/couriers-eu.js"></script>
 <script src="roas.js"></script>
 <script>
 (function () {
@@ -2193,6 +2197,23 @@ tr.hl td{background:#fffbe6}
       .catch(function (e) { showErr('etaInfo', e); });
   });
   /* ---- BOX NOW: автомати в чекаута (включва се за всеки магазин) ---- */
+  // Интеграции → Куриери by country: Bulgaria keeps its working cards; every courier still to come is a „скоро“ card from the shared list
+  var EU = window.ORDYX_EU;
+  if (EU) {
+    $('iCountry').innerHTML = EU.countries.map(function (c) { return '<option value="' + c.code + '">' + c.flag + ' ' + esc(c.name) + '</option>'; }).join('');
+    var showCountry = function () {
+      var code = $('iCountry').value, c = EU.country(code), home = code === 'BG';
+      [].forEach.call(document.querySelectorAll('.bg-only'), function (el) { el.hidden = !home; });
+      $('iCountryLine').hidden = home;
+      $('iCountryLine').textContent = home ? '' : '🌍 ' + c.name + ': наложен платеж в ' + EU.currencies[c.currency] + ' и местните куриери идват скоро. Ще ви уведомим, когато държавата се включи.';
+      $('iCountryCouriers').innerHTML = EU.soon(code).map(function (k) {
+        return '<div class="icard"><div class="tile" style="color:' + esc(k.color) + '">' + esc(k.short) + (k.domain ? '<img src="https://www.google.com/s2/favicons?domain=' + esc(k.domain) + '&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">' : '') + '</div>' +
+          '<div class="ibody"><b>' + esc(k.name) + '</b> <span class="chip">скоро</span><div class="muted">' + esc(k.about) + '</div></div><button type="button" class="ghost" disabled>Скоро</button></div>';
+      }).join('');
+    };
+    $('iCountry').addEventListener('change', showCountry);
+    showCountry();
+  }
   var lastBoxnow = {}, lastBoxnowApi = {};
   function renderBoxnow(b, a) {
     lastBoxnow = b; lastBoxnowApi = a || {};
