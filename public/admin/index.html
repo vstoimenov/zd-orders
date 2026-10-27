@@ -2159,7 +2159,7 @@ tr.hl td{background:#fffbe6}
     $('iMetaOpen').disabled = m.open === false && !m.configured; // clients: until Meta approves the app (META_PUBLIC); a connected shop keeps its settings
     var daysLeft = m.tokenExpiresAt ? Math.floor((Date.parse(m.tokenExpiresAt) - Date.now()) / 864e5) : null;
     $('iMetaLine').textContent = m.accountId ? (m.accountName || 'акаунт') + ' · act_' + m.accountId + ' · ' + (m.currency || '') + ' · синхронизация ' + when(m.lastSyncAt) +
-      (daysLeft != null ? ' · връзката е валидна още ' + Math.max(0, daysLeft) + ' дни' : '') ': m.open === false && !m.configured ? 'Очаква одобрение от Meta — скоро ще свържете рекламите си оттук.' : (m.configured && m.oauth ? 'Влязохте с Facebook — изберете рекламен акаунт' : '');
+      (daysLeft != null ? ' · връзката е валидна още ' + Math.max(0, daysLeft) + ' дни' : '') : m.open === false && !m.configured ? 'Очаква одобрение от Meta — скоро ще свържете рекламите си оттук.' : (m.configured && m.oauth ? 'Влязохте с Facebook — изберете рекламен акаунт' : '');
     var pm = m.partner || {};
     $('iMetaPartnerOn').hidden = !pm.enabled; $('iMetaPartnerOff').hidden = !!pm.enabled;
     $('iMetaBiz').textContent = pm.businessId || '';
