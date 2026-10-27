@@ -15,11 +15,22 @@ import { retryDue } from '../../lib/fulfilment.js';
 
 /** Vercel Cron calls this daily with `Authorization: Bearer $CRON_SECRET`. */
 export default async function handler(req, res) {
-  // pg_cron calls ?job=voice every few minutes with its own secret: only the automatic calls run then
-  if (searchParams(req).get('job') === 'voice') {
-    const tick = process.env.VOICE_TICK_SECRET;
-    if (!tick || !safeEqual(req.headers.authorization || '', `Bearer ${tick}`)) return send(res, 401, { error: 'auth' });
-    try { return send(res, 200, { ok: true, voice: await autoCallDue(getQuery()) }); } catch (err) { console.error('[cron] voice tick failed', err); return send(res, 500, { error: 'server' }); }
+  // pg_cron calls ?job=voice every few minutes: only the automatic calls run then. It proves itself with a one-time code it has just
+  // written to zd.settings (fresh, used once — no shared secret to keep), or with VOICE_TICK_SECRET.
+  const p = searchParams(req);
+  if (p.get('job') === 'voice') {
+    try {
+      const q = getQuery();
+      const tick = process.env.VOICE_TICK_SECRET;
+      const bySecret = Boolean(tick) && safeEqual(req.headers.authorization || '', `Bearer ${tick}`);
+      const nonce = String(p.get('nonce') || '');
+      const byNonce = !bySecret && /^[0-9a-f-]{36}$/i.test(nonce) && (await q(
+        `delete from zd.settings where key = 'voice_tick_nonce' and value->>'nonce' = $1 and (value->>'at')::timestamptz > now() - interval '5 minutes' returning key`,
+        [nonce],
+      )).length > 0;
+      if (!bySecret && !byNonce) return send(res, 401, { error: 'auth' });
+      return send(res, 200, { ok: true, voice: await autoCallDue(q) });
+    } catch (err) { console.error('[cron] voice tick failed', err); return send(res, 500, { error: 'server' }); }
   }
   const secret = process.env.CRON_SECRET;
   if (!secret || !safeEqual(req.headers.authorization || '', `Bearer ${secret}`)) return send(res, 401, { error: 'auth' });

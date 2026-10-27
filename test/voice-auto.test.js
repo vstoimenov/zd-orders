@@ -113,3 +113,18 @@ test('the tick: /api/cron/refresh?job=voice runs only the calls, with its own se
   assert.equal(ok.statusCode, 200, ok.body);
   assert.ok(calls.every((c) => c.url === 'https://voice.example/ordyx/call'), 'no courier refresh, no other jobs');
 });
+
+test('the tick can prove itself with a one-time code the database wrote (no shared secret): valid once, fresh only', async () => {
+  delete process.env.VOICE_TICK_SECRET;
+  await order(70);
+  const run = async (nonce) => { const res = fakeRes(); await cron({ method: 'GET', url: `/api/cron/refresh?job=voice&nonce=${encodeURIComponent(nonce)}`, headers: {} }, res); return res; };
+  const mint = async (n, ago = '0 seconds') => q(`insert into zd.settings (key, value) values ('voice_tick_nonce', jsonb_build_object('nonce', $1::text, 'at', now() - $2::interval))
+    on conflict (key) do update set value = excluded.value`, [n, ago]);
+  await mint('11111111-2222-4333-8444-555555555555');
+  assert.equal((await run('wrong-code-0000')).statusCode, 401);
+  assert.equal((await run('11111111-2222-4333-8444-555555555555')).statusCode, 200);
+  assert.equal((await run('11111111-2222-4333-8444-555555555555')).statusCode, 401, 'used up');
+  await mint('66666666-2222-4333-8444-555555555555', '10 minutes');
+  assert.equal((await run('66666666-2222-4333-8444-555555555555')).statusCode, 401, 'too old');
+  assert.equal((await run('')).statusCode, 401);
+});
