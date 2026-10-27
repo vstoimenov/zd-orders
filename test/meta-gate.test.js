@@ -53,7 +53,7 @@ test('the platform token reads only the account the shop linked by sharing; a sh
   await saveIntegration(q, 'meta', { config: { mode: 'partner', partnerAccountId: '222', accountId: '222', active: true }, shopId: B });
   assert.equal((await metaConfig(q, B)).token, 'PLATFORM', 'its own shared account');
   process.env.META_PUBLIC = '1';
-  const swap = await call(client, { method: 'POST', url: `/api/admin/integrations?shop=${B}`, body: { action: 'save_meta', accountId: '111', token: 'junk', active: false } });
+  const swap = await call(client, { method: 'POST', url: `/api/admin/integrations?shop=${B}`, body: { action: 'save_meta', accountId: '111', token: 'junk' } });
   assert.equal(swap.statusCode, 400); assert.match(json(swap).error, /друг магазин/);
   await saveIntegration(q, 'meta', { config: { accountId: '333' }, shopId: B }); // any other way the account changes
   assert.equal(await metaConfig(q, B), null, 'not the shared account any more: no platform token');
@@ -63,4 +63,13 @@ test('the old popup WhatsApp connect is the owner\'s only too, until WHATSAPP_PU
   delete process.env.WHATSAPP_PUBLIC;
   const r = await call(client, { method: 'POST', body: { action: 'wa_connect', code: 'x', wabaId: '1', phoneNumberId: '2' } });
   assert.equal(r.statusCode, 403);
+});
+
+test('switching Meta off works even when another shop uses the same ad account', async () => {
+  const { saveIntegration } = await import('../lib/integrations-repo.js');
+  const B = (await q(`insert into zd.shops (name, domain) values ('Б', 'b.bg') returning id`))[0].id;
+  await saveIntegration(q, 'meta', { config: { accountId: '555', active: true }, secret: 't', shopId: SHOP });
+  await saveIntegration(q, 'meta', { config: { accountId: '555', active: true }, secret: 't', shopId: B });
+  const r = await call(owner, { method: 'POST', url: `/api/admin/integrations?shop=${B}`, body: { action: 'save_meta', accountId: '555', active: false } });
+  assert.equal(r.statusCode, 200, r.body);
 });

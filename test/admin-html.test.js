@@ -32,8 +32,8 @@ test('a waybill for a courier that is not connected says so at the top and hides
 });
 
 test('the Meta card shows „Скоро“ and cannot be opened while the server says meta.open is false', () => {
-  assert.match(html, /\$\('iMetaOpen'\)\.textContent = m\.open === false \? 'Скоро'/);
-  assert.match(html, /\$\('iMetaOpen'\)\.disabled = m\.open === false/);
+  assert.match(html, /\$\('iMetaOpen'\)\.textContent = m\.open === false && !m\.configured \? 'Скоро'/);
+  assert.match(html, /\$\('iMetaOpen'\)\.disabled = m\.open === false && !m\.configured/, 'a shop already connected keeps its settings (disconnect = data deletion)');
 });
 
 test('„Клиенти“ names the client\'s own shops and offers „Откажи“ next to „Одобри“', () => {

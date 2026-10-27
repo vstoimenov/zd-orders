@@ -177,10 +177,8 @@ test('10 wrong passwords lock the account for a while', async () => {
   try {
     for (let i = 0; i < 10; i++) await call({ method: 'POST', url: '/api/admin/login', body: { email: 'a@client.bg', password: 'nope' } });
     const res = await call({ method: 'POST', url: '/api/admin/login', body: { email: 'a@client.bg', password: 'client-pass-1' } });
-    assert.equal(res.statusCode, 401, 'still locked');
-    assert.match(json(res).error, /временно спрян/, 'only the right password learns why (the account is theirs)');
-    const wrong = await call({ method: 'POST', url: '/api/admin/login', body: { email: 'a@client.bg', password: 'nope-again' } });
-    assert.match(json(wrong).error, /минути/, 'a wrong password gets the usual answer');
+    assert.equal(res.statusCode, 401, 'the same answer as a wrong password: no hint that the account exists');
+    assert.match(json(res).error, /минути/);
   } finally { globalThis.setTimeout = realSet; }
 });
 
@@ -262,11 +260,11 @@ test('parallel wrong passwords still lock the account; unknown and locked logins
   try {
     await Promise.all(Array.from({ length: 25 }, () => call({ method: 'POST', url: '/api/admin/login', body: { email: 'a@client.bg', password: 'nope' } })));
     resetLoginLimitForTests(); // the account lock is checked here, not the per-address limit
-    const locked = await call({ method: 'POST', url: '/api/admin/login', body: { email: 'a@client.bg', password: 'wrong-guess' } });
+    const locked = await call({ method: 'POST', url: '/api/admin/login', body: { email: 'a@client.bg', password: 'client-pass-1' } });
     const unknown = await call({ method: 'POST', url: '/api/admin/login', body: { email: 'nobody@x.bg', password: 'whatever1' } });
     assert.equal(locked.statusCode, 401);
     assert.equal(unknown.statusCode, 401);
-    assert.equal(json(locked).error, json(unknown).error, 'a guesser cannot tell a locked account from an unknown email');
+    assert.equal(json(locked).error, json(unknown).error, 'even the right password learns nothing while locked');
     const [u] = await q(`select locked_until > now() as locked from zd.users`);
     assert.equal(u.locked, true);
   } finally { globalThis.setTimeout = realSet; }

@@ -63,12 +63,13 @@ test('an approved shop or one with orders is never refused (deleted)', async () 
 
 const login = async (body, ip = '9.9.9.9') => { const res = fakeRes(); await router({ method: 'POST', url: '/api/admin/login', headers: { 'x-forwarded-for': ip }, body: JSON.stringify(body), socket: { remoteAddress: ip } }, res); return res; };
 
-test('a locked client who types the right password is told the account is paused and for how long; a wrong password learns nothing', async () => {
+test('while an account is locked no guess is checked: the right password gets the same answer as a wrong one (no oracle)', async () => {
   for (let i = 0; i < 11; i++) await login({ email: 'c@x.bg', password: 'wrong-pass' }, `10.0.0.${i}`);
   const right = await login({ email: 'c@x.bg', password: 'client-pass-1' }, '10.0.1.1');
-  assert.equal(right.statusCode, 401); assert.match(json(right).error, /временно спрян/); assert.match(json(right).error, /\d+ мин/);
   const wrong = await login({ email: 'c@x.bg', password: 'still-wrong' }, '10.0.1.2');
-  assert.doesNotMatch(json(wrong).error, /временно спрян/);
+  assert.equal(right.statusCode, 401);
+  assert.equal(json(right).error, json(wrong).error);
+  assert.match(json(right).error, /15 минути/, 'everyone is told how long the pause is');
 });
 
 test('the owner password cannot be guessed at full speed from one address', async () => {
@@ -77,6 +78,12 @@ test('the owner password cannot be guessed at full speed from one address', asyn
   for (let i = 0; i < 21; i++) last = await login({ password: `guess-${i}` }, '7.7.7.7');
   assert.equal(last.statusCode, 429);
   assert.equal((await login({ password: 'owner-real-pass' }, '7.7.7.8')).statusCode, 200, 'another address still logs in');
+});
+
+test("clients' typos on a shared Wi-Fi do not block the owner's login from that address", async () => {
+  process.env.ADMIN_PASSWORD = 'owner-real-pass';
+  for (let i = 0; i < 20; i++) await login({ email: `nobody${i}@x.bg`, password: 'typo-pass' }, '6.6.6.6');
+  assert.equal((await login({ password: 'owner-real-pass' }, '6.6.6.6')).statusCode, 200);
 });
 
 test('a session used in its last 3 days gets a fresh week; a fresh one is left alone (the phone app asked for the password every week)', async () => {
@@ -91,7 +98,7 @@ test('a session used in its last 3 days gets a fresh week; a fresh one is left a
   assert.ok(exp - Math.floor(Date.now() / 1000) > 6 * 86400);
   assert.equal((await me(client)).headers['set-cookie'], undefined);
   const ownerOld = await me(`zdo_admin=${signSession('secret', old)}`);
-  assert.match(String(ownerOld.headers['set-cookie']), /zdo_admin=\d+\./);
+  assert.equal(ownerOld.headers['set-cookie'], undefined, 'the owner token has no version to revoke it: it is not renewed');
 });
 
 test("the owner's phone is not notified about orders in a client's own shop; the client's phone is", async () => {
@@ -111,4 +118,12 @@ test('two shops with one domain at the same moment: one is made, the other hears
   const [a, b] = await Promise.all([1, 2].map(() => call(owner, 'POST', '/api/admin/shops', { name: 'Дубъл', domain: 'same-moment.bg' })));
   assert.deepEqual([a.statusCode, b.statusCode].sort(), [200, 400], a.body + ' | ' + b.body);
   assert.match(json(a.statusCode === 400 ? a : b).error, /вече има/);
+});
+
+test('refusing a shop that may not be refused leaves its settings in place', async () => {
+  const shop = await addShop('keep-me.bg');
+  await q(`insert into zd.integrations (provider, shop_id, config) values ('econt', $1::uuid, '{"sender":"x"}')`, [shop.id]);
+  await call(owner, 'POST', '/api/admin/users', { action: 'approve_shop', shopId: shop.id });
+  assert.equal((await call(owner, 'POST', '/api/admin/users', { action: 'reject_shop', shopId: shop.id })).statusCode, 400);
+  assert.equal((await q(`select 1 from zd.integrations where shop_id = $1::uuid`, [shop.id])).length, 1);
 });
