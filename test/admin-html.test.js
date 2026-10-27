@@ -48,3 +48,10 @@ test('small first-run fixes: the home-screen icon is „Ordyx“; a 429 at login
   assert.match(html, /if \(currentShop === 'all' && !shops\.length\) currentShop = ''/);
   assert.match(html, /location\.hash = fromGuide \? '#start' : '#integrations'/);
 });
+
+test('the login screen tells a client who forgot the password whom to write to (the address of the legal pages)', () => {
+  const login = html.slice(html.indexOf('<form id="login"'), html.indexOf('</form>', html.indexOf('<form id="login"')));
+  assert.match(login, /Забравена парола\?/);
+  assert.match(login, /mailto:stoimenov@profitbrand\.online/);
+  assert.match(html, /Пишете на <a href="mailto:stoimenov@profitbrand\.online/);
+});
