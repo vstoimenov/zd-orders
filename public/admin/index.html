@@ -1320,6 +1320,7 @@ tr.hl td{background:#fffbe6}
             try { history.replaceState(null, '', location.pathname + (rest.toString() ? '?' + rest : '') + location.hash); } catch (e) { /* old browser */ }
           }
           loadShops().catch(function () {}).then(loadMe).then(function () {
+            render(); // the rows were drawn before the role was known: the owner's „📞 Потвърди“ needs it
             if (role === 'client' && !location.hash && !shops.length) location.hash = '#start'; // a new client starts with the guide
             showView(viewFromHash()); afterFacebook(); afterWhatsApp();
           });

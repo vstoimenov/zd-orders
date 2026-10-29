@@ -55,3 +55,8 @@ test('the login screen tells a client who forgot the password whom to write to (
   assert.match(login, /mailto:stoimenov@profitbrand\.online/);
   assert.match(html, /Пишете на <a href="mailto:stoimenov@profitbrand\.online/);
 });
+
+test('the orders drawn before the role was known are drawn again once it is: the owner got no „📞 Потвърди“ until a refresh', () => {
+  const boot = html.slice(html.indexOf('.then(loadMe).then(function () {'), html.indexOf('.then(loadMe).then(function () {') + 400);
+  assert.match(boot, /\.then\(loadMe\)\.then\(function \(\) \{[\s\S]*?render\(\);/);
+});
