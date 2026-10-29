@@ -49,6 +49,22 @@ test('an account marked as the owner is the owner — an open phone session incl
   assert.equal(again.role, 'owner', 'a new login with the email answers „owner“');
 });
 
+test('the phone fills in the owner\'s email: the owner\'s password works with it too — even while wrong guesses locked the account', async () => {
+  await q(`update zd.users set is_owner = true, locked_until = now() + interval '15 minutes' where email = 'owner@mail.bg'`);
+  const res = await call({ method: 'POST', url: '/api/admin/login', body: { email: 'Owner@Mail.bg ', password: 'owner-pass' } });
+  assert.equal(res.statusCode, 200);
+  assert.equal(json(res).role, 'owner');
+  assert.match(cookieOf(res), /^zdo_admin=c\./, 'an account session: renewed on the phone and ended by a new password');
+  assert.equal(json(await call({ url: '/api/admin/me', cookie: cookieOf(res) })).role, 'owner');
+});
+
+test('the owner\'s password opens no other account: a client\'s email with it is refused', async () => {
+  const { token } = await createClient(q, { email: 'client@mail.bg', name: 'Клиент', shopIds: [SHOP_A] });
+  await acceptInvite(q, token, 'client-pass-1');
+  const res = await call({ method: 'POST', url: '/api/admin/login', body: { email: 'client@mail.bg', password: 'owner-pass' } });
+  assert.equal(res.statusCode, 401);
+});
+
 test('a stopped owner account or a changed password ends its sessions, like any account', async () => {
   await q(`update zd.users set is_owner = true where email = 'owner@mail.bg'`);
   const { cookie } = await login('owner@mail.bg');
