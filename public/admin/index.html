@@ -161,12 +161,13 @@ tr.st-new{background:#fffbeb}
 .integ button{margin-right:6px}
 /* интеграции: раздели с карти + прозорец */
 .isec{margin-bottom:30px}
-.isec-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.isec-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;flex-wrap:wrap}
 .isec-ic{width:34px;height:34px;flex:none;border-radius:10px;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center}
 .isec-ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .isec-head h2{font-size:17px;margin:0;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .icountry{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--muted)}
 .icountry select{width:auto;min-width:0;max-width:220px}
+@media (max-width:600px){.icountry{margin-left:0;flex:1 1 100%}.icountry select{flex:1;max-width:none}}
 .igrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .icard{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
 .tile{position:relative;overflow:hidden;width:48px;height:48px;flex:none;border-radius:12px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;font-weight:800;font-size:15px}
@@ -302,6 +303,7 @@ tr.hl td{background:#fffbe6}
     <div class="trap" aria-hidden="true"><label>Уебсайт<input type="text" id="suWebsite" tabindex="-1" autocomplete="off"></label></div>
     <button class="primary" id="suBtn">Създай акаунт</button>
     <div class="err" id="suErr"></div>
+    <p style="font-size:12px;color:var(--muted)">С регистрацията приемате <a href="https://ordyx.eu/terms" target="_blank" rel="noopener">Общите условия</a> и <a href="https://ordyx.eu/privacy" target="_blank" rel="noopener">Политиката за поверителност</a>.</p>
     <p style="font-size:13px">Вече имате акаунт? <a href="/admin/">Вход</a></p>
   </div>
 </form>

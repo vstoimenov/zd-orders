@@ -60,3 +60,13 @@ test('the orders drawn before the role was known are drawn again once it is: the
   const boot = html.slice(html.indexOf('.then(loadMe).then(function () {'), html.indexOf('.then(loadMe).then(function () {') + 400);
   assert.match(boot, /\.then\(loadMe\)\.then\(function \(\) \{[\s\S]*?render\(\);/);
 });
+
+test('on a phone the courier country picker wraps under the heading instead of widening the page (Интеграции and its dialogs ran off the screen)', () => {
+  assert.match(html, /\.isec-head\{display:flex;[^}]*flex-wrap:wrap/);
+  assert.match(html, /@media \(max-width:600px\)\{[^}]*\.icountry\{margin-left:0;flex:1 1 100%\}/);
+});
+
+test('the registration form names the terms and the privacy policy it accepts (the link goes out publicly)', () => {
+  const form = html.slice(html.indexOf('<form id="signupForm"'), html.indexOf('<form id="inviteForm"'));
+  assert.match(form, /С регистрацията приемате <a href="https:\/\/ordyx\.eu\/terms"[^>]*>Общите условия<\/a> и <a href="https:\/\/ordyx\.eu\/privacy"[^>]*>Политиката за поверителност<\/a>/);
+});
