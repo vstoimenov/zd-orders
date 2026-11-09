@@ -54,15 +54,24 @@ footer{margin:48px 0 30px;color:var(--muted);font-size:14px}
 &lt;input id="office" name="office_text" readonly&gt;
 &lt;input id="city" name="city"&gt; &lt;input id="zip" name="post_code"&gt;
 &lt;input type="hidden" id="office_id" name="office_id"&gt; &lt;input type="hidden" id="address" name="address_text"&gt;</code></pre>
+<p><b>Като в ConvertBuilder</b> — карти с логата на куриерите, срок за доставка и цена; клиентът избира куриера директно в тях (без ваш <code>&lt;select&gt;</code>):</p>
+<pre><code>&lt;div data-ordyx-picker data-type="all" data-delivery="#how"
+     data-types="econt_office,econt_address,speedy_office,speedy_address,boxnow_locker"
+     data-prices='{"econt_office":"3.90 €","speedy_office":"4.07 €","speedy_address":"5.50 €","boxnow_locker":"2.99 €"}'
+     data-into="#office" data-city="#city" data-zip="#zip" data-office-id="#office_id" data-address="#address"&gt;&lt;/div&gt;
+&lt;input type="hidden" id="how" name="delivery_type"&gt;</code></pre>
+<p>Картата на BOX NOW се показва само ако BOX NOW е включен за магазина (Ordyx → Интеграции → BOX NOW → „Включи в чекаута“). Цените са текст, както ги показва вашият сайт; при промяна (друга сума, безплатна доставка) извикайте <code>document.querySelector('[data-ordyx-picker]').ordyxPicker.setPrices({...})</code>.</p>
 <table><tr><th>Атрибут</th><th>Какво прави</th></tr>
-<tr><td><code>data-type</code></td><td>Фиксиран тип (<code>econt_office</code>, <code>speedy_office</code>, <code>boxnow_locker</code>, <code>speedy_address</code>) или <code>select:#id</code> — следва избора в този <code>&lt;select&gt;</code>, чиито стойности са същите типове.</td></tr>
+<tr><td><code>data-type</code></td><td>Фиксиран тип (<code>econt_office</code>, <code>speedy_office</code>, <code>boxnow_locker</code>, <code>speedy_address</code>) <code>all</code> (картите по-горе) или <code>select:#id</code> — следва избора в този <code>&lt;select&gt;</code>, чиито стойности са същите типове.</td></tr>
+<tr><td><code>data-delivery</code></td><td>При <code>all</code>: полето, в което се записва избраният начин (<code>econt_office</code>, <code>boxnow_locker</code>…). Изпратете го като <code>delivery_type</code>.</td></tr>
+<tr><td><code>data-types</code>, <code>data-prices</code></td><td>При <code>all</code>: кои начини да се предлагат (по подразбиране всички) и цените им като JSON.</td></tr>
 <tr><td><code>data-into</code></td><td>Полето за текста на избора, напр. „ЕКОНТ – офис Плевен Център (1127), ул. Левски 5“. Изпратете го като <code>office_text</code>.</td></tr>
 <tr><td><code>data-city</code>, <code>data-zip</code></td><td>Град и пощенски код на офиса (или въведените при адрес).</td></tr>
 <tr><td><code>data-office-id</code></td><td>Идентификаторът на офиса, напр. <code>econt:1127</code>. Изпратете го като <code>office_id</code> — така товарителницата се прави без преписване.</td></tr>
 <tr><td><code>data-address</code></td><td>При доставка до адрес: улицата, която клиентът написа. Изпратете я като <code>address_text</code> (задължителна за <code>*_address</code>).</td></tr>
 <tr><td><code>data-host</code></td><td>По желание: домейнът на магазина, ако формата е на друг домейн (решава дали BOX NOW е включен).</td></tr></table>
 <p>Един избор на страница (при смяна на типа старият офис се изчиства от полетата). Скриптът праща и анонимна статистика за посещение към Ordyx (без бисквитки и IP) — споменете го в политиката си за поверителност.</p>
-<p>С JavaScript: <code>OrdyxPicker.mount(el, { type, onChange })</code> връща <code>{ value(), setType(type), destroy() }</code>; <code>onChange</code> получава <code>{ type, officeId, officeText, city, postCode, addressText, error }</code>.</p>
+<p>С JavaScript: <code>OrdyxPicker.mount(el, { type, onChange, cards, types, prices })</code> връща <code>{ value(), setType(type), setPrices(prices), destroy() }</code> (<code>cards: true</code> = картите като в ConvertBuilder); <code>onChange</code> получава <code>{ type, officeId, officeText, city, postCode, addressText, error }</code>.</p>
 
 <h2 id="key">2. Ключът на магазина</h2>
 <p>В Ordyx → Интеграции → WooCommerce → „Направи ключ“. Показва се веднъж; нов ключ спира стария. Пазете го само на сървъра — никога в браузъра.</p>
