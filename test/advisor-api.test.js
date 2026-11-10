@@ -99,7 +99,7 @@ test('the filter: all metrics on by default; a switched-off one goes at once and
   const { setWatched } = await import('../lib/advisor/repo.js');
   await returnsRising();
   let a = await getAdvisor(q, SHOP, DAY);
-  assert.equal(a.watched.length, 7);
+  assert.equal(a.watched.length, 13);
   assert.ok(a.watched.every((w) => w.on), 'everything on by default');
   assert.equal(a.cards[0].rule, 'returns_up');
   const all = a.watched.map((w) => w.rule);
@@ -114,4 +114,22 @@ test('the filter: all metrics on by default; a switched-off one goes at once and
   await setWatched(q, SHOP, all, DAY);
   assert.equal((await getAdvisor(q, SHOP, DAY)).cards[0].rule, 'returns_up', 'back when switched on');
   await assert.rejects(setWatched(q, SHOP, 'returns_up', DAY), /Невалиден избор/);
+});
+
+test('the shop profile: „rarely“ silences the repeat-purchase metrics; refresh runs today again', async () => {
+  const { setProfile } = await import('../lib/advisor/repo.js');
+  await returnsRising();
+  let a = await getAdvisor(q, SHOP, DAY);
+  assert.deepEqual(a.profile, { value: '', suggested: '', secondOrderDays: null });
+  let res = fakeRes();
+  await router(fakeReq({ method: 'POST', url: '/api/admin/advisor', headers: { cookie: owner }, body: JSON.stringify({ action: 'profile', value: 'rarely' }) }), res);
+  assert.equal(json(res).profile, 'rarely');
+  a = await getAdvisor(q, SHOP, DAY);
+  assert.equal(a.profile.value, 'rarely');
+  await assert.rejects(setProfile(q, SHOP, 'weekly', DAY), /Невалиден избор/);
+  const first = a.cards.map((c) => c.id);
+  res = fakeRes();
+  await router(fakeReq({ method: 'POST', url: '/api/admin/advisor', headers: { cookie: owner }, body: JSON.stringify({ action: 'refresh' }) }), res);
+  assert.equal(res.statusCode, 200);
+  assert.notDeepEqual((await getAdvisor(q, SHOP)).cards.map((c) => c.id), first, 'new cards after a refresh');
 });

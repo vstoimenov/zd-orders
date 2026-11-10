@@ -111,3 +111,55 @@ test('missing data is named, never counted as zero', () => {
   assert.deepEqual(missingData(base({ meta: false, marginKnown: false, statusTracked: false })).map((x) => x.key), ['meta', 'costs', 'statuses']);
   for (const r of Object.values(RULES)) assert.ok(['step', 'metric', 'test', 'gain'].every((k) => k in r));
 });
+
+/* ---- stage 2 ---- */
+test('refusals at confirmation: over 20% with no history, or worse than the shop’s own base', () => {
+  const m = base({ refusals: { rate: 0.25, base: null, answered: 40, refused: 10 } });
+  const c = candidates(m).find((x) => x.rule === 'refusals_up');
+  assert.equal(c.euros, Math.round((0.25 - 0.1) * 40 * 12 * 100) / 100);
+  assert.match(c.problem, /25% от клиентите отказват/);
+  assert.equal(candidates(base({ refusals: { rate: 0.17, base: 0.15, answered: 40 } })).find((x) => x.rule === 'refusals_up'), undefined);
+  assert.ok(candidates(base({ refusals: { rate: 0.2, base: 0.1, answered: 40 } })).find((x) => x.rule === 'refusals_up'));
+});
+
+test('slow shipping only when it is slower than usual and slow parcels do come back more', () => {
+  const ship = { median: 52, base: 20, n: 40, baseN: 90, slow30: 25, slowReturnRate: 0.2, fastReturnRate: 0.1 };
+  const c = candidates(base({ ship })).find((x) => x.rule === 'ship_slow');
+  assert.equal(c.euros, Math.round(0.1 * 25 * 6 * 100) / 100);
+  assert.match(c.problem, /52 ч\..*20 ч\./);
+  assert.equal(candidates(base({ ship: { ...ship, slowReturnRate: 0.08 } })).find((x) => x.rule === 'ship_slow'), undefined, 'no proof it costs');
+  assert.equal(candidates(base({ ship: { ...ship, median: 28 } })).find((x) => x.rule === 'ship_slow'), undefined, 'under 12 hours slower');
+  const j = judge({ rule: 'ship_slow', valueAtStart: 52, target: 20, euros: 15 }, base({ ship: { ...ship, median: 36 } }));
+  assert.equal(j.result, 'partial');
+  assert.equal(j.euros, 7.5, 'half the way back: half the euros');
+});
+
+test('a new buyer got dearer while the site sells as before; conversion down while visits hold', () => {
+  const m = base({ newBuyers: { n30: 40, cac: 18, cacBase: 12 }, conversion: { rate: 0.02, base: 0.021, visits30: 3000, visitsPerDay: 100, baseVisitsPerDay: 95 } });
+  const c = candidates(m).find((x) => x.rule === 'cac_up');
+  assert.equal(c.euros, 240);
+  assert.equal(candidates({ ...m, conversion: { ...m.conversion, rate: 0.012 } }).find((x) => x.rule === 'cac_up'), undefined, 'the site is the problem then');
+  const conv = candidates({ ...m, conversion: { rate: 0.012, base: 0.02, visits30: 3000, visitsPerDay: 100, baseVisitsPerDay: 95 } }).find((x) => x.rule === 'conversion_down');
+  assert.equal(conv.euros, Math.round(0.008 * 3000 * 12 * 100) / 100);
+  assert.equal(candidates({ ...m, conversion: { rate: 0.012, base: 0.02, visits30: 3000, visitsPerDay: 60, baseVisitsPerDay: 95 } }).find((x) => x.rule === 'conversion_down'), undefined, 'fewer visits, not a weaker site');
+});
+
+test('second orders within 60 days dropped (not for shops whose buyers come back rarely); time to scale', () => {
+  const m = base({ repeat60: { rate: 0.1, base: 0.18, n: 60, baseN: 150 }, newBuyers: { n30: 50 } });
+  const r = candidates(m).find((x) => x.rule === 'repeat_down');
+  assert.equal(r.euros, Math.round(0.08 * 50 * 12 * 100) / 100);
+  assert.equal(r.days, 60);
+  assert.equal(candidates({ ...m, repeatProfile: 'rarely' }).find((x) => x.rule === 'repeat_down'), undefined);
+  const up = base({ payback: { value: 1.9, newBuyers: 40, spend: 900, margin: 1710 }, paybackMonthAgo: 1.7 });
+  const s = candidates(up).find((x) => x.rule === 'scale_up');
+  assert.equal(s.euros, Math.round(0.2 * 900 * 0.9 * 100) / 100);
+  assert.match(cardFor(s, '2026-11-10').texts.cost, /^Можеш да спечелиш още около/);
+  assert.equal(candidates({ ...up, paybackMonthAgo: 1.2 }).find((x) => x.rule === 'scale_up'), undefined, 'one good month is not enough');
+});
+
+test('no product costs: growth cards still speak, on an estimated 30% margin they name', () => {
+  const m = base({ marginPerOrder: null, marginKnown: false, aov: 40, carts: { open: 20 } });
+  const c = candidates(m).find((x) => x.rule === 'carts_open');
+  assert.equal(c.euros, 20 * 0.1 * 12);
+  assert.match(cardFor(c, '2026-11-10').texts.cost, /30% марж/);
+});

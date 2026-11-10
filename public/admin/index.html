@@ -1818,6 +1818,10 @@ tr.hl td{background:#fffbe6}
       (d.brought && d.brought.euros > 0 ? '<span class="brought">Ordyx ти донесе около ' + Math.round(d.brought.euros) + ' € на месец</span>' : '') +
       '<button type="button" class="ghost agear" data-adv-gear aria-expanded="' + advGear + '">⚙️ Показатели</button></div>';
     if (advGear) {
+      var pf = d.profile || {}, sug = { often: 'често (до 2 месеца)', sometimes: 'понякога (няколко пъти в годината)', rarely: 'рядко (веднъж на година-две)' };
+      h += '<div class="awatch"><b>Колко често клиентите ти купуват отново?</b><div style="margin:6px 0 4px"><select data-adv-profile style="max-width:100%">' +
+        '<option value="">— не съм избрал —</option>' + ['often', 'sometimes', 'rarely'].map(function (k) { return '<option value="' + k + '"' + (pf.value === k ? ' selected' : '') + '>' + sug[k] + '</option>'; }).join('') + '</select></div>' +
+        (pf.suggested ? '<div class="muted">По поръчките ти: втората поръчка идва средно след ' + pf.secondOrderDays + ' дни → „' + esc(sug[pf.suggested]) + '“.</div>' : '<div class="muted">При „рядко“ не следя повторните покупки и заспалите клиенти.</div>') + '</div>';
       h += '<div class="awatch"><b>Какво да следи съветникът</b><div class="muted" style="margin:2px 0 6px">По подразбиране всичко е включено. Изключените не дават съвети.</div>' +
         (d.watched || []).map(function (w) { return '<label><input type="checkbox" data-adv-watch="' + esc(w.rule) + '"' + (w.on ? ' checked' : '') + '> ' + esc(w.name) + '</label>'; }).join('') +
         '<div class="abtns" style="margin-top:10px"><button type="button" class="primary" data-adv-watch-save>Запази</button><button type="button" class="ghost" data-adv-gear>Откажи</button></div></div>';
@@ -1844,7 +1848,9 @@ tr.hl td{background:#fffbe6}
       h += '<p class="amove">Всичко изглежда наред. Ще ти кажа, щом видя нещо.</p>';
     }
     if (d.missing && d.missing.length) {
-      h += '<div class="asub"><b>За по-точни съвети:</b>' + d.missing.map(function (m) { return '<div>• <a href="#' + esc(m.view) + '">' + esc(m.text) + '</a></div>'; }).join('') + '</div>';
+      h += '<div class="asub"><b>За по-точни съвети:</b>' + d.missing.map(function (m) {
+        return m.sync ? '<div>• ' + esc(m.text) + ' <button type="button" class="ghost agear" data-adv-sync>Изтегли</button></div>' : '<div>• <a href="#' + esc(m.view) + '">' + esc(m.text) + '</a></div>';
+      }).join('') + '</div>';
     }
     if (d.checking.length || d.results.length) {
       h += '<div class="asub">' +
@@ -1864,6 +1870,10 @@ tr.hl td{background:#fffbe6}
     if (location.hash.slice(1) === a.view) showView(a.view); else location.hash = '#' + a.view;
     if (a.anchor) setTimeout(function () { var el = $(a.anchor); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); if (el.focus) el.focus(); } }, 300);
   }
+  function advisorPost(body) {
+    return fetch(withShop(API + 'advisor'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (x) { if (!r.ok) throw new Error(x.error || 'Грешка'); return x; }); });
+  }
   function advisorAnswer(btn, id, action, reason) {
     return busy(btn, fetch(withShop(API + 'advisor'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, action: action, reason: reason || '' }) })
       .then(function (r) { return r.json().then(function (x) { if (!r.ok) throw new Error(x.error || 'Грешка'); return x; }); }));
@@ -1875,9 +1885,22 @@ tr.hl td{background:#fffbe6}
     if (b.hasAttribute('data-adv-gear')) { advGear = !advGear; renderAdvisor(); return; }
     if (b.hasAttribute('data-adv-watch-save')) {
       var on = [].filter.call($('advisor').querySelectorAll('[data-adv-watch]'), function (i) { return i.checked; }).map(function (i) { return i.getAttribute('data-adv-watch'); });
-      busy(b, fetch(withShop(API + 'advisor'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'watch', watched: on }) })
-        .then(function (r) { return r.json().then(function (x) { if (!r.ok) throw new Error(x.error || 'Грешка'); return x; }); }))
+      var prof = $('advisor').querySelector('[data-adv-profile]').value;
+      busy(b, advisorPost({ action: 'watch', watched: on }).then(function () { return prof !== ((adv.profile || {}).value || '') ? advisorPost({ action: 'profile', value: prof }) : null; }))
         .then(function () { advGear = false; loadAdvisor(); }, function (err) { alert(err.message); });
+      return;
+    }
+    if (b.hasAttribute('data-adv-sync')) { // the last 90 days from ConvertBuilder, 30 days a request (each request has 60 s)
+      var day = function (n) { var d = new Date(Date.now() - n * 864e5); return d.toLocaleDateString('sv-SE', { timeZone: 'Europe/Sofia' }); };
+      var parts = [[90, 61], [60, 31], [30, 0]], done = 0;
+      b.textContent = 'Изтеглям… 0/3';
+      busy(b, parts.reduce(function (p, r) {
+        return p.then(function () {
+          return fetch(withShop(API + 'integrations'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'sync_convertbuilder', from: day(r[0]), to: day(r[1]) }) })
+            .then(function (x) { return x.json().then(function (j) { if (!x.ok) throw new Error(j.error || 'Грешка при изтеглянето'); b.textContent = 'Изтеглям… ' + (++done) + '/3'; }); });
+        });
+      }, Promise.resolve()).then(function () { return advisorPost({ action: 'refresh' }); }))
+        .then(loadAdvisor, function (err) { b.textContent = 'Опитай пак'; alert(err.message); });
       return;
     }
     var id = b.getAttribute('data-adv-act');

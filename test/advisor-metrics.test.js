@@ -126,3 +126,66 @@ test('payback by orders counts a returned order as the loss it is; stock looks o
   const s = await shopMetrics(q, SHOP, DAY);
   assert.equal(s.stock.find((x) => x.name === 'Мостра'), undefined, 'a small product is not a top seller');
 });
+
+/* ---- stage 2 ---- */
+const shipAfter = (id, hours) => q(`update zd.orders set waybill_created_at = created_at + make_interval(hours => $2) where id = $1::uuid`, [id, hours]);
+
+test('hours to ship (Ordyx waybills) now and before; slow parcels come back more often', async () => {
+  for (let i = 0; i < 20; i++) await shipAfter(await order({ daysAgo: 2 + (i % 25) }), 60); // now: 60 h
+  for (let i = 0; i < 20; i++) await shipAfter(await order({ daysAgo: 40 + (i % 60) }), 10); // before: 10 h
+  for (let i = 0; i < 10; i++) await shipAfter(await order({ daysAgo: 50, status: i < 3 ? 'returned' : 'delivered' }), 72); // slow: 30% back
+  for (let i = 0; i < 10; i++) await shipAfter(await order({ daysAgo: 50, status: i < 1 ? 'returned' : 'delivered' }), 5); // fast: 10% back
+  const m = await shopMetrics(q, SHOP, DAY);
+  assert.equal(m.ship.n, 20);
+  assert.equal(m.ship.median, 60);
+  assert.equal(m.ship.base, 10);
+  assert.equal(m.ship.slow30, 20);
+  assert.equal(m.ship.slowReturnRate, 0.3);
+  assert.equal(m.ship.fastReturnRate, 0.1);
+});
+
+test('new buyers and their price; second orders within 60 days; refusals at confirmation', async () => {
+  await connectMeta();
+  for (let i = 0; i < 12; i++) await order({ daysAgo: 3 }); // 12 new buyers this month
+  for (let i = 0; i < 20; i++) await order({ daysAgo: 45 }); // 20 new in the 90 days before
+  for (let d = 1; d <= 120; d++) await spend(d, 4); // 120 € a month, 360 € before
+  // 30 new buyers 60–90 days ago, 6 of them came back within 60 days; 30 new 90–180 days ago, 12 came back
+  for (let i = 0; i < 30; i++) { const phone = `+359887000${String(i).padStart(3, '0')}`; await order({ phone, daysAgo: 75 }); if (i < 6) await order({ phone, daysAgo: 40 }); }
+  for (let i = 0; i < 30; i++) { const phone = `+359886000${String(i).padStart(3, '0')}`; await order({ phone, daysAgo: 150 }); if (i < 12) await order({ phone, daysAgo: 120 }); }
+  for (let i = 0; i < 20; i++) await q(`update zd.orders set confirm_answer = $2, confirm_answered_at = $3::timestamptz where id = $1::uuid`, [await order({ daysAgo: 4 }), i < 5 ? 'no' : 'yes', ago(4)]);
+  const m = await shopMetrics(q, SHOP, DAY);
+  assert.equal(m.newBuyers.n30, 12 + 20, 'the confirmed ones are new buyers too');
+  assert.equal(m.newBuyers.cac, Math.round((120 / 32) * 100) / 100);
+  assert.equal(m.repeat60.n, 30);
+  assert.equal(m.repeat60.rate, 0.2);
+  assert.equal(m.repeat60.base, 0.4);
+  assert.equal(m.refusals.answered, 20);
+  assert.equal(m.refusals.rate, 0.25);
+});
+
+test('conversion: orders ÷ visits since tracking began, now and before', async () => {
+  const visit = (daysAgo, n) => q(`insert into zd.visits (day, site, visitor, shop_id) select $1::date, 's.bg', 'v' || g || '-' || $1, $2::uuid from generate_series(1, $3) g`, [ago(daysAgo).slice(0, 10), SHOP, n]);
+  for (let d = 1; d <= 30; d++) await visit(d, 10); // 300 visits now
+  for (let d = 31; d <= 70; d++) await visit(d, 10); // 400 before (tracking began 70 days ago)
+  for (let i = 0; i < 3; i++) await order({ daysAgo: 5 }); // 1% now
+  for (let i = 0; i < 8; i++) await order({ daysAgo: 40 }); // 2% before
+  await order({ daysAgo: 100 }); // before tracking: not counted
+  const m = await shopMetrics(q, SHOP, DAY);
+  assert.equal(m.conversion.visits30, 300);
+  assert.equal(m.conversion.rate, 0.01);
+  assert.equal(m.conversion.base, 0.02);
+  assert.equal(m.conversion.baseVisitsPerDay, 10);
+});
+
+test('the shop profile suggested from days to the second order; history and ConvertBuilder', async () => {
+  for (let i = 0; i < 20; i++) { const phone = `+359885000${String(i).padStart(3, '0')}`; await order({ phone, daysAgo: 250 }); await order({ phone, daysAgo: 220 }); }
+  let m = await shopMetrics(q, SHOP, DAY);
+  assert.equal(m.secondOrderDays, 30);
+  assert.equal(m.profileSuggested, 'often');
+  assert.equal(m.history.days, 249, 'whole days since the first order (noon 250 days ago)');
+  assert.equal(m.history.cb, false);
+  q = await makeTestQuery();
+  await order({ daysAgo: 10 });
+  m = await shopMetrics(q, SHOP, DAY);
+  assert.equal(m.profileSuggested, '', 'too little history to suggest');
+});
