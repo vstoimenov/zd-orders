@@ -160,9 +160,10 @@ Ordyx предлага отговор от данните, когато има �
 
 - Нова таблица `zd.advisor_cards`: `shop_id`, `rule`, `created_at`, `state` (`shown|acting|checking|done|dismissed`), `metric`, `baseline`, `target`, `value_at_start`, `check_until`, `result`, `euros`, `dismiss_reason`.
 - Нова таблица `zd.advisor_daily`: `shop_id`, `day`, `metrics jsonb` (всички числа за деня) — за тренд и база без преизчисляване.
-- Нов cron `/api/cron/advisor` в 04:00 (след `refresh` в 03:00, за да има рекламен разход и статуси). Бюджет: 60 s за всички магазини; магазин, който не се смята навреме, остава с вчерашната карта.
-- Чисти функции в `lib/advisor/` (`metrics.js`, `rules.js`, `pick.js`, `check.js`) с `node:test` тестове върху фиксирани данни. SQL заявките са в `lib/advisor/repo.js` с PGlite тестове.
-- API: `GET /api/admin/advisor` (картата и „защо“), `POST {action: 'act'|'dismiss'|'next'}`.
+- **Без отделен cron** (Vercel Hobby позволява 12 функции, проектът има 11): денят се смята при първото отваряне на „Табло“ за магазина и се пази в `zd.advisor_daily`. Само заявката, която запише числата на деня, затваря проверките и избира картите — две едновременни отваряния го правят веднъж. Рекламният разход и статусите вече са обновени от нощния `refresh` в 03:00.
+- `lib/advisor/metrics.js` (числата), `lib/advisor/rules.js` (правилата, изборът, проверката — чисти функции), `lib/advisor/repo.js` (денят, картите, отговорите). Тестове: `test/advisor-rules.test.js`, `test/advisor-metrics.test.js` (PGlite), `test/advisor-api.test.js`.
+- API: `GET /api/admin/advisor?shop=` (картите на деня, проверките, резултатите, нивото на изплащане, липсващите данни, „Ordyx ти донесе“), `POST {id, action: 'act'|'dismiss', reason}`. „Следващ съвет“ е в браузъра (до 3 карти на ден).
+- Имената на правилата в кода (Етап 1): `ads_loss` (Е1), `roas_below` (Е2), `returns_up` (И1), `risky_unconfirmed` (И2), `stock_out` (Ф2), `carts_open` (N1), `sleeping` (Ч2).
 - Демо (`/demo/`) показва примерни карти от демо данните.
 
 ## Етапи
