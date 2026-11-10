@@ -94,3 +94,24 @@ test('a new shop with few orders: no cards, says what data is missing', async ()
   assert.equal(a.chance, null);
   assert.ok(a.missing.find((x) => x.key === 'meta'));
 });
+
+test('the filter: all metrics on by default; a switched-off one goes at once and stays off until switched on again', async () => {
+  const { setWatched } = await import('../lib/advisor/repo.js');
+  await returnsRising();
+  let a = await getAdvisor(q, SHOP, DAY);
+  assert.equal(a.watched.length, 7);
+  assert.ok(a.watched.every((w) => w.on), 'everything on by default');
+  assert.equal(a.cards[0].rule, 'returns_up');
+  const all = a.watched.map((w) => w.rule);
+  const res = fakeRes();
+  await router(fakeReq({ method: 'POST', url: '/api/admin/advisor', headers: { cookie: owner }, body: JSON.stringify({ action: 'watch', watched: all.filter((r) => r !== 'returns_up') }) }), res);
+  assert.equal(res.statusCode, 200);
+  assert.equal(json(res).watched.find((w) => w.rule === 'returns_up').on, false);
+  a = await getAdvisor(q, SHOP, DAY);
+  assert.equal(a.cards.find((c) => c.rule === 'returns_up'), undefined, 'gone at once, the same day');
+  await q(`delete from zd.advisor_daily`);
+  assert.equal((await getAdvisor(q, SHOP, DAY)).cards.find((c) => c.rule === 'returns_up'), undefined, 'and on the next days');
+  await setWatched(q, SHOP, all, DAY);
+  assert.equal((await getAdvisor(q, SHOP, DAY)).cards[0].rule, 'returns_up', 'back when switched on');
+  await assert.rejects(setWatched(q, SHOP, 'returns_up', DAY), /Невалиден избор/);
+});

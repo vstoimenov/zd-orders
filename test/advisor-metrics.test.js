@@ -94,3 +94,35 @@ test('risky parcels without the customer’s yes; stock days of top products; sl
   assert.equal(m.customers.sleeping, 1, 'a buyer who only returned is not a sleeping customer');
   assert.equal(m.carts.open, 1);
 });
+
+test('the margin is the same as „Финанси“ (profit before ads) for the same 30 days', async () => {
+  const { getProfit } = await import('../lib/costs.js');
+  await saveCosts(q, { products: [{ name: 'Крем', unitCost: 11.4 }, { name: 'Серум', unitCost: 7 }],
+    settings: { packaging: 0.8, codFeePct: 1.7, returnCost: 6.5, freeShippingEcont: 4.2 }, shopId: SHOP });
+  await order({ daysAgo: 2, total: 40, items: [{ name: 'Крем', qty: 1, price: 35 }] });
+  await order({ daysAgo: 3, total: 55, items: [{ name: 'Крем', qty: 1, price: 35 }, { name: 'Серум', qty: 2, price: 20 }] }); // free shipping
+  await order({ daysAgo: 4, total: 40, status: 'returned' });
+  await order({ daysAgo: 5, total: 40, status: 'cancelled' });
+  await order({ daysAgo: 6, total: 26, items: [{ name: 'Непознат', qty: 1, price: 21 }], status: 'delivered' }); // no cost entered
+  await order({ daysAgo: 35, total: 40 }); // outside
+  const m = await shopMetrics(q, SHOP, DAY);
+  const p = await getProfit(q, { from: '2026-10-11', to: '2026-11-09', shopId: SHOP });
+  assert.ok(Math.abs(m.contribution30 - p.profitBeforeAds) < 0.02, `${m.contribution30} vs ${p.profitBeforeAds}`);
+  assert.equal(m.orders30, 4);
+});
+
+test('payback by orders counts a returned order as the loss it is; stock looks only at the 3 best sellers', async () => {
+  await connectMeta();
+  await saveCosts(q, { products: [{ name: 'Крем', unitCost: 10 }, { name: 'Мостра', unitCost: 1 }], settings: { returnCost: 5 }, shopId: SHOP });
+  for (let i = 0; i < 5; i++) await order({ phone: `+35988877710${i}`, daysAgo: 45 });
+  await order({ phone: '+359888777100', daysAgo: 40, status: 'returned' });
+  for (let d = 31; d <= 60; d++) await spend(d, 5); // 150 €
+  const m = await shopMetrics(q, SHOP, DAY);
+  assert.equal(m.payback.margin, 5 * 25 - 5);
+  for (const [name, price] of [['А', 50], ['Б', 40], ['В', 30]]) await order({ daysAgo: 3, items: [{ name, qty: 1, price }] });
+  await saveCosts(q, { products: [{ name: 'Мостра', unitCost: 1 }], shopId: SHOP });
+  await q(`update zd.product_costs set stock = 1 where shop_id = $1::uuid and name = 'Мостра'`, [SHOP]);
+  await order({ daysAgo: 2, items: [{ name: 'Мостра', qty: 1, price: 2 }] });
+  const s = await shopMetrics(q, SHOP, DAY);
+  assert.equal(s.stock.find((x) => x.name === 'Мостра'), undefined, 'a small product is not a top seller');
+});

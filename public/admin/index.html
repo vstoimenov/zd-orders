@@ -148,6 +148,10 @@ main{padding:30px 32px 56px;max-width:1440px}
 .advisor ul{margin:8px 0 0;padding-left:18px}.advisor li{margin:4px 0;line-height:1.4}
 .advisor .asub{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;line-height:1.5}
 .advisor .asub b{display:block;margin-bottom:4px}
+.advisor .agear{font-size:12px;padding:4px 10px}
+.advisor .awatch{margin:0 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fafaf7}
+.advisor .awatch label{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px;cursor:pointer}
+.advisor .awatch input{width:18px;height:18px;margin:0}
 .panel h2{font-size:15px;margin:0 0 12px;font-weight:700}
 .panel table{border:0}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
@@ -1796,7 +1800,7 @@ tr.hl td{background:#fffbe6}
     var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'kurieri-dostavki.csv'; a.click();
   });
   /* ---- Съветник: една карта на ден — проблемът, цената в евро, едно действие и проверка (docs/superpowers/specs/2026-11-10-advisor-design.md) ---- */
-  var adv = null, advAt = 0;
+  var adv = null, advAt = 0, advGear = false;
   function loadAdvisor() {
     var box = $('advisor');
     if (currentShop === 'all') { box.hidden = true; return; }
@@ -1811,7 +1815,13 @@ tr.hl td{background:#fffbe6}
     var lvl = d.payback && d.payback.level;
     h += '<div class="ahead"><h2>💡 Съветник</h2>' +
       (lvl ? '<span class="lvl ' + esc(lvl.key) + '" title="' + esc(lvl.text) + '">Рекламата: ' + esc(lvl.label) + ' · ' + String(d.payback.value.toFixed(2)).replace('.', ',') + '</span>' : '') +
-      (d.brought && d.brought.euros > 0 ? '<span class="brought">Ordyx ти донесе около ' + Math.round(d.brought.euros) + ' € на месец</span>' : '') + '</div>';
+      (d.brought && d.brought.euros > 0 ? '<span class="brought">Ordyx ти донесе около ' + Math.round(d.brought.euros) + ' € на месец</span>' : '') +
+      '<button type="button" class="ghost agear" data-adv-gear aria-expanded="' + advGear + '">⚙️ Показатели</button></div>';
+    if (advGear) {
+      h += '<div class="awatch"><b>Какво да следи съветникът</b><div class="muted" style="margin:2px 0 6px">По подразбиране всичко е включено. Изключените не дават съвети.</div>' +
+        (d.watched || []).map(function (w) { return '<label><input type="checkbox" data-adv-watch="' + esc(w.rule) + '"' + (w.on ? ' checked' : '') + '> ' + esc(w.name) + '</label>'; }).join('') +
+        '<div class="abtns" style="margin-top:10px"><button type="button" class="primary" data-adv-watch-save>Запази</button><button type="button" class="ghost" data-adv-gear>Откажи</button></div></div>';
+    }
     var c = d.cards[advAt];
     if (c) {
       var t = c.texts || {}, a = t.action || {};
@@ -1862,6 +1872,14 @@ tr.hl td{background:#fffbe6}
     var b = e.target.closest('button');
     if (!b || !adv) return;
     if (b.hasAttribute('data-adv-next')) { advAt = (advAt + 1) % adv.cards.length; renderAdvisor(); return; }
+    if (b.hasAttribute('data-adv-gear')) { advGear = !advGear; renderAdvisor(); return; }
+    if (b.hasAttribute('data-adv-watch-save')) {
+      var on = [].filter.call($('advisor').querySelectorAll('[data-adv-watch]'), function (i) { return i.checked; }).map(function (i) { return i.getAttribute('data-adv-watch'); });
+      busy(b, fetch(withShop(API + 'advisor'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'watch', watched: on }) })
+        .then(function (r) { return r.json().then(function (x) { if (!r.ok) throw new Error(x.error || 'Грешка'); return x; }); }))
+        .then(function () { advGear = false; loadAdvisor(); }, function (err) { alert(err.message); });
+      return;
+    }
     var id = b.getAttribute('data-adv-act');
     if (id) {
       var card = adv.cards.filter(function (x) { return x.id === id; })[0];
