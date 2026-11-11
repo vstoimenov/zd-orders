@@ -9,7 +9,7 @@ import { cbConfig, syncOrders } from '../../lib/cb-sync.js';
 import { metaConfig, syncMeta } from '../../lib/meta.js';
 import { listShops } from '../../lib/shops.js';
 import { anonymiseOld } from '../../lib/abandoned.js';
-import { econtStatus, syncEcontStatuses, speedyStatus, syncSpeedyStatuses, boxnowStatus, syncBoxnowStatuses } from '../../lib/waybills.js';
+import { econtStatus, syncEcontStatuses, findEcontWaybills, speedyStatus, syncSpeedyStatuses, boxnowStatus, syncBoxnowStatuses } from '../../lib/waybills.js';
 import { retryCallbacks } from '../../lib/woo-callback.js';
 import { retryDue } from '../../lib/fulfilment.js';
 
@@ -108,7 +108,11 @@ export default async function handler(req, res) {
   // Econt waybills: shipped orders become delivered / returned
   for (const shop of shops) {
     try {
-      if ((await econtStatus(q, shop.id)).connected) (result.econtWaybills ??= {})[shop.domain] = await syncEcontStatuses(q, shop.id);
+      if ((await econtStatus(q, shop.id)).connected) {
+        // parcels sent outside Ordyx first (joined to their orders by phone), then every parcel's state
+        const found = await findEcontWaybills(q, shop.id).catch((err) => ({ error: err.message }));
+        (result.econtWaybills ??= {})[shop.domain] = { ...(await syncEcontStatuses(q, shop.id)), found };
+      }
     } catch (err) {
       console.error('[cron] econt waybill sync failed', shop.domain, err);
       (result.econtWaybills ??= {})[shop.domain] = { error: err.message };

@@ -188,3 +188,12 @@ test('one-product orders over 80%; one channel over 85% is a risk card without e
   assert.equal(candidates(base({ channel: { source: 'direct', share: 0.95, n: 80 } })).find((x) => x.rule === 'one_channel'), undefined);
   assert.equal(rank(candidates(base({ channel: { source: 'facebook', share: 0.92, n: 80 }, carts: { open: 20 } }))).pop().rule, 'one_channel', 'a risk with no euros comes last');
 });
+
+test('courier statuses missing: „connect the couriers“ only when none is connected; else the parcels left without Ordyx waybills', () => {
+  const none = missingData(base({ statusTracked: false, couriers: { connected: false, shipped: 14, final: 5 } })).find((x) => x.key === 'statuses');
+  assert.match(none.text, /^Свържи куриерите/);
+  assert.equal(none.view, 'integrations');
+  const conn = missingData(base({ statusTracked: false, couriers: { connected: true, shipped: 14, final: 5 } })).find((x) => x.key === 'statuses');
+  assert.match(conn.text, /^Куриерът е свързан, но 9 от 14 пратки/);
+  assert.equal(conn.view, 'orders');
+});
