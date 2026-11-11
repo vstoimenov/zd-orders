@@ -149,6 +149,9 @@ main{padding:30px 32px 56px;max-width:1440px}
 .advisor .asub{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;line-height:1.5}
 .advisor .asub b{display:block;margin-bottom:4px}
 .advisor .agear{font-size:12px;padding:4px 10px}
+.advisor .aset{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.advisor .aset:hover,.advisor .aset[aria-expanded="true"]{background:#f1f0ec;color:var(--ink)}
+.advisor .aset svg{flex:none}
 .advisor .awatch{margin:0 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fafaf7}
 .advisor .awatch label{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px;cursor:pointer}
 .advisor .awatch input{width:18px;height:18px;margin:0}
@@ -1849,7 +1852,8 @@ tr.hl td{background:#fffbe6}
     h += '<div class="ahead"><h2>💡 Съветник</h2>' +
       (lvl ? '<span class="lvl ' + esc(lvl.key) + '" title="' + esc(lvl.text) + '">Рекламата: ' + esc(lvl.label) + ' · ' + String(d.payback.value.toFixed(2)).replace('.', ',') + '</span>' : '') +
       (d.brought && d.brought.euros > 0 ? '<span class="brought">Ordyx ти донесе около ' + Math.round(d.brought.euros) + ' € на месец</span>' : '') +
-      '<button type="button" class="ghost agear" data-adv-gear aria-expanded="' + advGear + '">⚙️ Показатели</button></div>';
+      '<button type="button" class="aset" data-adv-gear aria-expanded="' + advGear + '" title="Какво да следи съветникът">' +
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Настрой</button></div>';
     if (advGear) {
       var pf = d.profile || {}, sug = { often: 'често (до 2 месеца)', sometimes: 'понякога (няколко пъти в годината)', rarely: 'рядко (веднъж на година-две)' };
       h += '<div class="awatch"><b>Колко често клиентите ти купуват отново?</b><div style="margin:6px 0 4px"><select data-adv-profile style="max-width:100%">' +

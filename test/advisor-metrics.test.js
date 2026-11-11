@@ -226,3 +226,11 @@ test('channel of orders (60 days); the funnel of 14–44 days ago with the euros
   assert.equal(f.returnCostEur, 5);
   assert.equal(f.visits, null, 'no visit tracking: no visits step');
 });
+
+test('a connected courier is told apart from none (the advisor words its advice by it)', async () => {
+  let m = await shopMetrics(q, SHOP, DAY);
+  assert.equal(m.couriers.connected, false);
+  await saveIntegration(q, 'econt', { config: { active: true }, secret: 'x', shopId: SHOP });
+  m = await shopMetrics(q, SHOP, DAY);
+  assert.equal(m.couriers.connected, true);
+});
