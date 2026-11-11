@@ -12,8 +12,9 @@ create table if not exists zd.advisor_cards (
   shop_id uuid not null references zd.shops(id) on delete cascade,
   rule text not null,
   created_at timestamptz not null default now(),
-  -- shown → checking (the shop acted, or the number is being watched) → done; dismissed hides the rule for a while
-  state text not null default 'shown' check (state in ('shown', 'checking', 'done', 'dismissed')),
+  -- shown → checking (the shop acted) → done; dismissed hides the rule for a while; expired = shown, nobody acted, the day passed
+  -- (kept for the owner's report: how often each metric speaks and how often shops act on it)
+  state text not null default 'shown' check (state in ('shown', 'checking', 'done', 'dismissed', 'expired')),
   acted boolean not null default false,
   metric text not null default '',
   value_at_start numeric,

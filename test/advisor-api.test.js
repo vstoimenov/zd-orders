@@ -134,3 +134,67 @@ test('the shop profile: „rarely“ silences the repeat-purchase metrics; refre
   assert.equal(res.statusCode, 200);
   assert.notDeepEqual((await getAdvisor(q, SHOP)).cards.map((c) => c.id), first, 'new cards after a refresh');
 });
+
+/* ---- stage 4 ---- */
+test('month summary inside Ordyx until seen; one push per shop and month on the first days', async () => {
+  const { monthSummary, markSummarySeen, sendMonthlySummaries } = await import('../lib/advisor/repo.js');
+  await returnsRising();
+  const [card] = (await getAdvisor(q, SHOP, DAY)).cards;
+  await answerCard(q, SHOP, { id: card.id, action: 'act' }, DAY);
+  await q(`update zd.advisor_cards set created_at = '2026-10-10T12:00:00Z', updated_at = '2026-10-10T12:00:00Z'`); // the cards of October
+  await q(`update zd.advisor_cards set state = 'done', result = 'success', euros = 42.5, updated_at = '2026-10-25T12:00:00Z' where id = $1::uuid`, [card.id]);
+  const s = await monthSummary(q, SHOP, '2026-11-02');
+  assert.equal(s.month, '2026-10');
+  assert.equal(s.acted, 1);
+  assert.equal(s.won, 1);
+  assert.match(s.text, /^През октомври приложи 1 съвет, 1 даде резултат — около 43 € на месец\.$/);
+  assert.equal((await getAdvisor(q, SHOP, '2026-11-02')).month.month, '2026-10', 'shown on the card');
+  await markSummarySeen(q, SHOP, '2026-10');
+  await q(`delete from zd.advisor_daily`);
+  assert.equal((await getAdvisor(q, SHOP, '2026-11-02')).month, null, 'not again once seen');
+
+  const sent = [];
+  const notify = async (qq, shopId, msg) => { sent.push({ shopId, ...msg }); };
+  assert.deepEqual(await sendMonthlySummaries(q, notify, '2026-11-15'), { sent: 0 }, 'only on the first days');
+  assert.deepEqual(await sendMonthlySummaries(q, notify, '2026-11-01'), { sent: 1 });
+  assert.match(sent[0].body, /приложи 1 съвет/);
+  assert.match(sent[0].url, /#dash$/);
+  assert.deepEqual(await sendMonthlySummaries(q, notify, '2026-11-02'), { sent: 0 }, 'once a month');
+});
+
+test('a quiet month: no summary; a month of cards not acted on says so', async () => {
+  const { monthSummary } = await import('../lib/advisor/repo.js');
+  assert.equal(await monthSummary(q, SHOP, '2026-11-02'), null);
+  await returnsRising();
+  await getAdvisor(q, SHOP, DAY);
+  await q(`update zd.advisor_cards set created_at = '2026-10-10T12:00:00Z', updated_at = '2026-10-10T12:00:00Z'`);
+  assert.match((await monthSummary(q, SHOP, '2026-11-02')).text, /видя \d+ проблема?, но не приложи нито един/);
+});
+
+test('unused cards expire (kept for the report); the owner’s report and thresholds', async () => {
+  const { advisorReport, saveLimits } = await import('../lib/advisor/repo.js');
+  const { LIMITS, setLimits } = await import('../lib/advisor/rules.js');
+  await returnsRising();
+  await getAdvisor(q, SHOP, '2026-11-09');
+  await getAdvisor(q, SHOP, DAY);
+  assert.equal((await q(`select count(*)::int as n from zd.advisor_cards where state = 'expired'`))[0].n >= 1, true);
+  const r = await advisorReport(q, { days: 3650 });
+  const ret = r.rules.find((x) => x.rule === 'returns_up');
+  assert.equal(ret.shown, 2, 'shown on two days');
+  assert.equal(r.limits.worse, 0.2);
+
+  let res = fakeRes();
+  await router(fakeReq({ url: '/api/admin/advisor?report=1', headers: { cookie: owner } }), res);
+  assert.equal(json(res).rules.length, 16);
+  await assert.rejects(saveLimits(q, { loses: 1.2, edge: 1.1 }), /трябва да растат/);
+  res = fakeRes();
+  await router(fakeReq({ method: 'POST', url: '/api/admin/advisor', headers: { cookie: owner }, body: JSON.stringify({ action: 'limits', limits: { worse: 0.9, minOrders: 1000 } }) }), res);
+  assert.deepEqual(json(res).limits, { worse: 0.2, minOrders: 30, loses: 0.9, edge: 1.1, scale: 1.6 }, 'out-of-range values keep the default');
+  await saveLimits(q, { minOrders: 200 });
+  await q(`delete from zd.advisor_daily`); await q(`delete from zd.advisor_cards`);
+  const a = await getAdvisor(q, SHOP, DAY);
+  assert.equal(a.ready, false, '90 orders are under 200 now');
+  assert.equal(a.cards.find((c) => c.rule === 'returns_up'), undefined, 'growth and leak cards wait for more orders');
+  assert.equal(LIMITS.minOrders, 200);
+  setLimits(null); // other tests use the defaults
+});

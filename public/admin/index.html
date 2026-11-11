@@ -158,6 +158,12 @@ main{padding:30px 32px 56px;max-width:1440px}
 .advisor .afun td.n{text-align:right;font-weight:700;white-space:nowrap}
 .advisor .afun .bar{height:8px;border-radius:4px;background:var(--accent);min-width:2px}
 .advisor .afun .lost{color:var(--bad);white-space:nowrap}
+.advisor .amonth{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 14px;padding:10px 14px;border-radius:10px;background:#eef6ff;color:#1e3a5f;font-size:14px;line-height:1.45}
+.advisor .amonth span{flex:1;min-width:200px}
+.advisor .arep{width:100%;border-collapse:collapse;font-size:13px}.advisor .arep th,.advisor .arep td{padding:6px;border-top:1px solid var(--line);text-align:right;white-space:nowrap}
+.advisor .arep th:first-child,.advisor .arep td:first-child{text-align:left;white-space:normal}.advisor .arep th{font-size:12px;color:var(--muted);font-weight:600}
+.advisor .alim{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.advisor .alim label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}.advisor .alim input{width:110px}
+.advisor .awide{overflow-x:auto}
 .panel h2{font-size:15px;margin:0 0 12px;font-weight:700}
 .panel table{border:0}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
@@ -1809,11 +1815,32 @@ tr.hl td{background:#fffbe6}
   var adv = null, advAt = 0, advGear = false, advGuide = '';
   function loadAdvisor() {
     var box = $('advisor');
-    if (currentShop === 'all') { box.hidden = true; return; }
+    if (currentShop === 'all') { if (role === 'owner' && !DEMO) loadAdvisorReport(); else box.hidden = true; return; }
     fetch(withShop(API + 'advisor'), { credentials: 'same-origin' })
       .then(function (res) { if (!res.ok) throw new Error(res.status); return res.json(); })
       .then(function (d) { if (d.all) { box.hidden = true; return; } adv = d; advAt = 0; renderAdvisor(); })
       .catch(function () { box.hidden = true; });
+  }
+  /** „All shops“, the owner: how each metric does across shops, and the thresholds to tune by it. */
+  function loadAdvisorReport() {
+    var box = $('advisor');
+    fetch(API + 'advisor?report=1', { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
+      var pc = function (a, b) { return b ? Math.round(a / b * 100) + '%' : '—'; };
+      var rows = d.rules.map(function (x) {
+        return '<tr><td>' + esc(x.name) + '</td><td>' + x.shops + '</td><td>' + x.shown + '</td><td>' + x.acted + ' <span class="muted">(' + pc(x.acted, x.shown) + ')</span></td><td>' +
+          x.success + ' / ' + x.partial + ' / ' + x.none + '</td><td>' + x.notForMe + '</td><td>' + (x.euros ? Math.round(x.euros) + ' €' : '—') + '</td></tr>';
+      }).join('');
+      var L = d.limits, D = d.defaults, f = function (k, label, hint) { return '<label>' + label + '<input type="number" step="any" data-adv-lim="' + k + '" value="' + L[k] + '"><span>по подразбиране ' + D[k] + (hint || '') + '</span></label>'; };
+      box.innerHTML = '<div class="ahead"><h2>💡 Съветник — отчет по всички магазини</h2><span class="muted">последните ' + d.days + ' дни</span></div>' +
+        '<div class="awide"><table class="arep"><tr><th>Показател</th><th>Магазини</th><th>Показан (дни)</th><th>Приложен</th><th>Успех / частично / без</th><th>„Не е за мен“</th><th>Донесени</th></tr>' + rows + '</table></div>' +
+        '<div class="asub"><b>Прагове</b><div class="muted">Сменят се за всички магазини от следващото отваряне на „Табло“. Показател, който често е „Не е за мен“ или „без промяна“, е знак прагът да се вдигне.</div><div class="alim">' +
+        f('worse', 'Колко по-лошо от обичайното (0,2 = 20%)') + f('minOrders', 'Поръчки за 30 дни за съвети за растеж') + f('loses', 'Изплащане „губи“ под') + f('edge', '„На ръба“ под') + f('scale', '„Мащабирай“ над') +
+        '</div><div class="abtns" style="margin-top:10px"><button type="button" class="primary" data-adv-lim-save>Запази праговете</button><button type="button" class="ghost" data-adv-lim-reset>Върни по подразбиране</button></div></div>';
+      box.hidden = false;
+    }).catch(function () { box.hidden = true; });
+  }
+  function saveAdvisorLimits(btn, limits) {
+    busy(btn, advisorPost({ action: 'limits', limits: limits })).then(loadAdvisorReport, function (err) { alert(err.message); });
   }
   function fmtDay(day) { var p = String(day || '').split('-'); return p.length === 3 ? (+p[2]) + '.' + p[1] + '.' + p[0] : ''; }
   function renderAdvisor() {
@@ -1832,6 +1859,7 @@ tr.hl td{background:#fffbe6}
         (d.watched || []).map(function (w) { return '<label><input type="checkbox" data-adv-watch="' + esc(w.rule) + '"' + (w.on ? ' checked' : '') + '> ' + esc(w.name) + '</label>'; }).join('') +
         '<div class="abtns" style="margin-top:10px"><button type="button" class="primary" data-adv-watch-save>Запази</button><button type="button" class="ghost" data-adv-gear>Откажи</button></div></div>';
     }
+    if (d.month) h += '<div class="amonth"><span>📅 <b>Резюме за ' + esc(d.month.name) + ':</b> ' + esc(d.month.text) + '</span><button type="button" class="ghost agear" data-adv-seen="' + esc(d.month.month) + '">Видях</button></div>';
     var c = d.cards[advAt];
     if (c) {
       var t = c.texts || {}, a = t.action || {};
@@ -1903,9 +1931,17 @@ tr.hl td{background:#fffbe6}
   }
   $('advisor').addEventListener('click', function (e) {
     var b = e.target.closest('button');
-    if (!b || !adv) return;
+    if (!b) return;
+    if (b.hasAttribute('data-adv-lim-save')) {
+      var lim = {}; [].forEach.call($('advisor').querySelectorAll('[data-adv-lim]'), function (i) { lim[i.getAttribute('data-adv-lim')] = Number(String(i.value).replace(',', '.')); });
+      saveAdvisorLimits(b, lim); return;
+    }
+    if (b.hasAttribute('data-adv-lim-reset')) { saveAdvisorLimits(b, {}); return; }
+    if (!adv) return;
     if (b.hasAttribute('data-adv-next')) { advAt = (advAt + 1) % adv.cards.length; renderAdvisor(); return; }
     if (b.hasAttribute('data-adv-gear')) { advGear = !advGear; renderAdvisor(); return; }
+    if (b.hasAttribute('data-adv-seen')) { busy(b, advisorPost({ action: 'seen', month: b.getAttribute('data-adv-seen') })).then(function () { adv.month = null; renderAdvisor(); }, function (err) { alert(err.message); }); return; }
+
     if (b.hasAttribute('data-adv-watch-save')) {
       var on = [].filter.call($('advisor').querySelectorAll('[data-adv-watch]'), function (i) { return i.checked; }).map(function (i) { return i.getAttribute('data-adv-watch'); });
       var prof = $('advisor').querySelector('[data-adv-profile]').value;
