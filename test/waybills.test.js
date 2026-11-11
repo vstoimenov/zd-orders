@@ -291,12 +291,13 @@ test('the nightly cron syncs Econt statuses of every connected shop', async () =
   const { default: refresh } = await import('../api/cron/refresh.js');
   const f = econt({
     getShipmentStatuses: (body) => reply(200, { shipmentStatuses: body.shipmentNumbers.map((num) => ({ status: { shipmentNumber: num, deliveryTime: 5, trackingEvents: [], shortDeliveryStatus: 'Доставена' } })) }),
+    getMyAWB: () => reply(200, { results: [], page: 1, totalPages: 1 }), // no parcels made outside Ordyx
   });
   const res = fakeRes();
   // the courier catalogue calls fail here: the Econt waybill sync must still run
   await withFetch(async (url, init) => (String(url).includes('NomenclaturesService') || !String(url).includes('econt') ? reply(500, {}) : f.impl(url, init)),
     () => refresh(fakeReq({ headers: { authorization: 'Bearer cron' } }), res));
-  assert.deepEqual(json(res).econtWaybills, { 'adhdbg.eu': { checked: 1, delivered: 1, returned: 0 } });
+  assert.deepEqual(json(res).econtWaybills, { 'adhdbg.eu': { checked: 1, delivered: 1, returned: 0, found: { found: 0, joined: 0 } } });
   assert.equal((await orderById(id)).status, 'delivered');
 });
 
