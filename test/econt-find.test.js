@@ -72,3 +72,38 @@ test('an Econt error in the search is kept and shown under „Обнови ст�
     assert.match(i.config.lastFindError, /Нямате права/);
   } finally { globalThis.fetch = real; }
 });
+
+test('receiver phones are found wherever Econt keeps them — never the sender’s; field names are kept without values', async () => {
+  const { receiverPhones, fieldNames } = await import('../lib/econt-api.js');
+  assert.deepEqual(receiverPhones({ receiverClient: { phones: ['0888111111'] } }), ['0888111111']);
+  assert.deepEqual(receiverPhones({ receiverPhone: '+359 888 222 222', senderClient: { phones: ['0899000000'] } }), ['+359 888 222 222']);
+  assert.deepEqual(receiverPhones({ receiver: { phone: { number: '0888333333' } } }), ['0888333333']);
+  assert.deepEqual(receiverPhones({ senderPhone: '0899000000', receiverName: 'Мария' }), []);
+  assert.deepEqual(fieldNames({ shipmentNumber: '1', receiverClient: { name: 'Мария', phones: ['0888'] } }), ['shipmentNumber', 'receiverClient', 'receiverClient.name', 'receiverClient.phones']);
+});
+
+test('no phone on any parcel: the field names Econt used are kept (names only) to see where the receiver is', async () => {
+  await saveIntegration(q, 'econt', { config: { sender: { type: 'office', officeCode: '1', text: 'О' }, senderPhone: '0888', active: true }, secret: JSON.stringify({ username: 'u', password: 'p' }), shopId: SHOP });
+  const fetchImpl = async (url) => new Response(JSON.stringify(url.endsWith('getMyAWB.json')
+    ? { results: [{ shipmentNumber: '2000000001', receiverName: 'Мария' }], totalPages: 1 }
+    : { shipmentStatuses: [{ status: { shipmentNumber: '2000000001', receiverClient: { name: 'Мария' }, trackingEvents: [] } }] }));
+  await findEcontWaybills(q, SHOP, { fetchImpl });
+  const [i] = await q(`select config from zd.integrations where provider = 'econt'`);
+  assert.equal(i.config.lastFind.withPhone, 0);
+  assert.deepEqual(i.config.lastFind.shape.list, ['shipmentNumber', 'receiverName']);
+  assert.ok(i.config.lastFind.shape.status.includes('receiverClient.name'));
+  assert.ok(!JSON.stringify(i.config.lastFind).includes('Мария'), 'no personal data kept');
+});
+
+test('a phone only in the list (not in the status) still joins the order', async () => {
+  await saveIntegration(q, 'econt', { config: { sender: { type: 'office', officeCode: '1', text: 'О' }, senderPhone: '0888', active: true }, secret: JSON.stringify({ username: 'u', password: 'p' }), shopId: SHOP });
+  const r = await insertOrder(q, { cbOrderId: 's.bg:x1', name: 'Мария', phone: '+359888444444', phoneNorm: '+359888444444', email: '', deliveryType: 'econt_office', courier: 'econt', officeId: '', officeText: 'ЕКОНТ',
+    city: 'Плевен', postCode: '', addressText: '', items: [{ name: 'Крем', qty: 1, price: 35 }], total: 40, currency: 'EUR', paymentMethod: 'cod', pageUrl: '', ip: '1', shopId: SHOP });
+  await q(`update zd.orders set created_at = now() - interval '3 days' where id = $1::uuid`, [r.id]);
+  const created = new Date(Date.now() - 2 * 864e5).toISOString();
+  const fetchImpl = async (url) => new Response(JSON.stringify(url.endsWith('getMyAWB.json')
+    ? { results: [{ shipmentNumber: '3000000001', receiverPhone: '0888444444', createdTime: created }], totalPages: 1 }
+    : { shipmentStatuses: [{ status: { shipmentNumber: '3000000001', trackingEvents: [], shortDeliveryStatus: 'В пътя' } }] }));
+  assert.deepEqual(await findEcontWaybills(q, SHOP, { fetchImpl }), { found: 1, joined: 1 });
+  assert.equal((await q(`select waybill_number from zd.orders where id = $1::uuid`, [r.id]))[0].waybill_number, '3000000001');
+});
