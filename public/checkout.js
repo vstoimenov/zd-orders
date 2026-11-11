@@ -381,7 +381,7 @@
   function getJson(path) { return fetch(API + path).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }); }
   function loadOffices(courier) {
     if (offices[courier]) return Promise.resolve(offices[courier]);
-    var site = courier === 'boxnow' ? '&host=' + encodeURIComponent(location.host) : ''; // BOX NOW only for shops that switched it on
+    var site = courier === 'boxnow' ? '&host=' + encodeURIComponent(standalone && standalone.host ? standalone.host : location.host) : ''; // BOX NOW only for shops that switched it on
     return getJson('/api/offices?courier=' + courier + site).then(function (d) {
       if (!d.offices || !d.offices.length) throw new Error('empty office list'); // treat as a failure → manual entry
       return (offices[courier] = d.offices);
@@ -471,7 +471,7 @@
     if (panel && label && label.nextSibling !== panel) label.parentNode.insertBefore(panel, label.nextSibling);
   }
   function render() {
-    [].forEach.call(root.querySelectorAll('.zdo-opt'), function (l) { l.classList.toggle('is-on', l.querySelector('input').value === state.type); });
+    [].forEach.call(root.querySelectorAll('.zdo-opt'), function (l) { var r = l.querySelector('input'); l.classList.toggle('is-on', r.value === state.type); r.checked = r.value === state.type; });
     if (standalone) fillPrices();
     else [].forEach.call(root.querySelectorAll('.zdo-panel'), function (p) { p.classList.toggle('is-on', panelFor(p, state.type)); });
     placeAddressPanel();
@@ -665,6 +665,22 @@
   }
   var NO_SHIPPING_GRACE_MS = 3000; // ConvertBuilder may still be loading its methods (slow phones)
   function fillPrices() {
+    if (standalone && standalone.cards) { // a custom site wants the ConvertBuilder look: our cards with logos, delivery time and its prices
+      var shown = 0;
+      [].forEach.call(root.querySelectorAll('.zdo-opt input'), function (r) {
+        var t = r.value, on = standalone.types.indexOf(t) >= 0 && (t !== 'boxnow_locker' || boxnowOn);
+        r.closest('.zdo-opt').hidden = !on;
+        root.querySelector('[data-price="' + t + '"]').textContent = standalone.prices[t] || '';
+        if (on) shown++;
+      });
+      if (state.type === 'boxnow_locker' && !boxnowOn && !boxnowPending) { state.type = ''; sync(); } // BOX NOW is off for this shop
+      [].forEach.call(root.querySelectorAll('.zdo-panel'), function (p) { p.classList.toggle('is-on', !!state.type && panelFor(p, state.type)); });
+      placeAddressPanel();
+      var none = root.querySelector('.zdo-none');
+      none.hidden = shown > 0 || boxnowPending;
+      none.textContent = 'Няма включен начин на доставка.';
+      return;
+    }
     if (standalone) { // the host platform shows its own methods and prices: only the asked-for panel, BOX NOW only when the shop switched it on
       [].forEach.call(root.querySelectorAll('.zdo-opt input'), function (r) { r.closest('.zdo-opt').hidden = true; });
       var ok = state.type && (state.type !== 'boxnow_locker' || boxnowOn || boxnowPending);
@@ -939,13 +955,21 @@
     opts = opts || {};
     if (root) destroyStandalone();
     API = opts.api || API || (SCRIPT && SCRIPT.src ? new URL(SCRIPT.src).origin : 'https://app.ordyx.eu');
-    standalone = { host: opts.host || location.host, onChange: typeof opts.onChange === 'function' ? opts.onChange : function () {} };
+    standalone = {
+      host: opts.host || location.host, onChange: typeof opts.onChange === 'function' ? opts.onChange : function () {},
+      // cards: the choice of courier is ours, as on ConvertBuilder (types = which to offer, prices = {type: '4.90 €'} as the site prints them)
+      cards: !!opts.cards,
+      types: (Array.isArray(opts.types) && opts.types.length ? opts.types : TYPES).filter(function (t) { return TYPES.indexOf(t) >= 0; }),
+      prices: opts.prices && typeof opts.prices === 'object' ? opts.prices : {}
+    };
     if (!document.querySelector('style[data-zdo]')) { var style = document.createElement('style'); style.setAttribute('data-zdo', '1'); style.textContent = CSS; document.head.appendChild(style); }
     root = document.createElement('div');
     root.className = 'zdo zdo-standalone';
     root.innerHTML = TEMPLATE;
-    root.querySelector('.zdo-title').hidden = true;
+    root.querySelector('.zdo-title').hidden = !standalone.cards;
     root.querySelector('.zdo-inv').hidden = true; // the platform's own form asks for invoice details
+    // our radios belong to no form: the site's form never sends a stray "zdo-type" (the choice goes to data-delivery / onChange)
+    [].forEach.call(root.querySelectorAll('input[name="zdo-type"]'), function (r) { r.setAttribute('form', 'zdo-no-form'); });
     target.appendChild(root);
     mountedAt = Date.now();
     [].forEach.call(root.querySelectorAll('[data-logo]'), function (img) { img.src = logoFor(API, img.getAttribute('data-logo')); img.onerror = function () { img.remove(); }; });
@@ -954,7 +978,7 @@
     var handle = {
       value: currentValue,
       setType: function (type) {
-        state.type = TYPES.indexOf(type) >= 0 ? type : '';
+        state.type = TYPES.indexOf(type) >= 0 && (!standalone || !standalone.cards || standalone.types.indexOf(type) >= 0) ? type : '';
         render(); showError('');
         var courier = officeCourier(state.type);
         if (courier && !state[courier]) loadOffices(courier).then(function () { renderOfficeList(courier); }, function () { officesFailed(courier); });
@@ -962,6 +986,8 @@
         sync();
       },
       showError: showError,
+      /** cards: the site's prices changed (another cart total, free shipping) */
+      setPrices: function (prices) { if (standalone) { standalone.prices = prices && typeof prices === 'object' ? prices : {}; fillPrices(); } },
       destroy: destroyStandalone
     };
     handle.setType(opts.type || '');
@@ -983,7 +1009,7 @@
    */
   function fieldsOf(el) {
     var pick = function (attr) { var sel = el.getAttribute(attr); return sel ? document.querySelector(sel) : null; };
-    return { into: pick('data-into'), city: pick('data-city'), zip: pick('data-zip'), id: pick('data-office-id'), address: pick('data-address') };
+    return { into: pick('data-into'), city: pick('data-city'), zip: pick('data-zip'), id: pick('data-office-id'), address: pick('data-address'), delivery: pick('data-delivery') };
   }
   /** writes through the native setter, so frameworks that watch the input (React, Vue) see the change too */
   function put(input, value) {
@@ -994,10 +1020,15 @@
   }
   function mountDeclared(el) {
     var f = fieldsOf(el), typeAttr = el.getAttribute('data-type') || 'econt_office', sel = null, wrote = false;
+    // data-type="all": the courier cards as on ConvertBuilder (data-types limits them, data-prices = {"econt_office": "4.90 €"})
+    var cards = typeAttr === 'all', prices = {};
+    if (cards) { typeAttr = f.delivery ? f.delivery.value : ''; try { prices = JSON.parse(el.getAttribute('data-prices') || '{}'); } catch (e) { console.warn('[zdo] data-prices is not JSON'); } }
     if (/^select:/.test(typeAttr)) { sel = document.querySelector(typeAttr.slice(7)); typeAttr = sel ? sel.value : ''; }
+    var types = (el.getAttribute('data-types') || '').split(',').map(clean).filter(Boolean);
     var handle = mountStandalone(el, {
-      api: API, host: el.getAttribute('data-host') || location.host, type: typeAttr,
+      api: API, host: el.getAttribute('data-host') || location.host, type: typeAttr, cards: cards, types: types, prices: prices,
       onChange: function (v) {
+        put(f.delivery, v.type); // the chosen way of delivery (cards), e.g. for the site's own shipping price
         var has = Boolean(v.officeText || v.addressText);
         if (!has && !wrote) return; // nothing chosen yet: leave the site's fields alone
         // a choice, or the previous choice gone (the type changed): the site's fields follow — an old office never stays behind

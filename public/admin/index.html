@@ -130,6 +130,40 @@ main{padding:30px 32px 56px;max-width:1440px}
 .card .hint{font-size:12px;color:var(--muted);margin-top:6px}
 .val.ok{color:var(--ok)}.val.warn{color:var(--warn)}.val.bad,.neg{color:var(--bad)!important}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px}
+/* Съветник: one card at the top of „Табло“ */
+.advisor{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px}
+.advisor .ahead{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:10px}
+.advisor .ahead h2{font-size:15px;margin:0;font-weight:800;flex:1;min-width:140px}
+.advisor .lvl{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#f1f0ec;color:var(--muted)}
+.advisor .lvl.loses{background:#fde8e8;color:var(--bad)}.advisor .lvl.edge{background:#fff3e0;color:var(--warn)}
+.advisor .lvl.pays{background:#e7f6ec;color:var(--ok)}.advisor .lvl.scale{background:#dcfce7;color:#166534}
+.advisor .brought{font-size:12px;color:var(--ok);font-weight:700}
+.advisor .aproblem{font-size:17px;font-weight:700;line-height:1.4;margin:0 0 6px}
+.advisor .acost{font-size:15px;font-weight:700;color:var(--bad);margin:0 0 10px}
+.advisor .amove{font-size:15px;line-height:1.5;margin:0 0 12px}
+.advisor .acheck{font-size:13px;color:var(--muted);margin:10px 0 0}
+.advisor .abtns{display:flex;flex-wrap:wrap;gap:8px}
+.advisor .abtns .ghost{font-size:13px}
+.advisor details{margin-top:12px;font-size:13px}.advisor summary{cursor:pointer;color:var(--muted)}
+.advisor ul{margin:8px 0 0;padding-left:18px}.advisor li{margin:4px 0;line-height:1.4}
+.advisor .asub{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;line-height:1.5}
+.advisor .asub b{display:block;margin-bottom:4px}
+.advisor .agear{font-size:12px;padding:4px 10px}
+.advisor .awatch{margin:0 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fafaf7}
+.advisor .awatch label{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px;cursor:pointer}
+.advisor .awatch input{width:18px;height:18px;margin:0}
+.advisor .aguide{margin:10px 0 0;padding:10px 12px;border-radius:10px;background:var(--accent-soft);color:var(--accent-ink);font-size:13px;line-height:1.5}
+.advisor .afun{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px}
+.advisor .afun td{padding:5px 6px;border-top:1px solid var(--line);vertical-align:middle}
+.advisor .afun td.n{text-align:right;font-weight:700;white-space:nowrap}
+.advisor .afun .bar{height:8px;border-radius:4px;background:var(--accent);min-width:2px}
+.advisor .afun .lost{color:var(--bad);white-space:nowrap}
+.advisor .amonth{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 14px;padding:10px 14px;border-radius:10px;background:#eef6ff;color:#1e3a5f;font-size:14px;line-height:1.45}
+.advisor .amonth span{flex:1;min-width:200px}
+.advisor .arep{width:100%;border-collapse:collapse;font-size:13px}.advisor .arep th,.advisor .arep td{padding:6px;border-top:1px solid var(--line);text-align:right;white-space:nowrap}
+.advisor .arep th:first-child,.advisor .arep td:first-child{text-align:left;white-space:normal}.advisor .arep th{font-size:12px;color:var(--muted);font-weight:600}
+.advisor .alim{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}.advisor .alim label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}.advisor .alim input{width:110px}
+.advisor .awide{overflow-x:auto}
 .panel h2{font-size:15px;margin:0 0 12px;font-weight:700}
 .panel table{border:0}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
@@ -375,6 +409,7 @@ tr.hl td{background:#fffbe6}
           <button class="primary">Покажи</button>
         </form>
       </div>
+      <div class="advisor" id="advisor" hidden aria-live="polite"></div>
       <div class="cards" id="dCards"></div>
       <div class="panel" id="dByShopPanel" hidden><h2>По магазини</h2><table id="dByShop"></table></div>
       <div class="panel" id="beCalc">
@@ -1776,8 +1811,171 @@ tr.hl td{background:#fffbe6}
     var csv = '\ufeff' + rows.map(function (r) { return r.map(function (c) { var t = String(c); return /[";\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }).join(';'); }).join('\r\n');
     var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'kurieri-dostavki.csv'; a.click();
   });
+  /* ---- Съветник: една карта на ден — проблемът, цената в евро, едно действие и проверка (docs/superpowers/specs/2026-11-10-advisor-design.md) ---- */
+  var adv = null, advAt = 0, advGear = false, advGuide = '';
+  function loadAdvisor() {
+    var box = $('advisor');
+    if (currentShop === 'all') { if (role === 'owner' && !DEMO) loadAdvisorReport(); else box.hidden = true; return; }
+    fetch(withShop(API + 'advisor'), { credentials: 'same-origin' })
+      .then(function (res) { if (!res.ok) throw new Error(res.status); return res.json(); })
+      .then(function (d) { if (d.all) { box.hidden = true; return; } adv = d; advAt = 0; renderAdvisor(); })
+      .catch(function () { box.hidden = true; });
+  }
+  /** „All shops“, the owner: how each metric does across shops, and the thresholds to tune by it. */
+  function loadAdvisorReport() {
+    var box = $('advisor');
+    fetch(API + 'advisor?report=1', { credentials: 'same-origin' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
+      var pc = function (a, b) { return b ? Math.round(a / b * 100) + '%' : '—'; };
+      var rows = d.rules.map(function (x) {
+        return '<tr><td>' + esc(x.name) + '</td><td>' + x.shops + '</td><td>' + x.shown + '</td><td>' + x.acted + ' <span class="muted">(' + pc(x.acted, x.shown) + ')</span></td><td>' +
+          x.success + ' / ' + x.partial + ' / ' + x.none + '</td><td>' + x.notForMe + '</td><td>' + (x.euros ? Math.round(x.euros) + ' €' : '—') + '</td></tr>';
+      }).join('');
+      var L = d.limits, D = d.defaults, f = function (k, label, hint) { return '<label>' + label + '<input type="number" step="any" data-adv-lim="' + k + '" value="' + L[k] + '"><span>по подразбиране ' + D[k] + (hint || '') + '</span></label>'; };
+      box.innerHTML = '<div class="ahead"><h2>💡 Съветник — отчет по всички магазини</h2><span class="muted">последните ' + d.days + ' дни</span></div>' +
+        '<div class="awide"><table class="arep"><tr><th>Показател</th><th>Магазини</th><th>Показан (дни)</th><th>Приложен</th><th>Успех / частично / без</th><th>„Не е за мен“</th><th>Донесени</th></tr>' + rows + '</table></div>' +
+        '<div class="asub"><b>Прагове</b><div class="muted">Сменят се за всички магазини от следващото отваряне на „Табло“. Показател, който често е „Не е за мен“ или „без промяна“, е знак прагът да се вдигне.</div><div class="alim">' +
+        f('worse', 'Колко по-лошо от обичайното (0,2 = 20%)') + f('minOrders', 'Поръчки за 30 дни за съвети за растеж') + f('loses', 'Изплащане „губи“ под') + f('edge', '„На ръба“ под') + f('scale', '„Мащабирай“ над') +
+        '</div><div class="abtns" style="margin-top:10px"><button type="button" class="primary" data-adv-lim-save>Запази праговете</button><button type="button" class="ghost" data-adv-lim-reset>Върни по подразбиране</button></div></div>';
+      box.hidden = false;
+    }).catch(function () { box.hidden = true; });
+  }
+  function saveAdvisorLimits(btn, limits) {
+    busy(btn, advisorPost({ action: 'limits', limits: limits })).then(loadAdvisorReport, function (err) { alert(err.message); });
+  }
+  function fmtDay(day) { var p = String(day || '').split('-'); return p.length === 3 ? (+p[2]) + '.' + p[1] + '.' + p[0] : ''; }
+  function renderAdvisor() {
+    var d = adv, box = $('advisor'), h = '';
+    var lvl = d.payback && d.payback.level;
+    h += '<div class="ahead"><h2>💡 Съветник</h2>' +
+      (lvl ? '<span class="lvl ' + esc(lvl.key) + '" title="' + esc(lvl.text) + '">Рекламата: ' + esc(lvl.label) + ' · ' + String(d.payback.value.toFixed(2)).replace('.', ',') + '</span>' : '') +
+      (d.brought && d.brought.euros > 0 ? '<span class="brought">Ordyx ти донесе около ' + Math.round(d.brought.euros) + ' € на месец</span>' : '') +
+      '<button type="button" class="ghost agear" data-adv-gear aria-expanded="' + advGear + '">⚙️ Показатели</button></div>';
+    if (advGear) {
+      var pf = d.profile || {}, sug = { often: 'често (до 2 месеца)', sometimes: 'понякога (няколко пъти в годината)', rarely: 'рядко (веднъж на година-две)' };
+      h += '<div class="awatch"><b>Колко често клиентите ти купуват отново?</b><div style="margin:6px 0 4px"><select data-adv-profile style="max-width:100%">' +
+        '<option value="">— не съм избрал —</option>' + ['often', 'sometimes', 'rarely'].map(function (k) { return '<option value="' + k + '"' + (pf.value === k ? ' selected' : '') + '>' + sug[k] + '</option>'; }).join('') + '</select></div>' +
+        (pf.suggested ? '<div class="muted">По поръчките ти: втората поръчка идва средно след ' + pf.secondOrderDays + ' дни → „' + esc(sug[pf.suggested]) + '“.</div>' : '<div class="muted">При „рядко“ не следя повторните покупки и заспалите клиенти.</div>') + '</div>';
+      h += '<div class="awatch"><b>Какво да следи съветникът</b><div class="muted" style="margin:2px 0 6px">По подразбиране всичко е включено. Изключените не дават съвети.</div>' +
+        (d.watched || []).map(function (w) { return '<label><input type="checkbox" data-adv-watch="' + esc(w.rule) + '"' + (w.on ? ' checked' : '') + '> ' + esc(w.name) + '</label>'; }).join('') +
+        '<div class="abtns" style="margin-top:10px"><button type="button" class="primary" data-adv-watch-save>Запази</button><button type="button" class="ghost" data-adv-gear>Откажи</button></div></div>';
+    }
+    if (d.month) h += '<div class="amonth"><span>📅 <b>Резюме за ' + esc(d.month.name) + ':</b> ' + esc(d.month.text) + '</span><button type="button" class="ghost agear" data-adv-seen="' + esc(d.month.month) + '">Видях</button></div>';
+    var c = d.cards[advAt];
+    if (c) {
+      var t = c.texts || {}, a = t.action || {};
+      h += '<p class="aproblem">' + esc(t.problem) + '</p><p class="acost">' + esc(t.cost) + '</p><p class="amove">' + esc(t.move) + '</p>' +
+        '<div class="abtns">' + (a.label ? '<button type="button" class="primary" data-adv-act="' + esc(c.id) + '">' + esc(a.label) + '</button>' : '<button type="button" class="primary" data-adv-act="' + esc(c.id) + '">Направих го</button>') +
+        '<button type="button" class="ghost" data-adv-dismiss="' + esc(c.id) + '" data-why="doing">Вече го правя</button>' +
+        '<button type="button" class="ghost" data-adv-dismiss="' + esc(c.id) + '" data-why="not_for_me">Не е за мен</button>' +
+        (d.cards.length > 1 ? '<button type="button" class="ghost" data-adv-next>Следващ съвет (' + (advAt + 1) + '/' + d.cards.length + ')</button>' : '') + '</div>' +
+        '<p class="acheck">🎯 ' + esc(t.check) + '</p>';
+      if (d.cards.length > 1) {
+        h += '<details><summary>Защо това, а не друго?</summary><ul>' + d.cards.map(function (x, i) {
+          return '<li>' + (i === advAt ? '<b>' : '') + esc(x.texts.problem) + ' — ' + esc(x.texts.cost.replace(/^Това ти струва /, '')) + (i === advAt ? '</b>' : '') + '</li>';
+        }).join('') + '</ul><div class="muted" style="margin-top:6px">Първо показвам загубите от реклама, после най-скъпия проблем в евро.</div></details>';
+      }
+    } else if (d.chance) {
+      h += '<p class="aproblem">Няма спешно. Най-голямата ти възможност:</p><p class="amove">' + esc(d.chance.problem) + '</p><p class="amove"><b>Как:</b> ' + esc(d.chance.move) + '</p>';
+    } else if (!d.ready) {
+      h += '<p class="amove">Съветникът започва да дава съвети след 30 поръчки за последните 30 дни (сега: ' + d.orders30 + '). Дотогава гледам само дали рекламата се изплаща.</p>';
+    } else {
+      h += '<p class="amove">Всичко изглежда наред. Ще ти кажа, щом видя нещо.</p>';
+    }
+    if (d.missing && d.missing.length) {
+      h += '<div class="asub"><b>За по-точни съвети:</b>' + d.missing.map(function (m) {
+        return m.sync ? '<div>• ' + esc(m.text) + ' <button type="button" class="ghost agear" data-adv-sync>Изтегли</button></div>' : '<div>• <a href="#' + esc(m.view) + '">' + esc(m.text) + '</a></div>';
+      }).join('') + '</div>';
+    }
+    if (d.checking.length || d.results.length) {
+      h += '<div class="asub">' +
+        (d.checking.length ? '<b>Проверявам:</b>' + d.checking.map(function (x) {
+          var g = x.texts.action && x.texts.action.guide;
+          return '<div>⏳ ' + esc(x.texts.problem) + ' <span class="muted">— резултат на ' + esc(fmtDay(x.checkUntil)) + '</span>' +
+            (g ? '<details' + (advGuide === x.id ? ' open' : '') + '><summary>Как се прави</summary><div class="aguide">' + esc(g) + '</div></details>' : '') + '</div>';
+        }).join('') : '') +
+        (d.results.length ? '<b style="margin-top:8px">Резултати:</b>' + d.results.map(function (x) { return '<div>' + (x.result === 'success' ? '✅' : x.result === 'partial' ? '➖' : '✖️') + ' ' + esc(x.resultText) + '</div>'; }).join('') : '') +
+        '</div>';
+    }
+    if (d.funnel) h += funnelHtml(d.funnel);
+    box.innerHTML = h;
+    box.hidden = false;
+  }
+  /** Visit → order → not refused → sent → delivered, for orders of 14–44 days ago (most of them have ended by now). */
+  function funnelHtml(f) {
+    var eu = function (v) { return Math.round(v).toLocaleString('bg-BG') + ' €'; }, top = f.visits || f.orders, rows = [];
+    var row = function (label, n, lost) { rows.push('<tr><td>' + label + '</td><td class="n">' + n.toLocaleString('bg-BG') + '</td><td style="width:40%"><div class="bar" style="width:' + Math.max(1, Math.round(n / top * 100)) + '%"></div></td><td class="lost">' + (lost || '') + '</td></tr>'); };
+    if (f.visits) row('Посещения', f.visits, '');
+    row('Поръчки', f.orders, f.visits ? (Math.round(f.orders / f.visits * 1000) / 10).toString().replace('.', ',') + '% от посещенията' : '');
+    row('Без откази', f.orders - f.dropped, f.dropped ? '−' + f.dropped + ' отказани · ' + eu(f.droppedEur) + ' оборот' : '');
+    row('Изпратени', f.shipped, '');
+    row('Доставени', f.delivered, f.returned ? '−' + f.returned + ' върнати · ' + eu(f.returnedEur) + ' оборот + ' + eu(f.returnCostEur) + ' за връщане' : '');
+    return '<details class="asub"><summary><b style="display:inline">Фуния: от посещението до доставката</b> <span class="muted">(поръчки от ' + esc(fmtDay(f.from)) + ' до ' + esc(fmtDay(f.to)) + ')</span></summary><table class="afun">' + rows.join('') + '</table>' +
+      '<div class="muted" style="margin-top:6px">Доставени: ' + eu(f.deliveredEur) + ' оборот. Изгубени по пътя: ' + eu(f.droppedEur + f.returnedEur) + ' оборот' + (f.returnCostEur ? ' и ' + eu(f.returnCostEur) + ' разход за връщане' : '') + '.</div></details>';
+  }
+  function advisorGo(a) {
+    if (!a || !a.view) return;
+    if (a.view === 'buyers' && a.segment != null) {
+      buSeg = a.segment;
+      [].forEach.call($('buPills').children, function (b) { b.classList.toggle('on', b.getAttribute('data-bu') === a.segment); });
+    }
+    if (location.hash.slice(1) === a.view) showView(a.view); else location.hash = '#' + a.view;
+    if (a.anchor) setTimeout(function () { var el = $(a.anchor); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); if (el.focus) el.focus(); } }, 300);
+  }
+  function advisorPost(body) {
+    return fetch(withShop(API + 'advisor'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (x) { if (!r.ok) throw new Error(x.error || 'Грешка'); return x; }); });
+  }
+  function advisorAnswer(btn, id, action, reason) {
+    return busy(btn, fetch(withShop(API + 'advisor'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id, action: action, reason: reason || '' }) })
+      .then(function (r) { return r.json().then(function (x) { if (!r.ok) throw new Error(x.error || 'Грешка'); return x; }); }));
+  }
+  $('advisor').addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    if (b.hasAttribute('data-adv-lim-save')) {
+      var lim = {}; [].forEach.call($('advisor').querySelectorAll('[data-adv-lim]'), function (i) { lim[i.getAttribute('data-adv-lim')] = Number(String(i.value).replace(',', '.')); });
+      saveAdvisorLimits(b, lim); return;
+    }
+    if (b.hasAttribute('data-adv-lim-reset')) { saveAdvisorLimits(b, {}); return; }
+    if (!adv) return;
+    if (b.hasAttribute('data-adv-next')) { advAt = (advAt + 1) % adv.cards.length; renderAdvisor(); return; }
+    if (b.hasAttribute('data-adv-gear')) { advGear = !advGear; renderAdvisor(); return; }
+    if (b.hasAttribute('data-adv-seen')) { busy(b, advisorPost({ action: 'seen', month: b.getAttribute('data-adv-seen') })).then(function () { adv.month = null; renderAdvisor(); }, function (err) { alert(err.message); }); return; }
+
+    if (b.hasAttribute('data-adv-watch-save')) {
+      var on = [].filter.call($('advisor').querySelectorAll('[data-adv-watch]'), function (i) { return i.checked; }).map(function (i) { return i.getAttribute('data-adv-watch'); });
+      var prof = $('advisor').querySelector('[data-adv-profile]').value;
+      busy(b, advisorPost({ action: 'watch', watched: on }).then(function () { return prof !== ((adv.profile || {}).value || '') ? advisorPost({ action: 'profile', value: prof }) : null; }))
+        .then(function () { advGear = false; loadAdvisor(); }, function (err) { alert(err.message); });
+      return;
+    }
+    if (b.hasAttribute('data-adv-sync')) { // the last 90 days from ConvertBuilder, 30 days a request (each request has 60 s)
+      var day = function (n) { var d = new Date(Date.now() - n * 864e5); return d.toLocaleDateString('sv-SE', { timeZone: 'Europe/Sofia' }); };
+      var parts = [[90, 61], [60, 31], [30, 0]], done = 0;
+      b.textContent = 'Изтеглям… 0/3';
+      busy(b, parts.reduce(function (p, r) {
+        return p.then(function () {
+          return fetch(withShop(API + 'integrations'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'sync_convertbuilder', from: day(r[0]), to: day(r[1]) }) })
+            .then(function (x) { return x.json().then(function (j) { if (!x.ok) throw new Error(j.error || 'Грешка при изтеглянето'); b.textContent = 'Изтеглям… ' + (++done) + '/3'; }); });
+        });
+      }, Promise.resolve()).then(function () { return advisorPost({ action: 'refresh' }); }))
+        .then(loadAdvisor, function (err) { b.textContent = 'Опитай пак'; alert(err.message); });
+      return;
+    }
+    var id = b.getAttribute('data-adv-act');
+    if (id) {
+      var card = adv.cards.filter(function (x) { return x.id === id; })[0];
+      var guide = card && card.texts.action && card.texts.action.guide;
+      if (guide) advGuide = id; // a change in ConvertBuilder: the guide opens under „Проверявам“
+      advisorAnswer(b, id, 'act').then(function () { loadAdvisor(); if (!guide) advisorGo(card && card.texts.action); }, function (err) { alert(err.message); });
+      return;
+    }
+    id = b.getAttribute('data-adv-dismiss');
+    if (id) advisorAnswer(b, id, 'dismiss', b.getAttribute('data-why')).then(loadAdvisor, function (err) { alert(err.message); });
+  });
   function loadDash() {
     var r = periodRange($('dPeriod').value), p = new URLSearchParams({ from: r[0], to: r[1] });
+    loadAdvisor();
     $('dCards').innerHTML = '<div class="muted">Зареждане…</div>';
     fetch(withShop(API + 'stats?' + p), { credentials: 'same-origin' })
       .then(function (res) { if (res.status === 401) { showLogin(); return null; } if (!res.ok) throw new Error(res.status); return res.json(); })

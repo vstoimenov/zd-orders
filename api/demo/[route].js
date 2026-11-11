@@ -46,6 +46,7 @@ const ROUTES = {
   confirmadmin: (await import('../../lib/admin/confirm-admin.js')).default,
   abandoned: (await import('../../lib/admin/abandoned.js')).default,
   customers: (await import('../../lib/admin/customers.js')).default,
+  advisor: (await import('../../lib/admin/advisor.js')).default,
 };
 
 /* ---- one sandbox per visitor (a cookie), at most MAX_BOXES per instance: the least recently used one is reset ---- */
