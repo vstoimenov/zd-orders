@@ -99,7 +99,7 @@ test('the filter: all metrics on by default; a switched-off one goes at once and
   const { setWatched } = await import('../lib/advisor/repo.js');
   await returnsRising();
   let a = await getAdvisor(q, SHOP, DAY);
-  assert.equal(a.watched.length, 13);
+  assert.equal(a.watched.length, 16);
   assert.ok(a.watched.every((w) => w.on), 'everything on by default');
   assert.equal(a.cards[0].rule, 'returns_up');
   const all = a.watched.map((w) => w.rule);
@@ -124,6 +124,7 @@ test('the shop profile: „rarely“ silences the repeat-purchase metrics; refre
   let res = fakeRes();
   await router(fakeReq({ method: 'POST', url: '/api/admin/advisor', headers: { cookie: owner }, body: JSON.stringify({ action: 'profile', value: 'rarely' }) }), res);
   assert.equal(json(res).profile, 'rarely');
+  await setProfile(q, SHOP, 'rarely', DAY); // the API works on today; the test's fixed day is worked out again here
   a = await getAdvisor(q, SHOP, DAY);
   assert.equal(a.profile.value, 'rarely');
   await assert.rejects(setProfile(q, SHOP, 'weekly', DAY), /Невалиден избор/);

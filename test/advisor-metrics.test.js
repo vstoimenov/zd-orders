@@ -189,3 +189,40 @@ test('the shop profile suggested from days to the second order; history and Conv
   m = await shopMetrics(q, SHOP, DAY);
   assert.equal(m.profileSuggested, '', 'too little history to suggest');
 });
+
+/* ---- stage 3 ---- */
+test('the basket: average now and before, units, one-product orders; the free-shipping threshold from the shop’s own orders', async () => {
+  for (let i = 0; i < 6; i++) await order({ daysAgo: 3, total: 60, items: [{ name: 'Крем', qty: 2, price: 60 }] }); // free shipping (total = items)
+  for (let i = 0; i < 6; i++) await order({ daysAgo: 4, total: 40, items: [{ name: 'Крем', qty: 1, price: 35 }] }); // paid shipping
+  for (let i = 0; i < 30; i++) await order({ daysAgo: 60, total: 50 });
+  const m = await shopMetrics(q, SHOP, DAY);
+  assert.equal(m.basket.n, 12);
+  assert.equal(m.basket.aov, 50);
+  assert.equal(m.basket.single, 0.5);
+  assert.equal(m.basket.units, 1.5);
+  assert.equal(m.basket.baseAov, Math.round(((30 * 50) / 30) * 100) / 100);
+  assert.equal(m.freeShipping.threshold, 60);
+  assert.equal(m.freeShipping.share, 0.5);
+});
+
+test('channel of orders (60 days); the funnel of 14–44 days ago with the euros lost', async () => {
+  for (let i = 0; i < 70; i++) { const id = await order({ daysAgo: 20 }); await q(`update zd.orders set traffic_source = $2 where id = $1::uuid`, [id, i < 63 ? 'facebook' : 'google']); }
+  const c = await shopMetrics(q, SHOP, DAY);
+  assert.deepEqual(c.channel, { source: 'facebook', share: 0.9, n: 70 });
+  q = await makeTestQuery();
+  await order({ daysAgo: 20, status: 'delivered', shippedDaysAgo: 19 });
+  await order({ daysAgo: 20, status: 'returned', shippedDaysAgo: 19 });
+  await order({ daysAgo: 20, status: 'cancelled' });
+  await order({ daysAgo: 5, status: 'delivered' }); // too fresh for the funnel
+  const f = (await shopMetrics(q, SHOP, DAY)).funnel;
+  assert.equal(f.from, '2026-09-27');
+  assert.equal(f.to, '2026-10-26');
+  assert.equal(f.orders, 3);
+  assert.equal(f.dropped, 1);
+  assert.equal(f.shipped, 2);
+  assert.equal(f.delivered, 1);
+  assert.equal(f.returned, 1);
+  assert.equal(f.returnedEur, 40);
+  assert.equal(f.returnCostEur, 5);
+  assert.equal(f.visits, null, 'no visit tracking: no visits step');
+});

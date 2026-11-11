@@ -152,6 +152,12 @@ main{padding:30px 32px 56px;max-width:1440px}
 .advisor .awatch{margin:0 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fafaf7}
 .advisor .awatch label{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px;cursor:pointer}
 .advisor .awatch input{width:18px;height:18px;margin:0}
+.advisor .aguide{margin:10px 0 0;padding:10px 12px;border-radius:10px;background:var(--accent-soft);color:var(--accent-ink);font-size:13px;line-height:1.5}
+.advisor .afun{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px}
+.advisor .afun td{padding:5px 6px;border-top:1px solid var(--line);vertical-align:middle}
+.advisor .afun td.n{text-align:right;font-weight:700;white-space:nowrap}
+.advisor .afun .bar{height:8px;border-radius:4px;background:var(--accent);min-width:2px}
+.advisor .afun .lost{color:var(--bad);white-space:nowrap}
 .panel h2{font-size:15px;margin:0 0 12px;font-weight:700}
 .panel table{border:0}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
@@ -1800,7 +1806,7 @@ tr.hl td{background:#fffbe6}
     var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'kurieri-dostavki.csv'; a.click();
   });
   /* ---- Съветник: една карта на ден — проблемът, цената в евро, едно действие и проверка (docs/superpowers/specs/2026-11-10-advisor-design.md) ---- */
-  var adv = null, advAt = 0, advGear = false;
+  var adv = null, advAt = 0, advGear = false, advGuide = '';
   function loadAdvisor() {
     var box = $('advisor');
     if (currentShop === 'all') { box.hidden = true; return; }
@@ -1854,12 +1860,29 @@ tr.hl td{background:#fffbe6}
     }
     if (d.checking.length || d.results.length) {
       h += '<div class="asub">' +
-        (d.checking.length ? '<b>Проверявам:</b>' + d.checking.map(function (x) { return '<div>⏳ ' + esc(x.texts.problem) + ' <span class="muted">— резултат на ' + esc(fmtDay(x.checkUntil)) + '</span></div>'; }).join('') : '') +
+        (d.checking.length ? '<b>Проверявам:</b>' + d.checking.map(function (x) {
+          var g = x.texts.action && x.texts.action.guide;
+          return '<div>⏳ ' + esc(x.texts.problem) + ' <span class="muted">— резултат на ' + esc(fmtDay(x.checkUntil)) + '</span>' +
+            (g ? '<details' + (advGuide === x.id ? ' open' : '') + '><summary>Как се прави</summary><div class="aguide">' + esc(g) + '</div></details>' : '') + '</div>';
+        }).join('') : '') +
         (d.results.length ? '<b style="margin-top:8px">Резултати:</b>' + d.results.map(function (x) { return '<div>' + (x.result === 'success' ? '✅' : x.result === 'partial' ? '➖' : '✖️') + ' ' + esc(x.resultText) + '</div>'; }).join('') : '') +
         '</div>';
     }
+    if (d.funnel) h += funnelHtml(d.funnel);
     box.innerHTML = h;
     box.hidden = false;
+  }
+  /** Visit → order → not refused → sent → delivered, for orders of 14–44 days ago (most of them have ended by now). */
+  function funnelHtml(f) {
+    var eu = function (v) { return Math.round(v).toLocaleString('bg-BG') + ' €'; }, top = f.visits || f.orders, rows = [];
+    var row = function (label, n, lost) { rows.push('<tr><td>' + label + '</td><td class="n">' + n.toLocaleString('bg-BG') + '</td><td style="width:40%"><div class="bar" style="width:' + Math.max(1, Math.round(n / top * 100)) + '%"></div></td><td class="lost">' + (lost || '') + '</td></tr>'); };
+    if (f.visits) row('Посещения', f.visits, '');
+    row('Поръчки', f.orders, f.visits ? (Math.round(f.orders / f.visits * 1000) / 10).toString().replace('.', ',') + '% от посещенията' : '');
+    row('Без откази', f.orders - f.dropped, f.dropped ? '−' + f.dropped + ' отказани · ' + eu(f.droppedEur) + ' оборот' : '');
+    row('Изпратени', f.shipped, '');
+    row('Доставени', f.delivered, f.returned ? '−' + f.returned + ' върнати · ' + eu(f.returnedEur) + ' оборот + ' + eu(f.returnCostEur) + ' за връщане' : '');
+    return '<details class="asub"><summary><b style="display:inline">Фуния: от посещението до доставката</b> <span class="muted">(поръчки от ' + esc(fmtDay(f.from)) + ' до ' + esc(fmtDay(f.to)) + ')</span></summary><table class="afun">' + rows.join('') + '</table>' +
+      '<div class="muted" style="margin-top:6px">Доставени: ' + eu(f.deliveredEur) + ' оборот. Изгубени по пътя: ' + eu(f.droppedEur + f.returnedEur) + ' оборот' + (f.returnCostEur ? ' и ' + eu(f.returnCostEur) + ' разход за връщане' : '') + '.</div></details>';
   }
   function advisorGo(a) {
     if (!a || !a.view) return;
@@ -1906,7 +1929,9 @@ tr.hl td{background:#fffbe6}
     var id = b.getAttribute('data-adv-act');
     if (id) {
       var card = adv.cards.filter(function (x) { return x.id === id; })[0];
-      advisorAnswer(b, id, 'act').then(function () { loadAdvisor(); advisorGo(card && card.texts.action); }, function (err) { alert(err.message); });
+      var guide = card && card.texts.action && card.texts.action.guide;
+      if (guide) advGuide = id; // a change in ConvertBuilder: the guide opens under „Проверявам“
+      advisorAnswer(b, id, 'act').then(function () { loadAdvisor(); if (!guide) advisorGo(card && card.texts.action); }, function (err) { alert(err.message); });
       return;
     }
     id = b.getAttribute('data-adv-dismiss');

@@ -163,3 +163,28 @@ test('no product costs: growth cards still speak, on an estimated 30% margin the
   assert.equal(c.euros, 20 * 0.1 * 12);
   assert.match(cardFor(c, '2026-11-10').texts.cost, /30% марж/);
 });
+
+/* ---- stage 3 ---- */
+test('small orders: the average fell 10%, or it is far under the free-shipping threshold; a guide instead of a screen', () => {
+  const m = base({ basket: { aov: 30, baseAov: 36, units: 1.2, single: 0.5, n: 120 } });
+  const c = candidates(m).find((x) => x.rule === 'small_orders');
+  assert.equal(c.euros, Math.round(0.1 * 120 * 30 * 0.3 * 100) / 100);
+  assert.match(c.problem, /падна от 36 € на 30 €/);
+  assert.match(c.move, /около 35 €/);
+  assert.ok(c.action.guide);
+  const far = candidates(base({ basket: { aov: 30, baseAov: 31, n: 120, single: 0.5 }, freeShipping: { threshold: 60, share: 0.08 } })).find((x) => x.rule === 'small_orders');
+  assert.match(far.problem, /от 60 € — стигат я само 8%/);
+  assert.equal(candidates(base({ basket: { aov: 34, baseAov: 36, n: 120, single: 0.5 } })).find((x) => x.rule === 'small_orders'), undefined, 'under 10% down');
+});
+
+test('one-product orders over 80%; one channel over 85% is a risk card without euros (direct visits are not a channel)', () => {
+  const s1 = candidates(base({ basket: { aov: 30, baseAov: 30, n: 140, single: 0.9 } })).find((x) => x.rule === 'single_item');
+  assert.equal(s1.euros, Math.round((1 / 7) * 140 * 10 * (12 / 30) * 100) / 100);
+  assert.match(s1.problem, /90% от поръчките/);
+  const ch = candidates(base({ channel: { source: 'facebook', share: 0.92, n: 80 } })).find((x) => x.rule === 'one_channel');
+  assert.equal(ch.euros, 0);
+  assert.match(ch.problem, /92% .* Facebook/);
+  assert.match(cardFor(ch, '2026-11-10').texts.cost, /риск/);
+  assert.equal(candidates(base({ channel: { source: 'direct', share: 0.95, n: 80 } })).find((x) => x.rule === 'one_channel'), undefined);
+  assert.equal(rank(candidates(base({ channel: { source: 'facebook', share: 0.92, n: 80 }, carts: { open: 20 } }))).pop().rule, 'one_channel', 'a risk with no euros comes last');
+});
