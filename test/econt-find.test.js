@@ -53,6 +53,22 @@ test('nightly: Econt parcels made outside Ordyx join their orders, which become 
   assert.deepEqual(await row(delivered), { status: 'delivered', waybill_number: '1000000001', waybill_courier: 'econt', waybill_status: 'Доставена' });
   assert.equal((await row(returned)).status, 'returned');
   assert.equal((await row(other)).waybill_number, '1000000009', 'untouched');
-  assert.deepEqual(calls, ['Shipments', 'Shipments'].map((x, i) => (i ? 'ShipmentService.getShipmentStatuses.json' : 'ShipmentService.getMyAWB.json')));
+  assert.deepEqual(calls, ['ShipmentService.getMyAWB.json', 'ShipmentService.getMyAWB.json', 'ShipmentService.getMyAWB.json', 'ShipmentService.getShipmentStatuses.json'],
+    '90 days in three 30-day lists, then the details of the new parcels');
+  const [i] = await q(`select config from zd.integrations where provider = 'econt'`);
+  assert.deepEqual({ ...i.config.lastFind, at: undefined }, { at: undefined, listed: 3, found: 2, withPhone: 2, joined: 2 }, 'what Econt answered is kept');
   assert.deepEqual(await findEcontWaybills(q, SHOP, { fetchImpl: async (url) => new Response(JSON.stringify(url.endsWith('getMyAWB.json') ? { results: [{ shipmentNumber: '1000000001' }], totalPages: 1 } : { shipmentStatuses: [] })) }), { found: 0, joined: 0 }, 'the next night: nothing new');
+});
+
+test('an Econt error in the search is kept and shown under „Обнови статусите“; the status check still runs', async () => {
+  const { syncShopStatuses } = await import('../lib/waybills.js');
+  await saveIntegration(q, 'econt', { config: { sender: { type: 'office', officeCode: '1', text: 'О' }, senderPhone: '0888', active: true }, secret: JSON.stringify({ username: 'u', password: 'p' }), shopId: SHOP });
+  const real = globalThis.fetch;
+  globalThis.fetch = async (url) => (String(url).endsWith('getMyAWB.json') ? new Response(JSON.stringify({ message: 'Нямате права' }), { status: 403 }) : new Response(JSON.stringify({ shipmentStatuses: [] })));
+  try {
+    const r = await syncShopStatuses(q, SHOP);
+    assert.match(r.errors.join(' '), /Еконт \(търсене на товарителници\): .*Нямате права/);
+    const [i] = await q(`select config from zd.integrations where provider = 'econt'`);
+    assert.match(i.config.lastFindError, /Нямате права/);
+  } finally { globalThis.fetch = real; }
 });

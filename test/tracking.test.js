@@ -34,6 +34,7 @@ function econt(statusFor = () => null) {
     const body = JSON.parse(init.body);
     if (path.includes('getClientProfiles')) return reply(200, PROFILE);
     if (path.includes('deleteLabels')) return reply(200, { results: [{ shipmentNum: body.shipmentNumbers[0], error: null }] });
+    if (path.includes('getMyAWB')) return reply(200, { results: [], page: 1, totalPages: 1 }); // no parcels made outside Ordyx
     if (path.includes('getShipmentStatuses')) {
       calls.push(body.shipmentNumbers);
       return reply(200, { shipmentStatuses: body.shipmentNumbers.map((num) => ({ status: { shipmentNumber: num, trackingEvents: [], shortDeliveryStatus: 'В Плевен', ...(statusFor(num) || {}) } })) });
