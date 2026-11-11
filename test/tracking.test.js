@@ -229,7 +229,7 @@ test('"Обнови статусите" checks the shop\'s shipped parcels now',
   const res = fakeRes();
   await withFetch(f.impl, () => ordersApi(fakeReq({ method: 'POST', url: `/api/admin/orders?shop=${SHOP}`, headers: { cookie: owner }, body: JSON.stringify({ action: 'refresh_statuses' }) }), res));
   assert.equal(res.statusCode, 200);
-  assert.deepEqual(json(res), { ok: true, checked: 1, delivered: 1, returned: 0, errors: [], skipped: [] });
+  assert.deepEqual(json(res), { ok: true, checked: 1, delivered: 1, returned: 0, joined: 0, errors: [], skipped: [] });
   assert.equal((await listOrders(q)).rows.find((o) => o.id === id).status, 'delivered');
 });
 
@@ -292,5 +292,5 @@ test('"Обнови статусите" stops starting couriers after its time b
   const f = econt();
   const r = await withFetch(f.impl, () => syncShopStatuses(q, SHOP, { deadline: Date.now() - 1 }));
   assert.equal(f.calls.length, 0);
-  assert.deepEqual(r, { checked: 0, delivered: 0, returned: 0, errors: [], skipped: ['Еконт'] });
+  assert.deepEqual(r, { checked: 0, delivered: 0, returned: 0, joined: 0, errors: [], skipped: ['Еконт'] });
 });
