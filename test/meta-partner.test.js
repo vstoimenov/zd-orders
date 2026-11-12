@@ -135,3 +135,21 @@ test('disconnecting a shared account unlinks it so another shop could link it', 
   const [{ id: other }] = await q(`insert into zd.shops (name, domain) values ('Б', 'b.bg') returning id`);
   assert.equal((await call({ url: `/api/admin/integrations?shop=${other}`, body: { action: 'meta_partner', accountId: '123' } })).statusCode, 200);
 });
+
+test('sharing is open to clients as soon as the platform is on — no META_PUBLIC; Facebook login and a pasted token stay closed', async () => {
+  delete process.env.META_PUBLIC;
+  const [{ id: other }] = await q(`insert into zd.shops (name, domain) values ('В', 'v.bg') returning id`);
+  const { id, token } = await createClient(q, { email: 'd@x.bg', shopIds: [other] });
+  const u = await acceptInvite(q, token, 'client-pass-1');
+  const c = `zdo_admin=${clientSession('secret', { id, session_version: u.session_version })}`;
+  const url = `/api/admin/integrations?shop=${other}`;
+  let st = json(await call({ method: 'GET', url, cookie: c })).meta;
+  assert.equal(st.open, false, 'nothing to offer before the owner turns sharing on');
+  await enable();
+  st = json(await call({ method: 'GET', url, cookie: c })).meta;
+  assert.equal(st.open, true);
+  assert.equal(st.loginOpen, false);
+  assert.equal((await call({ url, cookie: c, body: { action: 'meta_partner', accountId: '123' } })).statusCode, 200);
+  assert.equal((await call({ url, cookie: c, body: { action: 'save_meta', accountId: '123', token: 'x' } })).statusCode, 403);
+  assert.equal((await call({ url, cookie: c, body: { action: 'meta_accounts', token: 'x' } })).statusCode, 403);
+});

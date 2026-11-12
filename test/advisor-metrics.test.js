@@ -234,3 +234,20 @@ test('a connected courier is told apart from none (the advisor words its advice 
   m = await shopMetrics(q, SHOP, DAY);
   assert.equal(m.couriers.connected, true);
 });
+
+test('the margin is known when the products that bring the revenue have a cost or are digital; the missing ones are named', async () => {
+  const items = [{ name: 'Книга', qty: 1, price: 12.9 }, { name: 'Бонус план', qty: 1, price: 0 }, { name: 'Аудио книга', qty: 1, price: 5.28 }];
+  for (let i = 0; i < 5; i++) await order({ daysAgo: 3, total: 23, items });
+  await saveCosts(q, { products: [{ name: 'Бонус план', unitCost: 0, digital: true }], shopId: SHOP });
+  let m = await shopMetrics(q, SHOP, DAY);
+  assert.equal(m.marginKnown, false, 'a free bonus alone tells nothing');
+  assert.deepEqual(m.missingCosts, ['Книга', 'Аудио книга']);
+  await saveCosts(q, { products: [{ name: 'Книга', unitCost: 6 }, { name: 'Аудио книга', unitCost: 0 }], shopId: SHOP });
+  m = await shopMetrics(q, SHOP, DAY);
+  assert.equal(m.marginKnown, false, '0 € without „digital“ is not a cost: 5,28 of 18,18 € still unknown (29%)');
+  assert.deepEqual(m.missingCosts, ['Аудио книга']);
+  await saveCosts(q, { products: [{ name: 'Аудио книга', unitCost: 0, digital: true }], shopId: SHOP });
+  m = await shopMetrics(q, SHOP, DAY);
+  assert.equal(m.marginKnown, true);
+  assert.deepEqual(m.missingCosts, []);
+});

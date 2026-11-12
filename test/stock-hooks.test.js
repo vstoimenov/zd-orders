@@ -75,3 +75,9 @@ test('an order is still taken when the inventory part fails', async () => {
     assert.equal((await q(`select count(*)::int as n from zd.orders`))[0].n, 1);
   } finally { console.error = err; }
 });
+
+test('a digital product is never taken from stock (a stock typed by mistake stays as it is)', async () => {
+  await q(`update zd.product_costs set digital = true where name = 'Книга'`);
+  assert.equal((await checkout(90, 2)).statusCode, 200);
+  assert.equal(await stock(), 10);
+});
