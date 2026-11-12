@@ -47,6 +47,26 @@ form#signupForm{min-height:100vh;display:flex;align-items:center;justify-content
 .offerbox{background:#fff6cc;border:1px solid #f1d75c;color:#3d3300;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.45;margin:0 0 12px}
 .whoami .free{display:block;margin-top:6px;color:var(--accent);font-weight:600}
 .whoami .free.warn{color:#ffb4a8}
+.whoami .sub{display:block;margin-top:6px;color:var(--side-text);font-weight:600}
+#signupForm .logincard{max-width:460px}
+.suplans{display:flex;flex-direction:column;gap:8px}
+.subill{display:flex;gap:6px;background:#0b0b0a;border:1px solid #2c2c27;border-radius:12px;padding:4px}
+.subill button{flex:1;background:none;border:0;color:var(--side-muted);font-weight:700;padding:8px;border-radius:9px;cursor:pointer}
+.subill button.on{background:var(--accent);color:#0d0d0c}
+.suplan{display:flex;gap:10px;align-items:center;border:1px solid #2c2c27;border-radius:12px;padding:10px 12px;cursor:pointer;background:#0b0b0a}
+.suplan input{width:auto;margin:0;accent-color:var(--accent)}
+.suplan.on{border-color:var(--accent)}
+.suplan b{color:#fff}
+.suplan small{display:block;color:var(--side-muted);font-size:12px}
+.suplan .pr{margin-left:auto;text-align:right;font-weight:800;color:var(--accent);white-space:nowrap}
+.suplan .pr small{font-weight:600}
+.suterms{font-size:12.5px;line-height:1.5;color:var(--side-muted);background:#0b0b0a;border:1px dashed #3a3a35;border-radius:12px;padding:10px 12px}
+.suterms b{color:var(--side-text)}
+.welcome{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+.welcome .box{background:#fff;color:#141412;border-radius:18px;max-width:420px;width:100%;padding:26px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.welcome .box .e{font-size:40px}
+.welcome .box h2{margin:8px 0 6px}
+.welcome .box p{color:#55534c;margin:0 0 16px;line-height:1.5}
 .logincard a{color:var(--accent)}
 .trap{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 form#inviteForm{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--side);padding:16px}
@@ -333,11 +353,17 @@ tr.hl td{background:#fffbe6}
     <div class="brand"><svg class="omark" viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 60,24 40,24" fill="#FFEFA8"/><polygon points="70,4 96,30 76,40 60,24" fill="#FFDD4D"/><polygon points="96,30 96,70 76,60 76,40" fill="#F4C200"/><polygon points="96,70 70,96 60,76 76,60" fill="#D6A400"/><polygon points="70,96 30,96 40,76 60,76" fill="#C49500"/><polygon points="30,96 4,70 24,60 40,76" fill="#DDAC00"/><polygon points="4,70 4,30 24,40 24,60" fill="#FFD21F"/><polygon points="4,30 30,4 40,24 24,40" fill="#FFF3C7"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="#FFD84A"/><polygon points="40,24 60,24 67,31 33,31" fill="#FFF0B3" opacity=".7"/><g fill="none" stroke="#0d0d0c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40"/></g></svg><span>ordyx</span></div>
     <h1>Регистрация</h1>
     <div class="offerbox" id="suOffer" hidden>🎟️ <b>Скрита оферта:</b> 3 месеца безплатно на най-високия план — без лимит на магазини и поръчки.</div>
-    <p>Офиси на Еконт и Спиди в чекаута, поръчките на едно място, товарителници и известия.</p>
+    <p>Офиси и автомати на Еконт, Спиди и BOX NOW в чекаута, поръчките на едно място, товарителници и известия.</p>
     <input type="text" id="suName" placeholder="Име и фамилия" autocomplete="name" maxlength="80" required>
     <input type="email" id="suEmail" placeholder="Имейл" autocomplete="email" maxlength="160" required>
     <input type="password" id="suPw" placeholder="Парола (поне 8 знака)" autocomplete="new-password" minlength="8" required>
     <input type="password" id="suPw2" placeholder="Повторете паролата" autocomplete="new-password" minlength="8" required>
+    <div id="suPlanBox" hidden>
+      <div style="font-weight:700;margin:4px 0 8px">Изберете план — 14 дни безплатно</div>
+      <div class="subill" role="group" aria-label="Плащане"><button type="button" class="on" data-bill="monthly">Месечно</button><button type="button" data-bill="yearly">Годишно</button></div>
+      <div class="suplans" id="suPlans" style="margin-top:8px"></div>
+      <div class="suterms" id="suTerms" style="margin-top:8px"></div>
+    </div>
     <div class="trap" aria-hidden="true"><label>Уебсайт<input type="text" id="suWebsite" tabindex="-1" autocomplete="off"></label></div>
     <button class="primary" id="suBtn">Създай акаунт</button>
     <div class="err" id="suErr"></div>
@@ -668,6 +694,7 @@ tr.hl td{background:#fffbe6}
         <div class="linkbox"><input type="text" id="ofLink" readonly value="https://ordyx.eu/oferta"><button type="button" class="ghost" id="ofCopy">Копирай</button></div>
         <div class="actions"><button type="button" class="ghost" id="ofToggle">Изключи офертата</button><a class="ghost btnlink" href="/brand/qr-oferta.png" download>⬇ QR код (PNG)</a><a class="ghost btnlink" href="/brand/qr-oferta.svg" download>⬇ QR код (SVG)</a><span class="muted" id="ofInfo"></span></div>
       </div>
+      <div class="muted" id="cFounders" style="margin:0 0 8px;font-weight:700"></div>
       <div class="panel"><table id="cTable"></table></div>
     </section>
     <section id="callsView" hidden>
@@ -2973,7 +3000,7 @@ tr.hl td{background:#fffbe6}
       $('callsSoon').hidden = role === 'owner'; $('callsTip').hidden = role !== 'owner'; // calls: the owner only for now
       $('callsSetSoon').hidden = role === 'owner'; $('callsSetChip').hidden = role === 'owner'; $('callsSetOwner').hidden = role !== 'owner';
       $('whoami').hidden = role !== 'client';
-      if (role === 'client') $('whoami').innerHTML = '<b>' + esc(d.name || 'Клиент') + '</b>' + esc(d.email) + freeLine(d.freeUntil);
+      if (role === 'client') $('whoami').innerHTML = '<b>' + esc(d.name || 'Клиент') + '</b>' + esc(d.email) + freeLine(d.freeUntil) + subLine(d.subscription);
     }).catch(function () {});
   }
   function shopName(id) { var s = shopById(id); return s ? s.display : '—'; }
@@ -2985,12 +3012,30 @@ tr.hl td{background:#fffbe6}
     if (left <= 0) return '<span class="free warn">Безплатният период изтече на ' + esc(day(iso)) + '</span>';
     return '<span class="free' + (left <= 7 ? ' warn' : '') + '">🎟️ Безплатно до ' + esc(day(iso)) + (left <= 7 ? ' · остават ' + left + (left === 1 ? ' ден' : ' дни') : '') + '</span>';
   }
+  /** the plan: name, period, price; the free days left before the first payment */
+  function subLine(s) {
+    if (!s) return '';
+    var trial = !s.paidAt && s.trialUntil ? Math.ceil((new Date(s.trialUntil) - Date.now()) / 864e5) : null;
+    return '<span class="sub">' + esc(s.planName) + ' · ' + esc(money(s.price, 'EUR')) + (s.billing === 'yearly' ? '/год.' : '/мес.') +
+      (trial != null ? (trial > 0 ? ' · безплатно още ' + trial + (trial === 1 ? ' ден' : ' дни') : ' · чака плащане') : '') + '</span>';
+  }
+  /** the owner's view of a client's subscription */
+  function subCell(s) {
+    if (!s) return '<span class="muted">—</span>';
+    var out = '<b>' + esc(s.planName) + '</b> · ' + (s.billing === 'yearly' ? 'годишно' : 'месечно') + '<br>' + esc(money(s.price, 'EUR')) +
+      (s.launch && s.price !== s.regular ? ' <span class="muted">(редовна ' + esc(money(s.regular, 'EUR')) + ')</span>' : '');
+    if (s.founder) out += '<br><span class="badge ok">⭐ Founders 20</span>';
+    if (s.paidAt) out += '<br><span class="badge ok">платено ' + esc(day(s.paidAt)) + '</span>' + (s.launch && !s.founder && s.lockedUntil ? '<br><span class="muted">стартова цена до ' + esc(day(s.lockedUntil)) + '</span>' : '');
+    else if (s.trialUntil) out += '<br><span class="badge' + (new Date(s.trialUntil) < new Date() ? ' bad' : '') + '">безплатно до ' + esc(day(s.trialUntil)) + '</span>';
+    return out;
+  }
   function loadClients() {
     $('cTable').innerHTML = '<tr><td class="muted">Зареждам…</td></tr>';
     return fetch(API + 'users', { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); }).then(function (d) {
       clientsData = d.users || [];
       renderSignup(d.signup); renderOffer(d.offer);
-      $('cTable').innerHTML = table(['Клиент', 'Магазини', 'Състояние', 'Последен вход', ''], clientsData.map(function (u, i) {
+      $('cFounders').textContent = d.founders ? 'Founders 20: остават ' + d.founders.left + ' от ' + d.founders.of + ' места' : '';
+      $('cTable').innerHTML = table(['Клиент', 'Магазини', 'Абонамент', 'Състояние', 'Последен вход', ''], clientsData.map(function (u, i) {
         var state = !u.active ? '<span class="badge bad">спрян</span>' : u.hasPassword ? '<span class="badge ok">активен</span>' : '<span class="badge">чака парола</span>';
         if (u.freeUntil) {
           var over = new Date(u.freeUntil) < new Date();
@@ -3002,9 +3047,11 @@ tr.hl td{background:#fffbe6}
         }).join('');
         return ['<b>' + esc(u.name || '—') + '</b><br><span class="muted">' + esc(u.email) + '</span>',
           // the client's approved shops by name (their own shops are not in the owner's shop list)
-          esc((u.shops || []).filter(function (sh) { return sh.approved; }).map(function (sh) { return sh.name || sh.domain; }).join(', ') || (pending ? '' : '—')) + pending, state, esc(when(u.lastLoginAt)),
+          esc((u.shops || []).filter(function (sh) { return sh.approved; }).map(function (sh) { return sh.name || sh.domain; }).join(', ') || (pending ? '' : '—')) + pending, subCell(u.subscription), state, esc(when(u.lastLoginAt)),
           '<button type="button" class="ghost" data-cedit="' + i + '">Магазини</button> <button type="button" class="ghost" data-clink="' + i + '">Нов линк</button> ' +
-          '<button type="button" class="ghost" data-cactive="' + i + '">' + (u.active ? 'Спри достъп' : 'Пусни достъп') + '</button>'];
+          '<button type="button" class="ghost" data-cactive="' + i + '">' + (u.active ? 'Спри достъп' : 'Пусни достъп') + '</button>' +
+          (u.subscription && !u.subscription.paidAt ? ' <button type="button" class="ghost" data-cpaid="' + i + '">Платено</button>' : '') +
+          ' <button type="button" class="ghost" data-cplan="' + i + '">План</button>'];
       }));
     }).catch(function (e) { if (e.message !== 'auth') $('cTable').innerHTML = '<tr><td class="err">' + esc(e.message) + '</td></tr>'; });
   }
@@ -3087,6 +3134,25 @@ tr.hl td{background:#fffbe6}
     if (b.hasAttribute('data-approve')) {
       if (!window.confirm('Одобрявате ли този магазин? След това поръчките от чекаута на неговия домейн ще влизат при клиента. Проверете, че домейнът наистина е негов.')) return;
       busy(b, usersApi({ action: 'approve_shop', shopId: b.getAttribute('data-approve') })).then(function () { loadShops().catch(function () {}); loadClients(); }).catch(function (err) { alert(err.message); });
+      return;
+    }
+    if (b.hasAttribute('data-cpaid')) {
+      var pu = clientsData[b.getAttribute('data-cpaid')];
+      var when2 = window.prompt('Първо плащане на ' + pu.email + ' — дата (ГГГГ-ММ-ДД). Стартовата цена се пази 12 месеца от нея.', new Date().toISOString().slice(0, 10));
+      if (!when2) return;
+      busy(b, usersApi({ action: 'sub_paid', id: pu.id, paidAt: when2 + 'T12:00:00+02:00' })).then(function (d) {
+        if (d.subscription && d.subscription.founder) alert('⭐ ' + pu.email + ' е сред Founders 20 — годишната цена остава завинаги.');
+        loadClients();
+      }).catch(function (err) { alert(err.message); });
+      return;
+    }
+    if (b.hasAttribute('data-cplan')) {
+      var cu = clientsData[b.getAttribute('data-cplan')], cs = cu.subscription || {};
+      var plan = window.prompt('План за ' + cu.email + ': starter, growth или business', cs.plan || 'growth');
+      if (!plan) return;
+      var bill = window.prompt('Плащане: monthly (месечно) или yearly (годишно)', cs.billing || 'monthly');
+      if (!bill) return;
+      busy(b, usersApi({ action: 'sub_set', id: cu.id, plan: plan.trim().toLowerCase(), billing: bill.trim().toLowerCase() })).then(loadClients).catch(function (err) { alert(err.message); });
       return;
     }
     var u = clientsData[b.getAttribute('data-cedit') || b.getAttribute('data-clink') || b.getAttribute('data-cactive')];
@@ -3733,24 +3799,69 @@ tr.hl td{background:#fffbe6}
 
   /* ---- линк от собственика: клиентът си задава парола ---- */
   var inviteToken = new URLSearchParams(location.search).get('invite');
+  /* ---- плановете при регистрацията (цените са с ДДС; стартовите — до 30.11.2026 23:59) ---- */
+  var PLAN_LIST = [
+    { key: 'starter', name: 'Starter', what: '1 магазин · 300 поръчки на месец', monthly: 67, launchMonthly: 40.2, launchYearly: 160.8 },
+    { key: 'growth', name: 'Growth', what: '3 магазина · 1 000 поръчки · Growth Lab', monthly: 97, launchMonthly: 58.2, launchYearly: 232.8 },
+    { key: 'business', name: 'Business', what: '6 магазина · 4 000 поръчки · Growth Lab', monthly: 147, launchMonthly: 88.2, launchYearly: 352.8 },
+  ];
+  var suPick = { plan: 'growth', billing: 'monthly' }, suInfo = { launch: true, foundersLeft: 20 };
+  function eurS(v) { v = Math.round(v * 100) / 100; var t = v.toFixed(v % 1 ? 2 : 0).split('.'); return t[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (t[1] ? ',' + t[1] : '') + ' €'; }
+  function planPrice(p, billing) { return suInfo.launch ? (billing === 'yearly' ? p.launchYearly : p.launchMonthly) : (billing === 'yearly' ? p.monthly * 12 : p.monthly); }
+  function renderPlans() {
+    [].forEach.call(document.querySelectorAll('[data-bill]'), function (b) { b.classList.toggle('on', b.getAttribute('data-bill') === suPick.billing); });
+    var per = suPick.billing === 'yearly' ? 'година' : 'месец';
+    $('suPlans').innerHTML = PLAN_LIST.map(function (p) {
+      return '<label class="suplan' + (p.key === suPick.plan ? ' on' : '') + '"><input type="radio" name="suPlan" value="' + p.key + '"' + (p.key === suPick.plan ? ' checked' : '') + '>' +
+        '<span><b>' + p.name + '</b>' + (p.key === 'growth' ? ' <span class="badge ok">най-популярен</span>' : '') + '<small>' + p.what + '</small></span>' +
+        '<span class="pr">' + eurS(planPrice(p, suPick.billing)) + '<small> / ' + per + '</small></span></label>';
+    }).join('');
+    var p = PLAN_LIST.filter(function (x) { return x.key === suPick.plan; })[0], price = eurS(planPrice(p, suPick.billing));
+    // the renewal terms, plainly, before anything is paid
+    $('suTerms').innerHTML = '<b>Условия:</b> 14 дни безплатно, без карта. След това плащате по линк, който ще ви изпратим. ' + (suInfo.launch
+      ? (suPick.billing === 'yearly'
+        ? 'Годишно: ' + price + ' за първите 12 месеца (предплащане). После абонаментът се подновява по редовната цена — ' + eurS(p.monthly * 12) + ' на година. ' +
+          (suInfo.foundersLeft > 0 ? '<b>Founders 20:</b> първите 20 платили годишен абонамент запазват цената ' + price + ' завинаги, докато го подновяват без прекъсване (остават ' + suInfo.foundersLeft + ').' : '')
+        : 'Месечно: ' + price + ' на месец за първите 12 месеца, докато абонаментът е активен. После — редовната цена ' + eurS(p.monthly) + ' на месец.')
+        + ' При прекратяване стартовата цена отпада. Цени с ДДС.'
+      : (suPick.billing === 'yearly' ? 'Годишно: ' + price + ' на година.' : 'Месечно: ' + price + ' на месец.') + ' Цени с ДДС.');
+  }
+  function planPicker(d) {
+    suInfo = { launch: d && d.launch !== false, foundersLeft: d && d.foundersLeft != null ? d.foundersLeft : 20 };
+    var u = new URLSearchParams(location.search);
+    if (PLAN_LIST.some(function (x) { return x.key === u.get('plan'); })) suPick.plan = u.get('plan');
+    if (u.get('billing') === 'yearly') suPick.billing = 'yearly';
+    $('suPlanBox').hidden = false; renderPlans();
+  }
+  $('suPlans').addEventListener('change', function (e) { if (e.target.name === 'suPlan') { suPick.plan = e.target.value; renderPlans(); } });
+  [].forEach.call(document.querySelectorAll('[data-bill]'), function (b) { b.addEventListener('click', function () { suPick.billing = b.getAttribute('data-bill'); renderPlans(); }); });
+  /** after registering: a colleague gets in touch for the integration */
+  function showWelcome() {
+    var w = document.createElement('div');
+    w.className = 'welcome'; w.setAttribute('role', 'dialog'); w.setAttribute('aria-modal', 'true');
+    w.innerHTML = '<div class="box"><div class="e">🎉</div><h2>Добре дошли в Ordyx!</h2><p>Планът ви е активен — 14 дни безплатно.<br><b>Колега ще се свърже с вас за интеграцията.</b></p><button type="button" class="primary">Разбрах</button></div>';
+    w.querySelector('button').addEventListener('click', function () { w.remove(); });
+    document.body.appendChild(w);
+  }
   var signupCode = new URLSearchParams(location.search).get('signup');
   var offerSignup = !signupCode && Boolean(new URLSearchParams(location.search).get('offer')); // ordyx.eu/oferta
   function dropInvite() { var p = new URLSearchParams(location.search); p.delete('invite'); try { history.replaceState(null, '', location.pathname + (p.toString() ? '?' + p : '') + location.hash); } catch (e) { /* old browser */ } }
   if ((signupCode || offerSignup) && !inviteToken && !DEMO) {
     $('signupForm').hidden = false;
-    fetch(API + (offerSignup ? 'signup?offer=1' : 'signup?code=' + encodeURIComponent(signupCode))).then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Невалиден линк'); }); })
-      .then(function () { $('suOffer').hidden = !offerSignup; })
+    fetch(API + (offerSignup ? 'signup?offer=1' : 'signup?code=' + encodeURIComponent(signupCode))).then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Невалиден линк'); return d; }); })
+      .then(function (d) { $('suOffer').hidden = !offerSignup; if (!offerSignup) planPicker(d); })
       .catch(function (e) { $('suErr').textContent = e.message; $('suBtn').disabled = true; });
     $('signupForm').addEventListener('submit', function (e) {
       e.preventDefault();
       $('suErr').textContent = '';
       if ($('suPw').value !== $('suPw2').value) { $('suErr').textContent = 'Паролите не съвпадат.'; return; }
       busy($('suBtn'), fetch(API + 'signup', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: offerSignup ? undefined : signupCode, offer: offerSignup || undefined, name: $('suName').value, email: $('suEmail').value, password: $('suPw').value, website: $('suWebsite').value }) })
+        body: JSON.stringify({ code: offerSignup ? undefined : signupCode, offer: offerSignup || undefined, plan: offerSignup ? undefined : suPick.plan, billing: offerSignup ? undefined : suPick.billing, name: $('suName').value, email: $('suEmail').value, password: $('suPw').value, website: $('suWebsite').value }) })
         .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
         .then(function () {
           $('signupForm').hidden = true;
-          var p = new URLSearchParams(location.search); p.delete('signup'); p.delete('offer');
+          if (!offerSignup) showWelcome();
+          var p = new URLSearchParams(location.search); p.delete('signup'); p.delete('offer'); p.delete('plan'); p.delete('billing');
           try { history.replaceState(null, '', location.pathname + (p.toString() ? '?' + p : '') + '#start'); } catch (e2) { location.hash = '#start'; }
           load(1);
         })

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ordyx — всичко след „Поръчай“ на един екран</title>
-<meta name="description" content="Избор на офис на Еконт и Спиди в чекаута, товарителница с един клик, потвърждение на поръчката по WhatsApp и печалбата ти — на телефона. За онлайн магазини, които пращат сами.">
+<meta name="description" content="Избор на офис или автомат на Еконт, Спиди и BOX NOW в чекаута, товарителница с един клик, потвърждение на поръчката по WhatsApp и печалбата ти — на телефона. За онлайн магазини, които пращат сами.">
 <meta property="og:title" content="Ordyx — всичко след „Поръчай“ на един екран">
 <meta property="og:description" content="Офис, товарителница, потвърждение и печалба — без програмист. Един ред код в магазина.">
 <meta property="og:type" content="website">
@@ -53,8 +53,26 @@ section{padding:88px 0}
 /* hero */
 .hero{background:var(--ink);color:#fff;padding:56px 0 0;overflow:hidden;position:relative}
 .hero .wrap{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:40px;align-items:center}
-.who{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:#1f1f1c;color:#e9e7df;font-weight:600;font-size:14px;margin-bottom:22px}
-.who i{width:8px;height:8px;border-radius:50%;background:var(--y);box-shadow:0 0 0 4px rgba(255,210,31,.2)}
+/* the tagline lands like a rubber stamp: falls from above, hits, the page shudders, an ink ring spreads; it stays a little crooked */
+.who{position:relative;display:inline-flex;align-items:center;gap:10px;padding:9px 16px;border-radius:10px;color:var(--y);font:800 13px/1.35 Manrope,sans-serif;
+  letter-spacing:.06em;text-transform:uppercase;border:2.5px solid var(--y);box-shadow:inset 0 0 0 2px #0d0d0c,inset 0 0 0 3.5px rgba(255,210,31,.55);
+  background:rgba(255,210,31,.06);margin-bottom:24px;transform:rotate(-2.5deg);transform-origin:50% 60%;
+  animation:stamp .62s cubic-bezier(.2,.7,.25,1.25) .45s both}
+.who::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;mix-blend-mode:multiply;opacity:.55;
+  background:radial-gradient(circle at 12% 30%,#0d0d0c 0 1.5px,transparent 2px),radial-gradient(circle at 37% 78%,#0d0d0c 0 1px,transparent 1.6px),
+    radial-gradient(circle at 63% 22%,#0d0d0c 0 1.8px,transparent 2.4px),radial-gradient(circle at 81% 70%,#0d0d0c 0 1.2px,transparent 1.8px),
+    radial-gradient(circle at 92% 35%,#0d0d0c 0 1px,transparent 1.5px),radial-gradient(circle at 50% 55%,#0d0d0c 0 .8px,transparent 1.2px)}
+.who::after{content:"";position:absolute;inset:-6px;border-radius:14px;border:3px solid var(--y);opacity:0;pointer-events:none;animation:inkring .7s ease-out .9s both}
+.who i{width:9px;height:9px;border-radius:50%;background:var(--y);box-shadow:0 0 0 4px rgba(255,210,31,.22);flex:none}
+@keyframes stamp{
+  0%{opacity:0;transform:translateY(-70px) scale(2.4) rotate(-14deg);filter:blur(6px)}
+  55%{opacity:1;filter:blur(0)}
+  72%{transform:translateY(0) scale(.9) rotate(-1deg)}
+  86%{transform:scale(1.05) rotate(-3.2deg)}
+  100%{opacity:1;transform:rotate(-2.5deg)}}
+@keyframes inkring{0%{opacity:.75;transform:scale(.92)}100%{opacity:0;transform:scale(1.35)}}
+@keyframes thud{0%,100%{transform:none}20%{transform:translate(0,3px)}40%{transform:translate(-2px,-1px)}60%{transform:translate(2px,1px)}80%{transform:translate(-1px,0)}}
+.hero .wrap>div:first-child{animation:thud .32s ease-out .9s both}
 .hero h1{font-size:clamp(32px,4.4vw,52px);font-weight:600;overflow-wrap:break-word}
 .hero h1 em{font-style:normal;color:var(--y)}
 .hero p.sub{font-size:clamp(17px,1.7vw,20px);color:#c9c7bf;margin:20px 0 28px;max-width:560px}
@@ -250,12 +268,42 @@ input[type=range]{width:100%;accent-color:var(--ink);height:28px}
 .plan .btn{margin-top:auto}
 .soon{font-style:normal;font-size:11px;font-weight:800;padding:1px 7px;border-radius:999px;background:var(--ysoft);color:#7a5c00;margin-left:4px}
 .plan.star .btn{background:var(--ink);color:#fff;box-shadow:0 6px 0 #000}
-.est{margin-top:28px;background:#1a1a17;border:1px solid #2c2c28;border-radius:22px;padding:24px;display:grid;grid-template-columns:1fr 1fr auto;gap:22px;align-items:center}
+.est{margin-top:28px;background:#1a1a17;border:1px solid #2c2c28;border-radius:22px;padding:24px;display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center}
 .est .rng label{color:#fff}
 .est .tot{text-align:right}
 .est .tot b{display:block;font-family:Unbounded;font-size:38px;color:var(--y)}
 .est .tot s{color:#8f8d86}
 .fine{margin-top:16px;font-size:14px;color:#a9a79f;text-align:center}
+.offer{margin:26px auto 0;max-width:860px;text-align:center;font:600 clamp(18px,2.4vw,24px)/1.35 Unbounded;color:#fff}
+.offer b{color:var(--y);font-weight:700}
+.plan .sub2{font-weight:800;color:#c9c7bf;margin-top:-6px}
+.plan .was{font-size:13px;font-weight:600;color:#8f8d86}
+.plan .yr{font-size:14px;color:#c9c7bf;margin-top:-4px}
+.plan .yr b{color:#fff}
+.plan.star .yr{color:#5c5a53}
+.plan.star .yr b{color:var(--ink)}
+.plan .was s{font-size:16px;font-weight:700;margin-right:6px}
+.plan.star .was{color:#9a978f}
+.plan.star .sub2{color:#5c5a53}
+.plan .addon{font-weight:800;font-size:15px;color:var(--y);border-top:1px dashed #3a3a35;padding-top:10px}
+.plan .addon small{display:block;font-weight:600;font-size:13px;color:#a9a79f}
+.plan.star .addon{color:var(--ink);border-color:#e3e0d5}
+.plan.star .addon small{color:#6b6960}
+.extra{margin:22px auto 0;max-width:860px;display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;align-items:baseline;text-align:center}
+.extra b{font:700 20px Unbounded;color:var(--y)}
+.extra span{color:#c9c7bf}
+.agent{margin:22px auto 0;max-width:860px;display:flex;gap:16px;align-items:center;background:#1a1a17;border:1px solid var(--y);border-radius:22px;padding:18px 22px}
+.agent .e{font-size:34px;flex:none}
+.agent b{display:block;font:700 18px Unbounded;color:#fff;margin-bottom:4px}
+.agent span{color:#c9c7bf;font-size:15px}
+.agent span b{display:inline;font:800 15px Manrope;color:var(--y)}
+.terms-box{margin:22px auto 0;max-width:860px;border:1px dashed #4a4a44;border-radius:18px;padding:18px 22px;color:#c9c7bf;font-size:14px}
+.terms-box>b{display:block;color:#fff;font:700 16px Unbounded;margin-bottom:8px}
+.terms-box ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.terms-box li b{color:#fff}
+.est .hint{margin-top:12px;font-size:15px;color:#c9c7bf;min-height:22px}
+.est .hint b{color:var(--y)}
+.est .tot .pl{display:inline;font:800 15px Manrope;color:#fff}
 @media (max-width:900px){.plans{grid-template-columns:1fr}.plan.star{transform:none}.est{grid-template-columns:1fr}.est .tot{text-align:left}}
 /* guarantee */
 .guar{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:36px}
@@ -312,7 +360,7 @@ footer a{color:#e9e7df;text-decoration:none}
       <div class="who"><i></i>За онлайн магазини, които искат пълния контрол и цялата картина на едно място</div>
       <h1>Всичко след „Поръчай“ — <em>на един екран</em>, на телефона ти</h1>
       <p class="sub">Един ред код в магазина. Офис, товарителница, потвърждение и печалба — без програмист.</p>
-      <div><a class="btn" data-cta href="#">Започни безплатно →</a><a class="link demo-link" href="https://app.ordyx.eu/demo" target="_blank" rel="noopener">Виж демото</a></div>
+      <div><a class="btn" data-cta href="#">Започни безплатно →</a></div>
       <div class="trust"><span>14 дни безплатно</span><span>Без карта</span><span>Включване за 10 минути</span></div>
     </div>
     <div class="stage" aria-hidden="true">
@@ -332,7 +380,7 @@ footer a{color:#e9e7df;text-decoration:none}
 <div class="logos">
   <div class="wrap">
     <small>Работи с</small>
-    <span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>Еконт</span><span class="chip"><i class="lg" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.6 20.4 7.2v9.6L12 21.4 3.6 16.8V7.2z" fill="#e0234e" stroke="#e0234e" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 7.4 12 11.9l8-4.5M12 11.9v9" fill="none" stroke="#f7b6c5" stroke-width="1.3" stroke-linecap="round"/></svg></i>Спиди</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=convertbuilder.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>ConvertBuilder</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=woocommerce.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>WooCommerce</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=shopify.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>Shopify</span>
+    <span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>Еконт</span><span class="chip"><i class="lg" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.6 20.4 7.2v9.6L12 21.4 3.6 16.8V7.2z" fill="#e0234e" stroke="#e0234e" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 7.4 12 11.9l8-4.5M12 11.9v9" fill="none" stroke="#f7b6c5" stroke-width="1.3" stroke-linecap="round"/></svg></i>Спиди</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=boxnow.bg&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>BOX NOW</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=convertbuilder.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>ConvertBuilder</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=woocommerce.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>WooCommerce</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=shopify.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>Shopify</span>
   </div>
 </div>
 
@@ -358,7 +406,7 @@ footer a{color:#e9e7df;text-decoration:none}
     <span class="eyebrow rv">Какво получаваш</span>
     <h2 class="h2 rv">Три неща, които движат печалбата ти</h2>
     <div class="ben">
-      <div class="bcard rv"><span class="lbl">📦 Пратката</span><h3>Точният офис. Товарителница с един клик.</h3><p>Клиентът търси офис или автомат на Еконт и Спиди направо в чекаута. Ти натискаш „Създай товарителница“ — и опаковаш.</p><div class="scene">Сутрин, докато пиеш кафето, товарителниците вече са готови.</div></div>
+      <div class="bcard rv"><span class="lbl">📦 Пратката</span><h3>Точният офис. Товарителница с един клик.</h3><p>Клиентът търси офис или автомат на Еконт, Спиди и BOX NOW направо в чекаута. Ти натискаш „Създай товарителница“ — и опаковаш.</p><div class="scene">Сутрин, докато пиеш кафето, товарителниците вече са готови.</div></div>
       <div class="bcard rv"><span class="lbl">🛡️ Сигурността</span><h3>Изпращаш само това, което ще бъде взето.</h3><p>Клиентът потвърждава поръчката по WhatsApp или SMS с личен линк, а телефонът му се проверява автоматично в регистъра на некоректни клиенти.</p><div class="scene">Отказаната поръчка вече не е пратка, която се връща — тя просто не тръгва.</div></div>
       <div class="bcard rv"><span class="lbl">📈 Печалбата</span><h3>Колко реално остава — без таблици.</h3><p>Реклама, доставка, връщания, такса за наложен платеж и себестойност — сметнати заедно, за избрания период.</p><div class="scene">Вечер поглеждаш телефона и знаеш дали денят е бил на печалба.</div></div>
     </div>
@@ -383,10 +431,10 @@ footer a{color:#e9e7df;text-decoration:none}
       </div>
       <div>
         <div class="flow" id="flow">
-          <div class="fstep on"><span class="n">1</span><div><b>Клиентът поръчва</b><span>избира офис на Еконт или Спиди</span></div></div>
+          <div class="fstep on"><span class="n">1</span><div><b>Клиентът поръчва</b><span>избира офис или автомат на Еконт, Спиди или BOX NOW</span></div></div>
           <div class="fstep"><span class="n">2</span><div><b>Поръчката влиза в Ordyx</b><span>проверка на телефона и известие на твоя телефон</span></div></div>
           <div class="fstep"><span class="n">3</span><div><b>Клиентът потвърждава</b><span>личен линк по WhatsApp или SMS</span></div></div>
-          <div class="fstep"><span class="n">4</span><div><b>Товарителница с един клик</b><span>Еконт или Спиди, PDF за печат</span></div></div>
+          <div class="fstep"><span class="n">4</span><div><b>Товарителница с един клик</b><span>Еконт, Спиди или BOX NOW, PDF за печат</span></div></div>
           <div class="fstep"><span class="n">5</span><div><b>Проследяване</b><span>доставена или върната — само; на 4-ия ден в офиса те подсеща да звъннеш</span></div></div>
           <div class="fstep"><span class="n">6</span><div><b>Табло: чиста печалба</b><span>реклама, доставка, връщания, себестойност</span></div></div>
         </div>
@@ -403,7 +451,7 @@ footer a{color:#e9e7df;text-decoration:none}
     <div class="steps">
       <div class="step rv"><div class="big">01</div><h3>Слагаш един ред код</h3><p>Копираш го в магазина си. Водачът „Първи стъпки“ те превежда отметка по отметка.</p></div>
       <div class="step rv"><div class="big">02</div><h3>Поръчките идват сами</h3><p>С точния офис, проверен телефон и известие на твоя телефон. Клиентът потвърждава от своя.</p></div>
-      <div class="step rv"><div class="big">03</div><h3>Създаваш товарителница и опаковаш</h3><p>Един клик с твоя профил в Еконт или договор със Спиди. Статусът се обновява сам.</p></div>
+      <div class="step rv"><div class="big">03</div><h3>Създаваш товарителница и опаковаш</h3><p>Един клик с твоя профил в Еконт, договор със Спиди или BOX NOW. Статусът се обновява сам.</p></div>
     </div>
   </div>
 </section>
@@ -533,21 +581,40 @@ footer a{color:#e9e7df;text-decoration:none}
 <section class="pricing" id="prices">
   <div class="wrap">
     <div style="text-align:center"><span class="eyebrow" style="color:#a9a79f">Цени</span><h2 class="h2">Една цена. Без изненади.</h2></div>
+    <div class="offer"><b>3 магазина + 1 000 поръчки + Growth Lab</b> на стойност 20 €/месец — само <b><span data-pp="1">58,20 €</span>/месец</b></div>
     <div class="count" id="count">
-      <div><b>Цена за основатели — заключена завинаги</b><br>за всеки, който се регистрира до 30 ноември 2026 г.</div>
+      <div><b>Стартови цени до 30 ноември! Заключи цената си за 12 месеца.</b><br>Първите 20 годишни клиента я запазват завинаги!</div>
       <div class="cd" id="cd"><span id="cdD">0<small>дни</small></span><span id="cdH">0<small>часа</small></span><span id="cdM">0<small>мин</small></span><span id="cdS">0<small>сек</small></span></div>
     </div>
     <div class="plans">
-      <div class="plan"><h3>Старт</h3><div><span class="old" data-old>29 €</span></div><div class="now"><span data-p1>24 €</span><small>/мес</small></div><ul><li>1 магазин</li><li>до 500 поръчки на месец</li><li>всичко в Ordyx</li><li>+5 € за всеки 250 поръчки над лимита</li></ul><a class="btn" data-cta href="#">Започни безплатно</a></div>
-      <div class="plan star"><span class="badge">⭐ Най-избиран</span><h3>Растеж</h3><div><span class="old" data-old>29 € + 12 € за магазин</span></div><div class="now"><span data-p2>24 €</span><small> + <span data-p2s>9 €</span> за всеки следващ магазин</small></div><ul><li>от 2 до 10 магазина</li><li>до 500 поръчки на магазин</li><li>всички магазини на един екран</li><li>🎙️ гласов агент, който потвърждава поръчките по телефона <em class="soon">скоро</em></li><li>+5 € за всеки 250 поръчки над лимита</li></ul><a class="btn" data-cta href="#">Започни безплатно</a></div>
-      <div class="plan"><h3>Агенция</h3><div><span class="old" style="text-decoration:none">10+ магазина</span></div><div class="now" style="font-size:30px">По запитване</div><ul><li>над 10 магазина</li><li>поръчки по договаряне</li><li>вход за всеки клиент</li><li>помощ при включването</li></ul><a class="btn dark" href="mailto:stoimenov@profitbrand.online?subject=Ordyx%20за%20агенция" style="background:#2a2a26">Пиши ни</a></div>
+      <div class="plan"><h3>Starter</h3><div class="sub2">1 магазин · 300 поръчки на месец</div><div class="was" data-old><s>67 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="0">40,20 €</span><small>/месец</small></div><div class="yr">или <b data-py="0"></b> за година</div><div class="addon">+1 магазин за 7 €/мес.<small>до 2 магазина общо · лимитът на поръчките остава 300</small></div><ul><li>всичко в Ordyx</li><li>чекаут с офиси и автомати</li><li>товарителници с един клик</li><li>потвърждение и печалба на телефона</li><li>Growth Lab — безплатно при годишен абонамент</li></ul><a class="btn" data-cta data-plan="starter" href="#">Започни безплатно</a></div>
+      <div class="plan star"><span class="badge">⭐ Най-популярен</span><h3>Growth</h3><div class="sub2">3 магазина · 1 000 поръчки на месец</div><div class="was" data-old><s>97 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="1">58,20 €</span><small>/месец</small></div><div class="yr">или <b data-py="1"></b> за година</div><div class="addon">+ до 2 магазина по 7 €/мес.<small>до 5 магазина общо · лимитът на поръчките остава 1 000</small></div><ul><li><b>Growth Lab включен</b> — стойност 20 €/мес.</li><li>всички магазини на един екран</li><li>🎙️ гласов агент за автоматично потвърждение на поръчките — 0,60 € на разговор</li></ul><a class="btn" data-cta data-plan="growth" href="#">Започни безплатно</a></div>
+      <div class="plan"><h3>Business</h3><div class="sub2">6 магазина · 4 000 поръчки на месец</div><div class="was" data-old><s>147 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="2">88,20 €</span><small>/месец</small></div><div class="yr">или <b data-py="2"></b> за година</div><div class="addon">+7 € за всеки следващ магазин<small>без горна граница · лимитът на поръчките остава 4 000</small></div><ul><li><b>Growth Lab включен</b> — стойност 20 €/мес.</li><li>всички магазини на един екран</li><li>🎙️ гласов агент за автоматично потвърждение — 0,60 € на разговор</li><li>вход за всеки клиент</li><li>помощ при включването</li></ul><a class="btn" data-cta data-plan="business" href="#">Започни безплатно</a></div>
     </div>
+    <div class="extra"><b>Само 7 € за допълнителен магазин</b><span>Разширявай бизнеса си, без да плащаш за ненужен по-голям пакет.</span></div>
+    <div class="agent"><span class="e" aria-hidden="true">🎓</span><div><b>Ordyx Growth Lab — стойност 20 €/месец</b><span>Премиум общност за онлайн търговци с практически обучения, работни материали и стратегии за повече продажби и по-висока печалба. Получаваш достъп до експертни уъркшопи, записи и реални решения за развитието на онлайн магазина си. <b>Включен в Growth и Business; в Starter — при годишен абонамент.</b></span></div></div>
+    <div class="agent"><span class="e" aria-hidden="true">🎙️</span><div><b>Агент, който потвърждава поръчките вместо теб</b><span>Около час след поръчката се обажда на купувача (между 9 и 20 ч.), прочита поръчката, пита дали я потвърждава и записва отговора в Ordyx. <b>0,60 € на разговор.</b></span></div></div>
     <div class="est">
-      <div class="rng" style="margin:0"><label for="e1">Колко магазина имаш? <b id="ev1">1</b></label><input id="e1" type="range" min="1" max="10" value="1"></div>
-      <div class="rng" style="margin:0"><label for="e2">Поръчки на месец на магазин <b id="ev2">400</b></label><input id="e2" type="range" min="50" max="2000" step="50" value="400"></div>
-      <div class="tot" aria-live="polite"><small style="color:#a9a79f">Твоята месечна цена</small><b id="etot">24 €</b><s id="eold">29 €</s></div>
+      <div>
+        <div class="rng"><label for="e1">Колко магазина управляваш? <b id="ev1">1</b></label><input id="e1" type="range" min="1" max="15" value="1"></div>
+        <div class="rng" style="margin:0"><label for="e2">Поръчки на месец (общо) <b id="ev2">300</b></label><input id="e2" type="range" min="50" max="6000" step="50" value="300"></div>
+        <div class="hint" id="ehint" aria-live="polite"></div>
+      </div>
+      <div class="tot" aria-live="polite"><small style="color:#a9a79f">Най-подходящ план: <b class="pl" id="eplan">Starter</b></small><b id="etot">40,20 €</b><s id="eold">67 €</s><small style="display:block;color:#a9a79f">на месец</small><small style="display:block;color:#a9a79f" id="eover"></small></div>
     </div>
-    <p class="fine">💯 30 дни гаранция за връщане на парите след първото плащане. Цените са без ДДС. SMS и WhatsApp съобщенията и гласовите обаждания се плащат отделно, според използването. След 30 ноември 2026 г. новите клиенти плащат редовните цени.</p>
+    <div class="terms-box" data-old>
+      <b>Условия на стартовата оферта</b>
+      <ul>
+        <li>Купиш ли Ordyx на стартовите цени до 30 ноември 2026 г., 23:59 ч., запазваш цената 12 месеца от датата на покупката — с месечно или с годишно плащане.</li>
+        <li><b>Месечно:</b> 40,20 / 58,20 / 88,20 € на месец за 12 последователни месеца, докато абонаментът е активен.</li>
+        <li><b>Годишно:</b> предплащаш 12 месеца — 160,80 / 232,80 / 352,80 €.</li>
+        <li><b>Founders 20:</b> първите 20 платили годишен абонамент запазват същата годишна цена завинаги при непрекъснато подновяване на същия план.</li>
+        <li>След 12-те месеца абонаментът продължава по редовните цени: 67 / 97 / 147 € на месец.</li>
+        <li>След 30 ноември новите клиенти получават редовните цени. При прекратяване стартовата цена отпада.</li>
+        <li>Първо 14 дни безплатно, без карта — линк за плащане ти изпращаме след това.</li>
+      </ul>
+    </div>
+    <p class="fine">Цени с ДДС. До 30 ноември 2026 г., 23:59 ч. — промоционална отстъпка от 40% върху основния план; от 1 декември важат редовните цени 67 / 97 / 147 €. Добавката от 7 € за магазин е фиксирана, не се намалява и не увеличава лимита на поръчките. Лимитът е общ за всички магазини в плана; над него — 5 € за всеки допълнителни 250 поръчки. Разговорите на гласовия агент (0,60 € на разговор), SMS и WhatsApp съобщенията се плащат отделно, според използването. 💯 30 дни гаранция за връщане на парите след първото плащане.</p>
   </div>
 </section>
 
@@ -575,9 +642,11 @@ footer a{color:#e9e7df;text-decoration:none}
       <details class="rv"><summary>Работи ли с моя магазин?</summary><p>Ordyx работи с магазини и фунии в ConvertBuilder, с WooCommerce (плъгин) и със собствени сайтове (API). Shopify идва скоро. Ако стоката ти е при фулфилмънт склад, поръчките отиват при него, а той връща товарителницата — работиш с конкретен център? Пиши ни и ще направим интеграцията.</p></details>
       <details class="rv"><summary>Мога ли да пращам в чужбина?</summary><p>Скоро. Подготвяме 24 европейски държави с местните им куриери и наложен платеж — <a href="#europe">виж списъка</a>. Днес Ordyx прави товарителници за Еконт, Спиди и BOX NOW в България. Ако стоката ти е при фулфилмънт склад, който праща в чужбина, Ordyx вече може да му предава поръчките.</p></details>
       <details class="rv"><summary>Ползвам ли моя договор с Еконт и Спиди?</summary><p>Да. Товарителниците се правят с твоя профил в Еконт и с твоя договор със Спиди — цените и условията остават твоите.</p></details>
-      <details class="rv"><summary>Колко струва след пробния период?</summary><p>24 € на месец за един магазин, ако се регистрираш до 30 ноември 2026 г. — заключени завинаги. След това редовната цена е 29 €. Цените са без ДДС.</p></details>
+      <details class="rv"><summary>Колко струва след пробния период?</summary><p>Starter (1 магазин, 300 поръчки) — 67 €, Growth (3 магазина, 1 000 поръчки) — 97 €, Business (6 магазина, 4 000 поръчки) — 147 € на месец, с ДДС. Ако купиш абонамент до 30 ноември 2026 г., 23:59 ч., плащаш стартовите цени 40,20 €, 58,20 € и 88,20 € и ги запазваш 12 месеца от първото плащане. Първите 20 клиенти с годишен абонамент запазват стартовата цена завинаги, докато подновяват същия план без прекъсване. След това абонаментът се подновява по редовната цена; при прекратяване стартовата цена отпада.</p></details>
       <details class="rv"><summary>Сигурни ли са данните на клиентите ми (GDPR)?</summary><p>Данните се пазят в Европейския съюз. Ключовете за куриерите и магазина са криптирани. Данните от незавършени поръчки се заличават автоматично след 30 дни. Ти виждаш само своите магазини.</p></details>
-      <details class="rv"><summary>Мога ли да имам няколко магазина?</summary><p>Да. Всички магазини са на един екран, а всеки следващ струва 9 € на месец с цената за основатели.</p></details>
+      <details class="rv"><summary>Мога ли да имам няколко магазина?</summary><p>Да. Всички магазини са на един екран. Към всеки план добавяш магазин за 7 € на месец: Starter до 2 магазина, Growth до 5, Business — колкото ти трябват. Допълнителният магазин не увеличава лимита на поръчките — той е общ за магазините в плана. Над лимита плащаш 5 € за всеки 250 поръчки.</p></details>
+      <details class="rv"><summary>Как работи агентът за потвърждение?</summary><p>Около час след поръчката гласов агент се обажда на купувача (между 9 и 20 ч.), прочита името, продуктите и сумата и пита дали потвърждава. Отговорът се записва в Ordyx сам — потвърдена или отказана. Струва 0,60 € на разговор.</p></details>
+      <details class="rv"><summary>Какво е Ordyx Growth Lab?</summary><p>Премиум общност за онлайн търговци с практически обучения, работни материали и стратегии за повече продажби и по-висока печалба: експертни уъркшопи, записи и реални решения за развитието на онлайн магазина ти. Стойност 20 € на месец. Включен е в Growth и Business, а в Starter — при годишен абонамент.</p></details>
       <details class="rv"><summary>Има ли гаранция?</summary><p>Да. След пробните 14 дни, ако в първите 30 дни след първото плащане решиш, че Ordyx не е за теб, връщаме парите за абонамента — без въпроси.</p></details>
       <details class="rv"><summary>Какво става, ако спра?</summary><p>Махаш реда код и чекаутът е както преди. Поръчките и купувачите си ги изтегляш в Excel по всяко време.</p></details>
     </div>
@@ -598,7 +667,7 @@ footer a{color:#e9e7df;text-decoration:none}
   <div class="wrap">
     <a class="logo" href="#top"><svg viewBox="0 0 100 100" style="width:26px;height:26px" aria-hidden="true"><polygon points="30,4 70,4 60,24 40,24" fill="#FFEFA8"/><polygon points="70,4 96,30 76,40 60,24" fill="#FFDD4D"/><polygon points="96,30 96,70 76,60 76,40" fill="#F4C200"/><polygon points="96,70 70,96 60,76 76,60" fill="#D6A400"/><polygon points="70,96 30,96 40,76 60,76" fill="#C49500"/><polygon points="30,96 4,70 24,60 40,76" fill="#DDAC00"/><polygon points="4,70 4,30 24,40 24,60" fill="#FFD21F"/><polygon points="4,30 30,4 40,24 24,40" fill="#FFF3C7"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="#FFD84A"/><polygon points="40,24 60,24 67,31 33,31" fill="#FFF0B3" opacity=".7"/><g fill="none" stroke="#0d0d0c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40"/></g></svg><b style="color:#fff">ordyx</b></a>
     <span>ordyx.eu · <a href="mailto:stoimenov@profitbrand.online">stoimenov@profitbrand.online</a></span>
-    <span><a href="https://app.ordyx.eu/admin/">Вход</a> · <a href="https://app.ordyx.eu/demo" target="_blank" rel="noopener">Демо</a> · <a href="/terms">Общи условия</a> · <a href="/privacy">Поверителност</a> · <a href="/data-deletion">Изтриване на данни</a></span>
+    <span><a href="https://app.ordyx.eu/admin/">Вход</a> · <a href="/terms">Общи условия</a> · <a href="/privacy">Поверителност</a> · <a href="/data-deletion">Изтриване на данни</a></span>
     <span>от ProfitBrand</span>
   </div>
 </footer>
@@ -616,7 +685,8 @@ footer a{color:#e9e7df;text-decoration:none}
   var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var founders = function () { return Date.now() < DEADLINE; };
 
-  [].forEach.call(document.querySelectorAll('[data-cta]'), function (a) { a.href = SIGNUP; });
+  // a plan's button opens the registration with that plan picked (the form asks monthly or yearly)
+  [].forEach.call(document.querySelectorAll('[data-cta]'), function (a) { a.href = SIGNUP + (a.getAttribute('data-plan') ? '&plan=' + a.getAttribute('data-plan') : ''); });
 
   /* reveal on scroll */
   // shown when on screen; checked on scroll too, so nothing stays hidden where the observer is slow or missing
@@ -763,18 +833,43 @@ footer a{color:#e9e7df;text-decoration:none}
   }
   ['r1', 'r2', 'r3', 'r4'].forEach(function (id) { $(id).addEventListener('input', calc); }); calc();
 
-  /* pricing: founders vs regular, countdown, estimate */
+  /* pricing: 3 plans + 7 € a store; founders −40% on the plan until 30.11.2026 23:59 (the 7 € add-on is fixed); the order
+     limit is shared by the plan's stores and an added store does not raise it; 5 € for every 250 orders above it */
+  var PLANS = [
+    { name: 'Starter', shops: 1, max: 2, orders: 300, price: 67, launchYear: 160.8 },
+    { name: 'Growth', shops: 3, max: 5, orders: 1000, price: 97, launchYear: 232.8 },
+    { name: 'Business', shops: 6, max: Infinity, orders: 4000, price: 147, launchYear: 352.8 },
+  ];
+  var ADDON = 7, OVER_STEP = 250, OVER_EUR = 5;
+  var r2 = function (v) { return Math.round(v * 100) / 100; };
+  var money = function (v) { v = r2(v); return v % 1 ? v.toLocaleString('bg-BG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €' : eur(v); };
+  var thousands = function (v) { return String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }; // 1 000, the Bulgarian way
+  function planPrice(p, f) { return f ? r2(p.price * 0.6) : p.price; }
+  function cost(p, n, orders, f) {
+    var extra = Math.max(0, n - p.shops), over = Math.ceil(Math.max(0, orders - p.orders) / OVER_STEP) * OVER_EUR;
+    return { plan: p, extra: extra, over: over, total: r2(planPrice(p, f) + ADDON * extra + over), old: p.price + ADDON * extra + over };
+  }
   function prices() {
     var f = founders();
-    var base = f ? 24 : 29, extra = f ? 9 : 12;
     [].forEach.call(document.querySelectorAll('[data-old]'), function (el) { el.hidden = !f; });
-    [].forEach.call(document.querySelectorAll('[data-p1],[data-p2]'), function (el) { el.textContent = base + ' €'; });
-    [].forEach.call(document.querySelectorAll('[data-p2s]'), function (el) { el.textContent = extra + ' €'; });
-    var shops = +$('e1').value, per = +$('e2').value;
-    $('ev1').textContent = shops; $('ev2').textContent = per.toLocaleString('bg-BG');
-    var over = Math.max(0, Math.ceil((per - 500) / 250)) * 5 * shops;
-    var tot = base + extra * (shops - 1) + over, old = 29 + 12 * (shops - 1) + over;
-    $('etot').textContent = eur(tot); $('eold').textContent = f ? eur(old) : ''; $('eold').hidden = !f;
+    [].forEach.call(document.querySelectorAll('[data-pp]'), function (el) { el.textContent = money(planPrice(PLANS[+el.getAttribute('data-pp')], f)); });
+    // yearly: the launch year prepaid until 30.11, 12 × the regular month after
+    [].forEach.call(document.querySelectorAll('[data-py]'), function (el) { var pl = PLANS[+el.getAttribute('data-py')]; el.textContent = thousands(money(f ? pl.launchYear : pl.price * 12)); });
+    var n = +$('e1').value, orders = +$('e2').value;
+    $('ev1').textContent = n; $('ev2').textContent = thousands(orders);
+    // the cheapest plan that takes this many stores
+    var opts = PLANS.filter(function (p) { return n <= p.max; }).map(function (p) { return cost(p, n, orders, f); });
+    var best = opts.reduce(function (a, b) { return b.total < a.total ? b : a; });
+    $('eplan').textContent = best.plan.name + (best.extra ? ' + ' + best.extra : '');
+    $('etot').textContent = money(best.total); $('eold').textContent = f ? eur(best.old) : ''; $('eold').hidden = !f;
+    $('eover').textContent = best.over ? 'в т.ч. ' + eur(best.over) + ' за поръчки над ' + thousands(best.plan.orders) : '';
+    // the next plan up, when it is close: what the step costs and brings
+    var up = opts.filter(function (o) { return PLANS.indexOf(o.plan) === PLANS.indexOf(best.plan) + 1; })[0], hint = '';
+    if (up && up.total - best.total <= 20) {
+      hint = 'Само за <b>' + eur(r2(up.total - best.total)) + ' повече</b> минаваш на ' + up.plan.name + ': ' + up.plan.shops + ' магазина, ' +
+        thousands(up.plan.orders) + ' поръчки' + (best.plan.name === 'Starter' ? ' и Growth Lab (20 €/мес.)' : '') + '.';
+    }
+    $('ehint').innerHTML = hint;
     if (!f) $('count').hidden = true;
   }
   ['e1', 'e2'].forEach(function (id) { $(id).addEventListener('input', prices); });
