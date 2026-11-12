@@ -181,6 +181,40 @@ section{padding:88px 0}
 .tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .screenbox{background:#fff;border:1px solid var(--line);border-radius:22px;padding:22px;min-height:360px;box-shadow:0 20px 50px rgba(0,0,0,.06)}
 .sc{display:none;animation:fade .35s ease both}.sc.on{display:block}
+/* the secret weapon: a classified dossier; „Разсекрети“ lifts the stamp and wipes the black bars off */
+.secret{background:var(--ink);color:#fff;position:relative;overflow:hidden}
+.secret::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.06;background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 4px)}
+.secret .lead{color:#c9c7bf;max-width:720px}
+.secret .eyebrow{color:#ff3b5c}
+.dossier{position:relative;margin-top:34px;max-width:860px;background:#f3eedf;color:#1d1b16;border-radius:6px;padding:26px 28px 22px;
+  box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.06);transform:rotate(-.6deg);font-family:"Courier New",ui-monospace,monospace}
+.dossier::after{content:"";position:absolute;top:-10px;left:40px;width:120px;height:22px;background:#d9cfae;border-radius:6px 6px 0 0}
+.dos-h{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:12px;font-weight:700;letter-spacing:.12em;color:#7a7360;border-bottom:1.5px dashed #b7ad90;padding-bottom:10px;margin-bottom:16px}
+.dos-title{font:700 22px Unbounded,sans-serif;margin-bottom:12px}
+.dos-card{background:#fff;border:1px solid #e1dbc8;border-radius:14px;padding:16px 18px;font-family:Manrope,sans-serif}
+.dos-k{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.dos-card h3{font-size:18px;margin:0 0 6px}
+.dos-card p{margin:0;color:#55534c}
+.dos-list{margin:16px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:15px;line-height:1.5}
+.rd{background:linear-gradient(#1d1b16,#1d1b16) no-repeat 0 0/100% 100%;color:transparent;border-radius:3px;-webkit-box-decoration-break:clone;box-decoration-break:clone;transition:background-size .7s cubic-bezier(.7,0,.2,1),color .2s .45s}
+.rd b{color:inherit}
+.dossier.open .rd{background-size:0 100%;background-position:100% 0;color:inherit}
+.dossier.open .dos-list li:nth-child(1) .rd{transition-delay:.25s,.7s}
+.dossier.open .dos-list li:nth-child(2) .rd{transition-delay:.4s,.85s}
+.dossier.open .dos-list li:nth-child(3) .rd{transition-delay:.55s,1s}
+.dossier.open .dos-card .rd{transition-delay:.1s,.55s}
+.dos-stamp{position:absolute;top:58px;right:26px;z-index:2;color:#d1213f;border:4px solid #d1213f;border-radius:10px;padding:8px 18px;font:800 30px/1 Unbounded,sans-serif;letter-spacing:.08em;
+  transform:rotate(-14deg);box-shadow:inset 0 0 0 3px #f3eedf,inset 0 0 0 5px rgba(209,33,63,.5);opacity:.88;transition:transform .55s cubic-bezier(.5,-0.4,.7,.2),opacity .55s}
+.secret.go .dos-stamp{animation:secstamp .55s cubic-bezier(.2,.7,.25,1.3) .2s both}
+@keyframes secstamp{0%{opacity:0;transform:translateY(-40px) scale(2.6) rotate(-30deg);filter:blur(5px)}60%{opacity:.88;filter:blur(0)}75%{transform:scale(.88) rotate(-10deg)}100%{opacity:.88;transform:rotate(-14deg)}}
+.dossier.open .dos-stamp{animation:none;opacity:0;transform:translate(160px,-120px) rotate(30deg) scale(.6)}
+.dos-f{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:20px;font-family:Manrope,sans-serif}
+.dos-note{color:#7a7360;font-weight:700}
+.dossier.open #declass{display:none}
+.peek{font-weight:800;color:var(--ink);text-decoration:underline;text-decoration-color:var(--y);text-decoration-thickness:3px}
+@media (max-width:640px){.dossier{padding:22px 18px 18px}.dos-stamp{top:46px;right:10px;font-size:20px;padding:6px 12px}}
+@media (prefers-reduced-motion:reduce){.rd{transition:none}}
+
 .adv{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;max-width:560px}
 .adv-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .adv h3{font-size:19px;margin:0 0 6px}
@@ -510,7 +544,7 @@ footer a{color:#e9e7df;text-decoration:none}
     <span class="eyebrow rv">Отвътре</span>
     <h2 class="h2 rv">Целият магазин след „Поръчай“</h2>
     <div class="tabs" role="tablist">
-      <button class="on" role="tab" data-t="s1">📋 Поръчки</button><button role="tab" data-t="s2">📊 Табло</button><button role="tab" data-t="s3">💬 Потвърждение</button><button role="tab" data-t="s4">🛒 Изоставени колички</button><button role="tab" data-t="s5">🧭 Съветник</button>
+      <button class="on" role="tab" data-t="s1">📋 Поръчки</button><button role="tab" data-t="s2">📊 Табло</button><button role="tab" data-t="s3">💬 Потвърждение</button><button role="tab" data-t="s4">🛒 Изоставени колички</button>
     </div>
     <div class="screenbox">
       <div class="sc on" id="s1">
@@ -535,13 +569,6 @@ footer a{color:#e9e7df;text-decoration:none}
         <div class="arow" style="margin-top:8px"><div><b>Нели Иванова</b><br>1 × Книга · 15,38 €</div><span class="tag g">върната ✓</span><span class="tag">Viber</span></div>
         <p style="margin:12px 0 0;color:var(--muted);font-size:14px">Хора, които въведоха телефон в чекаута, но не поръчаха. Едно докосване и напомнянето е в WhatsApp, SMS или Viber.</p>
       </div>
-      <div class="sc" id="s5">
-        <div class="adv"><div class="adv-h"><b>🧭 Ordyx Съветник</b><span class="tag y">днес</span></div>
-          <h3>Връщанията от нови клиенти са 14% — при 7% обикновено</h3>
-          <p>Включи потвърждението по телефона за поръчки над 40 €. Очакван ефект: <b>~180 € на месец</b>.</p>
-          <div class="btns"><button type="button" style="background:var(--y)">Включи</button><button type="button" style="background:#f1f0ec">По-късно</button></div></div>
-        <p style="margin:12px 0 0;color:var(--muted);font-size:14px">Примерна карта. Съветникът гледа 16 показателя на магазина и ти казва само едно нещо на ден — най-важното.</p>
-      </div>
     </div>
   </div>
 </section>
@@ -554,12 +581,39 @@ footer a{color:#e9e7df;text-decoration:none}
     <div class="feat">
       <div class="fcard wide rv"><span class="fi">📲</span><div><h3>Поръчките и магазините — в телефона ти</h3><p>Ordyx се слага на телефона като приложение — iPhone или Android, без App Store. Всички магазини на един екран, а известие идва веднага: <b>нова поръчка</b>, <b>потвърдена или отказана</b>, отговор от гласовия агент, клиент писа в WhatsApp, промяна на доставката. Не пропускаш нищо, дори когато не си на компютъра.</p></div>
         <div class="push" aria-hidden="true"><div class="pn"><b>🛒 Нова поръчка · Магазин А</b><span>Мария И. · 28,28 € · Еконт – Плевен</span></div><div class="pn"><b>✅ Клиентът потвърди по телефона</b><span>Георги П. · 64 €</span></div><div class="pn"><b>💬 Клиент писа в WhatsApp</b><span>„Може ли до адрес?“</span></div></div></div>
-      <div class="fcard rv"><span class="fi">🧭</span><h3>Ordyx Съветник</h3><p>Всяка сутрин една карта в таблото: какво да промениш днес и колко € носи. Следи 16 показателя на магазина — марж, връщания, реклама, наличности, изоставени колички — и в началото на месеца ти дава резюме.</p></div>
+      <div class="fcard rv"><span class="fi">🔒</span><h3>Тайното оръжие</h3><p>Има една функция, заради която собствениците отварят Ordyx всяка сутрин. <a href="#advisor" class="peek">Разсекрети я →</a></p></div>
       <div class="fcard rv"><span class="fi">🎙️</span><h3>Гласов агент</h3><p>Около час след поръчката се обажда на купувача, прочита поръчката и записва отговора в Ordyx — потвърдена или отказана. <b>0,60 € на разговор.</b></p></div>
       <div class="fcard rv"><span class="fi">💬</span><h3>WhatsApp</h3><p>Съобщение „Потвърдете поръчката“ с бутони — едно докосване и поръчката е потвърдена. Напомняния за изоставени колички и кампании до твоите купувачи.</p></div>
       <div class="fcard rv"><span class="fi">📱</span><h3>SMS</h3><p>Потвърждение с личен линк и SMS кампании до купувачите от твоите поръчки — с броя знаци и цената преди изпращане. <em class="soon">директно изпращане скоро</em></p></div>
       <div class="fcard rv"><span class="fi">📍</span><h3>Проследяване на пратката</h3><p>Купувачът има лична страница с поръчката и къде е пратката. Статусите от Еконт, Спиди и BOX NOW се обновяват сами — ти виждаш доставените и върнатите.</p></div>
       <div class="fcard rv"><span class="fi">📈</span><h3>Реклами и източници</h3><p>Разходът от <b>Meta Ads</b> влиза в таблото: ROAS, CPA и печалба след реклама. Всяка поръчка показва откъде е дошла — Facebook, Instagram, Google, TikTok. <em class="soon">Google Ads и TikTok Ads скоро</em></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SECRET WEAPON: the advisor -->
+<section class="secret" id="advisor">
+  <div class="wrap">
+    <span class="eyebrow rv">🔒 Тайното оръжие</span>
+    <h2 class="h2 rv">Всеки собственик си задава един въпрос всяка сутрин.</h2>
+    <p class="lead rv">„Какво да направя днес, за да спечеля повече?“ Повечето системи ти дават графики и те оставят сам да търсиш отговора. Ordyx ти казва отговора.</p>
+    <div class="dossier rv" id="dossier">
+      <div class="dos-h"><span>ДОСИЕ № 016 · ORDYX</span><span>ДОСТЪП: САМО СОБСТВЕНИЦИ</span></div>
+      <div class="dos-stamp" aria-hidden="true">СЕКРЕТНО</div>
+      <div class="dos-body">
+        <div class="dos-title"><span class="rd">Ordyx Съветник</span></div>
+        <div class="dos-card">
+          <div class="dos-k"><b><span class="rd">🧭 Ordyx Съветник</span></b><span class="tag y"><span class="rd">днес</span></span></div>
+          <h3><span class="rd">Връщанията от нови клиенти са 14% — при 7% обикновено</span></h3>
+          <p><span class="rd">Включи потвърждението по телефона за поръчки над 40 €.</span> <span class="rd">Очакван ефект: <b>~180 € на месец</b>.</span></p>
+        </div>
+        <ul class="dos-list">
+          <li><span class="rd">Всяка нощ преглежда <b>16 показателя</b> на магазина ти — марж, връщания, реклама, рискови клиенти, наличности, изоставени колички, заспали купувачи.</span></li>
+          <li><span class="rd">Сутрин ти казва <b>само едно нещо</b> — най-важното, с очаквания ефект в евро.</span></li>
+          <li><span class="rd">Следи дали препоръката е проработила и в началото на месеца ти дава <b>резюме: какво донесе</b>.</span></li>
+        </ul>
+      </div>
+      <div class="dos-f"><button type="button" class="btn" id="declass">Разсекрети →</button><span class="dos-note" id="dosNote">Включено във всеки план.</span></div>
     </div>
   </div>
 </section>
@@ -897,6 +951,19 @@ footer a{color:#e9e7df;text-decoration:none}
     });
   });
   function drawBars() { $('bars').innerHTML = [38, 52, 44, 61, 58, 73, 66, 80, 71, 88, 79, 95].map(function (h, i) { return '<i style="height:' + h + '%;animation-delay:' + i * 40 + 'ms"></i>'; }).join(''); }
+  /* the secret weapon: the stamp lands when the dossier comes into view; „Разсекрети“ opens it */
+  (function () {
+    var sec = document.getElementById('advisor'), dos = document.getElementById('dossier');
+    if (!sec || !dos) return;
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { sec.classList.add('go'); io.disconnect(); } }, { threshold: 0.35 });
+      io.observe(dos);
+    } else sec.classList.add('go');
+    document.getElementById('declass').addEventListener('click', function () {
+      dos.classList.add('open');
+      document.getElementById('dosNote').textContent = 'Разсекретено ✓ Включено във всеки план.';
+    });
+  })();
   $('cYes').addEventListener('click', function () { $('cMsg').textContent = '✓ Благодарим! Поръчката е потвърдена — магазинът току-що получи известие.'; $('cMsg').style.color = 'var(--ok)'; });
   $('cNo').addEventListener('click', function () { $('cMsg').textContent = 'Поръчката е отказана — пратката няма да тръгне и няма да се върне.'; $('cMsg').style.color = 'var(--bad)'; });
 
