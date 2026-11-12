@@ -78,3 +78,10 @@ test('admin: the shop switches BOX NOW in the checkout on and off; the status sh
   await call({ method: 'POST', body: JSON.stringify({ action: 'boxnow_checkout', on: false }) });
   assert.equal(json(await call({})).boxnow.checkout, false);
 });
+
+test('ordyx.eu shows the real checkout as a demo: BOX NOW lockers and the switch on, with no shop', async () => {
+  await replaceOffices(q, 'boxnow', parseBoxnowLockers(LOCKERS));
+  assert.equal(json(await ask('/api/offices?courier=boxnow&host=ordyx.eu')).offices.length, 3);
+  assert.equal(json(await ask('/api/offices?courier=shop&host=www.ordyx.eu')).boxnow, true);
+  assert.equal(json(await ask('/api/offices?courier=shop&host=other.bg')).boxnow, false);
+});

@@ -123,6 +123,22 @@ section{padding:88px 0}
 .face.b small{color:var(--y)}
 /* benefits */
 .ben{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}
+.feat{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:36px}
+.fcard{background:#fff;border:1px solid var(--line);border-radius:22px;padding:24px;display:flex;flex-direction:column;gap:10px}
+.fcard .fi{font-size:30px;line-height:1}
+.fcard .logos-row{display:flex;gap:8px}
+.fcard .logos-row .lg{display:grid;place-items:center;width:52px;height:52px;border-radius:14px;background:#f6f5f0;border:1px solid var(--line)}
+.fcard .logos-row img,.fcard .logos-row svg{width:30px;height:30px;object-fit:contain}
+.fcard h3{font-size:20px}
+.fcard p{margin:0;color:var(--muted)}
+.fcard p b{color:var(--ink)}
+.fcard.wide{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr minmax(260px,340px);gap:18px 22px;align-items:center;background:var(--ink);color:#fff;border-color:var(--ink)}
+.fcard.wide p{color:#c9c7bf}.fcard.wide p b{color:var(--y)}
+.fcard.wide h3{margin-bottom:6px}
+.push{display:flex;flex-direction:column;gap:8px}
+.push .pn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px 12px;font-size:13px;backdrop-filter:blur(6px)}
+.push .pn b{display:block;font-weight:800}.push .pn span{color:#c9c7bf}
+@media (max-width:900px){.feat{grid-template-columns:1fr}.fcard.wide{grid-template-columns:1fr}}
 .bcard{background:#fff;border:1px solid var(--line);border-radius:22px;padding:26px;display:flex;flex-direction:column;gap:12px}
 .bcard .lbl{font-weight:800;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .bcard h3{font-size:22px}
@@ -134,7 +150,14 @@ section{padding:88px 0}
 .demo .grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:40px;align-items:start;margin-top:36px}
 .demo .lead{color:#c9c7bf}
 .co{background:#fff;color:var(--ink);border-radius:22px;padding:22px;box-shadow:0 30px 70px rgba(0,0,0,.4)}
-.co h4{margin:0 0 12px;font-size:15px}
+.co h4{margin:0;font-size:17px}
+.co-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.co-step{font-size:12px;font-weight:800;color:var(--muted);background:#f1f0ec;border-radius:999px;padding:3px 9px}
+.co-fake{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.co-f{border:1.5px solid #e8e2cf;border-radius:12px;padding:8px 12px;font-size:13px;color:var(--muted)}
+.co-f b{display:block;color:var(--ink);font-size:15px}
+.co-btn{width:100%;margin-top:12px;min-height:50px;border:0;border-radius:12px;background:var(--y);color:var(--ink);font:800 16px Manrope;cursor:pointer;box-shadow:0 5px 0 #c9a100}
+.co .zdo{margin:12px 0 0;font-family:inherit}
 .opt{display:flex;align-items:center;gap:10px;padding:13px 14px;margin:0 0 8px;border:1.5px solid #e8e2cf;border-radius:12px;cursor:pointer;font-size:15px;background:#fff;width:100%;font:inherit;text-align:left}
 .opt.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
 .opt .dot{width:18px;height:18px;border-radius:50%;border:2px solid #bbb;flex:none}
@@ -147,6 +170,7 @@ section{padding:88px 0}
 .res button:hover,.res button:focus{background:var(--ysoft)}
 .res button small{display:block;color:var(--muted)}
 .picked{margin-top:12px;padding:12px 14px;border-radius:12px;background:#e7f6ec;color:#14532d;font-weight:700;font-size:14px}
+.picked.warn{background:#fff3cd;color:#6b4e00}
 .flow{display:flex;flex-direction:column;gap:10px}
 .fstep{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:16px;background:#1a1a17;border:1px solid #2a2a26;opacity:.45;transition:opacity .4s,border-color .4s,transform .4s}
 .fstep.on{opacity:1;border-color:var(--y);transform:translateX(6px)}
@@ -168,6 +192,46 @@ section{padding:88px 0}
 .tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
 .screenbox{background:#fff;border:1px solid var(--line);border-radius:22px;padding:22px;min-height:360px;box-shadow:0 20px 50px rgba(0,0,0,.06)}
 .sc{display:none;animation:fade .35s ease both}.sc.on{display:block}
+/* the secret weapon: a classified dossier; „Разсекрети“ lifts the stamp and wipes the black bars off */
+.secret{background:var(--ink);color:#fff;position:relative;overflow:hidden}
+.secret::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.06;background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 4px)}
+.secret .lead{color:#c9c7bf;max-width:720px}
+.secret .eyebrow{color:#ff3b5c}
+.dossier{position:relative;margin-top:34px;max-width:860px;background:#f3eedf;color:#1d1b16;border-radius:6px;padding:26px 28px 22px;
+  box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.06);transform:rotate(-.6deg);font-family:"Courier New",ui-monospace,monospace}
+.dossier::after{content:"";position:absolute;top:-10px;left:40px;width:120px;height:22px;background:#d9cfae;border-radius:6px 6px 0 0}
+.dos-h{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:12px;font-weight:700;letter-spacing:.12em;color:#7a7360;border-bottom:1.5px dashed #b7ad90;padding-bottom:10px;margin-bottom:16px}
+.dos-title{font:700 22px Unbounded,sans-serif;margin-bottom:12px}
+.dos-card{background:#fff;border:1px solid #e1dbc8;border-radius:14px;padding:16px 18px;font-family:Manrope,sans-serif}
+.dos-k{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.dos-card h3{font-size:18px;margin:0 0 6px}
+.dos-card p{margin:0;color:#55534c}
+.dos-list{margin:16px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:15px;line-height:1.5}
+.rd{background:linear-gradient(#1d1b16,#1d1b16) no-repeat 0 0/100% 100%;color:transparent;border-radius:3px;-webkit-box-decoration-break:clone;box-decoration-break:clone;transition:background-size .7s cubic-bezier(.7,0,.2,1),color .2s .45s}
+.rd b{color:inherit}
+.dossier.open .rd{background-size:0 100%;background-position:100% 0;color:inherit}
+.dossier.open .dos-list li:nth-child(1) .rd{transition-delay:.25s,.7s}
+.dossier.open .dos-list li:nth-child(2) .rd{transition-delay:.4s,.85s}
+.dossier.open .dos-list li:nth-child(3) .rd{transition-delay:.55s,1s}
+.dossier.open .dos-card .rd{transition-delay:.1s,.55s}
+.dos-stamp{position:absolute;top:58px;right:26px;z-index:2;color:#d1213f;border:4px solid #d1213f;border-radius:10px;padding:8px 18px;font:800 30px/1 Unbounded,sans-serif;letter-spacing:.08em;
+  transform:rotate(-14deg);box-shadow:inset 0 0 0 3px #f3eedf,inset 0 0 0 5px rgba(209,33,63,.5);opacity:.88;transition:transform .55s cubic-bezier(.5,-0.4,.7,.2),opacity .55s}
+.secret.go .dos-stamp{animation:secstamp .55s cubic-bezier(.2,.7,.25,1.3) .2s both}
+@keyframes secstamp{0%{opacity:0;transform:translateY(-40px) scale(2.6) rotate(-30deg);filter:blur(5px)}60%{opacity:.88;filter:blur(0)}75%{transform:scale(.88) rotate(-10deg)}100%{opacity:.88;transform:rotate(-14deg)}}
+.dossier.open .dos-stamp{animation:none;opacity:0;transform:translate(160px,-120px) rotate(30deg) scale(.6)}
+.dos-f{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:20px;font-family:Manrope,sans-serif}
+.dos-note{color:#7a7360;font-weight:700}
+.dossier.open #declass{display:none}
+.peek{font-weight:800;color:var(--ink);text-decoration:underline;text-decoration-color:var(--y);text-decoration-thickness:3px}
+@media (max-width:640px){.dossier{padding:22px 18px 18px}.dos-stamp{top:46px;right:10px;font-size:20px;padding:6px 12px}}
+@media (prefers-reduced-motion:reduce){.rd{transition:none}}
+
+.adv{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;max-width:560px}
+.adv-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.adv h3{font-size:19px;margin:0 0 6px}
+.adv p{margin:0 0 14px;color:var(--muted)}
+.adv .btns{display:flex;gap:8px}
+.adv .btns button{border:0;border-radius:12px;padding:10px 16px;font:800 14px Manrope;cursor:default}
 @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .kpi{border:1px solid var(--line);border-radius:14px;padding:14px}
@@ -193,6 +257,22 @@ input[type=range]{width:100%;accent-color:var(--ink);height:28px}
 .out .line{display:flex;justify-content:space-between;border-top:1px solid #2a2a26;padding-top:10px;font-size:15px}
 @media (max-width:860px){.calc{grid-template-columns:1fr}}
 /* compare */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:36px}
+.ba-col{border-radius:24px;padding:24px;border:1px solid var(--line)}
+.ba-before{background:#ecebe5}
+.ba-after{background:var(--ink);color:#fff;border-color:var(--ink)}
+.ba-h{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.ba-h b{font:700 19px Unbounded}
+.ba-tag{width:max-content;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:#fff;color:var(--muted)}
+.ba-after .ba-tag{background:var(--y);color:var(--ink)}
+.ba ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.ba li{position:relative;padding-left:34px}
+.ba li b{display:block;font-size:15.5px}
+.ba li span{display:block;font-size:14px;color:var(--muted);margin-top:2px}
+.ba-after li span{color:#bdbbb3}
+.ba li::before{content:"";position:absolute;left:0;top:2px;width:22px;height:22px;border-radius:50%;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M205.66 194.34a8 8 0 0 1-11.32 11.32L128 139.31l-66.34 66.35a8 8 0 0 1-11.32-11.32L116.69 128 50.34 61.66a8 8 0 0 1 11.32-11.32L128 116.69l66.34-66.35a8 8 0 0 1 11.32 11.32L139.31 128Z' fill='%23b42318'/%3E%3C/svg%3E") center/12px no-repeat}
+.ba-after li::before{background:var(--y) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M104 192a8 8 0 0 1-5.66-2.34l-56-56a8 8 0 0 1 11.32-11.32L104 172.69 202.34 74.34a8 8 0 0 1 11.32 11.32l-104 104A8 8 0 0 1 104 192Z' fill='%230d0d0c'/%3E%3C/svg%3E") center/13px no-repeat}
+@media (max-width:760px){.ba{grid-template-columns:1fr}}
 .cmp{width:100%;border-collapse:separate;border-spacing:0;margin-top:36px;background:#fff;border:1px solid var(--line);border-radius:22px;overflow:hidden}
 .cmp th,.cmp td{padding:15px 18px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top;font-size:15px}
 .cmp tr:last-child td{border-bottom:0}
@@ -240,11 +320,19 @@ input[type=range]{width:100%;accent-color:var(--ink);height:28px}
 @media (max-width:900px){.eu{grid-template-columns:1fr}.eu-panel{position:static}}
 @media (max-width:600px){.eu-list{padding:16px;gap:14px}.eu-reg div{gap:6px}.eu-c{min-height:34px;padding:0 10px 0 8px;gap:5px;font-size:13px}.eu-c .fl{font-size:15px}.eu-panel{padding:18px}.eu-panel h3{font-size:21px}}
 /* story */
-.story{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center;margin-top:30px;background:#fff;border:1px solid var(--line);border-radius:26px;padding:30px}
+.story{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:start;margin-top:30px;background:#fff;border:1px solid var(--line);border-radius:26px;padding:30px}
 .story .mark{width:86px;height:86px;border-radius:22px;background:var(--ink);display:grid;place-items:center}
 .story .mark svg{width:54px;height:54px}
 .story p{margin:0 0 10px;font-size:17px}
+.story .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:6px 0 18px}
+.story .stats div{background:var(--ink);color:#fff;border-radius:18px;padding:16px 18px}
+.story .stats b{display:block;font:700 clamp(26px,3.4vw,38px)/1.05 Unbounded;color:var(--y)}
+.story .stats span{font-size:14px;color:#c9c7bf;font-weight:600}
+.story .claim{font-weight:800;font-size:18px;border-left:4px solid var(--y);padding:4px 0 4px 14px;margin:16px 0}
+.story .tag3{display:flex;flex-wrap:wrap;gap:8px;margin:0}
+.story .tag3 span{background:var(--ysoft);color:#3d3300;font-weight:800;border-radius:999px;padding:6px 14px;font-size:15px}
 @media (max-width:640px){.story{grid-template-columns:1fr}}
+@media (max-width:640px){.story .stats{grid-template-columns:1fr}}
 /* pricing */
 .pricing{background:var(--ink);color:#fff}
 .count{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px 22px;margin:30px auto 0;padding:16px 20px;border-radius:18px;background:var(--y);color:var(--ink);max-width:860px;text-align:center}
@@ -263,8 +351,27 @@ input[type=range]{width:100%;accent-color:var(--ink);height:28px}
 .plan.star .now{color:var(--ink);background:var(--y);display:inline-block;padding:4px 10px;border-radius:12px}
 .plan .now small{font:700 15px Manrope}
 .plan ul{list-style:none;margin:6px 0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:15px}
-.plan li::before{content:"✓";font-weight:800;color:var(--y);margin-right:8px}
-.plan.star li::before{color:var(--ok)}
+/* premium icons: Phosphor duotone in gold or dark tiles */
+.ico{display:inline-grid;place-items:center;flex:none;width:52px;height:52px;border-radius:16px;color:#1a1400;
+  background:linear-gradient(150deg,#fff1a6 0%,#ffd21f 45%,#e8b400 100%);box-shadow:0 10px 22px -10px rgba(232,180,0,.85),inset 0 1px 0 rgba(255,255,255,.7),inset 0 -2px 0 rgba(0,0,0,.08)}
+.ico svg{width:28px;height:28px}
+.ico.dark{color:var(--y);background:linear-gradient(150deg,#34342f 0%,#151513 60%,#0d0d0c 100%);box-shadow:0 10px 22px -12px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.1)}
+.ico.sm{width:38px;height:38px;border-radius:12px}.ico.sm svg{width:22px;height:22px}
+.ico.xs{width:26px;height:26px;border-radius:8px;vertical-align:middle;margin-right:8px}.ico.xs svg{width:16px;height:16px}
+.ih{display:flex;align-items:center;gap:10px}
+.ie{display:inline-flex;align-items:center;gap:6px}.ie svg{width:16px;height:16px}
+.tabs button{display:inline-flex;align-items:center;gap:8px}.tabs button svg{width:20px;height:20px}
+.plan .badge{display:inline-flex;align-items:center;gap:6px}.plan .badge svg{width:15px;height:15px}
+.dos-k svg{width:16px;height:16px;vertical-align:-2px}
+.face .em.ico{font-size:0}
+.moneyback{margin:24px auto 0;max-width:860px;display:flex;gap:16px;align-items:center;background:linear-gradient(135deg,#1f1d12,#14140f);border:1.5px solid rgba(255,210,31,.55);border-radius:22px;padding:18px 22px}
+.moneyback b{display:block;font:700 18px Unbounded;color:#fff;margin-bottom:4px}
+.moneyback span{color:#c9c7bf;font-size:15px}
+.plan li.all{font-weight:800;color:inherit}
+.plan li.all::before{display:none}
+.plan li{position:relative;padding-left:28px}
+.plan li::before{content:"";position:absolute;left:0;top:2px;width:19px;height:19px;border-radius:50%;background:var(--y) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M104 192a8 8 0 0 1-5.66-2.34l-56-56a8 8 0 0 1 11.32-11.32L104 172.69 202.34 74.34a8 8 0 0 1 11.32 11.32l-104 104A8 8 0 0 1 104 192Z' fill='%230d0d0c'/%3E%3C/svg%3E") center/12px no-repeat}
+.plan.star li::before{background-color:var(--ok);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M104 192a8 8 0 0 1-5.66-2.34l-56-56a8 8 0 0 1 11.32-11.32L104 172.69 202.34 74.34a8 8 0 0 1 11.32 11.32l-104 104A8 8 0 0 1 104 192Z' fill='%23fff'/%3E%3C/svg%3E")}
 .plan .btn{margin-top:auto}
 .soon{font-style:normal;font-size:11px;font-weight:800;padding:1px 7px;border-radius:999px;background:var(--ysoft);color:#7a5c00;margin-left:4px}
 .plan.star .btn{background:var(--ink);color:#fff;box-shadow:0 6px 0 #000}
@@ -276,7 +383,13 @@ input[type=range]{width:100%;accent-color:var(--ink);height:28px}
 .fine{margin-top:16px;font-size:14px;color:#a9a79f;text-align:center}
 .plan .sub2{font-weight:800;color:#c9c7bf;margin-top:-6px}
 .plan .was{font-size:13px;font-weight:600;color:#8f8d86}
+.billtog{display:flex;width:max-content;max-width:100%;margin:26px auto 0;gap:4px;background:#1a1a17;border:1px solid #2c2c28;border-radius:999px;padding:5px}
+.billtog button{border:0;background:none;color:#c9c7bf;font:800 15px Manrope,sans-serif;padding:10px 20px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:8px}
+.billtog button.on{background:var(--y);color:var(--ink)}
+.billtog .save{background:#ff3b5c;color:#fff;font-size:12px;padding:3px 8px;border-radius:999px}
+.billtog .save[hidden]{display:none}
 .plan .yr{font-size:14px;color:#c9c7bf;margin-top:-4px}
+.plans.yearly .plan .now{font-size:clamp(28px,3vw,36px);white-space:nowrap}
 .plan .yr b{color:#fff}
 .plan.star .yr{color:#5c5a53}
 .plan.star .yr b{color:var(--ink)}
@@ -310,7 +423,7 @@ input[type=range]{width:100%;accent-color:var(--ink);height:28px}
 .extra b{font:700 20px Unbounded;color:var(--y)}
 .extra span{color:#c9c7bf}
 .agent{margin:22px auto 0;max-width:860px;display:flex;gap:16px;align-items:center;background:#1a1a17;border:1px solid var(--y);border-radius:22px;padding:18px 22px}
-.agent .e{font-size:34px;flex:none}
+.agent .e{flex:none}
 .agent b{display:block;font:700 18px Unbounded;color:#fff;margin-bottom:4px}
 .agent span{color:#c9c7bf;font-size:15px}
 .agent span b{display:inline;font:800 15px Manrope;color:var(--y)}
@@ -331,7 +444,7 @@ input[type=range]{width:100%;accent-color:var(--ink);height:28px}
 .guar div{background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px}
 .guar b{display:block;font-size:17px;margin:8px 0 4px}
 .guar span{color:var(--muted);font-size:15px}
-.guar .e{font-size:28px}
+.guar .e{margin-bottom:4px}
 @media (max-width:900px){.guar{grid-template-columns:1fr 1fr}}
 /* faq */
 .faq{max-width:820px;margin:36px auto 0}
@@ -361,6 +474,7 @@ footer a{color:#e9e7df;text-decoration:none}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-phone" viewBox="0 0 256 256" fill="currentColor"><path d="M223.94,174.08A48.33,48.33,0,0,1,176,216,136,136,0,0,1,40,80,48.33,48.33,0,0,1,81.92,32.06a8,8,0,0,1,8.3,4.8l21.13,47.2a8,8,0,0,1-.66,7.53L89.32,117a7.93,7.93,0,0,0-.54,7.81c8.27,16.93,25.77,34.22,42.75,42.41a7.92,7.92,0,0,0,7.83-.59l25-21.3a8,8,0,0,1,7.59-.69l47.16,21.13A8,8,0,0,1,223.94,174.08Z" opacity="0.2"/><path d="M222.37,158.46l-47.11-21.11-.13-.06a16,16,0,0,0-15.17,1.4,8.12,8.12,0,0,0-.75.56L134.87,160c-15.42-7.49-31.34-23.29-38.83-38.51l20.78-24.71c.2-.25.39-.5.57-.77a16,16,0,0,0,1.32-15.06l0-.12L97.54,33.64a16,16,0,0,0-16.62-9.52A56.26,56.26,0,0,0,32,80c0,79.4,64.6,144,144,144a56.26,56.26,0,0,0,55.88-48.92A16,16,0,0,0,222.37,158.46ZM176,208A128.14,128.14,0,0,1,48,80,40.2,40.2,0,0,1,82.87,40a.61.61,0,0,0,0,.12l21,47L83.2,111.86a6.13,6.13,0,0,0-.57.77,16,16,0,0,0-1,15.7c9.06,18.53,27.73,37.06,46.46,46.11a16,16,0,0,0,15.75-1.14,8.44,8.44,0,0,0,.74-.56L168.89,152l47,21.05h0s.08,0,.11,0A40.21,40.21,0,0,1,176,208Z"/></symbol><symbol id="i-keyboard" viewBox="0 0 256 256" fill="currentColor"><path d="M232,64V192a8,8,0,0,1-8,8H32a8,8,0,0,1-8-8V64a8,8,0,0,1,8-8H224A8,8,0,0,1,232,64Z" opacity="0.2"/><path d="M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48Zm0,144H32V64H224V192Zm-16-64a8,8,0,0,1-8,8H56a8,8,0,0,1,0-16H200A8,8,0,0,1,208,128Zm0-32a8,8,0,0,1-8,8H56a8,8,0,0,1,0-16H200A8,8,0,0,1,208,96ZM72,160a8,8,0,0,1-8,8H56a8,8,0,0,1,0-16h8A8,8,0,0,1,72,160Zm96,0a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,160Zm40,0a8,8,0,0,1-8,8h-8a8,8,0,0,1,0-16h8A8,8,0,0,1,208,160Z"/></symbol><symbol id="i-undo" viewBox="0 0 256 256" fill="currentColor"><path d="M80,40v96L32,88Z" opacity="0.2"/><path d="M168,80H88V40a8,8,0,0,0-13.66-5.66l-48,48a8,8,0,0,0,0,11.32l48,48A8,8,0,0,0,88,136V96h80a48,48,0,0,1,0,96H80a8,8,0,0,0,0,16h88a64,64,0,0,0,0-128ZM72,116.69,43.31,88,72,59.31Z"/></symbol><symbol id="i-question" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M140,180a12,12,0,1,1-12-12A12,12,0,0,1,140,180ZM128,72c-22.06,0-40,16.15-40,36v4a8,8,0,0,0,16,0v-4c0-11,10.77-20,24-20s24,9,24,20-10.77,20-24,20a8,8,0,0,0-8,8v8a8,8,0,0,0,16,0v-.72c18.24-3.35,32-17.9,32-35.28C168,88.15,150.06,72,128,72Zm104,56A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol><symbol id="i-coins" viewBox="0 0 256 256" fill="currentColor"><path d="M240,132c0,19.88-35.82,36-80,36-19.6,0-37.56-3.17-51.47-8.44h0C146.76,156.85,176,142,176,124V96.72h0C212.52,100.06,240,114.58,240,132ZM176,84c0-19.88-35.82-36-80-36S16,64.12,16,84s35.82,36,80,36S176,103.88,176,84Z" opacity="0.2"/><path d="M184,89.57V84c0-25.08-37.83-44-88-44S8,58.92,8,84v40c0,20.89,26.25,37.49,64,42.46V172c0,25.08,37.83,44,88,44s88-18.92,88-44V132C248,111.3,222.58,94.68,184,89.57ZM232,132c0,13.22-30.79,28-72,28-3.73,0-7.43-.13-11.08-.37C170.49,151.77,184,139,184,124V105.74C213.87,110.19,232,122.27,232,132ZM72,150.25V126.46A183.74,183.74,0,0,0,96,128a183.74,183.74,0,0,0,24-1.54v23.79A163,163,0,0,1,96,152,163,163,0,0,1,72,150.25Zm96-40.32V124c0,8.39-12.41,17.4-32,22.87V123.5C148.91,120.37,159.84,115.71,168,109.93ZM96,56c41.21,0,72,14.78,72,28s-30.79,28-72,28S24,97.22,24,84,54.79,56,96,56ZM24,124V109.93c8.16,5.78,19.09,10.44,32,13.57v23.37C36.41,141.4,24,132.39,24,124Zm64,48v-4.17c2.63.1,5.29.17,8,.17,3.88,0,7.67-.13,11.39-.35A121.92,121.92,0,0,0,120,171.41v23.46C100.41,189.4,88,180.39,88,172Zm48,26.25V174.4a179.48,179.48,0,0,0,24,1.6,183.74,183.74,0,0,0,24-1.54v23.79a165.45,165.45,0,0,1-48,0Zm64-3.38V171.5c12.91-3.13,23.84-7.79,32-13.57V172C232,180.39,219.59,189.4,200,194.87Z"/></symbol><symbol id="i-package" viewBox="0 0 256 256" fill="currentColor"><path d="M128,129.09V232a8,8,0,0,1-3.84-1l-88-48.18a8,8,0,0,1-4.16-7V80.18a8,8,0,0,1,.7-3.25Z" opacity="0.2"/><path d="M223.68,66.15,135.68,18a15.88,15.88,0,0,0-15.36,0l-88,48.17a16,16,0,0,0-8.32,14v95.64a16,16,0,0,0,8.32,14l88,48.17a15.88,15.88,0,0,0,15.36,0l88-48.17a16,16,0,0,0,8.32-14V80.18A16,16,0,0,0,223.68,66.15ZM128,32l80.34,44-29.77,16.3-80.35-44ZM128,120,47.66,76l33.9-18.56,80.34,44ZM40,90l80,43.78v85.79L40,175.82Zm176,85.78h0l-80,43.79V133.82l32-17.51V152a8,8,0,0,0,16,0V107.55L216,90v85.77Z"/></symbol><symbol id="i-shield" viewBox="0 0 256 256" fill="currentColor"><path d="M216,56v56c0,96-88,120-88,120S40,208,40,112V56a8,8,0,0,1,8-8H208A8,8,0,0,1,216,56Z" opacity="0.2"/><path d="M208,40H48A16,16,0,0,0,32,56v56c0,52.72,25.52,84.67,46.93,102.19,23.06,18.86,46,25.26,47,25.53a8,8,0,0,0,4.2,0c1-.27,23.91-6.67,47-25.53C198.48,196.67,224,164.72,224,112V56A16,16,0,0,0,208,40Zm0,72c0,37.07-13.66,67.16-40.6,89.42A129.3,129.3,0,0,1,128,223.62a128.25,128.25,0,0,1-38.92-21.81C61.82,179.51,48,149.3,48,112l0-56,160,0ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"/></symbol><symbol id="i-chart" viewBox="0 0 256 256" fill="currentColor"><path d="M224,64V208H32V48H208A16,16,0,0,1,224,64Z" opacity="0.2"/><path d="M232,208a8,8,0,0,1-8,8H32a8,8,0,0,1-8-8V48a8,8,0,0,1,16,0V156.69l50.34-50.35a8,8,0,0,1,11.32,0L128,132.69,180.69,80H160a8,8,0,0,1,0-16h40a8,8,0,0,1,8,8v40a8,8,0,0,1-16,0V91.31l-58.34,58.35a8,8,0,0,1-11.32,0L96,123.31l-56,56V200H224A8,8,0,0,1,232,208Z"/></symbol><symbol id="i-mobile" viewBox="0 0 256 256" fill="currentColor"><path d="M192,56V200H64V56Z" opacity="0.2"/><path d="M176,16H80A24,24,0,0,0,56,40V216a24,24,0,0,0,24,24h96a24,24,0,0,0,24-24V40A24,24,0,0,0,176,16ZM72,64H184V192H72Zm8-32h96a8,8,0,0,1,8,8v8H72V40A8,8,0,0,1,80,32Zm96,192H80a8,8,0,0,1-8-8v-8H184v8A8,8,0,0,1,176,224Z"/></symbol><symbol id="i-lock" viewBox="0 0 256 256" fill="currentColor"><path d="M208,88H48a8,8,0,0,0-8,8V208a8,8,0,0,0,8,8H208a8,8,0,0,0,8-8V96A8,8,0,0,0,208,88Zm-80,72a20,20,0,1,1,20-20A20,20,0,0,1,128,160Z" opacity="0.2"/><path d="M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96ZM208,208H48V96H208V208Zm-80-96a28,28,0,0,0-8,54.83V184a8,8,0,0,0,16,0V166.83A28,28,0,0,0,128,112Zm0,40a12,12,0,1,1,12-12A12,12,0,0,1,128,152Z"/></symbol><symbol id="i-mic" viewBox="0 0 256 256" fill="currentColor"><path d="M168,64v64a40,40,0,0,1-40,40h0a40,40,0,0,1-40-40V64a40,40,0,0,1,40-40h0A40,40,0,0,1,168,64Z" opacity="0.2"/><path d="M128,176a48.05,48.05,0,0,0,48-48V64a48,48,0,0,0-96,0v64A48.05,48.05,0,0,0,128,176ZM96,64a32,32,0,0,1,64,0v64a32,32,0,0,1-64,0Zm40,143.6V240a8,8,0,0,1-16,0V207.6A80.11,80.11,0,0,1,48,128a8,8,0,0,1,16,0,64,64,0,0,0,128,0,8,8,0,0,1,16,0A80.11,80.11,0,0,1,136,207.6Z"/></symbol><symbol id="i-pin" viewBox="0 0 256 256" fill="currentColor"><path d="M128,24a80,80,0,0,0-80,80c0,72,80,128,80,128s80-56,80-128A80,80,0,0,0,128,24Zm0,112a32,32,0,1,1,32-32A32,32,0,0,1,128,136Z" opacity="0.2"/><path d="M200,224H150.54A266.56,266.56,0,0,0,174,200.25c27.45-31.57,42-64.85,42-96.25a88,88,0,0,0-176,0c0,31.4,14.51,64.68,42,96.25A266.56,266.56,0,0,0,105.46,224H56a8,8,0,0,0,0,16H200a8,8,0,0,0,0-16ZM56,104a72,72,0,0,1,144,0c0,57.23-55.47,105-72,118C111.47,209,56,161.23,56,104Zm112,0a40,40,0,1,0-40,40A40,40,0,0,0,168,104Zm-64,0a24,24,0,1,1,24,24A24,24,0,0,1,104,104Z"/></symbol><symbol id="i-cap" viewBox="0 0 256 256" fill="currentColor"><path d="M216,113.07v53.22a8,8,0,0,1-2,5.31c-11.3,12.59-38.9,36.4-86,36.4s-74.68-23.81-86-36.4a8,8,0,0,1-2-5.31V113.07L128,160Z" opacity="0.2"/><path d="M251.76,88.94l-120-64a8,8,0,0,0-7.52,0l-120,64a8,8,0,0,0,0,14.12L32,117.87v48.42a15.91,15.91,0,0,0,4.06,10.65C49.16,191.53,78.51,216,128,216a130,130,0,0,0,48-8.76V240a8,8,0,0,0,16,0V199.51a115.63,115.63,0,0,0,27.94-22.57A15.91,15.91,0,0,0,224,166.29V117.87l27.76-14.81a8,8,0,0,0,0-14.12ZM128,200c-43.27,0-68.72-21.14-80-33.71V126.4l76.24,40.66a8,8,0,0,0,7.52,0L176,143.47v46.34C163.4,195.69,147.52,200,128,200Zm80-33.75a97.83,97.83,0,0,1-16,14.25V134.93l16-8.53ZM188,118.94l-.22-.13-56-29.87a8,8,0,0,0-7.52,14.12L171,128l-43,22.93L25,96,128,41.07,231,96Z"/></symbol><symbol id="i-gift" viewBox="0 0 256 256" fill="currentColor"><path d="M208,128v72a8,8,0,0,1-8,8H56a8,8,0,0,1-8-8V128Z" opacity="0.2"/><path d="M216,72H180.92c.39-.33.79-.65,1.17-1A29.53,29.53,0,0,0,192,49.57,32.62,32.62,0,0,0,158.44,16,29.53,29.53,0,0,0,137,25.91a54.94,54.94,0,0,0-9,14.48,54.94,54.94,0,0,0-9-14.48A29.53,29.53,0,0,0,97.56,16,32.62,32.62,0,0,0,64,49.57,29.53,29.53,0,0,0,73.91,71c.38.33.78.65,1.17,1H40A16,16,0,0,0,24,88v32a16,16,0,0,0,16,16v64a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V136a16,16,0,0,0,16-16V88A16,16,0,0,0,216,72ZM149,36.51a13.69,13.69,0,0,1,10-4.5h.49A16.62,16.62,0,0,1,176,49.08a13.69,13.69,0,0,1-4.5,10c-9.49,8.4-25.24,11.36-35,12.4C137.7,60.89,141,45.5,149,36.51Zm-64.09.36A16.63,16.63,0,0,1,96.59,32h.49a13.69,13.69,0,0,1,10,4.5c8.39,9.48,11.35,25.2,12.39,34.92-9.72-1-25.44-4-34.92-12.39a13.69,13.69,0,0,1-4.5-10A16.6,16.6,0,0,1,84.87,36.87ZM40,88h80v32H40Zm16,48h64v64H56Zm144,64H136V136h64Zm16-80H136V88h80v32Z"/></symbol><symbol id="i-seal" viewBox="0 0 256 256" fill="currentColor"><path d="M232,128c0,12.51-17.82,21.95-22.68,33.69-4.68,11.32,1.42,30.65-7.78,39.85s-28.53,3.1-39.85,7.78C150,214.18,140.5,232,128,232s-22-17.82-33.69-22.68c-11.32-4.68-30.65,1.42-39.85-7.78s-3.1-28.53-7.78-39.85C41.82,150,24,140.5,24,128s17.82-22,22.68-33.69C51.36,83,45.26,63.66,54.46,54.46S83,51.36,94.31,46.68C106.05,41.82,115.5,24,128,24S150,41.82,161.69,46.68c11.32,4.68,30.65-1.42,39.85,7.78s3.1,28.53,7.78,39.85C214.18,106.05,232,115.5,232,128Z" opacity="0.2"/><path d="M225.86,102.82c-3.77-3.94-7.67-8-9.14-11.57-1.36-3.27-1.44-8.69-1.52-13.94-.15-9.76-.31-20.82-8-28.51s-18.75-7.85-28.51-8c-5.25-.08-10.67-.16-13.94-1.52-3.56-1.47-7.63-5.37-11.57-9.14C146.28,23.51,138.44,16,128,16s-18.27,7.51-25.18,14.14c-3.94,3.77-8,7.67-11.57,9.14C88,40.64,82.56,40.72,77.31,40.8c-9.76.15-20.82.31-28.51,8S41,67.55,40.8,77.31c-.08,5.25-.16,10.67-1.52,13.94-1.47,3.56-5.37,7.63-9.14,11.57C23.51,109.72,16,117.56,16,128s7.51,18.27,14.14,25.18c3.77,3.94,7.67,8,9.14,11.57,1.36,3.27,1.44,8.69,1.52,13.94.15,9.76.31,20.82,8,28.51s18.75,7.85,28.51,8c5.25.08,10.67.16,13.94,1.52,3.56,1.47,7.63,5.37,11.57,9.14C109.72,232.49,117.56,240,128,240s18.27-7.51,25.18-14.14c3.94-3.77,8-7.67,11.57-9.14,3.27-1.36,8.69-1.44,13.94-1.52,9.76-.15,20.82-.31,28.51-8s7.85-18.75,8-28.51c.08-5.25.16-10.67,1.52-13.94,1.47-3.56,5.37-7.63,9.14-11.57C232.49,146.28,240,138.44,240,128S232.49,109.73,225.86,102.82Zm-11.55,39.29c-4.79,5-9.75,10.17-12.38,16.52-2.52,6.1-2.63,13.07-2.73,19.82-.1,7-.21,14.33-3.32,17.43s-10.39,3.22-17.43,3.32c-6.75.1-13.72.21-19.82,2.73-6.35,2.63-11.52,7.59-16.52,12.38S132,224,128,224s-9.15-4.92-14.11-9.69-10.17-9.75-16.52-12.38c-6.1-2.52-13.07-2.63-19.82-2.73-7-.1-14.33-.21-17.43-3.32s-3.22-10.39-3.32-17.43c-.1-6.75-.21-13.72-2.73-19.82-2.63-6.35-7.59-11.52-12.38-16.52S32,132,32,128s4.92-9.15,9.69-14.11,9.75-10.17,12.38-16.52c2.52-6.1,2.63-13.07,2.73-19.82.1-7,.21-14.33,3.32-17.43S70.51,56.9,77.55,56.8c6.75-.1,13.72-.21,19.82-2.73,6.35-2.63,11.52-7.59,16.52-12.38S124,32,128,32s9.15,4.92,14.11,9.69,10.17,9.75,16.52,12.38c6.1,2.52,13.07,2.63,19.82,2.73,7,.1,14.33.21,17.43,3.32s3.22,10.39,3.32,17.43c.1,6.75.21,13.72,2.73,19.82,2.63,6.35,7.59,11.52,12.38,16.52S224,124,224,128,219.08,137.15,214.31,142.11ZM173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34Z"/></symbol><symbol id="i-file" viewBox="0 0 256 256" fill="currentColor"><path d="M208,88H152V32Z" opacity="0.2"/><path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Zm-32-80a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,136Zm0,32a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,168Z"/></symbol><symbol id="i-pause" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM112,96v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V96a8,8,0,0,1,16,0Z"/></symbol><symbol id="i-download" viewBox="0 0 256 256" fill="currentColor"><path d="M216,48V208H40V48A16,16,0,0,1,56,32H200A16,16,0,0,1,216,48Z" opacity="0.2"/><path d="M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z"/></symbol><symbol id="i-yes" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128a96,96,0,1,1-96-96A96,96,0,0,1,224,128Z" opacity="0.2"/><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol><symbol id="i-no" viewBox="0 0 256 256" fill="currentColor"><path d="M208,116v36a80,80,0,0,1-160,0V76a20,20,0,0,1,40,0V44a20,20,0,0,1,40,0V60a20,20,0,0,1,40,0v56a20,20,0,0,1,40,0Z" opacity="0.2"/><path d="M188,88a27.75,27.75,0,0,0-12,2.71V60a28,28,0,0,0-41.36-24.6A28,28,0,0,0,80,44v6.71A27.75,27.75,0,0,0,68,48,28,28,0,0,0,40,76v76a88,88,0,0,0,176,0V116A28,28,0,0,0,188,88Zm12,64a72,72,0,0,1-144,0V76a12,12,0,0,1,24,0v44a8,8,0,0,0,16,0V44a12,12,0,0,1,24,0v68a8,8,0,0,0,16,0V60a12,12,0,0,1,24,0v68.67A48.08,48.08,0,0,0,120,176a8,8,0,0,0,16,0,32,32,0,0,1,32-32,8,8,0,0,0,8-8V116a12,12,0,0,1,24,0Z"/></symbol><symbol id="i-list" viewBox="0 0 256 256" fill="currentColor"><path d="M216,64V192H128V64Z" opacity="0.2"/><path d="M224,128a8,8,0,0,1-8,8H128a8,8,0,0,1,0-16h88A8,8,0,0,1,224,128ZM128,72h88a8,8,0,0,0,0-16H128a8,8,0,0,0,0,16Zm88,112H128a8,8,0,0,0,0,16h88a8,8,0,0,0,0-16ZM82.34,42.34,56,68.69,45.66,58.34A8,8,0,0,0,34.34,69.66l16,16a8,8,0,0,0,11.32,0l32-32A8,8,0,0,0,82.34,42.34Zm0,64L56,132.69,45.66,122.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32,0l32-32a8,8,0,0,0-11.32-11.32Zm0,64L56,196.69,45.66,186.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32,0l32-32a8,8,0,0,0-11.32-11.32Z"/></symbol><symbol id="i-bars" viewBox="0 0 256 256" fill="currentColor"><path d="M208,40V208H152V40Z" opacity="0.2"/><path d="M224,200h-8V40a8,8,0,0,0-8-8H152a8,8,0,0,0-8,8V80H96a8,8,0,0,0-8,8v40H48a8,8,0,0,0-8,8v64H32a8,8,0,0,0,0,16H224a8,8,0,0,0,0-16ZM160,48h40V200H160ZM104,96h40V200H104ZM56,144H88v56H56Z"/></symbol><symbol id="i-chat" viewBox="0 0 256 256" fill="currentColor"><path d="M224,128A96,96,0,0,1,79.93,211.11h0L42.54,223.58a8,8,0,0,1-10.12-10.12l12.47-37.39h0A96,96,0,1,1,224,128Z" opacity="0.2"/><path d="M128,24A104,104,0,0,0,36.18,176.88L24.83,210.93a16,16,0,0,0,20.24,20.24l34.05-11.35A104,104,0,1,0,128,24Zm0,192a87.87,87.87,0,0,1-44.06-11.81,8,8,0,0,0-4-1.08,7.85,7.85,0,0,0-2.53.42L40,216,52.47,178.6a8,8,0,0,0-.66-6.54A88,88,0,1,1,128,216Zm12-88a12,12,0,1,1-12-12A12,12,0,0,1,140,128Zm-44,0a12,12,0,1,1-12-12A12,12,0,0,1,96,128Zm88,0a12,12,0,1,1-12-12A12,12,0,0,1,184,128Z"/></symbol><symbol id="i-cart" viewBox="0 0 256 256" fill="currentColor"><path d="M224,64l-12.16,66.86A16,16,0,0,1,196.1,144H70.55L56,64Z" opacity="0.2"/><path d="M230.14,58.87A8,8,0,0,0,224,56H62.68L56.6,22.57A8,8,0,0,0,48.73,16H24a8,8,0,0,0,0,16h18L67.56,172.29a24,24,0,0,0,5.33,11.27,28,28,0,1,0,44.4,8.44h45.42A27.75,27.75,0,0,0,160,204a28,28,0,1,0,28-28H91.17a8,8,0,0,1-7.87-6.57L80.13,152h116a24,24,0,0,0,23.61-19.71l12.16-66.86A8,8,0,0,0,230.14,58.87ZM104,204a12,12,0,1,1-12-12A12,12,0,0,1,104,204Zm96,0a12,12,0,1,1-12-12A12,12,0,0,1,200,204Zm4-74.57A8,8,0,0,1,196.1,136H77.22L65.59,72H214.41Z"/></symbol><symbol id="i-compass" viewBox="0 0 256 256" fill="currentColor"><path d="M128,32a96,96,0,1,0,96,96A96,96,0,0,0,128,32Zm16,112L80,176l32-64,64-32Z" opacity="0.2"/><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM172.42,72.84l-64,32a8.05,8.05,0,0,0-3.58,3.58l-32,64A8,8,0,0,0,80,184a8.1,8.1,0,0,0,3.58-.84l64-32a8.05,8.05,0,0,0,3.58-3.58l32-64a8,8,0,0,0-10.74-10.74ZM138,138,97.89,158.11,118,118l40.15-20.07Z"/></symbol><symbol id="i-star" viewBox="0 0 256 256" fill="currentColor"><path d="M229.06,108.79l-48.7,42,14.88,62.79a8.4,8.4,0,0,1-12.52,9.17L128,189.09,73.28,222.74a8.4,8.4,0,0,1-12.52-9.17l14.88-62.79-48.7-42A8.46,8.46,0,0,1,31.73,94L95.64,88.8l24.62-59.6a8.36,8.36,0,0,1,15.48,0l24.62,59.6L224.27,94A8.46,8.46,0,0,1,229.06,108.79Z" opacity="0.2"/><path d="M239.18,97.26A16.38,16.38,0,0,0,224.92,86l-59-4.76L143.14,26.15a16.36,16.36,0,0,0-30.27,0L90.11,81.23,31.08,86a16.46,16.46,0,0,0-9.37,28.86l45,38.83L53,211.75a16.38,16.38,0,0,0,24.5,17.82L128,198.49l50.53,31.08A16.4,16.4,0,0,0,203,211.75l-13.76-58.07,45-38.83A16.43,16.43,0,0,0,239.18,97.26Zm-15.34,5.47-48.7,42a8,8,0,0,0-2.56,7.91l14.88,62.8a.37.37,0,0,1-.17.48c-.18.14-.23.11-.38,0l-54.72-33.65a8,8,0,0,0-8.38,0L69.09,215.94c-.15.09-.19.12-.38,0a.37.37,0,0,1-.17-.48l14.88-62.8a8,8,0,0,0-2.56-7.91l-48.7-42c-.12-.1-.23-.19-.13-.5s.18-.27.33-.29l63.92-5.16A8,8,0,0,0,103,91.86l24.62-59.61c.08-.17.11-.25.35-.25s.27.08.35.25L153,91.86a8,8,0,0,0,6.75,4.92l63.92,5.16c.15,0,.24,0,.33.29S224,102.63,223.84,102.73Z"/></symbol><symbol id="i-calendar" viewBox="0 0 256 256" fill="currentColor"><path d="M216,48V88H40V48a8,8,0,0,1,8-8H208A8,8,0,0,1,216,48Z" opacity="0.2"/><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Zm-38.34-85.66a8,8,0,0,1,0,11.32l-48,48a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L116,164.69l42.34-42.35A8,8,0,0,1,169.66,122.34Z"/></symbol><symbol id="i-receipt" viewBox="0 0 256 256" fill="currentColor"><path d="M224,56V208l-32-16-32,16-32-16L96,208,64,192,32,208V56a8,8,0,0,1,8-8H216A8,8,0,0,1,224,56Z" opacity="0.2"/><path d="M72,104a8,8,0,0,1,8-8h96a8,8,0,0,1,0,16H80A8,8,0,0,1,72,104Zm8,40h96a8,8,0,0,0,0-16H80a8,8,0,0,0,0,16ZM232,56V208a8,8,0,0,1-11.58,7.15L192,200.94l-28.42,14.21a8,8,0,0,1-7.16,0L128,200.94,99.58,215.15a8,8,0,0,1-7.16,0L64,200.94,35.58,215.15A8,8,0,0,1,24,208V56A16,16,0,0,1,40,40H216A16,16,0,0,1,232,56Zm-16,0H40V195.06l20.42-10.22a8,8,0,0,1,7.16,0L96,199.06l28.42-14.22a8,8,0,0,1,7.16,0L160,199.06l28.42-14.22a8,8,0,0,1,7.16,0L216,195.06Z"/></symbol><symbol id="i-target" viewBox="0 0 256 256" fill="currentColor"><path d="M176,128a48,48,0,1,1-48-48A48,48,0,0,1,176,128Z" opacity="0.2"/><path d="M221.87,83.16A104.1,104.1,0,1,1,195.67,49l22.67-22.68a8,8,0,0,1,11.32,11.32l-96,96a8,8,0,0,1-11.32-11.32l27.72-27.72a40,40,0,1,0,17.87,31.09,8,8,0,1,1,16-.9,56,56,0,1,1-22.38-41.65L184.3,60.39a87.88,87.88,0,1,0,23.13,29.67,8,8,0,0,1,14.44-6.9Z"/></symbol></svg>
 
 <header class="nav">
   <div class="wrap">
@@ -368,7 +482,7 @@ footer a{color:#e9e7df;text-decoration:none}
       <svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 60,24 40,24" fill="#FFEFA8"/><polygon points="70,4 96,30 76,40 60,24" fill="#FFDD4D"/><polygon points="96,30 96,70 76,60 76,40" fill="#F4C200"/><polygon points="96,70 70,96 60,76 76,60" fill="#D6A400"/><polygon points="70,96 30,96 40,76 60,76" fill="#C49500"/><polygon points="30,96 4,70 24,60 40,76" fill="#DDAC00"/><polygon points="4,70 4,30 24,40 24,60" fill="#FFD21F"/><polygon points="4,30 30,4 40,24 24,40" fill="#FFF3C7"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="#FFD84A"/><polygon points="40,24 60,24 67,31 33,31" fill="#FFF0B3" opacity=".7"/><g fill="none" stroke="#0d0d0c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40"/></g></svg>
       <b>ordyx</b>
     </a>
-    <nav aria-label="Основно меню"><a href="#how">Как работи</a><a href="#prices">Цени</a><a href="#faq">ЧЗВ</a><a href="https://app.ordyx.eu/admin/">Вход</a></nav>
+    <nav aria-label="Основно меню"><a href="#how">Как работи</a><a href="#features">Възможности</a><a href="#prices">Цени</a><a href="#faq">ЧЗВ</a><a href="https://app.ordyx.eu/admin/">Вход</a></nav>
     <a class="btn" data-cta href="#">Започни безплатно</a>
   </div>
 </header>
@@ -401,7 +515,7 @@ footer a{color:#e9e7df;text-decoration:none}
 <div class="logos">
   <div class="wrap">
     <small>Работи с</small>
-    <span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>Еконт</span><span class="chip"><i class="lg" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.6 20.4 7.2v9.6L12 21.4 3.6 16.8V7.2z" fill="#e0234e" stroke="#e0234e" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 7.4 12 11.9l8-4.5M12 11.9v9" fill="none" stroke="#f7b6c5" stroke-width="1.3" stroke-linecap="round"/></svg></i>Спиди</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=boxnow.bg&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>BOX NOW</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=convertbuilder.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>ConvertBuilder</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=woocommerce.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>WooCommerce</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=shopify.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>Shopify</span>
+    <span class="chip"><i class="lg" aria-hidden="true"><img src="/logos/econt.svg" alt="" width="24" height="24" loading="lazy"></i>Еконт</span><span class="chip"><i class="lg" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.6 20.4 7.2v9.6L12 21.4 3.6 16.8V7.2z" fill="#e0234e" stroke="#e0234e" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 7.4 12 11.9l8-4.5M12 11.9v9" fill="none" stroke="#f7b6c5" stroke-width="1.3" stroke-linecap="round"/></svg></i>Спиди</span><span class="chip"><i class="lg" aria-hidden="true"><img src="/logos/boxnow.svg" alt="" width="24" height="24" loading="lazy"></i>BOX NOW</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=convertbuilder.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>ConvertBuilder</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=woocommerce.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>WooCommerce</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=shopify.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>Shopify</span><span class="chip"><i class="lg" aria-hidden="true"><img src="/logos/meta.svg" alt="" width="24" height="24" loading="lazy"></i>Meta Ads</span><span class="chip"><i class="lg" aria-hidden="true"><img src="/logos/whatsapp.svg" alt="" width="24" height="24" loading="lazy"></i>WhatsApp</span><span class="chip"><i class="lg" aria-hidden="true"><img src="/logos/googleads.svg" alt="" width="24" height="24" loading="lazy"></i>Google Ads</span><span class="chip"><i class="lg" aria-hidden="true"><img src="/logos/tiktok.svg" alt="" width="24" height="24" loading="lazy"></i>TikTok Ads</span>
   </div>
 </div>
 
@@ -412,11 +526,11 @@ footer a{color:#e9e7df;text-decoration:none}
     <h2 class="h2 rv">Магазинът продава. А после започва ръчната работа.</h2>
     <p class="lead rv">Докосни картата, за да видиш как изглежда със Ordyx.</p>
     <div class="pain">
-      <button class="pcard rv" type="button"><div class="in"><div class="face f"><span class="em">📞</span><b>Звъниш на клиента, защото е написал „офиса до мола“.</b><small>Докосни →</small></div><div class="face b"><span class="em">📍</span><b>Клиентът избира точния офис или автомат от списък още в чекаута.</b><small>Със Ordyx</small></div></div></button>
-      <button class="pcard rv" type="button"><div class="in"><div class="face f"><span class="em">⌨️</span><b>Преписваш данни в сайта на куриера, поръчка по поръчка.</b><small>Докосни →</small></div><div class="face b"><span class="em">🧾</span><b>Товарителницата се създава с един клик, с PDF за печат.</b><small>Със Ordyx</small></div></div></button>
-      <button class="pcard rv" type="button"><div class="in"><div class="face f"><span class="em">↩️</span><b>Пратката се връща и плащаш доставка два пъти.</b><small>Докосни →</small></div><div class="face b"><span class="em">✅</span><b>Клиентът потвърждава от телефона си, преди да изпратиш.</b><small>Със Ordyx</small></div></div></button>
-      <button class="pcard rv" type="button"><div class="in"><div class="face f"><span class="em">🤷</span><b>Не знаеш колко ти остава след рекламата.</b><small>Докосни →</small></div><div class="face b"><span class="em">📊</span><b>Таблото смята реклама, доставка, връщания и себестойност.</b><small>Със Ordyx</small></div></div></button>
-      <button class="pcard rv" type="button"><div class="in"><div class="face f"><span class="em">💸</span><b>Плащаш три абонамента за три различни неща.</b><small>Докосни →</small></div><div class="face b"><span class="em">🎯</span><b>Едно място, един абонамент.</b><small>Със Ordyx</small></div></div></button>
+      <button class="pcard rv" type="button"><div class="in"><div class="face f"><span class="em ico dark"><svg aria-hidden="true"><use href="#i-phone"/></svg></span><b>Звъниш на клиента, защото е написал „офиса до мола“.</b><small>Докосни →</small></div><div class="face b"><span class="em ico"><svg aria-hidden="true"><use href="#i-pin"/></svg></span><b>Клиентът избира точния офис или автомат от списък още в чекаута.</b><small>Със Ordyx</small></div></div></button>
+      <button class="pcard rv" type="button"><div class="in"><div class="face f"><span class="em ico dark"><svg aria-hidden="true"><use href="#i-keyboard"/></svg></span><b>Преписваш данни в сайта на куриера, поръчка по поръчка.</b><small>Докосни →</small></div><div class="face b"><span class="em ico"><svg aria-hidden="true"><use href="#i-receipt"/></svg></span><b>Товарителницата се създава с един клик, с PDF за печат.</b><small>Със Ordyx</small></div></div></button>
+      <button class="pcard rv" type="button"><div class="in"><div class="face f"><span class="em ico dark"><svg aria-hidden="true"><use href="#i-undo"/></svg></span><b>Пратката се връща и плащаш доставка два пъти.</b><small>Докосни →</small></div><div class="face b"><span class="em ico"><svg aria-hidden="true"><use href="#i-yes"/></svg></span><b>Клиентът потвърждава от телефона си, преди да изпратиш.</b><small>Със Ordyx</small></div></div></button>
+      <button class="pcard rv" type="button"><div class="in"><div class="face f"><span class="em ico dark"><svg aria-hidden="true"><use href="#i-question"/></svg></span><b>Не знаеш колко ти остава след рекламата.</b><small>Докосни →</small></div><div class="face b"><span class="em ico"><svg aria-hidden="true"><use href="#i-bars"/></svg></span><b>Таблото смята реклама, доставка, връщания и себестойност.</b><small>Със Ordyx</small></div></div></button>
+      <button class="pcard rv" type="button"><div class="in"><div class="face f"><span class="em ico dark"><svg aria-hidden="true"><use href="#i-coins"/></svg></span><b>Плащаш три абонамента за три различни неща.</b><small>Докосни →</small></div><div class="face b"><span class="em ico"><svg aria-hidden="true"><use href="#i-target"/></svg></span><b>Едно място, един абонамент.</b><small>Със Ordyx</small></div></div></button>
     </div>
   </div>
 </section>
@@ -427,9 +541,9 @@ footer a{color:#e9e7df;text-decoration:none}
     <span class="eyebrow rv">Какво получаваш</span>
     <h2 class="h2 rv">Три неща, които движат печалбата ти</h2>
     <div class="ben">
-      <div class="bcard rv"><span class="lbl">📦 Пратката</span><h3>Точният офис. Товарителница с един клик.</h3><p>Клиентът търси офис или автомат на Еконт, Спиди и BOX NOW направо в чекаута. Ти натискаш „Създай товарителница“ — и опаковаш.</p><div class="scene">Сутрин, докато пиеш кафето, товарителниците вече са готови.</div></div>
-      <div class="bcard rv"><span class="lbl">🛡️ Сигурността</span><h3>Изпращаш само това, което ще бъде взето.</h3><p>Клиентът потвърждава поръчката по WhatsApp или SMS с личен линк, а телефонът му се проверява автоматично в регистъра на некоректни клиенти.</p><div class="scene">Отказаната поръчка вече не е пратка, която се връща — тя просто не тръгва.</div></div>
-      <div class="bcard rv"><span class="lbl">📈 Печалбата</span><h3>Колко реално остава — без таблици.</h3><p>Реклама, доставка, връщания, такса за наложен платеж и себестойност — сметнати заедно, за избрания период.</p><div class="scene">Вечер поглеждаш телефона и знаеш дали денят е бил на печалба.</div></div>
+      <div class="bcard rv"><span class="lbl"><span class="ico xs"><svg aria-hidden="true"><use href="#i-package"/></svg></span>Пратката</span><h3>Точният офис. Товарителница с един клик.</h3><p>Клиентът търси офис или автомат на Еконт, Спиди и BOX NOW направо в чекаута. Ти натискаш „Създай товарителница“ — и опаковаш.</p><div class="scene">Сутрин, докато пиеш кафето, товарителниците вече са готови.</div></div>
+      <div class="bcard rv"><span class="lbl"><span class="ico xs"><svg aria-hidden="true"><use href="#i-shield"/></svg></span>Сигурността</span><h3>Изпращаш само това, което ще бъде взето.</h3><p>Клиентът потвърждава поръчката по WhatsApp или SMS с личен линк, а телефонът му се проверява автоматично в регистъра на некоректни клиенти.</p><div class="scene">Отказаната поръчка вече не е пратка, която се връща — тя просто не тръгва.</div></div>
+      <div class="bcard rv"><span class="lbl"><span class="ico xs"><svg aria-hidden="true"><use href="#i-chart"/></svg></span>Печалбата</span><h3>Колко реално остава — без таблици.</h3><p>Реклама, доставка, връщания, такса за наложен платеж и себестойност — сметнати заедно, за избрания период.</p><div class="scene">Вечер поглеждаш телефона и знаеш дали денят е бил на печалба.</div></div>
     </div>
   </div>
 </section>
@@ -439,24 +553,25 @@ footer a{color:#e9e7df;text-decoration:none}
   <div class="wrap">
     <span class="eyebrow rv" style="color:#a9a79f">Пробвай сега</span>
     <h2 class="h2 rv">Ето какво вижда твоят клиент в чекаута</h2>
-    <p class="lead rv">Това е истинската търсачка на Ordyx — с реалните офиси и автомати на Еконт и Спиди. Напиши град.</p>
+    <p class="lead rv">Това не е картинка — това е <b>истинският модул на Ordyx</b>, същият, който стои в магазините. Избери куриер, напиши град, избери офис.</p>
     <div class="grid">
       <div class="co rv" id="co">
-        <h4>Доставка</h4>
-        <button type="button" class="opt on" data-c="econt"><span class="dot"></span><span>До офис или автомат на <b>Еконт</b></span><span class="pr">4,07 €</span></button>
-        <button type="button" class="opt" data-c="speedy"><span class="dot"></span><span>До офис или автомат на <b>Спиди</b></span><span class="pr">Безплатна</span></button>
-        <label for="q" class="visually" style="display:block;font-weight:700;margin:12px 0 6px;font-size:14px">Търси офис по град или име</label>
-        <input id="q" class="search" type="search" placeholder="напр. Плевен, Варна, Младост…" autocomplete="off">
-        <div class="res" id="res" role="listbox" aria-label="Офиси"></div>
+        <div class="co-head"><span class="co-step">3 от 3</span><h4>Доставка и плащане</h4></div>
+        <div class="co-fake"><div class="co-f"><span>Име</span><b>Мария Иванова</b></div><div class="co-f"><span>Телефон</span><b>0888 123 456</b></div></div>
+        <div id="ordyxDemo" data-ordyx-picker data-type="all" data-host="ordyx.eu" data-delivery="#demoType"
+             data-prices='{"econt_office":"4,07 €","econt_address":"5,90 €","speedy_office":"4,50 €","speedy_address":"6,20 €","boxnow_locker":"2,99 €"}'></div>
+        <input type="hidden" id="demoType">
+        <div class="co-fake" style="margin-top:12px"><div class="co-f"><span>Плащане</span><b>Наложен платеж</b></div><div class="co-f"><span>Общо</span><b>28,28 €</b></div></div>
+        <button type="button" class="co-btn" id="demoOrder">Поръчай</button>
         <div class="picked" id="picked" hidden></div>
       </div>
       <div>
         <div class="flow" id="flow">
-          <div class="fstep on"><span class="n">1</span><div><b>Клиентът поръчва</b><span>избира офис или автомат на Еконт, Спиди или BOX NOW</span></div></div>
-          <div class="fstep"><span class="n">2</span><div><b>Поръчката влиза в Ordyx</b><span>проверка на телефона и известие на твоя телефон</span></div></div>
-          <div class="fstep"><span class="n">3</span><div><b>Клиентът потвърждава</b><span>личен линк по WhatsApp или SMS</span></div></div>
-          <div class="fstep"><span class="n">4</span><div><b>Товарителница с един клик</b><span>Еконт, Спиди или BOX NOW, PDF за печат</span></div></div>
-          <div class="fstep"><span class="n">5</span><div><b>Проследяване</b><span>доставена или върната — само; на 4-ия ден в офиса те подсеща да звъннеш</span></div></div>
+          <div class="fstep on"><span class="n">1</span><div><b>Клиентът поръчва</b><span>избира офис или автомат на Еконт, Спиди или BOX NOW — без да пише адрес</span></div></div>
+          <div class="fstep"><span class="n">2</span><div><b>Поръчката влиза в Ordyx</b><span>с точния офис; телефонът се проверява и получаваш известие</span></div></div>
+          <div class="fstep"><span class="n">3</span><div><b>Клиентът потвърждава</b><span>по WhatsApp, SMS или гласовия агент</span></div></div>
+          <div class="fstep"><span class="n">4</span><div><b>Товарителница с един клик</b><span>Еконт, Спиди или BOX NOW — без преписване</span></div></div>
+          <div class="fstep"><span class="n">5</span><div><b>Проследяване</b><span>доставена или върната — сама; на 4-ия ден в офиса те подсеща да звъннеш</span></div></div>
           <div class="fstep"><span class="n">6</span><div><b>Табло: чиста печалба</b><span>реклама, доставка, връщания, себестойност</span></div></div>
         </div>
       </div>
@@ -483,7 +598,7 @@ footer a{color:#e9e7df;text-decoration:none}
     <span class="eyebrow rv">Отвътре</span>
     <h2 class="h2 rv">Целият магазин след „Поръчай“</h2>
     <div class="tabs" role="tablist">
-      <button class="on" role="tab" data-t="s1">📋 Поръчки</button><button role="tab" data-t="s2">📊 Табло</button><button role="tab" data-t="s3">💬 Потвърждение</button><button role="tab" data-t="s4">🛒 Изоставени колички</button>
+      <button class="on" role="tab" data-t="s1"><svg aria-hidden="true"><use href="#i-list"/></svg>Поръчки</button><button role="tab" data-t="s2"><svg aria-hidden="true"><use href="#i-bars"/></svg>Табло</button><button role="tab" data-t="s3"><svg aria-hidden="true"><use href="#i-chat"/></svg>Потвърждение</button><button role="tab" data-t="s4"><svg aria-hidden="true"><use href="#i-cart"/></svg>Изоставени колички</button>
     </div>
     <div class="screenbox">
       <div class="sc on" id="s1">
@@ -508,6 +623,51 @@ footer a{color:#e9e7df;text-decoration:none}
         <div class="arow" style="margin-top:8px"><div><b>Нели Иванова</b><br>1 × Книга · 15,38 €</div><span class="tag g">върната ✓</span><span class="tag">Viber</span></div>
         <p style="margin:12px 0 0;color:var(--muted);font-size:14px">Хора, които въведоха телефон в чекаута, но не поръчаха. Едно докосване и напомнянето е в WhatsApp, SMS или Viber.</p>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ALL IN ONE -->
+<section style="padding-top:0" id="features">
+  <div class="wrap">
+    <span class="eyebrow rv">Всичко в един абонамент</span>
+    <h2 class="h2 rv">В телефона ти: поръчки, известия, съобщения, проследяване, реклами и съветник</h2>
+    <div class="feat">
+      <div class="fcard wide rv"><span class="fi ico"><svg aria-hidden="true"><use href="#i-mobile"/></svg></span><div><h3>Поръчките и магазините — в телефона ти</h3><p>Ordyx се слага на телефона като приложение — iPhone или Android, без App Store. Всички магазини на един екран, а известие идва веднага: <b>нова поръчка</b>, <b>потвърдена или отказана</b>, отговор от гласовия агент, клиент писа в WhatsApp, промяна на доставката. Не пропускаш нищо, дори когато не си на компютъра.</p></div>
+        <div class="push" aria-hidden="true"><div class="pn"><b>🛒 Нова поръчка · Магазин А</b><span>Мария И. · 28,28 € · Еконт – Плевен</span></div><div class="pn"><b>✅ Клиентът потвърди по телефона</b><span>Георги П. · 64 €</span></div><div class="pn"><b>💬 Клиент писа в WhatsApp</b><span>„Може ли до адрес?“</span></div></div></div>
+      <div class="fcard rv"><span class="fi ico"><svg aria-hidden="true"><use href="#i-lock"/></svg></span><h3>Тайното оръжие</h3><p>Има една функция, заради която собствениците отварят Ordyx всяка сутрин. <a href="#advisor" class="peek">Разсекрети я →</a></p></div>
+      <div class="fcard rv"><span class="fi ico"><svg aria-hidden="true"><use href="#i-mic"/></svg></span><h3>Гласов агент</h3><p>Около час след поръчката се обажда на купувача, прочита поръчката и записва отговора в Ordyx — потвърдена или отказана. <b>0,60 € на разговор.</b></p></div>
+      <div class="fcard rv"><span class="logos-row"><span class="lg" title="WhatsApp"><img src="/logos/whatsapp.svg" alt="" width="34" height="34" loading="lazy"></span></span><h3>WhatsApp</h3><p>Съобщение „Потвърдете поръчката“ с бутони — едно докосване и поръчката е потвърдена. Напомняния за изоставени колички и кампании до твоите купувачи.</p></div>
+      <div class="fcard rv"><span class="logos-row"><span class="lg" title="SMS"><svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true"><rect x="3" y="6" width="42" height="30" rx="9" fill="#0b6bcb"/><path d="M14 36l-2 8 10-8z" fill="#0b6bcb"/><text x="24" y="26.5" text-anchor="middle" font-family="Manrope,Arial,sans-serif" font-weight="800" font-size="13" fill="#fff">SMS</text></svg></span></span><h3>SMS</h3><p>Потвърждение с личен линк и SMS кампании до купувачите от твоите поръчки — с броя знаци и цената преди изпращане. <em class="soon">директно изпращане скоро</em></p></div>
+      <div class="fcard rv"><span class="fi ico"><svg aria-hidden="true"><use href="#i-pin"/></svg></span><h3>Проследяване на пратката</h3><p>Купувачът има лична страница с поръчката и къде е пратката. Статусите от Еконт, Спиди и BOX NOW се обновяват сами — ти виждаш доставените и върнатите.</p></div>
+      <div class="fcard rv"><span class="logos-row"><span class="lg" title="Meta Ads"><img src="/logos/meta.svg" alt="" width="34" height="34" loading="lazy"></span><span class="lg" title="Google Ads"><img src="/logos/googleads.svg" alt="" width="34" height="34" loading="lazy"></span><span class="lg" title="TikTok Ads"><img src="/logos/tiktok.svg" alt="" width="34" height="34" loading="lazy"></span></span><h3>Meta, Google и TikTok Ads</h3><p>Ordyx разпознава от коя реклама е дошла всяка поръчка — <b>Meta</b> (Facebook, Instagram), <b>Google Ads</b> и <b>TikTok Ads</b> — и ти показва поръчки, оборот и печалба по източник. Разходът от Meta Ads влиза в таблото автоматично: ROAS, CPA и печалба след реклама. За Google и TikTok въвеждаш разхода, а Ordyx го свързва с поръчките от тях.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SECRET WEAPON: the advisor -->
+<section class="secret" id="advisor">
+  <div class="wrap">
+    <span class="eyebrow rv ie"><svg aria-hidden="true"><use href="#i-lock"/></svg>Тайното оръжие</span>
+    <h2 class="h2 rv">Всеки собственик си задава един въпрос всяка сутрин.</h2>
+    <p class="lead rv">„Какво да направя днес, за да спечеля повече?“ Повечето системи ти дават графики и те оставят сам да търсиш отговора. Ordyx ти казва отговора.</p>
+    <div class="dossier rv" id="dossier">
+      <div class="dos-h"><span>ДОСИЕ № 016 · ORDYX</span><span>ДОСТЪП: САМО СОБСТВЕНИЦИ</span></div>
+      <div class="dos-stamp" aria-hidden="true">СЕКРЕТНО</div>
+      <div class="dos-body">
+        <div class="dos-title"><span class="rd">Ordyx Съветник</span></div>
+        <div class="dos-card">
+          <div class="dos-k"><b><span class="rd"><svg aria-hidden="true"><use href="#i-compass"/></svg> Ordyx Съветник</span></b><span class="tag y"><span class="rd">днес</span></span></div>
+          <h3><span class="rd">Връщанията от нови клиенти са 14% — при 7% обикновено</span></h3>
+          <p><span class="rd">Включи потвърждението по телефона за поръчки над 40 €.</span> <span class="rd">Очакван ефект: <b>~180 € на месец</b>.</span></p>
+        </div>
+        <ul class="dos-list">
+          <li><span class="rd">Всяка нощ преглежда <b>16 показателя</b> на магазина ти — марж, връщания, реклама, рискови клиенти, наличности, изоставени колички, заспали купувачи.</span></li>
+          <li><span class="rd">Сутрин ти казва <b>само едно нещо</b> — най-важното, с очаквания ефект в евро.</span></li>
+          <li><span class="rd">Следи дали препоръката е проработила и в началото на месеца ти дава <b>резюме: какво донесе</b>.</span></li>
+        </ul>
+      </div>
+      <div class="dos-f"><button type="button" class="btn" id="declass">Разсекрети →</button><span class="dos-note" id="dosNote">Включено във всеки план.</span></div>
     </div>
   </div>
 </section>
@@ -537,22 +697,33 @@ footer a{color:#e9e7df;text-decoration:none}
 </section>
 
 <!-- COMPARE -->
-<section style="padding-top:0">
+<section style="padding-top:0" id="compare">
   <div class="wrap">
-    <span class="eyebrow rv">Днес срещу Ordyx</span>
-    <h2 class="h2 rv">Една система вместо пет раздела в браузъра</h2>
-    <table class="cmp rv">
-      <thead><tr><th></th><th>Днес</th><th>С Ordyx</th></tr></thead>
-      <tbody>
-        <tr><td>Избор на офис</td><td data-k="Избор на офис — днес">Клиентът пише на ръка, ти уточняваш по телефона</td><td data-k="С Ordyx">Списък с офиси и автомати в чекаута</td></tr>
-        <tr><td>Товарителници</td><td data-k="Товарителници — днес">Сайтът на куриера, поръчка по поръчка</td><td data-k="С Ordyx">Един клик, PDF за печат, статусът се следи сам</td></tr>
-        <tr><td>Потвърждение</td><td data-k="Потвърждение — днес">Обаждания, които никой не вдига</td><td data-k="С Ordyx">Личен линк по WhatsApp или SMS</td></tr>
-        <tr><td>Проверка на телефона</td><td data-k="Проверка — днес">Ръчно търсене, ако изобщо</td><td data-k="С Ordyx">Автоматично при всяка поръчка</td></tr>
-        <tr><td>Наличности</td><td data-k="Наличности — днес">Отделна таблица</td><td data-k="С Ordyx">Намаляват и се връщат сами</td></tr>
-        <tr><td>Печалба</td><td data-k="Печалба — днес">Отделен инструмент за статистика</td><td data-k="С Ordyx">Табло с реклама, доставка и връщания</td></tr>
-        <tr><td>Месечна сметка</td><td data-k="Месечна сметка — днес">3–4 отделни абонамента</td><td data-k="С Ordyx">Един</td></tr>
-      </tbody>
-    </table>
+    <span class="eyebrow rv">Преди и след</span>
+    <h2 class="h2 rv">Един ден от живота на магазина — без Ordyx и с Ordyx</h2>
+    <p class="lead rv">Същите поръчки. Същите куриери. Разликата е колко работа остава за теб.</p>
+    <div class="ba rv">
+      <div class="ba-col ba-before"><div class="ba-h"><span class="ba-tag">Без Ordyx</span><b>Ти вършиш всичко на ръка</b></div>
+        <ul>
+          <li><b>Клиентът пише „офиса до мола“.</b><span>Звъниш му, за да разбереш кой офис точно.</span></li>
+          <li><b>Отваряш сайта на куриера.</b><span>Преписваш име, телефон, офис — поръчка по поръчка.</span></li>
+          <li><b>Пращаш, без да знаеш дали ще вземе.</b><span>Част от пратките се връщат и плащаш доставка два пъти.</span></li>
+          <li><b>Наличностите са в таблица.</b><span>Броиш на ръка и често продаваш нещо, което го няма.</span></li>
+          <li><b>Печалбата е „горе-долу“.</b><span>Реклама, доставка, връщания — в три различни места.</span></li>
+          <li><b>Три абонамента за три неща.</b><span>Чекаут, съобщения, статистика — всяко отделно.</span></li>
+        </ul>
+      </div>
+      <div class="ba-col ba-after"><div class="ba-h"><span class="ba-tag">С Ordyx</span><b>Системата върши работата, ти решаваш</b></div>
+        <ul>
+          <li><b>Клиентът избира точния офис в чекаута.</b><span>От списък с всички офиси и автомати. Без обаждане.</span></li>
+          <li><b>Товарителницата е готова с един клик.</b><span>Данните са вече вътре. PDF за печат, статусът се следи сам.</span></li>
+          <li><b>Клиентът потвърждава преди да пратиш.</b><span>По WhatsApp, SMS или от гласовия агент. Телефонът се проверява автоматично.</span></li>
+          <li><b>Наличностите се броят сами.</b><span>Намаляват при поръчка, връщат се при отказ, казват кога ще свършат.</span></li>
+          <li><b>Печалбата е число, не усещане.</b><span>Реклама, доставка, връщания и себестойност — в едно табло, а Съветникът казва какво да промениш.</span></li>
+          <li><b>Един абонамент.</b><span>Всичко след „Поръчай“ — на едно място, в телефона ти.</span></li>
+        </ul>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -577,22 +748,26 @@ footer a{color:#e9e7df;text-decoration:none}
     <span class="eyebrow rv">Честно</span>
     <h2 class="h2 rv">За теб ли е?</h2>
     <div class="fit">
-      <div class="yes rv"><h3 style="font-size:20px">✅ За теб е, ако…</h3><ul><li>продаваш с наложен платеж или до офис</li><li>правиш от 5 до 200 поръчки на ден</li><li>управляваш магазина сам или с малък екип</li><li>искаш да виждаш всичко от телефона</li></ul></div>
-      <div class="no rv"><h3 style="font-size:20px">✋ Не е за теб, ако…</h3><ul><li>имаш собствен склад с ERP система</li><li>пращаш само извън България — поне докато не включим <a href="#europe">Европа</a></li></ul></div>
+      <div class="yes rv"><h3 style="font-size:20px" class="ih"><span class="ico sm"><svg aria-hidden="true"><use href="#i-yes"/></svg></span>За теб е, ако…</h3><ul><li>продаваш с наложен платеж или до офис</li><li>правиш от 5 до 200 поръчки на ден</li><li>управляваш магазина сам или с малък екип</li><li>искаш да виждаш всичко от телефона</li></ul></div>
+      <div class="no rv"><h3 style="font-size:20px" class="ih"><span class="ico sm dark"><svg aria-hidden="true"><use href="#i-no"/></svg></span>Не е за теб, ако…</h3><ul><li>имаш собствен склад с ERP система</li><li>пращаш само извън България — поне докато не включим <a href="#europe">Европа</a></li></ul></div>
     </div>
   </div>
 </section>
 
 <!-- STORY -->
-<section style="padding-top:0">
+<section style="padding-top:0" id="why">
   <div class="wrap">
-    <span class="eyebrow rv">Защо Ordyx</span>
-    <h2 class="h2 rv">Направено от търговец за търговци</h2>
+    <span class="eyebrow rv">Защо Ordyx?</span>
+    <h2 class="h2 rv">Създаден от търговци за търговци</h2>
     <div class="story rv">
       <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 60,24 40,24" fill="#FFEFA8"/><polygon points="70,4 96,30 76,40 60,24" fill="#FFDD4D"/><polygon points="96,30 96,70 76,60 76,40" fill="#F4C200"/><polygon points="96,70 70,96 60,76 76,60" fill="#D6A400"/><polygon points="70,96 30,96 40,76 60,76" fill="#C49500"/><polygon points="30,96 4,70 24,60 40,76" fill="#DDAC00"/><polygon points="4,70 4,30 24,40 24,60" fill="#FFD21F"/><polygon points="4,30 30,4 40,24 24,40" fill="#FFF3C7"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="#FFD84A"/><polygon points="40,24 60,24 67,31 33,31" fill="#FFF0B3" opacity=".7"/><g fill="none" stroke="#0d0d0c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40"/></g></svg></div>
       <div>
-        <p>Ordyx започна като инструмент за собствения ни онлайн магазин. Писахме офисите на ръка, преписвахме товарителници и не знаехме колко ни остава след рекламата.</p>
-        <p style="color:var(--muted);margin:0">Направихме си едно място за всичко след „Поръчай“. Сега го даваме и на други магазини — със същите неща, които ползваме всеки ден.</p>
+        <p>Зад Ordyx стои реален опит в електронната търговия:</p>
+        <div class="stats"><div><b>9</b><span>европейски пазара</span></div><div><b>60+</b><span>продукта</span></div><div><b>2 млн. €+</b><span>оборот през 2025 г.</span></div></div>
+        <p>Познаваме предизвикателствата от първа ръка — ръчна обработка на поръчки, товарителници, множество системи и липса на ясна представа за реалната печалба.</p>
+        <p>Затова създадохме Ordyx — платформа, която обединява всичко след бутона „Поръчай“. От управлението на поръчките до проследяването на разходите и реалната печалба на бизнеса.</p>
+        <p class="claim">Не просто софтуер, а решение, създадено от реалния опит в управлението и развитието на онлайн магазини.</p>
+        <p class="tag3"><span>По-малко ръчна работа.</span><span>Повече контрол.</span><span>Повече време за растеж.</span></p>
       </div>
     </div>
   </div>
@@ -606,14 +781,16 @@ footer a{color:#e9e7df;text-decoration:none}
       <div><b>Стартови цени до 30 ноември! Заключи цената си за 12 месеца.</b><br>Първите 20 годишни клиента я запазват завинаги!</div>
       <div class="cd" id="cd"><span id="cdD">0<small>дни</small></span><span id="cdH">0<small>часа</small></span><span id="cdM">0<small>мин</small></span><span id="cdS">0<small>сек</small></span></div>
     </div>
+    <div class="billtog" role="group" aria-label="Плащане"><button type="button" class="on" data-billing="monthly">Месечно</button><button type="button" data-billing="yearly">Годишно <span class="save" data-old>до −80%</span></button></div>
     <div class="plans">
-      <div class="plan"><h3>Starter</h3><div class="sub2">1 магазин · 300 поръчки на месец</div><div class="was" data-old><span class="disc">−40%</span><s>67 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="0">40,20 €</span><small>/месец</small></div><div class="yr">или <b data-py="0"></b> за година <span class="disc sm" data-old>−80%</span></div><div class="addon">+1 магазин за 7 €/мес.<small>до 2 магазина общо · лимитът на поръчките остава 300</small></div><ul><li>всичко в Ordyx</li><li>чекаут с офиси и автомати</li><li>товарителници с един клик</li><li>потвърждение и печалба на телефона</li><li>Growth Lab — безплатно при годишен абонамент</li></ul><a class="btn" data-cta data-plan="starter" href="#">Започни безплатно</a></div>
-      <div class="plan star"><span class="badge">⭐ Най-популярен</span><h3>Growth</h3><div class="sub2">3 магазина · 1 000 поръчки на месец</div><div class="was" data-old><span class="disc">−40%</span><s>97 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="1">58,20 €</span><small>/месец</small></div><div class="yr">или <b data-py="1"></b> за година <span class="disc sm" data-old>−80%</span></div><div class="addon">+ до 2 магазина по 7 €/мес.<small>до 5 магазина общо · лимитът на поръчките остава 1 000</small></div><ul><li><b>Growth Lab включен</b> — стойност 20 €/мес.</li><li>всички магазини на един екран</li><li>🎙️ гласов агент за автоматично потвърждение на поръчките — 0,60 € на разговор</li></ul><a class="btn" data-cta data-plan="growth" href="#">Започни безплатно</a></div>
-      <div class="plan"><h3>Business</h3><div class="sub2">6 магазина · 4 000 поръчки на месец</div><div class="was" data-old><span class="disc">−40%</span><s>147 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="2">88,20 €</span><small>/месец</small></div><div class="yr">или <b data-py="2"></b> за година <span class="disc sm" data-old>−80%</span></div><div class="addon">+7 € за всеки следващ магазин<small>без горна граница · лимитът на поръчките остава 4 000</small></div><ul><li><b>Growth Lab включен</b> — стойност 20 €/мес.</li><li>всички магазини на един екран</li><li>🎙️ гласов агент за автоматично потвърждение — 0,60 € на разговор</li><li>вход за всеки клиент</li><li>помощ при включването</li></ul><a class="btn" data-cta data-plan="business" href="#">Започни безплатно</a></div>
+      <div class="plan"><h3>Starter</h3><div class="sub2">1 магазин · 300 поръчки на месец</div><div class="was" data-old><span class="disc" data-dsc>−40%</span><s data-reg="0">67 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="0">40,20 €</span><small data-per>/месец</small></div><div class="yr" data-alt="0"></div><div class="addon">+1 магазин за 7 €/мес.<small>до 2 магазина общо · лимитът на поръчките остава 300</small></div><ul><li><b>Ordyx Съветник</b> — какво да промениш днес и колко носи</li><li>чекаут с офиси и автомати на Еконт, Спиди и BOX NOW</li><li>товарителници с един клик и проследяване на пратката</li><li>потвърждение по WhatsApp, SMS и гласов агент (0,60 € на разговор)</li><li>проверка на телефона за некоректни клиенти</li><li>изоставени колички с напомняне</li><li>наличности с прогноза кога ще свършат</li><li>чиста печалба: реклама, доставка, връщания, себестойност</li><li>Meta, Google и TikTok Ads — поръчки и печалба по източник</li><li>приложение и известия на телефона</li><li>Growth Lab — безплатно при годишен абонамент</li></ul><a class="btn" data-cta data-plan="starter" href="#">Започни безплатно</a></div>
+      <div class="plan star"><span class="badge"><svg aria-hidden="true"><use href="#i-star"/></svg>Най-популярен</span><h3>Growth</h3><div class="sub2">3 магазина · 1 000 поръчки на месец</div><div class="was" data-old><span class="disc" data-dsc>−40%</span><s data-reg="1">97 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="1">58,20 €</span><small data-per>/месец</small></div><div class="yr" data-alt="1"></div><div class="addon">+ до 2 магазина по 7 €/мес.<small>до 5 магазина общо · лимитът на поръчките остава 1 000</small></div><ul><li class="all">Всичко от Starter, плюс:</li><li><b>Growth Lab включен</b> — стойност 20 €/мес.</li><li>3 магазина на един екран</li><li>1 000 поръчки на месец</li></ul><a class="btn" data-cta data-plan="growth" href="#">Започни безплатно</a></div>
+      <div class="plan"><h3>Business</h3><div class="sub2">6 магазина · 4 000 поръчки на месец</div><div class="was" data-old><span class="disc" data-dsc>−40%</span><s data-reg="2">147 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="2">88,20 €</span><small data-per>/месец</small></div><div class="yr" data-alt="2"></div><div class="addon">+7 € за всеки следващ магазин<small>без горна граница · лимитът на поръчките остава 4 000</small></div><ul><li class="all">Всичко от Growth, плюс:</li><li><b>Growth Lab включен</b> — стойност 20 €/мес.</li><li>6 магазина и 4 000 поръчки на месец</li><li>вход за всеки клиент</li><li>помощ при включването</li></ul><a class="btn" data-cta data-plan="business" href="#">Започни безплатно</a></div>
     </div>
+    <div class="moneyback"><span class="ico"><svg aria-hidden="true"><use href="#i-seal"/></svg></span><div><b>30 дни гаранция за връщане на парите — без въпроси</b><span>Ако в първите 30 дни след първото плащане решиш, че Ordyx не е за теб, връщаме парите. Без формуляри, без обяснения.</span></div></div>
     <div class="extra"><b>Само 7 € за допълнителен магазин</b><span>Разширявай бизнеса си, без да плащаш за ненужен по-голям пакет.</span></div>
-    <div class="agent"><span class="e" aria-hidden="true">🎓</span><div><b>Ordyx Growth Lab — стойност 20 €/месец</b><span>Премиум общност за онлайн търговци с практически обучения, работни материали и стратегии за повече продажби и по-висока печалба. Получаваш достъп до експертни уъркшопи, записи и реални решения за развитието на онлайн магазина си. <b>Включен в Growth и Business; в Starter — при годишен абонамент.</b></span></div></div>
-    <div class="agent"><span class="e" aria-hidden="true">🎙️</span><div><b>Агент, който потвърждава поръчките вместо теб</b><span>Около час след поръчката се обажда на купувача (между 9 и 20 ч.), прочита поръчката, пита дали я потвърждава и записва отговора в Ordyx. <b>0,60 € на разговор.</b></span></div></div>
+    <div class="agent"><span class="e ico" aria-hidden="true"><svg aria-hidden="true"><use href="#i-cap"/></svg></span><div><b>Ordyx Growth Lab — стойност 20 €/месец</b><span>Премиум общност за онлайн търговци с практически обучения, работни материали и стратегии за повече продажби и по-висока печалба. Получаваш достъп до експертни уъркшопи, записи и реални решения за развитието на онлайн магазина си. <b>Включен в Growth и Business; в Starter — при годишен абонамент.</b></span></div></div>
+    <div class="agent"><span class="e ico" aria-hidden="true"><svg aria-hidden="true"><use href="#i-mic"/></svg></span><div><b>Агент, който потвърждава поръчките вместо теб</b><span>Около час след поръчката се обажда на купувача (между 9 и 20 ч.), прочита поръчката, пита дали я потвърждава и записва отговора в Ordyx. <b>0,60 € на разговор.</b></span></div></div>
     <div class="est">
       <div>
         <div class="rng"><label for="e1">Колко магазина управляваш? <b id="ev1">1</b></label><input id="e1" type="range" min="1" max="15" value="1"></div>
@@ -634,7 +811,7 @@ footer a{color:#e9e7df;text-decoration:none}
         <li>Първо 14 дни безплатно, без карта — линк за плащане ти изпращаме след това.</li>
       </ul>
     </details>
-    <p class="fine">Цени с ДДС. До 30 ноември 2026 г., 23:59 ч. — промоционална отстъпка от 40% върху основния план; от 1 декември важат редовните цени 67 / 97 / 147 €. Добавката от 7 € за магазин е фиксирана, не се намалява и не увеличава лимита на поръчките. Лимитът е общ за всички магазини в плана; над него — 5 € за всеки допълнителни 250 поръчки. Разговорите на гласовия агент (0,60 € на разговор), SMS и WhatsApp съобщенията се плащат отделно, според използването. 💯 30 дни гаранция за връщане на парите след първото плащане.</p>
+    <p class="fine">Цени с ДДС. До 30 ноември 2026 г., 23:59 ч. — промоционална отстъпка от 40% върху основния план; от 1 декември важат редовните цени 67 / 97 / 147 €. Добавката от 7 € за магазин е фиксирана, не се намалява и не увеличава лимита на поръчките. Лимитът е общ за всички магазини в плана; над него — 5 € за всеки допълнителни 250 поръчки. Разговорите на гласовия агент (0,60 € на разговор), SMS и WhatsApp съобщенията се плащат отделно, според използването. 30 дни гаранция за връщане на парите след първото плащане — без въпроси.</p>
   </div>
 </section>
 
@@ -644,11 +821,11 @@ footer a{color:#e9e7df;text-decoration:none}
     <span class="eyebrow rv">Без риск</span>
     <h2 class="h2 rv">Пробваш спокойно</h2>
     <div class="guar">
-      <div class="rv"><span class="e">🎁</span><b>14 дни безплатно</b><span>Без карта, без ангажимент.</span></div>
-      <div class="rv"><span class="e">💯</span><b>30 дни гаранция</b><span>Ако след първото плащане не си доволен, връщаме парите — без въпроси.</span></div>
-      <div class="rv"><span class="e">📄</span><b>Без договор</b><span>Плащаш месец за месец.</span></div>
-      <div class="rv"><span class="e">⏸️</span><b>Спираш по всяко време</b><span>Махаш реда код — чекаутът е както преди.</span></div>
-      <div class="rv"><span class="e">📥</span><b>Данните са твои</b><span>Поръчки и купувачи — изтегляш ги в Excel.</span></div>
+      <div class="rv"><span class="e ico"><svg aria-hidden="true"><use href="#i-gift"/></svg></span><b>14 дни безплатно</b><span>Без карта, без ангажимент.</span></div>
+      <div class="rv"><span class="e ico"><svg aria-hidden="true"><use href="#i-seal"/></svg></span><b>30 дни гаранция — без въпроси</b><span>Ако в първите 30 дни след първото плащане не си доволен, връщаме парите. Без обяснения.</span></div>
+      <div class="rv"><span class="e ico"><svg aria-hidden="true"><use href="#i-file"/></svg></span><b>Без договор</b><span>Плащаш месечно или годишно — както ти е удобно.</span></div>
+      <div class="rv"><span class="e ico"><svg aria-hidden="true"><use href="#i-pause"/></svg></span><b>Спираш по всяко време</b><span>Махаш реда код — чекаутът е както преди.</span></div>
+      <div class="rv"><span class="e ico"><svg aria-hidden="true"><use href="#i-download"/></svg></span><b>Данните са твои</b><span>Поръчки и купувачи — изтегляш ги в Excel.</span></div>
     </div>
   </div>
 </section>
@@ -694,6 +871,8 @@ footer a{color:#e9e7df;text-decoration:none}
 
 <div class="mcta" id="mcta"><a class="btn" data-cta href="#">Започни безплатно — 14 дни</a></div>
 
+<script>window.__zdoLogoBase = "https://app.ordyx.eu/logos/";</script>
+<script src="https://app.ordyx.eu/checkout.js" defer></script>
 <script src="/couriers-eu.js"></script>
 <script>
 (function () {
@@ -705,8 +884,10 @@ footer a{color:#e9e7df;text-decoration:none}
   var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var founders = function () { return Date.now() < DEADLINE; };
 
-  // a plan's button opens the registration with that plan picked (the form asks monthly or yearly)
-  [].forEach.call(document.querySelectorAll('[data-cta]'), function (a) { a.href = SIGNUP + (a.getAttribute('data-plan') ? '&plan=' + a.getAttribute('data-plan') : ''); });
+  // a plan's button opens the registration with that plan (and monthly or yearly) picked
+  var billing = 'monthly';
+  function ctas() { [].forEach.call(document.querySelectorAll('[data-cta]'), function (a) { a.href = SIGNUP + (a.getAttribute('data-plan') ? '&plan=' + a.getAttribute('data-plan') + (billing === 'yearly' ? '&billing=yearly' : '') : ''); }); }
+  ctas();
 
   /* reveal on scroll */
   // shown when on screen; checked on scroll too, so nothing stays hidden where the observer is slow or missing
@@ -789,41 +970,26 @@ footer a{color:#e9e7df;text-decoration:none}
   [].forEach.call(document.querySelectorAll('.pcard'), function (c) { c.addEventListener('click', function () { c.classList.toggle('on'); }); });
 
   /* live checkout: real office search */
-  var courier = 'econt', cache = {}, flowTimer = null;
-  function norm(s) { return String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim(); }
-  function load(c) {
-    if (cache[c]) return Promise.resolve(cache[c]);
-    return fetch(API + '/api/offices?courier=' + c).then(function (r) { return r.json(); }).then(function (d) {
-      return (cache[c] = (d.offices || []).map(function (o) { o._n = norm(o.city + ' ' + o.name + ' ' + o.address); return o; }));
+  /* the real Ordyx checkout module (checkout.js) runs here as on a shop; a choice starts the flow on the right */
+  var flowTimer = null, demoChoice = null;
+  (function () {
+    var el = $('ordyxDemo'); if (!el) return;
+    var started = false;
+    function watch() {
+      var h = el.ordyxPicker; if (!h) { setTimeout(watch, 200); return; }
+      el.addEventListener('change', function () { var v = h.value(); if (v && (v.officeText || v.addressText)) { demoChoice = v; } });
+      el.addEventListener('click', function () { setTimeout(function () { var v = h.value(); if (v && (v.officeText || v.addressText)) demoChoice = v; }, 50); });
+    }
+    watch();
+    $('demoOrder').addEventListener('click', function () {
+      var h = el.ordyxPicker, v = h ? h.value() : null;
+      if (!v || !(v.officeText || v.addressText)) { $('picked').hidden = false; $('picked').className = 'picked warn'; $('picked').textContent = 'Първо избери офис, автомат или адрес — както би направил твоят клиент.'; return; }
+      $('picked').hidden = false; $('picked').className = 'picked';
+      $('picked').innerHTML = '✓ Поръчката влезе в Ordyx с <b>' + esc(v.officeText || v.addressText) + '</b>' + (v.officeId ? ' (' + esc(v.officeId) + ')' : '') + '<br><span style="font-weight:600">Точно това влиза в товарителницата — без звънене и без преписване.</span>';
+      if (!started) started = true;
+      runFlow();
     });
-  }
-  function search() {
-    var q = norm($('q').value);
-    if (q.length < 2) { $('res').innerHTML = ''; return; }
-    $('res').innerHTML = '<button type="button" disabled>Търсим…</button>';
-    load(courier).then(function (list) {
-      var words = q.split(' ');
-      var hits = list.filter(function (o) { return words.every(function (w) { return o._n.indexOf(w) !== -1; }); }).slice(0, 8);
-      $('res').innerHTML = hits.length ? hits.map(function (o, i) { return '<button type="button" role="option" data-i="' + list.indexOf(o) + '">' + (o.isAutomat ? '🔲 Автомат ' : '🏢 Офис ') + esc(o.name) + '<small>' + esc(o.city) + (o.address ? ' · ' + esc(o.address) : '') + '</small></button>'; }).join('') : '<button type="button" disabled>Няма офис с това име — пробвай с друг град</button>';
-    }).catch(function () { $('res').innerHTML = '<button type="button" disabled>Търсачката не се зареди — опитай пак</button>'; });
-  }
-  var qt;
-  $('q').addEventListener('input', function () { clearTimeout(qt); qt = setTimeout(search, 160); });
-  $('q').addEventListener('focus', function () { load(courier); });
-  [].forEach.call(document.querySelectorAll('.opt'), function (b) {
-    b.addEventListener('click', function () {
-      [].forEach.call(document.querySelectorAll('.opt'), function (x) { x.classList.toggle('on', x === b); });
-      courier = b.getAttribute('data-c'); $('picked').hidden = true; search();
-    });
-  });
-  $('res').addEventListener('click', function (e) {
-    var b = e.target.closest('button[data-i]'); if (!b) return;
-    var o = cache[courier][+b.getAttribute('data-i')];
-    $('picked').hidden = false;
-    $('picked').innerHTML = '✓ ' + (courier === 'econt' ? 'ЕКОНТ' : 'СПИДИ') + ' – ' + (o.isAutomat ? 'автомат ' : 'офис ') + esc(o.name) + ', ' + esc(o.city) + '<br><span style="font-weight:600">Точно това влиза в поръчката — без звънене.</span>';
-    $('res').innerHTML = '';
-    runFlow();
-  });
+  })();
   function runFlow() {
     var steps = document.querySelectorAll('.fstep'), i = 0;
     clearInterval(flowTimer);
@@ -841,6 +1007,19 @@ footer a{color:#e9e7df;text-decoration:none}
     });
   });
   function drawBars() { $('bars').innerHTML = [38, 52, 44, 61, 58, 73, 66, 80, 71, 88, 79, 95].map(function (h, i) { return '<i style="height:' + h + '%;animation-delay:' + i * 40 + 'ms"></i>'; }).join(''); }
+  /* the secret weapon: the stamp lands when the dossier comes into view; „Разсекрети“ opens it */
+  (function () {
+    var sec = document.getElementById('advisor'), dos = document.getElementById('dossier');
+    if (!sec || !dos) return;
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { sec.classList.add('go'); io.disconnect(); } }, { threshold: 0.35 });
+      io.observe(dos);
+    } else sec.classList.add('go');
+    document.getElementById('declass').addEventListener('click', function () {
+      dos.classList.add('open');
+      document.getElementById('dosNote').textContent = 'Разсекретено ✓ Включено във всеки план.';
+    });
+  })();
   $('cYes').addEventListener('click', function () { $('cMsg').textContent = '✓ Благодарим! Поръчката е потвърдена — магазинът току-що получи известие.'; $('cMsg').style.color = 'var(--ok)'; });
   $('cNo').addEventListener('click', function () { $('cMsg').textContent = 'Поръчката е отказана — пратката няма да тръгне и няма да се върне.'; $('cMsg').style.color = 'var(--bad)'; });
 
@@ -872,9 +1051,20 @@ footer a{color:#e9e7df;text-decoration:none}
   function prices() {
     var f = founders();
     [].forEach.call(document.querySelectorAll('[data-old]'), function (el) { el.hidden = !f; });
-    [].forEach.call(document.querySelectorAll('[data-pp]'), function (el) { el.textContent = money(planPrice(PLANS[+el.getAttribute('data-pp')], f)); });
-    // yearly: the launch year prepaid until 30.11, 12 × the regular month after
-    [].forEach.call(document.querySelectorAll('[data-py]'), function (el) { var pl = PLANS[+el.getAttribute('data-py')]; el.textContent = thousands(money(f ? pl.launchYear : pl.price * 12)); });
+    // monthly or yearly (the launch year prepaid until 30.11; 12 × the regular month after)
+    var yearly = billing === 'yearly';
+    var month = function (pl) { return planPrice(pl, f); }, year = function (pl) { return f ? pl.launchYear : pl.price * 12; };
+    [].forEach.call(document.querySelectorAll('[data-pp]'), function (el) { var pl = PLANS[+el.getAttribute('data-pp')]; el.textContent = thousands(money(yearly ? year(pl) : month(pl))); });
+    [].forEach.call(document.querySelectorAll('[data-per]'), function (el) { el.textContent = yearly ? '/година' : '/месец'; });
+    var plansEl = document.querySelector('.plans'); if (plansEl) plansEl.classList.toggle('yearly', yearly); // a year's price is longer: a smaller size keeps it on one line
+    [].forEach.call(document.querySelectorAll('[data-reg]'), function (el) { var pl = PLANS[+el.getAttribute('data-reg')]; el.textContent = thousands(eur(yearly ? pl.price * 12 : pl.price)); });
+    [].forEach.call(document.querySelectorAll('[data-dsc]'), function (el) { el.textContent = yearly ? '−80%' : '−40%'; });
+    [].forEach.call(document.querySelectorAll('[data-alt]'), function (el) {
+      var pl = PLANS[+el.getAttribute('data-alt')];
+      el.innerHTML = yearly ? 'предплащаш 12 месеца · или <b>' + money(month(pl)) + '</b> на месец' : 'или <b>' + thousands(money(year(pl))) + '</b> за година' + (f ? ' <span class="disc sm">−80%</span>' : '');
+    });
+    [].forEach.call(document.querySelectorAll('[data-billing]'), function (b) { b.classList.toggle('on', b.getAttribute('data-billing') === billing); });
+    ctas();
     var n = +$('e1').value, orders = +$('e2').value;
     $('ev1').textContent = n; $('ev2').textContent = thousands(orders);
     // the cheapest plan that takes this many stores
@@ -895,6 +1085,7 @@ footer a{color:#e9e7df;text-decoration:none}
     if (!f) $('count').hidden = true;
   }
   ['e1', 'e2'].forEach(function (id) { $(id).addEventListener('input', prices); });
+  [].forEach.call(document.querySelectorAll('[data-billing]'), function (b) { b.addEventListener('click', function () { billing = b.getAttribute('data-billing'); prices(); }); });
   /* the discount stamps land when the prices come into view (no motion for people who asked for less) */
   (function () {
     var sec = document.getElementById('prices');
