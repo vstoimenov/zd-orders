@@ -117,3 +117,18 @@ test('a client cannot start it until the platform opens it; a stale or foreign s
   const foreign = await withFetch(meta(), () => call({ url: `/api/admin/waconnect?code=CODE&state=${'a'.repeat(64)}`, headers: { cookie: `zdo_wa=${'a'.repeat(64)}` } }));
   assert.match(decodeURIComponent(foreign.headers.location), /wa_error=Свързването изтече/);
 });
+
+test('the number from the WhatsApp Business app on the phone: Meta\'s coexistence flow, the number is never registered (it stays in the app)', async () => {
+  const start = await call({ url: `/api/admin/waconnect?start=1&coexist=1&shop=${SHOP}`, headers: admin });
+  const u = new URL(start.headers.location);
+  assert.deepEqual(JSON.parse(u.searchParams.get('extras')), { setup: {}, featureType: 'whatsapp_business_app_onboarding', sessionInfoVersion: '3' });
+  const state = stateOf(start);
+  const m = meta();
+  const res = await withFetch(m, () => call({ url: `/api/admin/waconnect?code=CODE&state=${state}`, headers: { cookie: `zdo_wa=${state}` } }));
+  assert.equal(res.headers.location, `https://app.ordyx.eu/admin/?wa=ok&shop=${SHOP}#integrations`);
+  assert.ok(m.calls.some((c) => c.u.pathname.endsWith('/102290129340398/subscribed_apps') && c.init.method === 'POST'));
+  assert.ok(!m.calls.some((c) => c.u.pathname.endsWith('/register')), 'registering would take the number away from the phone');
+  const i = await getIntegration(q, 'whatsapp', SHOP);
+  assert.equal(i.config.coexist, true);
+  assert.equal(i.config.phoneNumberId, '106540352242922');
+});
