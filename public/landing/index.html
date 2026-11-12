@@ -129,7 +129,13 @@ section{padding:88px 0}
 .fcard h3{font-size:20px}
 .fcard p{margin:0;color:var(--muted)}
 .fcard p b{color:var(--ink)}
-@media (max-width:900px){.feat{grid-template-columns:1fr}}
+.fcard.wide{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr minmax(260px,340px);gap:18px 22px;align-items:center;background:var(--ink);color:#fff;border-color:var(--ink)}
+.fcard.wide p{color:#c9c7bf}.fcard.wide p b{color:var(--y)}
+.fcard.wide h3{margin-bottom:6px}
+.push{display:flex;flex-direction:column;gap:8px}
+.push .pn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px 12px;font-size:13px;backdrop-filter:blur(6px)}
+.push .pn b{display:block;font-weight:800}.push .pn span{color:#c9c7bf}
+@media (max-width:900px){.feat{grid-template-columns:1fr}.fcard.wide{grid-template-columns:1fr}}
 .bcard{background:#fff;border:1px solid var(--line);border-radius:22px;padding:26px;display:flex;flex-direction:column;gap:12px}
 .bcard .lbl{font-weight:800;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
 .bcard h3{font-size:22px}
@@ -536,8 +542,10 @@ footer a{color:#e9e7df;text-decoration:none}
 <section style="padding-top:0" id="features">
   <div class="wrap">
     <span class="eyebrow rv">Всичко в един абонамент</span>
-    <h2 class="h2 rv">Потвърждение, съобщения, проследяване, реклами и съветник</h2>
+    <h2 class="h2 rv">В телефона ти: поръчки, известия, съобщения, проследяване, реклами и съветник</h2>
     <div class="feat">
+      <div class="fcard wide rv"><span class="fi">📲</span><div><h3>Поръчките и магазините — в телефона ти</h3><p>Ordyx се слага на телефона като приложение — iPhone или Android, без App Store. Всички магазини на един екран, а известие идва веднага: <b>нова поръчка</b>, <b>потвърдена или отказана</b>, отговор от гласовия агент, клиент писа в WhatsApp, промяна на доставката. Не пропускаш нищо, дори когато не си на компютъра.</p></div>
+        <div class="push" aria-hidden="true"><div class="pn"><b>🛒 Нова поръчка · Магазин А</b><span>Мария И. · 28,28 € · Еконт – Плевен</span></div><div class="pn"><b>✅ Клиентът потвърди по телефона</b><span>Георги П. · 64 €</span></div><div class="pn"><b>💬 Клиент писа в WhatsApp</b><span>„Може ли до адрес?“</span></div></div></div>
       <div class="fcard rv"><span class="fi">🧭</span><h3>Ordyx Съветник</h3><p>Всяка сутрин една карта в таблото: какво да промениш днес и колко € носи. Следи 16 показателя на магазина — марж, връщания, реклама, наличности, изоставени колички — и в началото на месеца ти дава резюме.</p></div>
       <div class="fcard rv"><span class="fi">🎙️</span><h3>Гласов агент</h3><p>Около час след поръчката се обажда на купувача, прочита поръчката и записва отговора в Ordyx — потвърдена или отказана. <b>0,60 € на разговор.</b></p></div>
       <div class="fcard rv"><span class="fi">💬</span><h3>WhatsApp</h3><p>Съобщение „Потвърдете поръчката“ с бутони — едно докосване и поръчката е потвърдена. Напомняния за изоставени колички и кампании до твоите купувачи.</p></div>
