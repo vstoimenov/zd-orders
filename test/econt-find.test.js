@@ -56,7 +56,7 @@ test('nightly: Econt parcels made outside Ordyx join their orders, which become 
   assert.deepEqual(calls, ['ShipmentService.getMyAWB.json', 'ShipmentService.getMyAWB.json', 'ShipmentService.getMyAWB.json', 'ShipmentService.getShipmentStatuses.json'],
     '90 days in three 30-day lists, then the details of the new parcels');
   const [i] = await q(`select config from zd.integrations where provider = 'econt'`);
-  assert.deepEqual({ ...i.config.lastFind, at: undefined }, { at: undefined, listed: 3, found: 2, withPhone: 2, joined: 2 }, 'what Econt answered is kept');
+  assert.deepEqual({ ...i.config.lastFind, at: undefined }, { at: undefined, listed: 3, found: 2, withPhone: 2, withDate: 2, customer: 2, openOrder: 2, joined: 2 }, 'what Econt answered is kept');
   assert.deepEqual(await findEcontWaybills(q, SHOP, { fetchImpl: async (url) => new Response(JSON.stringify(url.endsWith('getMyAWB.json') ? { results: [{ shipmentNumber: '1000000001' }], totalPages: 1 } : { shipmentStatuses: [] })) }), { found: 0, joined: 0 }, 'the next night: nothing new');
 });
 
@@ -106,4 +106,14 @@ test('a phone only in the list (not in the status) still joins the order', async
     : { shipmentStatuses: [{ status: { shipmentNumber: '3000000001', trackingEvents: [], shortDeliveryStatus: 'В пътя' } }] }));
   assert.deepEqual(await findEcontWaybills(q, SHOP, { fetchImpl }), { found: 1, joined: 1 });
   assert.equal((await q(`select waybill_number from zd.orders where id = $1::uuid`, [r.id]))[0].waybill_number, '3000000001');
+});
+
+test('a parcel without a date joins the customer’s latest order without a waybill (cash on delivery first)', async () => {
+  const t0 = Date.parse('2026-11-01T10:00:00Z');
+  const orders = [
+    { id: 'old', phoneNorm: '+359888111111', total: 40, createdAt: new Date(t0 - 60 * 24 * H).toISOString() },
+    { id: 'new', phoneNorm: '+359888111111', total: 55, createdAt: new Date(t0 - 2 * 24 * H).toISOString() },
+  ];
+  assert.deepEqual(matchShipments([{ number: '1', phones: ['0888111111'], cod: 0, createdAt: null }], orders).map((x) => x.orderId), ['new']);
+  assert.deepEqual(matchShipments([{ number: '1', phones: ['0888111111'], cod: 40, createdAt: null }], orders).map((x) => x.orderId), ['old']);
 });
