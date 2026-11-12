@@ -274,8 +274,6 @@ input[type=range]{width:100%;accent-color:var(--ink);height:28px}
 .est .tot b{display:block;font-family:Unbounded;font-size:38px;color:var(--y)}
 .est .tot s{color:#8f8d86}
 .fine{margin-top:16px;font-size:14px;color:#a9a79f;text-align:center}
-.offer{margin:26px auto 0;max-width:860px;text-align:center;font:600 clamp(18px,2.4vw,24px)/1.35 Unbounded;color:#fff}
-.offer b{color:var(--y);font-weight:700}
 .plan .sub2{font-weight:800;color:#c9c7bf;margin-top:-6px}
 .plan .was{font-size:13px;font-weight:600;color:#8f8d86}
 .plan .yr{font-size:14px;color:#c9c7bf;margin-top:-4px}
@@ -317,7 +315,11 @@ input[type=range]{width:100%;accent-color:var(--ink);height:28px}
 .agent span{color:#c9c7bf;font-size:15px}
 .agent span b{display:inline;font:800 15px Manrope;color:var(--y)}
 .terms-box{margin:22px auto 0;max-width:860px;border:1px dashed #4a4a44;border-radius:18px;padding:18px 22px;color:#c9c7bf;font-size:14px}
-.terms-box>b{display:block;color:#fff;font:700 16px Unbounded;margin-bottom:8px}
+.terms-box summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#fff;font:700 16px Unbounded}
+.terms-box summary::-webkit-details-marker{display:none}
+.terms-box summary::after{content:"";flex:none;width:10px;height:10px;border-right:2.5px solid var(--y);border-bottom:2.5px solid var(--y);transform:rotate(45deg) translateY(-3px);transition:transform .2s}
+.terms-box[open] summary::after{transform:rotate(-135deg) translateY(-3px)}
+.terms-box[open] summary{margin-bottom:10px}
 .terms-box ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
 .terms-box li b{color:#fff}
 .est .hint{margin-top:12px;font-size:15px;color:#c9c7bf;min-height:22px}
@@ -600,7 +602,6 @@ footer a{color:#e9e7df;text-decoration:none}
 <section class="pricing" id="prices">
   <div class="wrap">
     <div style="text-align:center"><span class="eyebrow" style="color:#a9a79f">Цени</span><h2 class="h2">Една цена. Без изненади.</h2></div>
-    <div class="offer"><b>3 магазина + 1 000 поръчки + Growth Lab</b> на стойност 20 €/месец — само <b><span data-pp="1">58,20 €</span>/месец</b></div>
     <div class="count" id="count">
       <div><b>Стартови цени до 30 ноември! Заключи цената си за 12 месеца.</b><br>Първите 20 годишни клиента я запазват завинаги!</div>
       <div class="cd" id="cd"><span id="cdD">0<small>дни</small></span><span id="cdH">0<small>часа</small></span><span id="cdM">0<small>мин</small></span><span id="cdS">0<small>сек</small></span></div>
@@ -621,8 +622,8 @@ footer a{color:#e9e7df;text-decoration:none}
       </div>
       <div class="tot" aria-live="polite"><small style="color:#a9a79f">Най-подходящ план: <b class="pl" id="eplan">Starter</b></small><b id="etot">40,20 €</b><span class="disc sm" id="edisc">−40%</span><s id="eold">67 €</s><small style="display:block;color:#a9a79f">на месец</small><small style="display:block;color:#a9a79f" id="eover"></small></div>
     </div>
-    <div class="terms-box" data-old>
-      <b>Условия на стартовата оферта</b>
+    <details class="terms-box" data-old>
+      <summary>Условия на стартовата оферта</summary>
       <ul>
         <li>Купиш ли Ordyx на стартовите цени до 30 ноември 2026 г., 23:59 ч., запазваш цената 12 месеца от датата на покупката — с месечно или с годишно плащане.</li>
         <li><b>Месечно:</b> 40,20 / 58,20 / 88,20 € на месец за 12 последователни месеца, докато абонаментът е активен.</li>
@@ -632,7 +633,7 @@ footer a{color:#e9e7df;text-decoration:none}
         <li>След 30 ноември новите клиенти получават редовните цени. При прекратяване стартовата цена отпада.</li>
         <li>Първо 14 дни безплатно, без карта — линк за плащане ти изпращаме след това.</li>
       </ul>
-    </div>
+    </details>
     <p class="fine">Цени с ДДС. До 30 ноември 2026 г., 23:59 ч. — промоционална отстъпка от 40% върху основния план; от 1 декември важат редовните цени 67 / 97 / 147 €. Добавката от 7 € за магазин е фиксирана, не се намалява и не увеличава лимита на поръчките. Лимитът е общ за всички магазини в плана; над него — 5 € за всеки допълнителни 250 поръчки. Разговорите на гласовия агент (0,60 € на разговор), SMS и WhatsApp съобщенията се плащат отделно, според използването. 💯 30 дни гаранция за връщане на парите след първото плащане.</p>
   </div>
 </section>
