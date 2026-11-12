@@ -860,6 +860,11 @@ tr.hl td{background:#fffbe6}
         <div id="waConnectBox">
           <div class="tip">💡 Натиснете бутона, влезте с Facebook профила, който управлява бизнеса ви, и следвайте стъпките на Meta: изберете или създайте WhatsApp Business акаунт и добавете номер (<b>номер, който не се ползва в обикновения WhatsApp</b>), потвърдете го с код. Накрая в WhatsApp Manager добавете карта за плащане — Meta таксува директно вас (~0,02 € на съобщение за поръчка).</div>
           <div class="actions"><button type="button" class="primary" id="waConnect">Свържи WhatsApp</button><span class="muted" id="waConnectInfo"></span></div>
+          <div class="partnerbox" style="margin-top:14px">
+            <h3 style="margin:0 0 6px">Номерът е в WhatsApp Business на телефона ви?</h3>
+            <div class="muted" style="margin-bottom:8px">Свържете го оттук — <b>остава и в приложението на телефона</b>, чатовете не се губят. Във Facebook изберете „Свързване на съществуващ WhatsApp Business акаунт“, после потвърдете връзката в приложението на телефона (WhatsApp Business трябва да е обновен).</div>
+            <div class="actions"><button type="button" class="ghost" id="waConnectApp">Свържи номера от телефона</button></div>
+          </div>
           <div id="waManualBox" hidden>
             <h3 style="margin:16px 0 6px">Ръчно свързване (собственик, за тест)</h3>
             <div class="muted" style="margin-bottom:8px">От Meta → приложението → WhatsApp → API Setup: WABA ID (WhatsApp Business Account), Phone number ID на тестовия номер и временен access token. Ключът се пази криптиран.</div>
@@ -2606,7 +2611,7 @@ tr.hl td{background:#fffbe6}
   $('iWaOpen').addEventListener('click', function () {
     $('waModal').hidden = false;
     if (lastWa.connected) return;
-    $('waConnect').disabled = !lastWa.ready;
+    $('waConnect').disabled = !lastWa.ready; $('waConnectApp').disabled = !lastWa.ready;
     $('waConnectInfo').textContent = lastWa.ready ? '' : 'Свързването с бутон още не е пуснато от Meta — ползвайте ръчното по-долу.';
   });
   $('waManConnect').addEventListener('click', function () {
@@ -2618,6 +2623,12 @@ tr.hl td{background:#fffbe6}
     if (!lastWa.ready) { $('waConnectInfo').textContent = 'Свързването с бутон още не е пуснато от Meta — ползвайте ръчното по-долу.'; return; }
     $('waConnectInfo').textContent = 'Отварям Meta…';
     location.href = withShop(API + 'waconnect?start=1');
+  });
+  // the number stays in the WhatsApp Business app on the phone (Meta's coexistence): Ordyx never moves it off the phone
+  $('waConnectApp').addEventListener('click', function () {
+    if (!lastWa.ready) { $('waConnectInfo').textContent = 'Свързването с бутон още не е пуснато от Meta.'; return; }
+    $('waConnectInfo').textContent = 'Отварям Meta…';
+    location.href = withShop(API + 'waconnect?start=1&coexist=1');
   });
   /* back from Meta: open the WhatsApp window with the result and tidy the address */
   function afterWhatsApp() {
