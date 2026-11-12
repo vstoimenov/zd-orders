@@ -197,3 +197,9 @@ test('courier statuses missing: „connect the couriers“ only when none is con
   assert.match(conn.text, /^Куриерът е свързан, но 9 от 14 пратки/);
   assert.equal(conn.view, 'orders');
 });
+
+test('missing costs name the products', () => {
+  const c = missingData(base({ marginKnown: false, missingCosts: ['Книга', 'Аудио книга'] })).find((x) => x.key === 'costs');
+  assert.match(c.text, /„Книга“, „Аудио книга“/);
+  assert.match(c.text, /дигитален/);
+});

@@ -304,6 +304,7 @@ tr.hl td{background:#fffbe6}
 .radios{display:flex;gap:18px;margin-bottom:14px;font-weight:700}
 .radios label{display:flex;align-items:center;gap:8px;cursor:pointer}
 .cost-in{width:110px}
+.cost-dig{display:inline-flex;gap:6px;align-items:center;white-space:nowrap;font-weight:400}
 
 @media (max-width:900px){
   .app,.app.collapsed{grid-template-columns:minmax(0,1fr)}
@@ -499,6 +500,7 @@ tr.hl td{background:#fffbe6}
       <div class="pagehead"><div><h1>Финанси</h1><div class="sub">Себестойност, разходи и печалба</div></div></div>
       <div class="panel">
         <h2>Себестойност на продуктите (€ за брой)</h2>
+        <p class="muted">Бонуси, планове и аудио отбележи „дигитален“ — те нямат себестойност и не се водят в наличността.</p>
         <table id="cProducts"></table>
       </div>
       <div class="panel">
@@ -2365,7 +2367,7 @@ tr.hl td{background:#fffbe6}
     chip('iMetaChip2', m.connected, 'Свързан', m.configured ? 'Неактивен' : 'Не е свързан');
     $('iMetaOpen').textContent = m.open === false && !m.configured ? 'Скоро' : m.configured ? 'Настройки' : '+ Свържи';
     $('iMetaOpen').className = m.open === false || m.configured ? 'ghost' : 'primary';
-    $('iMetaOpen').disabled = m.open === false && !m.configured; // clients: until Meta approves the app (META_PUBLIC); a connected shop keeps its settings
+    $('iMetaOpen').disabled = m.open === false && !m.configured; // clients: once the owner turns sharing on, or Meta approves the app (META_PUBLIC); a connected shop keeps its settings
     var daysLeft = m.tokenExpiresAt ? Math.floor((Date.parse(m.tokenExpiresAt) - Date.now()) / 864e5) : null;
     $('iMetaLine').textContent = m.accountId ? (m.accountName || 'акаунт') + ' · act_' + m.accountId + ' · ' + (m.currency || '') + ' · синхронизация ' + when(m.lastSyncAt) +
       (daysLeft != null ? ' · връзката е валидна още ' + Math.max(0, daysLeft) + ' дни' : '') : m.open === false && !m.configured ? 'Очаква одобрение от Meta — скоро ще свържете рекламите си оттук.' : (m.configured && m.oauth ? 'Влязохте с Facebook — изберете рекламен акаунт' : '');
@@ -2375,8 +2377,11 @@ tr.hl td{background:#fffbe6}
     $('iMetaPlatformBox').hidden = role !== 'owner';
     $('iMetaPlatInfo').textContent = pm.enabled ? 'Включено ✓ (бизнес ' + pm.businessId + ')' : '';
     if (m.mode === 'partner' && m.accountId) $('iMetaPartnerInfo').textContent = '✓ Свързан чрез споделяне: ' + (m.accountName || '') + ' (act_' + m.accountId + ')';
-    $('iMetaOauthBox').hidden = !m.oauth;
-    $('iMetaManual').open = !m.oauth;
+    // clients: sharing only, until Meta approves the app (Facebook login and a pasted token stay with the owner)
+    var loginOpen = m.loginOpen !== false;
+    $('iMetaOauthBox').hidden = !m.oauth || !loginOpen;
+    $('iMetaManual').hidden = !loginOpen;
+    $('iMetaManual').open = !m.oauth && loginOpen;
     $('iMetaExpiry').hidden = !(daysLeft != null && daysLeft <= 10);
     $('iMetaExpiry').textContent = daysLeft != null && daysLeft <= 10 ? 'Връзката с Facebook изтича след ' + Math.max(0, daysLeft) + ' дни — натиснете „Вход с Facebook“ отново.' : '';
     lastMeta = m;
@@ -3640,8 +3645,9 @@ tr.hl td{background:#fffbe6}
   function num(v) { return v == null ? '' : String(v); }
   function renderCosts() {
     var d = costsData;
-    $('cProducts').innerHTML = table(['Продукт', 'Продадени', 'Себестойност'], d.products.map(function (p, i) {
-      return [esc(p.name), String(p.soldQty), '<input type="number" step="0.01" min="0" class="cost-in" data-pi="' + i + '" value="' + esc(num(p.unitCost)) + '">'];
+    $('cProducts').innerHTML = table(['Продукт', 'Продадени', 'Себестойност', 'Дигитален'], d.products.map(function (p, i) {
+      return [esc(p.name), String(p.soldQty), '<input type="number" step="0.01" min="0" class="cost-in" data-pi="' + i + '" value="' + esc(num(p.unitCost)) + '"' + (p.digital ? ' disabled' : '') + '>',
+        '<label class="cost-dig" title="Бонус, план, аудио — без себестойност и без наличност"><input type="checkbox" data-pd="' + i + '"' + (p.digital ? ' checked' : '') + '> дигитален</label>'];
     }));
     $('cPackaging').value = num(d.settings.packaging); $('cCodFeePct').value = num(d.settings.codFeePct);
     $('cFreeEcont').value = num(d.settings.freeShippingEcont); $('cFreeSpeedy').value = num(d.settings.freeShippingSpeedy); $('cFreeBoxnow').value = num(d.settings.freeShippingBoxnow);
@@ -3657,7 +3663,11 @@ tr.hl td{background:#fffbe6}
     costsFetch('GET').then(function (d) { costsData = d; renderCosts(); }).catch(function (e) { if (e.message !== 'auth') alert('Разходите не се заредиха. Опитайте пак.'); });
   }
   $('cSave').addEventListener('click', function () {
-    var products = [].map.call(document.querySelectorAll('[data-pi]'), function (inp) { return { name: costsData.products[inp.getAttribute('data-pi')].name, unitCost: inp.value === '' ? 0 : inp.value }; });
+    var products = [].map.call(document.querySelectorAll('[data-pi]'), function (inp) {
+      var i = inp.getAttribute('data-pi'), dig = document.querySelector('[data-pd="' + i + '"]');
+      var digital = !!(dig && dig.checked);
+      return { name: costsData.products[i].name, unitCost: digital || inp.value === '' ? 0 : inp.value, digital: digital };
+    });
     var v = function (id) { return $(id).value === '' ? 0 : $(id).value; };
     var settings = { packaging: v('cPackaging'), codFeePct: v('cCodFeePct'), freeShippingEcont: v('cFreeEcont'), freeShippingSpeedy: v('cFreeSpeedy'), freeShippingBoxnow: v('cFreeBoxnow'), returnCost: v('cReturn'),
       vatRegistered: $('cVat').checked ? 1 : 0, vatRate: v('cVatRate'), costsWithVat: $('cCostsVat').checked ? 1 : 0, profitTaxPct: v('cTaxPct') };
@@ -3666,6 +3676,13 @@ tr.hl td{background:#fffbe6}
       .then(function () { $('cSaved').textContent = 'Запазено ✓'; dashLoaded = false; setTimeout(function () { $('cSaved').textContent = ''; }, 2000); })
       .catch(function (e) { if (e.message !== 'auth') alert('Не е запазено: проверете за отрицателни или празни стойности.'); })
       .then(function () { $('cSave').disabled = false; });
+  });
+  // a digital product (bonus, plan, audio): its cost is 0 by rule — the field is locked while ticked
+  $('cProducts').addEventListener('change', function (e) {
+    var i = e.target.getAttribute && e.target.getAttribute('data-pd');
+    if (i == null) return;
+    var inp = document.querySelector('[data-pi="' + i + '"]');
+    if (inp) { inp.disabled = e.target.checked; if (e.target.checked) inp.value = '0'; }
   });
   $('eForm').addEventListener('submit', function (e) {
     e.preventDefault();

@@ -31,7 +31,7 @@ test('getCosts lists every sold product with its saved unit cost', async () => {
   await add({ items: [{ name: 'Книга', qty: 2, price: 25.8 }] });
   await saveCosts(q, { products: [{ name: 'Книга', unitCost: 4.2 }], settings: { packaging: 0.5, codFeePct: 1.5, freeShippingEcont: 3.55, freeShippingSpeedy: 2.48, freeShippingBoxnow: 3.1, returnCost: 7 } });
   const c = await getCosts(q);
-  assert.deepEqual(c.products, [{ name: 'Книга', unitCost: 4.2, soldQty: 3 }, { name: 'Бонус', unitCost: 0, soldQty: 1 }]);
+  assert.deepEqual(c.products, [{ name: 'Книга', unitCost: 4.2, digital: false, soldQty: 3 }, { name: 'Бонус', unitCost: 0, digital: false, soldQty: 1 }]);
   assert.deepEqual(c.settings, {
     packaging: 0.5, codFeePct: 1.5, freeShippingEcont: 3.55, freeShippingSpeedy: 2.48, freeShippingBoxnow: 3.1, returnCost: 7,
     vatRegistered: 0, vatRate: 20, costsWithVat: 1, profitTaxPct: 10, // tax defaults until the shop sets them
@@ -168,4 +168,15 @@ test('a free-shipping BOX NOW order costs the shop its BOX NOW price', async () 
   await saveCosts(q, { products: [], settings: { freeShippingBoxnow: 3.1 } });
   await add({ total: 12.9, courier: 'boxnow', deliveryType: 'boxnow_locker', officeId: 'boxnow:1840', officeText: 'BOX NOW – автомат (1840)' });
   assert.equal((await getProfit(q, { from: today(), to: today() })).freeShipping, 3.1);
+});
+
+const SHOP = '00000000-0000-4000-8000-000000000001';
+test('a digital product: 0 is its true cost, kept with the flag; a typed cost is dropped for it', async () => {
+  await saveCosts(q, { products: [{ name: 'Аудио книга', unitCost: 3, digital: true }, { name: 'Книга', unitCost: 6.2 }], shopId: SHOP });
+  const { products } = await getCosts(q, { shopId: SHOP });
+  const audio = products.find((p) => p.name === 'Аудио книга'), book = products.find((p) => p.name === 'Книга');
+  assert.deepEqual([audio.unitCost, audio.digital], [0, true]);
+  assert.deepEqual([book.unitCost, book.digital], [6.2, false]);
+  await saveCosts(q, { products: [{ name: 'Аудио книга', unitCost: 0, digital: false }], shopId: SHOP });
+  assert.equal((await getCosts(q, { shopId: SHOP })).products.find((p) => p.name === 'Аудио книга').digital, false, 'can be unticked');
 });
