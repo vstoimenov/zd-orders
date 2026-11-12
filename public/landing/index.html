@@ -259,6 +259,9 @@ input[type=range]{width:100%;accent-color:var(--ink);height:28px}
 .offer{margin:26px auto 0;max-width:860px;text-align:center;font:600 clamp(18px,2.4vw,24px)/1.35 Unbounded;color:#fff}
 .offer b{color:var(--y);font-weight:700}
 .plan .sub2{font-weight:800;color:#c9c7bf;margin-top:-6px}
+.plan .was{font-size:13px;font-weight:600;color:#8f8d86}
+.plan .was s{font-size:16px;font-weight:700;margin-right:6px}
+.plan.star .was{color:#9a978f}
 .plan.star .sub2{color:#5c5a53}
 .plan .addon{font-weight:800;font-size:15px;color:var(--y);border-top:1px dashed #3a3a35;padding-top:10px}
 .plan .addon small{display:block;font-weight:600;font-size:13px;color:#a9a79f}
@@ -552,23 +555,28 @@ footer a{color:#e9e7df;text-decoration:none}
 <section class="pricing" id="prices">
   <div class="wrap">
     <div style="text-align:center"><span class="eyebrow" style="color:#a9a79f">Цени</span><h2 class="h2">Една цена. Без изненади.</h2></div>
-    <div class="offer">Управлявай <b>3 онлайн магазина за 58,20 €/месец</b> + получи <b>Growth Lab</b> без доплащане</div>
+    <div class="offer"><b>3 магазина + 1 000 поръчки + Growth Lab</b> на стойност 20 €/месец — само <b><span data-pp="1">58,20 €</span>/месец</b></div>
     <div class="count" id="count">
       <div><b>−40% за основатели — цената остава завинаги</b><br>за всеки, който се регистрира до 30 ноември 2026 г.</div>
       <div class="cd" id="cd"><span id="cdD">0<small>дни</small></span><span id="cdH">0<small>часа</small></span><span id="cdM">0<small>мин</small></span><span id="cdS">0<small>сек</small></span></div>
     </div>
     <div class="plans">
-      <div class="plan"><h3>Starter</h3><div class="sub2">1 магазин</div><div><span class="old" data-old>67 €</span></div><div class="now"><span data-pp="0">40,20 €</span><small>/месец</small></div><div class="addon">+1 магазин за 7 €/мес.<small>до 2 магазина общо</small></div><ul><li>всичко в Ordyx</li><li>чекаут с офиси и автомати</li><li>товарителници с един клик</li><li>потвърждение и печалба на телефона</li></ul><a class="btn" data-cta href="#">Започни безплатно</a></div>
-      <div class="plan star"><span class="badge">⭐ Най-популярен</span><h3>Growth</h3><div class="sub2">3 магазина</div><div><span class="old" data-old>97 €</span></div><div class="now"><span data-pp="1">58,20 €</span><small>/месец</small></div><div class="addon">+ до 2 магазина по 7 €/мес.<small>до 5 магазина общо</small></div><ul><li><b>Growth Lab включен</b> — стойност 20 €/мес.</li><li>по-висок лимит за поръчки</li><li>всички магазини на един екран</li><li>🎙️ гласов агент за автоматично потвърждение на поръчките — под 0,60 € на разговор</li></ul><a class="btn" data-cta href="#">Започни безплатно</a></div>
-      <div class="plan"><h3>Business</h3><div class="sub2">6 магазина</div><div><span class="old" data-old>147 €</span></div><div class="now"><span data-pp="2">88,20 €</span><small>/месец</small></div><div class="addon">+7 € за всеки следващ магазин<small>без горна граница</small></div><ul><li><b>Growth Lab включен</b> — стойност 20 €/мес.</li><li>всички магазини на един екран</li><li>🎙️ гласов агент за автоматично потвърждение — под 0,60 € на разговор</li><li>вход за всеки клиент</li><li>помощ при включването</li></ul><a class="btn" data-cta href="#">Започни безплатно</a></div>
+      <div class="plan"><h3>Starter</h3><div class="sub2">1 магазин · 300 поръчки на месец</div><div class="was" data-old><s>67 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="0">40,20 €</span><small>/месец</small></div><div class="addon">+1 магазин за 7 €/мес.<small>до 2 магазина общо · лимитът на поръчките остава 300</small></div><ul><li>всичко в Ordyx</li><li>чекаут с офиси и автомати</li><li>товарителници с един клик</li><li>потвърждение и печалба на телефона</li><li>Growth Lab — безплатно при годишен абонамент</li></ul><a class="btn" data-cta href="#">Започни безплатно</a></div>
+      <div class="plan star"><span class="badge">⭐ Най-популярен</span><h3>Growth</h3><div class="sub2">3 магазина · 1 000 поръчки на месец</div><div class="was" data-old><s>97 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="1">58,20 €</span><small>/месец</small></div><div class="addon">+ до 2 магазина по 7 €/мес.<small>до 5 магазина общо · лимитът на поръчките остава 1 000</small></div><ul><li><b>Growth Lab включен</b> — стойност 20 €/мес.</li><li>всички магазини на един екран</li><li>🎙️ гласов агент за автоматично потвърждение на поръчките — 0,60 € на разговор</li></ul><a class="btn" data-cta href="#">Започни безплатно</a></div>
+      <div class="plan"><h3>Business</h3><div class="sub2">6 магазина · 4 000 поръчки на месец</div><div class="was" data-old><s>147 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="2">88,20 €</span><small>/месец</small></div><div class="addon">+7 € за всеки следващ магазин<small>без горна граница · лимитът на поръчките остава 4 000</small></div><ul><li><b>Growth Lab включен</b> — стойност 20 €/мес.</li><li>всички магазини на един екран</li><li>🎙️ гласов агент за автоматично потвърждение — 0,60 € на разговор</li><li>вход за всеки клиент</li><li>помощ при включването</li></ul><a class="btn" data-cta href="#">Започни безплатно</a></div>
     </div>
     <div class="extra"><b>Само 7 € за допълнителен магазин</b><span>Разширявай бизнеса си, без да плащаш за ненужен по-голям пакет.</span></div>
-    <div class="agent"><span class="e" aria-hidden="true">🎙️</span><div><b>Агент, който потвърждава поръчките вместо теб</b><span>Около час след поръчката се обажда на купувача (между 9 и 20 ч.), прочита поръчката, пита дали я потвърждава и записва отговора в Ordyx. <b>Под 0,60 € на разговор.</b></span></div></div>
+    <div class="agent"><span class="e" aria-hidden="true">🎓</span><div><b>Ordyx Growth Lab — стойност 20 €/месец</b><span>Премиум общност за онлайн търговци с практически обучения, работни материали и стратегии за повече продажби и по-висока печалба. Получаваш достъп до експертни уъркшопи, записи и реални решения за развитието на онлайн магазина си. <b>Включен в Growth и Business; в Starter — при годишен абонамент.</b></span></div></div>
+    <div class="agent"><span class="e" aria-hidden="true">🎙️</span><div><b>Агент, който потвърждава поръчките вместо теб</b><span>Около час след поръчката се обажда на купувача (между 9 и 20 ч.), прочита поръчката, пита дали я потвърждава и записва отговора в Ordyx. <b>0,60 € на разговор.</b></span></div></div>
     <div class="est">
-      <div class="rng" style="margin:0"><label for="e1">Колко магазина управляваш? <b id="ev1">1</b></label><input id="e1" type="range" min="1" max="15" value="1"><div class="hint" id="ehint" aria-live="polite"></div></div>
-      <div class="tot" aria-live="polite"><small style="color:#a9a79f">Най-подходящ план: <b class="pl" id="eplan">Starter</b></small><b id="etot">40,20 €</b><s id="eold">67 €</s><small style="display:block;color:#a9a79f">на месец</small></div>
+      <div>
+        <div class="rng"><label for="e1">Колко магазина управляваш? <b id="ev1">1</b></label><input id="e1" type="range" min="1" max="15" value="1"></div>
+        <div class="rng" style="margin:0"><label for="e2">Поръчки на месец (общо) <b id="ev2">300</b></label><input id="e2" type="range" min="50" max="6000" step="50" value="300"></div>
+        <div class="hint" id="ehint" aria-live="polite"></div>
+      </div>
+      <div class="tot" aria-live="polite"><small style="color:#a9a79f">Най-подходящ план: <b class="pl" id="eplan">Starter</b></small><b id="etot">40,20 €</b><s id="eold">67 €</s><small style="display:block;color:#a9a79f">на месец</small><small style="display:block;color:#a9a79f" id="eover"></small></div>
     </div>
-    <p class="fine">Цени с ДДС, след промоционална отстъпка от 40% върху основния план. Добавката от 7 € е фиксирана и не се намалява допълнително. 💯 30 дни гаранция за връщане на парите след първото плащане. SMS и WhatsApp съобщенията и разговорите на гласовия агент (под 0,60 € на разговор) се плащат отделно, според използването. След 30 ноември 2026 г. новите клиенти плащат редовните цени.</p>
+    <p class="fine">Цени с ДДС. До 30 ноември 2026 г., 23:59 ч. — промоционална отстъпка от 40% върху основния план; от 1 декември важат редовните цени 67 / 97 / 147 €. Добавката от 7 € за магазин е фиксирана, не се намалява и не увеличава лимита на поръчките. Лимитът е общ за всички магазини в плана; над него — 5 € за всеки допълнителни 250 поръчки. Разговорите на гласовия агент (0,60 € на разговор), SMS и WhatsApp съобщенията се плащат отделно, според използването. 💯 30 дни гаранция за връщане на парите след първото плащане.</p>
   </div>
 </section>
 
@@ -596,10 +604,11 @@ footer a{color:#e9e7df;text-decoration:none}
       <details class="rv"><summary>Работи ли с моя магазин?</summary><p>Ordyx работи с магазини и фунии в ConvertBuilder, с WooCommerce (плъгин) и със собствени сайтове (API). Shopify идва скоро. Ако стоката ти е при фулфилмънт склад, поръчките отиват при него, а той връща товарителницата — работиш с конкретен център? Пиши ни и ще направим интеграцията.</p></details>
       <details class="rv"><summary>Мога ли да пращам в чужбина?</summary><p>Скоро. Подготвяме 24 европейски държави с местните им куриери и наложен платеж — <a href="#europe">виж списъка</a>. Днес Ordyx прави товарителници за Еконт, Спиди и BOX NOW в България. Ако стоката ти е при фулфилмънт склад, който праща в чужбина, Ordyx вече може да му предава поръчките.</p></details>
       <details class="rv"><summary>Ползвам ли моя договор с Еконт и Спиди?</summary><p>Да. Товарителниците се правят с твоя профил в Еконт и с твоя договор със Спиди — цените и условията остават твоите.</p></details>
-      <details class="rv"><summary>Колко струва след пробния период?</summary><p>От 40,20 € на месец с ДДС за един магазин (Starter), 58,20 € за 3 магазина (Growth) и 88,20 € за 6 магазина (Business) — с 40% отстъпка за основатели, ако се регистрираш до 30 ноември 2026 г., заключена завинаги. След това редовните цени са 67 €, 97 € и 147 €.</p></details>
+      <details class="rv"><summary>Колко струва след пробния период?</summary><p>Starter (1 магазин, 300 поръчки) — 67 €, Growth (3 магазина, 1 000 поръчки) — 97 €, Business (6 магазина, 4 000 поръчки) — 147 € на месец, с ДДС. До 30 ноември 2026 г., 23:59 ч. са с 40% отстъпка: 40,20 €, 58,20 € и 88,20 €.</p></details>
       <details class="rv"><summary>Сигурни ли са данните на клиентите ми (GDPR)?</summary><p>Данните се пазят в Европейския съюз. Ключовете за куриерите и магазина са криптирани. Данните от незавършени поръчки се заличават автоматично след 30 дни. Ти виждаш само своите магазини.</p></details>
-      <details class="rv"><summary>Мога ли да имам няколко магазина?</summary><p>Да. Всички магазини са на един екран. Към всеки план добавяш магазин за 7 € на месец: Starter до 2 магазина, Growth до 5, Business — колкото ти трябват. С 2 магазина плащаш 47,20 €, а само за 11 € повече минаваш на Growth с 3 магазина и Growth Lab.</p></details>
-      <details class="rv"><summary>Как работи агентът за потвърждение?</summary><p>Около час след поръчката гласов агент се обажда на купувача (между 9 и 20 ч.), прочита името, продуктите и сумата и пита дали потвърждава. Отговорът се записва в Ordyx сам — потвърдена или отказана. Струва под 0,60 € на разговор.</p></details>
+      <details class="rv"><summary>Мога ли да имам няколко магазина?</summary><p>Да. Всички магазини са на един екран. Към всеки план добавяш магазин за 7 € на месец: Starter до 2 магазина, Growth до 5, Business — колкото ти трябват. Допълнителният магазин не увеличава лимита на поръчките — той е общ за магазините в плана. Над лимита плащаш 5 € за всеки 250 поръчки.</p></details>
+      <details class="rv"><summary>Как работи агентът за потвърждение?</summary><p>Около час след поръчката гласов агент се обажда на купувача (между 9 и 20 ч.), прочита името, продуктите и сумата и пита дали потвърждава. Отговорът се записва в Ordyx сам — потвърдена или отказана. Струва 0,60 € на разговор.</p></details>
+      <details class="rv"><summary>Какво е Ordyx Growth Lab?</summary><p>Премиум общност за онлайн търговци с практически обучения, работни материали и стратегии за повече продажби и по-висока печалба: експертни уъркшопи, записи и реални решения за развитието на онлайн магазина ти. Стойност 20 € на месец. Включен е в Growth и Business, а в Starter — при годишен абонамент.</p></details>
       <details class="rv"><summary>Има ли гаранция?</summary><p>Да. След пробните 14 дни, ако в първите 30 дни след първото плащане решиш, че Ordyx не е за теб, връщаме парите за абонамента — без въпроси.</p></details>
       <details class="rv"><summary>Какво става, ако спра?</summary><p>Махаш реда код и чекаутът е както преди. Поръчките и купувачите си ги изтегляш в Excel по всяко време.</p></details>
     </div>
@@ -785,36 +794,44 @@ footer a{color:#e9e7df;text-decoration:none}
   }
   ['r1', 'r2', 'r3', 'r4'].forEach(function (id) { $(id).addEventListener('input', calc); }); calc();
 
-  /* pricing: 3 plans + 7 € a store; founders −40% on the plan (the 7 € add-on is fixed), countdown, estimate */
+  /* pricing: 3 plans + 7 € a store; founders −40% on the plan until 30.11.2026 23:59 (the 7 € add-on is fixed); the order
+     limit is shared by the plan's stores and an added store does not raise it; 5 € for every 250 orders above it */
   var PLANS = [
-    { name: 'Starter', shops: 1, max: 2, price: 67 },
-    { name: 'Growth', shops: 3, max: 5, price: 97 },
-    { name: 'Business', shops: 6, max: Infinity, price: 147 },
+    { name: 'Starter', shops: 1, max: 2, orders: 300, price: 67 },
+    { name: 'Growth', shops: 3, max: 5, orders: 1000, price: 97 },
+    { name: 'Business', shops: 6, max: Infinity, orders: 4000, price: 147 },
   ];
-  var ADDON = 7;
+  var ADDON = 7, OVER_STEP = 250, OVER_EUR = 5;
   var r2 = function (v) { return Math.round(v * 100) / 100; };
-  var money = function (v) { return r2(v).toLocaleString('bg-BG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'; };
+  var money = function (v) { v = r2(v); return v % 1 ? v.toLocaleString('bg-BG', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €' : eur(v); };
+  var thousands = function (v) { return String(v).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }; // 1 000, the Bulgarian way
   function planPrice(p, f) { return f ? r2(p.price * 0.6) : p.price; }
-  function pick(n) { return PLANS.filter(function (p) { return n >= p.shops && n <= p.max; })[0] || PLANS[0]; }
-  function cost(n, f) { var p = pick(n); return { plan: p, total: r2(planPrice(p, f) + ADDON * Math.max(0, n - p.shops)), old: p.price + ADDON * Math.max(0, n - p.shops) }; }
+  function cost(p, n, orders, f) {
+    var extra = Math.max(0, n - p.shops), over = Math.ceil(Math.max(0, orders - p.orders) / OVER_STEP) * OVER_EUR;
+    return { plan: p, extra: extra, over: over, total: r2(planPrice(p, f) + ADDON * extra + over), old: p.price + ADDON * extra + over };
+  }
   function prices() {
     var f = founders();
     [].forEach.call(document.querySelectorAll('[data-old]'), function (el) { el.hidden = !f; });
     [].forEach.call(document.querySelectorAll('[data-pp]'), function (el) { el.textContent = money(planPrice(PLANS[+el.getAttribute('data-pp')], f)); });
-    var n = +$('e1').value, c = cost(n, f);
-    $('ev1').textContent = n;
-    $('eplan').textContent = c.plan.name + (n > c.plan.shops ? ' + ' + (n - c.plan.shops) : '');
-    $('etot').textContent = money(c.total); $('eold').textContent = f ? eur(c.old) : ''; $('eold').hidden = !f;
-    // one store below the next plan: what the step up costs and brings
-    var next = PLANS[PLANS.indexOf(c.plan) + 1], hint = '';
-    if (next && n === c.plan.max) {
-      var up = r2(planPrice(next, f) - c.total);
-      hint = 'Само за <b>' + eur(up) + ' повече</b> минаваш на ' + next.name + ': ' + next.shops + ' магазина' + (c.plan.name === 'Starter' ? ', по-висок лимит за поръчки и Growth Lab (20 €/мес.)' : '') + '.';
+    var n = +$('e1').value, orders = +$('e2').value;
+    $('ev1').textContent = n; $('ev2').textContent = thousands(orders);
+    // the cheapest plan that takes this many stores
+    var opts = PLANS.filter(function (p) { return n <= p.max; }).map(function (p) { return cost(p, n, orders, f); });
+    var best = opts.reduce(function (a, b) { return b.total < a.total ? b : a; });
+    $('eplan').textContent = best.plan.name + (best.extra ? ' + ' + best.extra : '');
+    $('etot').textContent = money(best.total); $('eold').textContent = f ? eur(best.old) : ''; $('eold').hidden = !f;
+    $('eover').textContent = best.over ? 'в т.ч. ' + eur(best.over) + ' за поръчки над ' + thousands(best.plan.orders) : '';
+    // the next plan up, when it is close: what the step costs and brings
+    var up = opts.filter(function (o) { return PLANS.indexOf(o.plan) === PLANS.indexOf(best.plan) + 1; })[0], hint = '';
+    if (up && up.total - best.total <= 20) {
+      hint = 'Само за <b>' + eur(r2(up.total - best.total)) + ' повече</b> минаваш на ' + up.plan.name + ': ' + up.plan.shops + ' магазина, ' +
+        thousands(up.plan.orders) + ' поръчки' + (best.plan.name === 'Starter' ? ' и Growth Lab (20 €/мес.)' : '') + '.';
     }
     $('ehint').innerHTML = hint;
     if (!f) $('count').hidden = true;
   }
-  $('e1').addEventListener('input', prices);
+  ['e1', 'e2'].forEach(function (id) { $(id).addEventListener('input', prices); });
   function countdown() {
     var ms = DEADLINE - Date.now();
     if (ms <= 0) { prices(); return; }
