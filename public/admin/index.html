@@ -3548,6 +3548,17 @@ tr.hl td{background:#fffbe6}
   /* ---- Наличности ---- */
   var inv = null, invFilter = 'all', invEditing = null, invAdjusting = null;
   var STATE_LABEL = { ok: 'в наличност', low: 'ниска наличност', out: 'изчерпан', untracked: 'не се следи' };
+  /** When the product runs out at the pace of the last 14 days. */
+  function runOutCell(p) {
+    if (p.digital) return '<span class="muted">дигитален</span>';
+    if (p.stock == null) return '<span class="muted">—</span>';
+    if (p.daysLeft == null) return '<span class="muted">няма продажби за 14 дни</span>';
+    if (p.daysLeft === 0) return '<span class="stock out">свършил</span>';
+    var d = p.runOut ? p.runOut.split('-').reverse().join('.') : '';
+    var cls = p.daysLeft <= 7 ? 'out' : p.daysLeft <= 21 ? 'low' : 'ok';
+    var pace = String(p.perDay).replace('.', ',');
+    return '<span class="stock ' + cls + '">~' + p.daysLeft + ' ' + (p.daysLeft === 1 ? 'ден' : 'дни') + '</span><div class="muted">до ' + esc(d) + ' · ' + esc(pace) + ' бр./ден</div>';
+  }
   function invCall(body, query) {
     return fetch(withShop(API + 'inventory' + (query || '')), { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
       .then(function (r) {
@@ -3568,7 +3579,7 @@ tr.hl td{background:#fffbe6}
       return (invFilter === 'all' || p.state === invFilter) && (!term || p.name.toLowerCase().indexOf(term) >= 0 || (p.sku || '').toLowerCase().indexOf(term) >= 0);
     });
     if (!list.length) { $('invTable').innerHTML = '<tbody><tr><td class="empty">Няма намерени продукти.</td></tr></tbody>'; return; }
-    $('invTable').innerHTML = '<thead><tr><th>Продукт</th><th>SKU</th><th>Наличност</th><th>Праг</th><th>Продадени (30 дни)</th><th>Себестойност</th><th></th></tr></thead><tbody>' +
+    $('invTable').innerHTML = '<thead><tr><th>Продукт</th><th>SKU</th><th>Наличност</th><th>Праг</th><th>Продадени (30 дни)</th><th title="По темпото на продажбите от последните 14 дни">Ще свърши</th><th>Себестойност</th><th></th></tr></thead><tbody>' +
       list.map(function (p) {
         var i = inv.products.indexOf(p);
         var stock = p.stock == null ? '<span class="muted">не се следи</span>' : '<span class="stock ' + p.state + '">' + p.stock + '</span><div class="muted">' + STATE_LABEL[p.state] + '</div>';
@@ -3577,6 +3588,7 @@ tr.hl td{background:#fffbe6}
           : '<button type="button" data-inv-edit="' + i + '">Редактирай</button><button type="button" data-inv-adj="' + i + '">Корекция</button><button type="button" data-inv-hist="' + i + '">История</button>';
         return '<tr><td data-label="Продукт"><b>' + esc(p.name) + '</b></td><td data-label="SKU">' + (esc(p.sku) || '<span class="muted">—</span>') + '</td>' +
           '<td data-label="Наличност">' + stock + '</td><td data-label="Праг">' + p.lowStock + '</td><td data-label="Продадени (30 дни)">' + p.sold30 + '</td>' +
+          '<td data-label="Ще свърши">' + runOutCell(p) + '</td>' +
           '<td data-label="Себестойност">' + esc(money(p.unitCost, 'EUR')) + '</td><td><div class="rowbtns">' + btns + '</div></td></tr>';
       }).join('') + '</tbody>';
   }

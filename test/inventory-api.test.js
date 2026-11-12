@@ -29,7 +29,8 @@ test('create, edit, adjust and history through the admin API', async () => {
   assert.equal(res.statusCode, 200);
   res = await call({ headers });
   assert.deepEqual(json(res).cards, { products: 1, totalStock: 14, low: 0, out: 0 });
-  assert.deepEqual(json(res).products[0], { name: 'Книга', sku: 'BK-1', stock: 14, lowStock: 3, unitCost: 4.2, sold30: 0, state: 'ok' });
+  assert.deepEqual(json(res).products[0], { name: 'Книга', sku: 'BK-1', stock: 14, lowStock: 3, unitCost: 4.2, digital: false, sold30: 0, state: 'ok',
+    sold14: 0, perDay: null, daysLeft: null, runOut: null });
   res = await call({ url: `/api/admin/inventory?history=${encodeURIComponent('Книга')}`, headers });
   assert.deepEqual(json(res).moves.map((m) => [m.qty, m.note]), [[-1, 'Ръчно задаване'], [5, 'Доставка: от печатница'], [10, 'Начална наличност']]);
   res = await post({ action: 'nope' });

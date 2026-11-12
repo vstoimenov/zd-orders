@@ -159,3 +159,26 @@ test('deleting an order gives its stock back in the same step; history says why 
   assert.deepEqual(notes, ['2 Изтрита поръчка', '-2 Поръчка', '2 Отказана поръчка', '-2 Поръчка', '2 Върната поръчка', '-2 Поръчка', '10 Начална наличност']);
   assert.equal(await deleteOrderRestoringStock(q, a.id), false);
 });
+
+test('run-out forecast: days left and the date at the pace of the last 14 days; none without sales or for digital', async () => {
+  await saveProduct(q, { name: 'Книга', stock: 30 }, { create: true });
+  await saveProduct(q, { name: 'Гривна', stock: 5 }, { create: true });
+  await saveProduct(q, { name: 'План', stock: 100 }, { create: true });
+  await q(`update zd.product_costs set digital = true where name = 'План'`);
+  for (const ago of [1, 3, 5, 20]) { // 3 in the last 14 days (2 each) + one older that does not count
+    const o = await order([{ name: 'Книга', qty: 2, price: 25 }, { name: 'План', qty: 1, price: 0 }]);
+    await q(`update zd.orders set created_at = now() - make_interval(days => $2) where id = $1`, [o.id, ago]);
+  }
+  const c = await order([{ name: 'Книга', qty: 5, price: 60 }], { status: 'cancelled' }); // cancelled: not a sale
+  await q(`update zd.orders set status = 'cancelled' where id = $1`, [c.id]);
+  const byName = Object.fromEntries((await listInventory(q)).products.map((p) => [p.name, p]));
+  const book = byName['Книга'];
+  assert.equal(book.sold14, 6);
+  assert.equal(book.perDay, 0.43); // 6 / 14
+  assert.equal(book.daysLeft, 70); // 30 / (6/14)
+  const expect = new Date(Date.now() + 70 * 864e5).toLocaleDateString('sv', { timeZone: 'Europe/Sofia' });
+  assert.equal(book.runOut, expect);
+  assert.deepEqual([byName['Гривна'].daysLeft, byName['Гривна'].runOut], [null, null], 'no sales in 14 days: no forecast');
+  assert.equal(byName['План'].daysLeft, null, 'a digital product never runs out');
+  assert.equal(byName['План'].digital, true);
+});
