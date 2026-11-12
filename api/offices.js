@@ -2,7 +2,7 @@ import { getQuery } from '../lib/db.js';
 import { listOffices } from '../lib/catalog-repo.js';
 import { shopIdForHost } from '../lib/shops.js';
 import { getIntegration } from '../lib/integrations-repo.js';
-import { getCheckoutInfo } from '../lib/checkout-info.js';
+import { getCheckoutInfo, isDemoHost } from '../lib/checkout-info.js';
 import { send, searchParams } from '../lib/http.js';
 
 export default async function handler(req, res) {
@@ -29,8 +29,8 @@ export default async function handler(req, res) {
 
 /** BOX NOW lockers only for a shop that switched BOX NOW on in Ordyx (cached briefly so switching shows within minutes). */
 async function boxnowFor(q, host, res) {
-  const shopId = host ? await shopIdForHost(q, String(host).toLowerCase()) : null;
-  const on = shopId ? (await getIntegration(q, 'boxnow', shopId)).config.checkout === true : false;
+  const shopId = host && !isDemoHost(host) ? await shopIdForHost(q, String(host).toLowerCase()) : null;
+  const on = isDemoHost(host) || (shopId ? (await getIntegration(q, 'boxnow', shopId)).config.checkout === true : false);
   const answer = on ? { offices: await listOffices(q, 'boxnow'), enabled: true } : { offices: [], enabled: false };
   res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
   return answer;

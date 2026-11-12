@@ -150,7 +150,14 @@ section{padding:88px 0}
 .demo .grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:40px;align-items:start;margin-top:36px}
 .demo .lead{color:#c9c7bf}
 .co{background:#fff;color:var(--ink);border-radius:22px;padding:22px;box-shadow:0 30px 70px rgba(0,0,0,.4)}
-.co h4{margin:0 0 12px;font-size:15px}
+.co h4{margin:0;font-size:17px}
+.co-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.co-step{font-size:12px;font-weight:800;color:var(--muted);background:#f1f0ec;border-radius:999px;padding:3px 9px}
+.co-fake{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.co-f{border:1.5px solid #e8e2cf;border-radius:12px;padding:8px 12px;font-size:13px;color:var(--muted)}
+.co-f b{display:block;color:var(--ink);font-size:15px}
+.co-btn{width:100%;margin-top:12px;min-height:50px;border:0;border-radius:12px;background:var(--y);color:var(--ink);font:800 16px Manrope;cursor:pointer;box-shadow:0 5px 0 #c9a100}
+.co .zdo{margin:12px 0 0;font-family:inherit}
 .opt{display:flex;align-items:center;gap:10px;padding:13px 14px;margin:0 0 8px;border:1.5px solid #e8e2cf;border-radius:12px;cursor:pointer;font-size:15px;background:#fff;width:100%;font:inherit;text-align:left}
 .opt.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
 .opt .dot{width:18px;height:18px;border-radius:50%;border:2px solid #bbb;flex:none}
@@ -163,6 +170,7 @@ section{padding:88px 0}
 .res button:hover,.res button:focus{background:var(--ysoft)}
 .res button small{display:block;color:var(--muted)}
 .picked{margin-top:12px;padding:12px 14px;border-radius:12px;background:#e7f6ec;color:#14532d;font-weight:700;font-size:14px}
+.picked.warn{background:#fff3cd;color:#6b4e00}
 .flow{display:flex;flex-direction:column;gap:10px}
 .fstep{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:16px;background:#1a1a17;border:1px solid #2a2a26;opacity:.45;transition:opacity .4s,border-color .4s,transform .4s}
 .fstep.on{opacity:1;border-color:var(--y);transform:translateX(6px)}
@@ -249,6 +257,22 @@ input[type=range]{width:100%;accent-color:var(--ink);height:28px}
 .out .line{display:flex;justify-content:space-between;border-top:1px solid #2a2a26;padding-top:10px;font-size:15px}
 @media (max-width:860px){.calc{grid-template-columns:1fr}}
 /* compare */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:36px}
+.ba-col{border-radius:24px;padding:24px;border:1px solid var(--line)}
+.ba-before{background:#ecebe5}
+.ba-after{background:var(--ink);color:#fff;border-color:var(--ink)}
+.ba-h{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.ba-h b{font:700 19px Unbounded}
+.ba-tag{width:max-content;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:#fff;color:var(--muted)}
+.ba-after .ba-tag{background:var(--y);color:var(--ink)}
+.ba ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.ba li{position:relative;padding-left:34px}
+.ba li b{display:block;font-size:15.5px}
+.ba li span{display:block;font-size:14px;color:var(--muted);margin-top:2px}
+.ba-after li span{color:#bdbbb3}
+.ba li::before{content:"";position:absolute;left:0;top:2px;width:22px;height:22px;border-radius:50%;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M205.66 194.34a8 8 0 0 1-11.32 11.32L128 139.31l-66.34 66.35a8 8 0 0 1-11.32-11.32L116.69 128 50.34 61.66a8 8 0 0 1 11.32-11.32L128 116.69l66.34-66.35a8 8 0 0 1 11.32 11.32L139.31 128Z' fill='%23b42318'/%3E%3C/svg%3E") center/12px no-repeat}
+.ba-after li::before{background:var(--y) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'%3E%3Cpath d='M104 192a8 8 0 0 1-5.66-2.34l-56-56a8 8 0 0 1 11.32-11.32L104 172.69 202.34 74.34a8 8 0 0 1 11.32 11.32l-104 104A8 8 0 0 1 104 192Z' fill='%230d0d0c'/%3E%3C/svg%3E") center/13px no-repeat}
+@media (max-width:760px){.ba{grid-template-columns:1fr}}
 .cmp{width:100%;border-collapse:separate;border-spacing:0;margin-top:36px;background:#fff;border:1px solid var(--line);border-radius:22px;overflow:hidden}
 .cmp th,.cmp td{padding:15px 18px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top;font-size:15px}
 .cmp tr:last-child td{border-bottom:0}
@@ -491,7 +515,7 @@ footer a{color:#e9e7df;text-decoration:none}
 <div class="logos">
   <div class="wrap">
     <small>Работи с</small>
-    <span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>Еконт</span><span class="chip"><i class="lg" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.6 20.4 7.2v9.6L12 21.4 3.6 16.8V7.2z" fill="#e0234e" stroke="#e0234e" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 7.4 12 11.9l8-4.5M12 11.9v9" fill="none" stroke="#f7b6c5" stroke-width="1.3" stroke-linecap="round"/></svg></i>Спиди</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=boxnow.bg&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>BOX NOW</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=convertbuilder.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>ConvertBuilder</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=woocommerce.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>WooCommerce</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=shopify.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>Shopify</span><span class="chip"><i class="lg" aria-hidden="true"><img src="/logos/meta.svg" alt="" width="24" height="24" loading="lazy"></i>Meta Ads</span><span class="chip"><i class="lg" aria-hidden="true"><img src="/logos/whatsapp.svg" alt="" width="24" height="24" loading="lazy"></i>WhatsApp</span><span class="chip"><i class="lg" aria-hidden="true"><img src="/logos/googleads.svg" alt="" width="24" height="24" loading="lazy"></i>Google Ads <em>скоро</em></span><span class="chip"><i class="lg" aria-hidden="true"><img src="/logos/tiktok.svg" alt="" width="24" height="24" loading="lazy"></i>TikTok Ads <em>скоро</em></span>
+    <span class="chip"><i class="lg" aria-hidden="true"><img src="/logos/econt.svg" alt="" width="24" height="24" loading="lazy"></i>Еконт</span><span class="chip"><i class="lg" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.6 20.4 7.2v9.6L12 21.4 3.6 16.8V7.2z" fill="#e0234e" stroke="#e0234e" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 7.4 12 11.9l8-4.5M12 11.9v9" fill="none" stroke="#f7b6c5" stroke-width="1.3" stroke-linecap="round"/></svg></i>Спиди</span><span class="chip"><i class="lg" aria-hidden="true"><img src="/logos/boxnow.svg" alt="" width="24" height="24" loading="lazy"></i>BOX NOW</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=convertbuilder.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>ConvertBuilder</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=woocommerce.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>WooCommerce</span><span class="chip"><i class="lg" aria-hidden="true"><img src="https://www.google.com/s2/favicons?domain=shopify.com&amp;sz=128" alt="" width="24" height="24" loading="lazy" referrerpolicy="no-referrer"></i>Shopify</span><span class="chip"><i class="lg" aria-hidden="true"><img src="/logos/meta.svg" alt="" width="24" height="24" loading="lazy"></i>Meta Ads</span><span class="chip"><i class="lg" aria-hidden="true"><img src="/logos/whatsapp.svg" alt="" width="24" height="24" loading="lazy"></i>WhatsApp</span><span class="chip"><i class="lg" aria-hidden="true"><img src="/logos/googleads.svg" alt="" width="24" height="24" loading="lazy"></i>Google Ads</span><span class="chip"><i class="lg" aria-hidden="true"><img src="/logos/tiktok.svg" alt="" width="24" height="24" loading="lazy"></i>TikTok Ads</span>
   </div>
 </div>
 
@@ -529,24 +553,25 @@ footer a{color:#e9e7df;text-decoration:none}
   <div class="wrap">
     <span class="eyebrow rv" style="color:#a9a79f">Пробвай сега</span>
     <h2 class="h2 rv">Ето какво вижда твоят клиент в чекаута</h2>
-    <p class="lead rv">Това е истинската търсачка на Ordyx — с реалните офиси и автомати на Еконт и Спиди. Напиши град.</p>
+    <p class="lead rv">Това не е картинка — това е <b>истинският модул на Ordyx</b>, същият, който стои в магазините. Избери куриер, напиши град, избери офис.</p>
     <div class="grid">
       <div class="co rv" id="co">
-        <h4>Доставка</h4>
-        <button type="button" class="opt on" data-c="econt"><span class="dot"></span><span>До офис или автомат на <b>Еконт</b></span><span class="pr">4,07 €</span></button>
-        <button type="button" class="opt" data-c="speedy"><span class="dot"></span><span>До офис или автомат на <b>Спиди</b></span><span class="pr">Безплатна</span></button>
-        <label for="q" class="visually" style="display:block;font-weight:700;margin:12px 0 6px;font-size:14px">Търси офис по град или име</label>
-        <input id="q" class="search" type="search" placeholder="напр. Плевен, Варна, Младост…" autocomplete="off">
-        <div class="res" id="res" role="listbox" aria-label="Офиси"></div>
+        <div class="co-head"><span class="co-step">3 от 3</span><h4>Доставка и плащане</h4></div>
+        <div class="co-fake"><div class="co-f"><span>Име</span><b>Мария Иванова</b></div><div class="co-f"><span>Телефон</span><b>0888 123 456</b></div></div>
+        <div id="ordyxDemo" data-ordyx-picker data-type="all" data-host="ordyx.eu" data-delivery="#demoType"
+             data-prices='{"econt_office":"4,07 €","econt_address":"5,90 €","speedy_office":"4,50 €","speedy_address":"6,20 €","boxnow_locker":"2,99 €"}'></div>
+        <input type="hidden" id="demoType">
+        <div class="co-fake" style="margin-top:12px"><div class="co-f"><span>Плащане</span><b>Наложен платеж</b></div><div class="co-f"><span>Общо</span><b>28,28 €</b></div></div>
+        <button type="button" class="co-btn" id="demoOrder">Поръчай</button>
         <div class="picked" id="picked" hidden></div>
       </div>
       <div>
         <div class="flow" id="flow">
-          <div class="fstep on"><span class="n">1</span><div><b>Клиентът поръчва</b><span>избира офис или автомат на Еконт, Спиди или BOX NOW</span></div></div>
-          <div class="fstep"><span class="n">2</span><div><b>Поръчката влиза в Ordyx</b><span>проверка на телефона и известие на твоя телефон</span></div></div>
-          <div class="fstep"><span class="n">3</span><div><b>Клиентът потвърждава</b><span>личен линк по WhatsApp или SMS</span></div></div>
-          <div class="fstep"><span class="n">4</span><div><b>Товарителница с един клик</b><span>Еконт, Спиди или BOX NOW, PDF за печат</span></div></div>
-          <div class="fstep"><span class="n">5</span><div><b>Проследяване</b><span>доставена или върната — само; на 4-ия ден в офиса те подсеща да звъннеш</span></div></div>
+          <div class="fstep on"><span class="n">1</span><div><b>Клиентът поръчва</b><span>избира офис или автомат на Еконт, Спиди или BOX NOW — без да пише адрес</span></div></div>
+          <div class="fstep"><span class="n">2</span><div><b>Поръчката влиза в Ordyx</b><span>с точния офис; телефонът се проверява и получаваш известие</span></div></div>
+          <div class="fstep"><span class="n">3</span><div><b>Клиентът потвърждава</b><span>по WhatsApp, SMS или гласовия агент</span></div></div>
+          <div class="fstep"><span class="n">4</span><div><b>Товарителница с един клик</b><span>Еконт, Спиди или BOX NOW — без преписване</span></div></div>
+          <div class="fstep"><span class="n">5</span><div><b>Проследяване</b><span>доставена или върната — сама; на 4-ия ден в офиса те подсеща да звъннеш</span></div></div>
           <div class="fstep"><span class="n">6</span><div><b>Табло: чиста печалба</b><span>реклама, доставка, връщания, себестойност</span></div></div>
         </div>
       </div>
@@ -615,7 +640,7 @@ footer a{color:#e9e7df;text-decoration:none}
       <div class="fcard rv"><span class="logos-row"><span class="lg" title="WhatsApp"><img src="/logos/whatsapp.svg" alt="" width="34" height="34" loading="lazy"></span></span><h3>WhatsApp</h3><p>Съобщение „Потвърдете поръчката“ с бутони — едно докосване и поръчката е потвърдена. Напомняния за изоставени колички и кампании до твоите купувачи.</p></div>
       <div class="fcard rv"><span class="logos-row"><span class="lg" title="SMS"><svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true"><rect x="3" y="6" width="42" height="30" rx="9" fill="#0b6bcb"/><path d="M14 36l-2 8 10-8z" fill="#0b6bcb"/><text x="24" y="26.5" text-anchor="middle" font-family="Manrope,Arial,sans-serif" font-weight="800" font-size="13" fill="#fff">SMS</text></svg></span></span><h3>SMS</h3><p>Потвърждение с личен линк и SMS кампании до купувачите от твоите поръчки — с броя знаци и цената преди изпращане. <em class="soon">директно изпращане скоро</em></p></div>
       <div class="fcard rv"><span class="fi ico"><svg aria-hidden="true"><use href="#i-pin"/></svg></span><h3>Проследяване на пратката</h3><p>Купувачът има лична страница с поръчката и къде е пратката. Статусите от Еконт, Спиди и BOX NOW се обновяват сами — ти виждаш доставените и върнатите.</p></div>
-      <div class="fcard rv"><span class="logos-row"><span class="lg" title="Meta Ads"><img src="/logos/meta.svg" alt="" width="34" height="34" loading="lazy"></span><span class="lg" title="Google Ads"><img src="/logos/googleads.svg" alt="" width="34" height="34" loading="lazy"></span><span class="lg" title="TikTok Ads"><img src="/logos/tiktok.svg" alt="" width="34" height="34" loading="lazy"></span></span><h3>Реклами и източници</h3><p>Разходът от <b>Meta Ads</b> влиза в таблото: ROAS, CPA и печалба след реклама. Всяка поръчка показва откъде е дошла — Facebook, Instagram, Google, TikTok. <em class="soon">Google Ads и TikTok Ads скоро</em></p></div>
+      <div class="fcard rv"><span class="logos-row"><span class="lg" title="Meta Ads"><img src="/logos/meta.svg" alt="" width="34" height="34" loading="lazy"></span><span class="lg" title="Google Ads"><img src="/logos/googleads.svg" alt="" width="34" height="34" loading="lazy"></span><span class="lg" title="TikTok Ads"><img src="/logos/tiktok.svg" alt="" width="34" height="34" loading="lazy"></span></span><h3>Meta, Google и TikTok Ads</h3><p>Ordyx разпознава от коя реклама е дошла всяка поръчка — <b>Meta</b> (Facebook, Instagram), <b>Google Ads</b> и <b>TikTok Ads</b> — и ти показва поръчки, оборот и печалба по източник. Разходът от Meta Ads влиза в таблото автоматично: ROAS, CPA и печалба след реклама. За Google и TikTok въвеждаш разхода, а Ordyx го свързва с поръчките от тях.</p></div>
     </div>
   </div>
 </section>
@@ -672,22 +697,33 @@ footer a{color:#e9e7df;text-decoration:none}
 </section>
 
 <!-- COMPARE -->
-<section style="padding-top:0">
+<section style="padding-top:0" id="compare">
   <div class="wrap">
-    <span class="eyebrow rv">Днес срещу Ordyx</span>
-    <h2 class="h2 rv">Една система вместо пет раздела в браузъра</h2>
-    <table class="cmp rv">
-      <thead><tr><th></th><th>Днес</th><th>С Ordyx</th></tr></thead>
-      <tbody>
-        <tr><td>Избор на офис</td><td data-k="Избор на офис — днес">Клиентът пише на ръка, ти уточняваш по телефона</td><td data-k="С Ordyx">Списък с офиси и автомати в чекаута</td></tr>
-        <tr><td>Товарителници</td><td data-k="Товарителници — днес">Сайтът на куриера, поръчка по поръчка</td><td data-k="С Ordyx">Един клик, PDF за печат, статусът се следи сам</td></tr>
-        <tr><td>Потвърждение</td><td data-k="Потвърждение — днес">Обаждания, които никой не вдига</td><td data-k="С Ordyx">Личен линк по WhatsApp или SMS</td></tr>
-        <tr><td>Проверка на телефона</td><td data-k="Проверка — днес">Ръчно търсене, ако изобщо</td><td data-k="С Ordyx">Автоматично при всяка поръчка</td></tr>
-        <tr><td>Наличности</td><td data-k="Наличности — днес">Отделна таблица</td><td data-k="С Ordyx">Намаляват и се връщат сами</td></tr>
-        <tr><td>Печалба</td><td data-k="Печалба — днес">Отделен инструмент за статистика</td><td data-k="С Ordyx">Табло с реклама, доставка и връщания</td></tr>
-        <tr><td>Месечна сметка</td><td data-k="Месечна сметка — днес">3–4 отделни абонамента</td><td data-k="С Ordyx">Един</td></tr>
-      </tbody>
-    </table>
+    <span class="eyebrow rv">Преди и след</span>
+    <h2 class="h2 rv">Един ден от живота на магазина — без Ordyx и с Ordyx</h2>
+    <p class="lead rv">Същите поръчки. Същите куриери. Разликата е колко работа остава за теб.</p>
+    <div class="ba rv">
+      <div class="ba-col ba-before"><div class="ba-h"><span class="ba-tag">Без Ordyx</span><b>Ти вършиш всичко на ръка</b></div>
+        <ul>
+          <li><b>Клиентът пише „офиса до мола“.</b><span>Звъниш му, за да разбереш кой офис точно.</span></li>
+          <li><b>Отваряш сайта на куриера.</b><span>Преписваш име, телефон, офис — поръчка по поръчка.</span></li>
+          <li><b>Пращаш, без да знаеш дали ще вземе.</b><span>Част от пратките се връщат и плащаш доставка два пъти.</span></li>
+          <li><b>Наличностите са в таблица.</b><span>Броиш на ръка и често продаваш нещо, което го няма.</span></li>
+          <li><b>Печалбата е „горе-долу“.</b><span>Реклама, доставка, връщания — в три различни места.</span></li>
+          <li><b>Три абонамента за три неща.</b><span>Чекаут, съобщения, статистика — всяко отделно.</span></li>
+        </ul>
+      </div>
+      <div class="ba-col ba-after"><div class="ba-h"><span class="ba-tag">С Ordyx</span><b>Системата върши работата, ти решаваш</b></div>
+        <ul>
+          <li><b>Клиентът избира точния офис в чекаута.</b><span>От списък с всички офиси и автомати. Без обаждане.</span></li>
+          <li><b>Товарителницата е готова с един клик.</b><span>Данните са вече вътре. PDF за печат, статусът се следи сам.</span></li>
+          <li><b>Клиентът потвърждава преди да пратиш.</b><span>По WhatsApp, SMS или от гласовия агент. Телефонът се проверява автоматично.</span></li>
+          <li><b>Наличностите се броят сами.</b><span>Намаляват при поръчка, връщат се при отказ, казват кога ще свършат.</span></li>
+          <li><b>Печалбата е число, не усещане.</b><span>Реклама, доставка, връщания и себестойност — в едно табло, а Съветникът казва какво да промениш.</span></li>
+          <li><b>Един абонамент.</b><span>Всичко след „Поръчай“ — на едно място, в телефона ти.</span></li>
+        </ul>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -747,7 +783,7 @@ footer a{color:#e9e7df;text-decoration:none}
     </div>
     <div class="billtog" role="group" aria-label="Плащане"><button type="button" class="on" data-billing="monthly">Месечно</button><button type="button" data-billing="yearly">Годишно <span class="save" data-old>до −80%</span></button></div>
     <div class="plans">
-      <div class="plan"><h3>Starter</h3><div class="sub2">1 магазин · 300 поръчки на месец</div><div class="was" data-old><span class="disc" data-dsc>−40%</span><s data-reg="0">67 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="0">40,20 €</span><small data-per>/месец</small></div><div class="yr" data-alt="0"></div><div class="addon">+1 магазин за 7 €/мес.<small>до 2 магазина общо · лимитът на поръчките остава 300</small></div><ul><li><b>Ordyx Съветник</b> — какво да промениш днес и колко носи</li><li>чекаут с офиси и автомати на Еконт, Спиди и BOX NOW</li><li>товарителници с един клик и проследяване на пратката</li><li>потвърждение по WhatsApp, SMS и гласов агент (0,60 € на разговор)</li><li>проверка на телефона за некоректни клиенти</li><li>изоставени колички с напомняне</li><li>наличности с прогноза кога ще свършат</li><li>чиста печалба: реклама, доставка, връщания, себестойност</li><li>Meta Ads — ROAS и CPA в таблото</li><li>приложение и известия на телефона</li><li>Growth Lab — безплатно при годишен абонамент</li></ul><a class="btn" data-cta data-plan="starter" href="#">Започни безплатно</a></div>
+      <div class="plan"><h3>Starter</h3><div class="sub2">1 магазин · 300 поръчки на месец</div><div class="was" data-old><span class="disc" data-dsc>−40%</span><s data-reg="0">67 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="0">40,20 €</span><small data-per>/месец</small></div><div class="yr" data-alt="0"></div><div class="addon">+1 магазин за 7 €/мес.<small>до 2 магазина общо · лимитът на поръчките остава 300</small></div><ul><li><b>Ordyx Съветник</b> — какво да промениш днес и колко носи</li><li>чекаут с офиси и автомати на Еконт, Спиди и BOX NOW</li><li>товарителници с един клик и проследяване на пратката</li><li>потвърждение по WhatsApp, SMS и гласов агент (0,60 € на разговор)</li><li>проверка на телефона за некоректни клиенти</li><li>изоставени колички с напомняне</li><li>наличности с прогноза кога ще свършат</li><li>чиста печалба: реклама, доставка, връщания, себестойност</li><li>Meta, Google и TikTok Ads — поръчки и печалба по източник</li><li>приложение и известия на телефона</li><li>Growth Lab — безплатно при годишен абонамент</li></ul><a class="btn" data-cta data-plan="starter" href="#">Започни безплатно</a></div>
       <div class="plan star"><span class="badge"><svg aria-hidden="true"><use href="#i-star"/></svg>Най-популярен</span><h3>Growth</h3><div class="sub2">3 магазина · 1 000 поръчки на месец</div><div class="was" data-old><span class="disc" data-dsc>−40%</span><s data-reg="1">97 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="1">58,20 €</span><small data-per>/месец</small></div><div class="yr" data-alt="1"></div><div class="addon">+ до 2 магазина по 7 €/мес.<small>до 5 магазина общо · лимитът на поръчките остава 1 000</small></div><ul><li class="all">Всичко от Starter, плюс:</li><li><b>Growth Lab включен</b> — стойност 20 €/мес.</li><li>3 магазина на един екран</li><li>1 000 поръчки на месец</li></ul><a class="btn" data-cta data-plan="growth" href="#">Започни безплатно</a></div>
       <div class="plan"><h3>Business</h3><div class="sub2">6 магазина · 4 000 поръчки на месец</div><div class="was" data-old><span class="disc" data-dsc>−40%</span><s data-reg="2">147 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="2">88,20 €</span><small data-per>/месец</small></div><div class="yr" data-alt="2"></div><div class="addon">+7 € за всеки следващ магазин<small>без горна граница · лимитът на поръчките остава 4 000</small></div><ul><li class="all">Всичко от Growth, плюс:</li><li><b>Growth Lab включен</b> — стойност 20 €/мес.</li><li>6 магазина и 4 000 поръчки на месец</li><li>вход за всеки клиент</li><li>помощ при включването</li></ul><a class="btn" data-cta data-plan="business" href="#">Започни безплатно</a></div>
     </div>
@@ -835,6 +871,8 @@ footer a{color:#e9e7df;text-decoration:none}
 
 <div class="mcta" id="mcta"><a class="btn" data-cta href="#">Започни безплатно — 14 дни</a></div>
 
+<script>window.__zdoLogoBase = "https://app.ordyx.eu/logos/";</script>
+<script src="https://app.ordyx.eu/checkout.js" defer></script>
 <script src="/couriers-eu.js"></script>
 <script>
 (function () {
@@ -932,41 +970,26 @@ footer a{color:#e9e7df;text-decoration:none}
   [].forEach.call(document.querySelectorAll('.pcard'), function (c) { c.addEventListener('click', function () { c.classList.toggle('on'); }); });
 
   /* live checkout: real office search */
-  var courier = 'econt', cache = {}, flowTimer = null;
-  function norm(s) { return String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim(); }
-  function load(c) {
-    if (cache[c]) return Promise.resolve(cache[c]);
-    return fetch(API + '/api/offices?courier=' + c).then(function (r) { return r.json(); }).then(function (d) {
-      return (cache[c] = (d.offices || []).map(function (o) { o._n = norm(o.city + ' ' + o.name + ' ' + o.address); return o; }));
+  /* the real Ordyx checkout module (checkout.js) runs here as on a shop; a choice starts the flow on the right */
+  var flowTimer = null, demoChoice = null;
+  (function () {
+    var el = $('ordyxDemo'); if (!el) return;
+    var started = false;
+    function watch() {
+      var h = el.ordyxPicker; if (!h) { setTimeout(watch, 200); return; }
+      el.addEventListener('change', function () { var v = h.value(); if (v && (v.officeText || v.addressText)) { demoChoice = v; } });
+      el.addEventListener('click', function () { setTimeout(function () { var v = h.value(); if (v && (v.officeText || v.addressText)) demoChoice = v; }, 50); });
+    }
+    watch();
+    $('demoOrder').addEventListener('click', function () {
+      var h = el.ordyxPicker, v = h ? h.value() : null;
+      if (!v || !(v.officeText || v.addressText)) { $('picked').hidden = false; $('picked').className = 'picked warn'; $('picked').textContent = 'Първо избери офис, автомат или адрес — както би направил твоят клиент.'; return; }
+      $('picked').hidden = false; $('picked').className = 'picked';
+      $('picked').innerHTML = '✓ Поръчката влезе в Ordyx с <b>' + esc(v.officeText || v.addressText) + '</b>' + (v.officeId ? ' (' + esc(v.officeId) + ')' : '') + '<br><span style="font-weight:600">Точно това влиза в товарителницата — без звънене и без преписване.</span>';
+      if (!started) started = true;
+      runFlow();
     });
-  }
-  function search() {
-    var q = norm($('q').value);
-    if (q.length < 2) { $('res').innerHTML = ''; return; }
-    $('res').innerHTML = '<button type="button" disabled>Търсим…</button>';
-    load(courier).then(function (list) {
-      var words = q.split(' ');
-      var hits = list.filter(function (o) { return words.every(function (w) { return o._n.indexOf(w) !== -1; }); }).slice(0, 8);
-      $('res').innerHTML = hits.length ? hits.map(function (o, i) { return '<button type="button" role="option" data-i="' + list.indexOf(o) + '">' + (o.isAutomat ? '🔲 Автомат ' : '🏢 Офис ') + esc(o.name) + '<small>' + esc(o.city) + (o.address ? ' · ' + esc(o.address) : '') + '</small></button>'; }).join('') : '<button type="button" disabled>Няма офис с това име — пробвай с друг град</button>';
-    }).catch(function () { $('res').innerHTML = '<button type="button" disabled>Търсачката не се зареди — опитай пак</button>'; });
-  }
-  var qt;
-  $('q').addEventListener('input', function () { clearTimeout(qt); qt = setTimeout(search, 160); });
-  $('q').addEventListener('focus', function () { load(courier); });
-  [].forEach.call(document.querySelectorAll('.opt'), function (b) {
-    b.addEventListener('click', function () {
-      [].forEach.call(document.querySelectorAll('.opt'), function (x) { x.classList.toggle('on', x === b); });
-      courier = b.getAttribute('data-c'); $('picked').hidden = true; search();
-    });
-  });
-  $('res').addEventListener('click', function (e) {
-    var b = e.target.closest('button[data-i]'); if (!b) return;
-    var o = cache[courier][+b.getAttribute('data-i')];
-    $('picked').hidden = false;
-    $('picked').innerHTML = '✓ ' + (courier === 'econt' ? 'ЕКОНТ' : 'СПИДИ') + ' – ' + (o.isAutomat ? 'автомат ' : 'офис ') + esc(o.name) + ', ' + esc(o.city) + '<br><span style="font-weight:600">Точно това влиза в поръчката — без звънене.</span>';
-    $('res').innerHTML = '';
-    runFlow();
-  });
+  })();
   function runFlow() {
     var steps = document.querySelectorAll('.fstep'), i = 0;
     clearInterval(flowTimer);
