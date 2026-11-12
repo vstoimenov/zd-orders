@@ -31,11 +31,11 @@ beforeEach(async () => { q = await makeTestQuery(); setQueryForTests(q); resetSi
 test('the owner makes a registration link; with it anyone registers and is logged in with no shops', async () => {
   const code = await signupLink();
   assert.match(code, /^[A-Za-z0-9_-]{20,}$/);
-  assert.deepEqual(json(await call({ url: `/api/admin/signup?code=${code}` })), { ok: true });
+  assert.equal(json(await call({ url: `/api/admin/signup?code=${code}` })).ok, true);
   const res = await call({ method: 'POST', url: '/api/admin/signup', body: form(code) });
   assert.equal(res.statusCode, 200);
   const me = json(await call({ url: '/api/admin/me', cookie: cookieOf(res) }));
-  assert.deepEqual(me, { role: 'client', email: 'ivan@shop.bg', name: 'Иван Петров', plan: 'standard', freeUntil: null });
+  assert.deepEqual(me, { role: 'client', email: 'ivan@shop.bg', name: 'Иван Петров', plan: 'standard', freeUntil: null, subscription: null });
   assert.deepEqual(json(await call({ url: '/api/admin/shops', cookie: cookieOf(res) })).shops, []);
   const users = json(await call({ url: '/api/admin/users', cookie: owner })).users;
   assert.equal(users[0].email, 'ivan@shop.bg');
@@ -159,3 +159,28 @@ test('two registrations with one email at the same moment: one account, the othe
   assert.match(json(a.statusCode === 400 ? a : b).error, /вече е регистриран/);
 });
 
+
+test('the plan picked at registration: 14 days free, priced, shown to the client and to the owner, who marks the first payment', async () => {
+  const code = await signupLink();
+  const info = json(await call({ url: `/api/admin/signup?code=${code}` }));
+  assert.equal(info.foundersLeft, 20);
+  assert.equal(typeof info.launch, 'boolean');
+  assert.match(json(await call({ method: 'POST', url: '/api/admin/signup', body: form(code, { plan: 'pro' }) })).error, /план/);
+  const res = await call({ method: 'POST', url: '/api/admin/signup', body: form(code, { plan: 'growth', billing: 'yearly' }) });
+  assert.equal(res.statusCode, 200);
+  const sub = json(await call({ url: '/api/admin/me', cookie: cookieOf(res) })).subscription;
+  assert.deepEqual([sub.planName, sub.billing, sub.paidAt], ['Growth', 'yearly', null]);
+  assert.equal(sub.price, info.launch ? 232.8 : 1164);
+  assert.ok(Date.parse(sub.trialUntil) - Date.now() > 13.9 * 864e5);
+  let list = json(await call({ url: '/api/admin/users', cookie: owner }));
+  const u = list.users.find((x) => x.email === 'ivan@shop.bg');
+  assert.equal(u.subscription.plan, 'growth');
+  assert.deepEqual(list.founders, { left: 20, of: 20 });
+  const paid = json(await call({ method: 'POST', url: '/api/admin/users', cookie: owner, body: { action: 'sub_paid', id: u.id } })).subscription;
+  assert.equal(paid.founder, info.launch);
+  assert.ok(paid.paidAt);
+  const client = json(await call({ method: 'POST', url: '/api/admin/users', cookie: cookieOf(res), body: { action: 'sub_paid', id: u.id } }));
+  assert.ok(client.error, 'only the owner marks a payment');
+  list = json(await call({ url: '/api/admin/users', cookie: owner }));
+  assert.equal(list.founders.left, info.launch ? 19 : 20);
+});
