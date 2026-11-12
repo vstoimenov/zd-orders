@@ -53,8 +53,26 @@ section{padding:88px 0}
 /* hero */
 .hero{background:var(--ink);color:#fff;padding:56px 0 0;overflow:hidden;position:relative}
 .hero .wrap{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:40px;align-items:center}
-.who{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:#1f1f1c;color:#e9e7df;font-weight:600;font-size:14px;margin-bottom:22px}
-.who i{width:8px;height:8px;border-radius:50%;background:var(--y);box-shadow:0 0 0 4px rgba(255,210,31,.2)}
+/* the tagline lands like a rubber stamp: falls from above, hits, the page shudders, an ink ring spreads; it stays a little crooked */
+.who{position:relative;display:inline-flex;align-items:center;gap:10px;padding:9px 16px;border-radius:10px;color:var(--y);font:800 13px/1.35 Manrope,sans-serif;
+  letter-spacing:.06em;text-transform:uppercase;border:2.5px solid var(--y);box-shadow:inset 0 0 0 2px #0d0d0c,inset 0 0 0 3.5px rgba(255,210,31,.55);
+  background:rgba(255,210,31,.06);margin-bottom:24px;transform:rotate(-2.5deg);transform-origin:50% 60%;
+  animation:stamp .62s cubic-bezier(.2,.7,.25,1.25) .45s both}
+.who::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;mix-blend-mode:multiply;opacity:.55;
+  background:radial-gradient(circle at 12% 30%,#0d0d0c 0 1.5px,transparent 2px),radial-gradient(circle at 37% 78%,#0d0d0c 0 1px,transparent 1.6px),
+    radial-gradient(circle at 63% 22%,#0d0d0c 0 1.8px,transparent 2.4px),radial-gradient(circle at 81% 70%,#0d0d0c 0 1.2px,transparent 1.8px),
+    radial-gradient(circle at 92% 35%,#0d0d0c 0 1px,transparent 1.5px),radial-gradient(circle at 50% 55%,#0d0d0c 0 .8px,transparent 1.2px)}
+.who::after{content:"";position:absolute;inset:-6px;border-radius:14px;border:3px solid var(--y);opacity:0;pointer-events:none;animation:inkring .7s ease-out .9s both}
+.who i{width:9px;height:9px;border-radius:50%;background:var(--y);box-shadow:0 0 0 4px rgba(255,210,31,.22);flex:none}
+@keyframes stamp{
+  0%{opacity:0;transform:translateY(-70px) scale(2.4) rotate(-14deg);filter:blur(6px)}
+  55%{opacity:1;filter:blur(0)}
+  72%{transform:translateY(0) scale(.9) rotate(-1deg)}
+  86%{transform:scale(1.05) rotate(-3.2deg)}
+  100%{opacity:1;transform:rotate(-2.5deg)}}
+@keyframes inkring{0%{opacity:.75;transform:scale(.92)}100%{opacity:0;transform:scale(1.35)}}
+@keyframes thud{0%,100%{transform:none}20%{transform:translate(0,3px)}40%{transform:translate(-2px,-1px)}60%{transform:translate(2px,1px)}80%{transform:translate(-1px,0)}}
+.hero .wrap>div:first-child{animation:thud .32s ease-out .9s both}
 .hero h1{font-size:clamp(32px,4.4vw,52px);font-weight:600;overflow-wrap:break-word}
 .hero h1 em{font-style:normal;color:var(--y)}
 .hero p.sub{font-size:clamp(17px,1.7vw,20px);color:#c9c7bf;margin:20px 0 28px;max-width:560px}
