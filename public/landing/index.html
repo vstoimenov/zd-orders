@@ -259,11 +259,19 @@ input[type=range]{width:100%;accent-color:var(--ink);height:28px}
 @media (max-width:900px){.eu{grid-template-columns:1fr}.eu-panel{position:static}}
 @media (max-width:600px){.eu-list{padding:16px;gap:14px}.eu-reg div{gap:6px}.eu-c{min-height:34px;padding:0 10px 0 8px;gap:5px;font-size:13px}.eu-c .fl{font-size:15px}.eu-panel{padding:18px}.eu-panel h3{font-size:21px}}
 /* story */
-.story{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center;margin-top:30px;background:#fff;border:1px solid var(--line);border-radius:26px;padding:30px}
+.story{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:start;margin-top:30px;background:#fff;border:1px solid var(--line);border-radius:26px;padding:30px}
 .story .mark{width:86px;height:86px;border-radius:22px;background:var(--ink);display:grid;place-items:center}
 .story .mark svg{width:54px;height:54px}
 .story p{margin:0 0 10px;font-size:17px}
+.story .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:6px 0 18px}
+.story .stats div{background:var(--ink);color:#fff;border-radius:18px;padding:16px 18px}
+.story .stats b{display:block;font:700 clamp(26px,3.4vw,38px)/1.05 Unbounded;color:var(--y)}
+.story .stats span{font-size:14px;color:#c9c7bf;font-weight:600}
+.story .claim{font-weight:800;font-size:18px;border-left:4px solid var(--y);padding:4px 0 4px 14px;margin:16px 0}
+.story .tag3{display:flex;flex-wrap:wrap;gap:8px;margin:0}
+.story .tag3 span{background:var(--ysoft);color:#3d3300;font-weight:800;border-radius:999px;padding:6px 14px;font-size:15px}
 @media (max-width:640px){.story{grid-template-columns:1fr}}
+@media (max-width:640px){.story .stats{grid-template-columns:1fr}}
 /* pricing */
 .pricing{background:var(--ink);color:#fff}
 .count{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px 22px;margin:30px auto 0;padding:16px 20px;border-radius:18px;background:var(--y);color:var(--ink);max-width:860px;text-align:center}
@@ -628,15 +636,19 @@ footer a{color:#e9e7df;text-decoration:none}
 </section>
 
 <!-- STORY -->
-<section style="padding-top:0">
+<section style="padding-top:0" id="why">
   <div class="wrap">
-    <span class="eyebrow rv">Защо Ordyx</span>
-    <h2 class="h2 rv">Направено от търговец за търговци</h2>
+    <span class="eyebrow rv">Защо Ordyx?</span>
+    <h2 class="h2 rv">Създаден от търговци за търговци</h2>
     <div class="story rv">
       <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 60,24 40,24" fill="#FFEFA8"/><polygon points="70,4 96,30 76,40 60,24" fill="#FFDD4D"/><polygon points="96,30 96,70 76,60 76,40" fill="#F4C200"/><polygon points="96,70 70,96 60,76 76,60" fill="#D6A400"/><polygon points="70,96 30,96 40,76 60,76" fill="#C49500"/><polygon points="30,96 4,70 24,60 40,76" fill="#DDAC00"/><polygon points="4,70 4,30 24,40 24,60" fill="#FFD21F"/><polygon points="4,30 30,4 40,24 24,40" fill="#FFF3C7"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="#FFD84A"/><polygon points="40,24 60,24 67,31 33,31" fill="#FFF0B3" opacity=".7"/><g fill="none" stroke="#0d0d0c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40"/></g></svg></div>
       <div>
-        <p>Ordyx започна като инструмент за собствения ни онлайн магазин. Писахме офисите на ръка, преписвахме товарителници и не знаехме колко ни остава след рекламата.</p>
-        <p style="color:var(--muted);margin:0">Направихме си едно място за всичко след „Поръчай“. Сега го даваме и на други магазини — със същите неща, които ползваме всеки ден.</p>
+        <p>Зад Ordyx стои реален опит в електронната търговия:</p>
+        <div class="stats"><div><b>9</b><span>европейски пазара</span></div><div><b>60+</b><span>продукта</span></div><div><b>2 млн. €+</b><span>оборот през 2025 г.</span></div></div>
+        <p>Познаваме предизвикателствата от първа ръка — ръчна обработка на поръчки, товарителници, множество системи и липса на ясна представа за реалната печалба.</p>
+        <p>Затова създадохме Ordyx — платформа, която обединява всичко след бутона „Поръчай“. От управлението на поръчките до проследяването на разходите и реалната печалба на бизнеса.</p>
+        <p class="claim">Не просто софтуер, а решение, създадено от реалния опит в управлението и развитието на онлайн магазини.</p>
+        <p class="tag3"><span>По-малко ръчна работа.</span><span>Повече контрол.</span><span>Повече време за растеж.</span></p>
       </div>
     </div>
   </div>
