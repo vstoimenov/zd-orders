@@ -397,8 +397,8 @@ tr.hl td{background:#fffbe6}
     <input type="password" id="suPw" placeholder="Парола (поне 8 знака)" autocomplete="new-password" minlength="8" required>
     <input type="password" id="suPw2" placeholder="Повторете паролата" autocomplete="new-password" minlength="8" required>
     <div id="suPlanBox" hidden>
-      <div style="font-weight:700;margin:4px 0 8px">Изберете план — 14 дни безплатно</div>
-      <div class="subill" role="group" aria-label="Плащане"><button type="button" class="on" data-bill="monthly">Месечно</button><button type="button" data-bill="yearly">Годишно</button></div>
+      <div style="font-weight:700;margin:4px 0 8px">Изберете план: 14 дни безплатно или Free завинаги</div>
+      <div class="subill" id="suBill" role="group" aria-label="Плащане"><button type="button" class="on" data-bill="monthly">Месечно</button><button type="button" data-bill="yearly">Годишно</button></div>
       <div class="suplans" id="suPlans" style="margin-top:8px"></div>
       <div class="suterms" id="suTerms" style="margin-top:8px"></div>
     </div>
@@ -3146,7 +3146,8 @@ tr.hl td{background:#fffbe6}
     var left = st.trialUntil ? Math.ceil((new Date(st.trialUntil) - Date.now()) / 864e5) : 0;
     var up = ' <a href="#profile">Премини на платен план →</a>';
     bar.className = 'planbar' + (st.blocked ? ' stop' : st.warn ? ' warn' : '');
-    if (st.trial) bar.innerHTML = '🎁 Пробваш <b>' + esc(st.chosen) + '</b> — остават <b>' + left + (left === 1 ? ' ден' : ' дни') + '</b>. После минаваш на безплатния план (1 магазин, 50 поръчки на месец), ако не платиш.' + up;
+    if (st.trial && st.wantsFree) bar.innerHTML = '🎁 Първите 14 дни имаш <b>Starter</b> безплатно: остават <b>' + left + (left === 1 ? ' ден' : ' дни') + '</b>. После оставаш на Free (1 магазин, 50 поръчки на месец), без плащане.' + up;
+    else if (st.trial) bar.innerHTML = '🎁 Пробваш <b>' + esc(st.chosen) + '</b> — остават <b>' + left + (left === 1 ? ' ден' : ' дни') + '</b>. После минаваш на безплатния план (1 магазин, 50 поръчки на месец), ако не платиш.' + up;
     else {
       var pct = Math.min(100, Math.round(st.used / st.limit * 100));
       bar.innerHTML = '<span><b>Free план</b> · ' + st.used + ' от ' + st.limit + ' поръчки този месец</span><span class="meter"><i style="width:' + pct + '%"></i></span>' +
@@ -3158,6 +3159,10 @@ tr.hl td{background:#fffbe6}
   /** the plan: name, period, price; the free days left before the first payment */
   function subLine(s) {
     if (!s) return '';
+    if (s.wantsFree && !s.paidAt) {
+      var fd = s.trialUntil ? Math.ceil((new Date(s.trialUntil) - Date.now()) / 864e5) : 0;
+      return '<span class="sub">Free' + (fd > 0 ? ' · Starter безплатно още ' + fd + (fd === 1 ? ' ден' : ' дни') : ' · 0 €') + '</span>';
+    }
     var trial = !s.paidAt && s.trialUntil ? Math.ceil((new Date(s.trialUntil) - Date.now()) / 864e5) : null;
     return '<span class="sub">' + esc(s.planName) + ' · ' + esc(money(s.price, 'EUR')) + (s.billing === 'yearly' ? '/год.' : '/мес.') +
       (trial != null ? (trial > 0 ? ' · безплатно още ' + trial + (trial === 1 ? ' ден' : ' дни') : ' · чака плащане') : '') + '</span>';
@@ -3165,6 +3170,7 @@ tr.hl td{background:#fffbe6}
   /** the owner's view of a client's subscription */
   function subCell(s) {
     if (!s) return '<span class="muted">—</span>';
+    if (s.wantsFree && !s.paidAt) return '<b>Free</b> · без плащане' + (s.trialUntil && new Date(s.trialUntil) > new Date() ? '<br><span class="badge">Starter безплатно до ' + esc(day(s.trialUntil)) + '</span>' : '');
     var out = '<b>' + esc(s.planName) + '</b> · ' + (s.billing === 'yearly' ? 'годишно' : 'месечно') + '<br>' + esc(money(s.price, 'EUR')) +
       (s.launch && s.price !== s.regular ? ' <span class="muted">(редовна ' + esc(money(s.regular, 'EUR')) + ')</span>' : '');
     if (s.founder) out += '<br><span class="badge ok">⭐ Founders 20</span>';
@@ -3181,6 +3187,13 @@ tr.hl td{background:#fffbe6}
       if (!s) {
         $('pfPlan').innerHTML = '<h2 style="margin-top:0">План</h2><p class="muted">Още нямате избран план. Пишете ни и ще го настроим.</p>';
         $('pfNext').innerHTML = '';
+      } else if (s.wantsFree && !s.paidAt) {
+        var tr = s.trialUntil && new Date(s.trialUntil) > new Date();
+        $('pfPlan').innerHTML = '<div class="muted" style="font-weight:700;letter-spacing:.08em;font-size:12px;text-transform:uppercase">Вашият план</div>' +
+          '<div class="pf-name"><b>Free</b>' + (tr ? '<span class="badge ok">Starter безплатно до ' + esc(day(s.trialUntil)) + '</span>' : '') + '</div>' +
+          '<div class="pf-price">0 € <small>завинаги</small></div>' +
+          '<ul class="pf-list"><li><b>1 магазин</b>в Free</li><li><b>50 поръчки</b>на месец</li>' + (tr ? '<li><b>До ' + esc(day(s.trialUntil)) + '</b>всичко от Starter: 300 поръчки, анализ на печалбата, гласов агент</li>' : '') + '</ul>';
+        $('pfNext').innerHTML = '<h2 style="margin-top:0">Следващо плащане</h2><p>Няма. Free е безплатен.</p><p class="pf-terms">Искате повече поръчки, магазини или анализа на печалбата? Пишете ни и ще ви преминем на Starter, Growth или Business.</p>';
       } else {
         var per = s.billing === 'yearly' ? 'година' : 'месец';
         var state = s.paidAt ? '<span class="badge ok">активен</span>' : (s.trialUntil && new Date(s.trialUntil) > new Date() ? '<span class="badge ok">безплатно до ' + esc(day(s.trialUntil)) + '</span>' : '<span class="badge bad">чака плащане</span>');
@@ -3199,7 +3212,7 @@ tr.hl td{background:#fffbe6}
       $('pfPays').innerHTML = d.payments.length ? '<thead><tr><th>Дата</th><th>Период</th><th>Сума</th><th>Фактура</th></tr></thead><tbody>' + d.payments.map(function (p) {
         var inv = p.invoiceUrl ? '<a href="' + esc(p.invoiceUrl) + '" target="_blank" rel="noopener noreferrer">' + (p.invoiceNo ? '№ ' + esc(p.invoiceNo) : 'Отвори') + ' ↗</a>' : (p.invoiceNo ? '№ ' + esc(p.invoiceNo) : '<span class="muted">—</span>');
         return '<tr><td data-label="Дата">' + esc(dayBg(p.paidAt)) + '</td><td data-label="Период">' + (p.periodFrom ? esc(dayBg(p.periodFrom)) + ' – ' + esc(dayBg(p.periodTo)) : '—') + '</td><td data-label="Сума"><b>' + esc(money(p.amount, 'EUR')) + '</b></td><td data-label="Фактура">' + inv + '</td></tr>';
-      }).join('') + '</tbody>' : '<tbody><tr><td class="muted">Още няма плащания. Първото е след безплатните 14 дни — ще получите линк.</td></tr></tbody>';
+      }).join('') + '</tbody>' : '<tbody><tr><td class="muted">Още няма плащания.' + (s && !(s.wantsFree && !s.paidAt) ? ' Първото е след безплатните 14 дни — ще получите линк.' : '') + '</td></tr></tbody>';
       var pt = d.partner;
       $('pfPartner').hidden = !pt;
       if (pt) $('pfPartner').innerHTML = '<h2 style="margin-top:0">🤝 Партньорска програма — ' + Math.round(pt.rate * 100) + '%</h2>' +
@@ -4059,19 +4072,25 @@ tr.hl td{background:#fffbe6}
     { key: 'starter', name: 'Starter', what: '1 магазин · 300 поръчки на месец', monthly: 67, launchMonthly: 40.2, launchYearly: 321.6 },
     { key: 'growth', name: 'Growth', what: '3 магазина · 1 000 поръчки · Growth Lab', monthly: 97, launchMonthly: 58.2, launchYearly: 465.6 },
     { key: 'business', name: 'Business', what: '6 магазина · 4 000 поръчки · Growth Lab', monthly: 147, launchMonthly: 88.2, launchYearly: 705.6 },
+    { key: 'free', name: 'Free', what: '1 магазин · 50 поръчки на месец · първите 14 дни Starter', free: true },
   ];
   var suPick = { plan: 'growth', billing: 'monthly' }, suInfo = { launch: true, foundersLeft: 20 };
   function eurS(v) { v = Math.round(v * 100) / 100; var t = v.toFixed(v % 1 ? 2 : 0).split('.'); return t[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (t[1] ? ',' + t[1] : '') + ' €'; }
-  function planPrice(p, billing) { return suInfo.launch ? (billing === 'yearly' ? p.launchYearly : p.launchMonthly) : (billing === 'yearly' ? p.monthly * 12 : p.monthly); }
+  function planPrice(p, billing) { if (p.free) return 0; return suInfo.launch ? (billing === 'yearly' ? p.launchYearly : p.launchMonthly) : (billing === 'yearly' ? p.monthly * 12 : p.monthly); }
   function renderPlans() {
     [].forEach.call(document.querySelectorAll('[data-bill]'), function (b) { b.classList.toggle('on', b.getAttribute('data-bill') === suPick.billing); });
     var per = suPick.billing === 'yearly' ? 'година' : 'месец';
     $('suPlans').innerHTML = PLAN_LIST.map(function (p) {
       return '<label class="suplan' + (p.key === suPick.plan ? ' on' : '') + '"><input type="radio" name="suPlan" value="' + p.key + '"' + (p.key === suPick.plan ? ' checked' : '') + '>' +
         '<span><b>' + p.name + '</b>' + (p.key === 'growth' ? ' <span class="badge ok">най-популярен</span>' : '') + '<small>' + p.what + '</small></span>' +
-        '<span class="pr">' + eurS(planPrice(p, suPick.billing)) + '<small> / ' + per + '</small></span></label>';
+        '<span class="pr">' + (p.free ? '0 €<small> завинаги</small>' : eurS(planPrice(p, suPick.billing)) + '<small> / ' + per + '</small>') + '</span></label>';
     }).join('');
     var p = PLAN_LIST.filter(function (x) { return x.key === suPick.plan; })[0], price = eurS(planPrice(p, suPick.billing));
+    $('suBill').hidden = !!p.free; // Free has nothing to pay, monthly or yearly
+    if (p.free) {
+      $('suTerms').innerHTML = '<b>Условия:</b> първите 14 дни ползвате Starter безплатно, с всичко в него. После оставате на Free: 1 магазин, до 50 поръчки на месец, без плащане и без карта. На платен план минавате, когато поискате.';
+      return;
+    }
     // the renewal terms, plainly, before anything is paid
     $('suTerms').innerHTML = '<b>Условия:</b> 14 дни безплатно, без карта. След това плащате по линк, който ще ви изпратим — или оставате на безплатния план Free (1 магазин, до 50 поръчки на месец). ' + (suInfo.launch
       ? (suPick.billing === 'yearly'

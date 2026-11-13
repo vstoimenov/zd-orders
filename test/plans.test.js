@@ -69,3 +69,15 @@ test('a plan chosen after the launch is never a founder; cancelling ends the lau
   assert.deepEqual([s.price, s.founder, s.launch], [1164, false, false]);
   assert.equal(await foundersLeft(q), 19, 'the place of one of the first 20 who paid is not given again');
 });
+
+test('Free at registration: 14 days on Starter, then Free with no payment due; a paid plan chosen later clears it', async () => {
+  const { planState } = await import('../lib/plan-gate.js');
+  const id = await user();
+  let s = await chooseSubscription(q, id, { plan: 'free', billing: 'yearly' }, BEFORE);
+  assert.deepEqual([s.plan, s.billing, s.wantsFree, s.trialUntil], ['starter', 'monthly', true, '2026-12-14T21:59:00.000Z']);
+  assert.equal((await planState(q, { id }, new Date('2026-12-01T10:00:00Z'))).effective, 'starter');
+  const after = await planState(q, { id }, new Date('2026-12-20T10:00:00Z'));
+  assert.deepEqual([after.effective, after.limit, after.wantsFree], ['free', 50, true]);
+  s = await chooseSubscription(q, id, { plan: 'growth', billing: 'monthly' }, AFTER);
+  assert.deepEqual([s.plan, s.wantsFree], ['growth', false]);
+});
