@@ -5,7 +5,7 @@ import { fetchBoxnowLockers } from '../../lib/boxnow.js';
 import { replaceOffices, replaceCities } from '../../lib/catalog-repo.js';
 import { send, safeEqual, searchParams } from '../../lib/http.js';
 import { autoCallDue } from '../../lib/voice-auto.js';
-import { cbConfig, syncOrders } from '../../lib/cb-sync.js';
+import { cbConfig, syncOrders, pullCbStock } from '../../lib/cb-sync.js';
 import { metaConfig, syncMeta } from '../../lib/meta.js';
 import { listShops } from '../../lib/shops.js';
 import { anonymiseOld } from '../../lib/abandoned.js';
@@ -68,6 +68,16 @@ export default async function handler(req, res) {
     } catch (err) {
       console.error('[cron] convertbuilder sync failed', shop.domain, err);
       (result.convertbuilder ??= {})[shop.domain] = { error: err.message };
+    }
+  }
+  // stock from ConvertBuilder products, where the site's API has them (a site that said no is not asked again; the button still asks)
+  for (const shop of shops) {
+    try {
+      const cfg = await cbConfig(q, shop.id);
+      if (cfg && cfg.stockApi !== false) (result.cbStock ??= {})[shop.domain] = await pullCbStock(q, shop.id);
+    } catch (err) {
+      console.error('[cron] convertbuilder stock failed', shop.domain, err);
+      (result.cbStock ??= {})[shop.domain] = { error: err.message };
     }
   }
   // anonymous visit statistics are kept 400 days

@@ -47,6 +47,9 @@ class Ordyx_Settings {
           <?php if (isset($_GET['pinged']) && is_array($ping)): ?>
             <div class="notice <?php echo $ping['ok'] ? 'notice-success' : 'notice-error'; ?>"><p><?php echo esc_html($ping['text']); ?></p></div>
           <?php endif; ?>
+          <?php $stock = get_option('ordyx_last_stock'); if (isset($_GET['stock']) && is_array($stock)): ?>
+            <div class="notice <?php echo $stock['ok'] ? 'notice-success' : 'notice-error'; ?>"><p><?php echo esc_html($stock['text']); ?></p></div>
+          <?php endif; ?>
           <?php if (isset($_GET['resent'])): ?><div class="notice notice-info"><p>Изпратено отново.</p></div><?php endif; ?>
           <?php if ($mode === 'orders'): ?>
             <div class="notice notice-warning inline"><p><b>Режим „Само поръчките“:</b> поръчките влизат в Ordyx, но клиентите ви избират офис със сегашния ви плъгин и куриерът/офисът се избира ръчно при товарителницата.
@@ -71,6 +74,15 @@ class Ordyx_Settings {
               <?php wp_nonce_field('ordyx_ping'); ?><input type="hidden" name="action" value="ordyx_ping">
               <?php submit_button('Провери връзката', 'secondary', 'submit', false); ?>
               <?php if (is_array($ping)): ?><span style="margin-left:10px"><?php echo esc_html(($ping['ok'] ? '✓ ' : '✕ ') . $ping['text']); ?> · <?php echo esc_html(wp_date('d.m.Y H:i', $ping['at'])); ?></span><?php endif; ?>
+            </form>
+          <?php endif; ?>
+          <?php if ($key !== ''): ?>
+            <h2>Наличности</h2>
+            <p class="description">Ordyx взима наличностите от WooCommerce: при всяка промяна и веднъж на ден. Важи за продуктите с „Manage stock“ (Inventory).</p>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin:10px 0 20px">
+              <?php wp_nonce_field('ordyx_stock'); ?><input type="hidden" name="action" value="ordyx_stock">
+              <?php submit_button('Изпрати наличностите сега', 'secondary', 'submit', false); ?>
+              <?php if (is_array($stock)): ?><span style="margin-left:10px"><?php echo esc_html(($stock['ok'] ? '✓ ' : '✕ ') . $stock['text']); ?> · <?php echo esc_html(wp_date('d.m.Y H:i', $stock['at'])); ?></span><?php endif; ?>
             </form>
           <?php endif; ?>
           <h2>Поръчки, които не стигнаха до Ordyx</h2>

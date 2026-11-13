@@ -2,8 +2,8 @@
 /**
  * Plugin Name: Ordyx за WooCommerce
  * Plugin URI: https://ordyx.eu
- * Description: Избор на офис или автомат на Еконт, Спиди и BOX NOW в чекаута; поръчките влизат в Ordyx; товарителницата и проследяването се връщат в WooCommerce.
- * Version: 1.0.0
+ * Description: Избор на офис или автомат на Еконт, Спиди и BOX NOW в чекаута; поръчките влизат в Ordyx; товарителницата и проследяването се връщат в WooCommerce; наличностите отиват в Ordyx.
+ * Version: 1.1.0
  * Author: Ordyx
  * Author URI: https://ordyx.eu
  * Requires at least: 6.4
@@ -14,7 +14,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('ORDYX_VERSION', '1.0.0');
+define('ORDYX_VERSION', '1.1.0');
 define('ORDYX_API_VERSION', 1);
 define('ORDYX_FILE', __FILE__);
 define('ORDYX_DIR', plugin_dir_path(__FILE__));
@@ -27,6 +27,7 @@ require_once ORDYX_DIR . 'includes/class-ordyx-shipping.php';
 require_once ORDYX_DIR . 'includes/class-ordyx-checkout.php';
 require_once ORDYX_DIR . 'includes/class-ordyx-blocks.php';
 require_once ORDYX_DIR . 'includes/class-ordyx-sender.php';
+require_once ORDYX_DIR . 'includes/class-ordyx-stock.php';
 require_once ORDYX_DIR . 'includes/class-ordyx-rest.php';
 require_once ORDYX_DIR . 'includes/class-ordyx-updater.php';
 
@@ -50,10 +51,12 @@ add_action('plugins_loaded', function () {
     Ordyx_Checkout::init();
     Ordyx_Blocks::init();
     Ordyx_Sender::init();
+    Ordyx_Stock::init();
     Ordyx_Rest::init();
     Ordyx_Updater::init();
 });
 
 register_deactivation_hook(__FILE__, function () {
     wp_clear_scheduled_hook('ordyx_retry');
+    wp_clear_scheduled_hook('ordyx_stock_daily');
 });
