@@ -77,7 +77,7 @@ form#inviteForm{min-height:100vh;display:flex;align-items:center;justify-content
 .linkbox input{flex:1;font-size:12px}
 .shopchecks{display:flex;flex-direction:column;gap:8px;margin:6px 0 16px}
 .shopchecks label{display:flex;gap:10px;align-items:center;font-weight:600}
-.prioflt{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:-4px 0 12px}
+.prioflt[hidden]{display:none}.prioflt{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:-4px 0 12px}
 .prioflt .muted{font-size:13px;font-weight:700;margin-right:2px}
 .pdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:0}
 .pdot.p1,.prio.p1{--pc:#9aa0a6}.pdot.p2,.prio.p2{--pc:#2f80ed}.pdot.p3,.prio.p3{--pc:#f2994a}.pdot.p4,.prio.p4{--pc:#e5484d}
@@ -1331,7 +1331,8 @@ tr.hl td{background:#fffbe6}
   $('fPills').insertAdjacentHTML('beforebegin', '<div id="scanBar" hidden></div>');
   /* priority: 1 нисък · 2 среден · 3 висок · 4 критичен — a filter next to the pills and a selector on each order */
   var PRIO = [[1, 'Нисък'], [2, 'Среден'], [3, 'Висок'], [4, 'Критичен']];
-  $('fPills').insertAdjacentHTML('afterend', '<div class="prioflt" id="prioFlt"><span class="muted">Приоритет:</span><button type="button" class="pill on" data-prio="">Всички</button>' +
+  var SHOW_PRIO = false; // hidden for now (the owner sees no use yet); true brings back the filter and the selector
+  $('fPills').insertAdjacentHTML('afterend', '<div class="prioflt" id="prioFlt"' + (SHOW_PRIO ? '' : ' hidden') + '><span class="muted">Приоритет:</span><button type="button" class="pill on" data-prio="">Всички</button>' +
     PRIO.map(function (x) { return '<button type="button" class="pill" data-prio="' + x[0] + '"><i class="pdot p' + x[0] + '"></i>' + x[1] + '</button>'; }).join('') + '</div>');
   $('prioFlt').addEventListener('click', function (e) {
     var b = e.target.closest('[data-prio]'); if (!b) return;
@@ -1340,6 +1341,7 @@ tr.hl td{background:#fffbe6}
     clearFocus(); load(1);
   });
   function prioSelect(o, i) {
+    if (!SHOW_PRIO) return '';
     return '<select class="prio p' + (o.priority || 1) + '" data-prio-set="' + i + '" title="Приоритет">' + PRIO.map(function (x) { return '<option value="' + x[0] + '"' + (x[0] === (o.priority || 1) ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select>';
   }
   function setToPack(n) { $('toPackPill').textContent = '📦 За пакетиране' + (n != null ? ': ' + n : ''); }
