@@ -99,3 +99,41 @@ test('the shop changes it from the admin', async () => {
   assert.equal(res.statusCode, 200, res.body);
   assert.equal(json(res).order.officeId, 'econt:1127');
 });
+
+const shipped = async () => { const id = await order(); await q(`update zd.orders set status = 'shipped', waybill_number = '1055', waybill_at_office_since = now() where id = $1::uuid`, [id]); return id; };
+const api = async (body, method = 'POST') => { const res = fakeRes(); await ordersApi(fakeReq({ method, url: `/api/admin/orders?shop=${SHOP}`, headers: { cookie: `zdo_admin=${signSession('secret')}` }, body: JSON.stringify(body) }), res); return res; };
+
+test('„Пренасочи“: a parcel on its way goes to another office of its courier; it stays shipped, shows where it was, leaves „at the office“', async () => {
+  const id = await shipped();
+  await q(`insert into zd.offices (id, courier, code, name, city, is_automat) values ('econt:2000', 'econt', '2000', 'Варна Център', 'Варна', false)`);
+  let res = await api({ action: 'redirect', id, courier: 'econt', officeId: 'econt:2000' });
+  assert.equal(res.statusCode, 200, res.body);
+  const o = json(res).order;
+  assert.equal(o.status, 'shipped'); assert.equal(o.officeText, 'Варна Център, Варна (2000)');
+  assert.equal(o.redirect.from, 'Стар офис'); assert.equal((await row(id)).waybill_at_office_since, null);
+  // a second redirect keeps the first place it came from
+  res = await api({ action: 'redirect', id, courier: 'econt', city: 'Русе', addressText: 'ул. Борисова 5' });
+  assert.equal(json(res).order.redirect.from, 'Стар офис');
+  assert.equal((await row(id)).delivery_type, 'econt_address');
+  assert.match(json(await api({ action: 'redirect', id, courier: 'speedy', officeId: 'speedy:79' })).error, /Еконт/, 'not to another courier');
+  const notYet = await order();
+  assert.match(json(await api({ action: 'redirect', id: notYet, courier: 'econt', officeId: 'econt:1127' })).error, /изпратена пратка/);
+  const list = await listOrdersOf('redirected');
+  assert.deepEqual(list, [id]);
+});
+
+const listOrdersOf = async (status, extra = '') => { const res = fakeRes(); await ordersApi(fakeReq({ url: `/api/admin/orders?shop=${SHOP}&status=${status}${extra}`, headers: { cookie: `zdo_admin=${signSession('secret')}` } }), res); return json(res).orders.map((o) => o.id); };
+
+test('priority 1–4 and its filter; „Унищожена“ is cancelled, apart from „Отказана“, and a status set by hand undoes it', async () => {
+  const a = await order(), b = await order();
+  assert.equal((await api({ action: 'priority', id: a, priority: 4 })).statusCode, 200);
+  assert.equal((await api({ action: 'priority', id: a, priority: 7 })).statusCode, 400);
+  assert.deepEqual(await listOrdersOf('', '&priority=4'), [a]);
+  assert.equal((await row(b)).priority, 1);
+  assert.equal((await api({ action: 'destroy', id: b })).statusCode, 200);
+  assert.equal((await row(b)).status, 'cancelled');
+  assert.deepEqual(await listOrdersOf('destroyed'), [b]);
+  assert.deepEqual(await listOrdersOf('cancelled'), []);
+  await api({ id: b, status: 'confirmed' }, 'PATCH');
+  assert.equal((await row(b)).destroyed_at, null);
+});

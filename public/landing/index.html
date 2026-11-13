@@ -899,8 +899,16 @@ footer a{color:#e9e7df;text-decoration:none}
 
   // a plan's button opens the registration with that plan (and monthly or yearly) picked
   var billing = 'monthly';
+  // a partner's link (ordyx.eu/?ref=CODE): remembered 60 days on this device and carried to the registration
+  var REF = '';
+  try {
+    var refQ = new URLSearchParams(location.search).get('ref');
+    if (refQ && /^[a-z0-9]{6,16}$/i.test(refQ)) localStorage.setItem('ordyxRef', JSON.stringify({ c: refQ.toLowerCase(), t: Date.now() }));
+    var refS = JSON.parse(localStorage.getItem('ordyxRef') || 'null');
+    if (refS && Date.now() - refS.t < 60 * 864e5) REF = refS.c;
+  } catch (e) { /* private mode: only this visit */ var rq = new URLSearchParams(location.search).get('ref'); if (rq && /^[a-z0-9]{6,16}$/i.test(rq)) REF = rq.toLowerCase(); }
   // the plans' buttons open the registration with that plan; every other „Започни безплатно“ leads to the price list first
-  function ctas() { [].forEach.call(document.querySelectorAll('[data-cta]'), function (a) { var pl = a.getAttribute('data-plan'); a.href = pl ? SIGNUP + '&plan=' + pl + (billing === 'yearly' ? '&billing=yearly' : '') : '#prices'; }); }
+  function ctas() { [].forEach.call(document.querySelectorAll('[data-cta]'), function (a) { var pl = a.getAttribute('data-plan'); a.href = pl ? SIGNUP + '&plan=' + pl + (billing === 'yearly' ? '&billing=yearly' : '') + (REF ? '&ref=' + REF : '') : '#prices'; }); }
   ctas();
 
   /* integrations: N slots, each showing one chip; every 2.4 s one slot (in turn) swaps to the next logo not shown elsewhere */

@@ -77,6 +77,15 @@ form#inviteForm{min-height:100vh;display:flex;align-items:center;justify-content
 .linkbox input{flex:1;font-size:12px}
 .shopchecks{display:flex;flex-direction:column;gap:8px;margin:6px 0 16px}
 .shopchecks label{display:flex;gap:10px;align-items:center;font-weight:600}
+.prioflt{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:-4px 0 12px}
+.prioflt .muted{font-size:13px;font-weight:700;margin-right:2px}
+.pdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:0}
+.pdot.p1,.prio.p1{--pc:#9aa0a6}.pdot.p2,.prio.p2{--pc:#2f80ed}.pdot.p3,.prio.p3{--pc:#f2994a}.pdot.p4,.prio.p4{--pc:#e5484d}
+.pdot{background:var(--pc)}
+select.prio{display:block;margin-top:6px;font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;border:1.5px solid var(--pc);color:var(--pc);background:#fff;width:auto;min-height:0}
+.stmark{display:inline-block;margin-top:6px;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px}
+.st-redirected{background:#e8f0fe;color:#1a56c4}
+.st-destroyed{background:#f1f0ec;color:#6b6960}
 .badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;background:#f1f0ec;color:var(--muted)}
 .badge.ok{background:#e8f6ec;color:var(--ok)}.badge.bad{background:#fdecee;color:var(--bad)}
 form#login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--side);padding:16px}
@@ -706,6 +715,7 @@ tr.hl td{background:#fffbe6}
         <div class="panel" id="pfNext"></div>
       </div>
       <div class="panel"><h2 style="margin-top:0">Плащания и фактури</h2><table id="pfPays"></table></div>
+      <div class="panel pfpartner" id="pfPartner"></div>
       <div class="panel"><h2 style="margin-top:0">Акаунт</h2><div id="pfAcc"></div>
         <p class="muted" style="margin:12px 0 0">Смяна на плана, годишно плащане или прекратяване — пишете ни на <a href="mailto:stoimenov@profitbrand.online?subject=Ordyx%20—%20моят%20план">stoimenov@profitbrand.online</a>.</p></div>
     </section>
@@ -723,6 +733,7 @@ tr.hl td{background:#fffbe6}
         <div class="linkbox"><input type="text" id="ofLink" readonly value="https://ordyx.eu/oferta"><button type="button" class="ghost" id="ofCopy">Копирай</button></div>
         <div class="actions"><button type="button" class="ghost" id="ofToggle">Изключи офертата</button><a class="ghost btnlink" href="/brand/qr-oferta.png" download>⬇ QR код (PNG)</a><a class="ghost btnlink" href="/brand/qr-oferta.svg" download>⬇ QR код (SVG)</a><span class="muted" id="ofInfo"></span></div>
       </div>
+      <div class="panel" id="ptPanel" hidden><h2 style="margin-top:0">🤝 Партньори (50%)</h2><div class="muted" style="margin-bottom:10px">Клиенти, които са довели други. Комисионата е 50% от всяко плащане на доведения клиент.</div><table id="ptTable"></table></div>
       <div class="muted" id="cFounders" style="margin:0 0 8px;font-weight:700"></div>
       <div class="panel"><table id="cTable"></table></div>
     </section>
@@ -983,6 +994,7 @@ tr.hl td{background:#fffbe6}
           <label>Пощенски код<input type="text" id="dlPost" maxlength="12"></label>
           <label style="grid-column:1/-1">Адрес<input type="text" id="dlAddress" maxlength="200"></label>
         </div>
+        <div class="tip" id="dlRedirNote" hidden style="margin-bottom:12px"></div>
         <div class="actions"><button type="button" class="primary" id="dlSave">Запази</button><span class="muted" id="dlErr"></span></div>
       </div>
     </div>
@@ -1295,11 +1307,26 @@ tr.hl td{background:#fffbe6}
   $('fPills').innerHTML = [['', 'Всички']].concat(STATUSES).map(function (s) {
     return '<button type="button" class="pill' + (s[0] === '' ? ' on' : '') + '" data-pill="' + s[0] + '">' + s[1] + '</button>';
   }).join('') + '<button type="button" class="pill" data-pill="at_office" id="atOfficePill" hidden>📦 Чакат в офис</button>' +
+    '<button type="button" class="pill" data-pill="redirected" title="Пратки, пренасочени към друг офис или адрес по пътя">↪ Пренасочени</button>' +
+    '<button type="button" class="pill" data-pill="destroyed" title="Фалшиви, тестови или дублирани поръчки — не се броят никъде">🗑 Унищожени</button>' +
     '<button type="button" class="pill" data-pill="to_pack" id="toPackPill">📦 За пакетиране</button>' +
     '<button type="button" class="pill" data-pill="problems" id="problemsPill" hidden title="В офиса от 4-ия ден или без движение при куриера 3+ дни">⚠️ Проблемни</button>' +
     '<button type="button" class="ghost" id="refreshWb" title="Пита куриерите за всички изпратени пратки сега">↻ Обнови статусите</button>' +
     '<button type="button" class="ghost" id="slipAll" title="Лист за всяка поръчка за пакетиране, с QR код">🖨 Листове за пакетиране</button>';
   $('fPills').insertAdjacentHTML('beforebegin', '<div id="scanBar" hidden></div>');
+  /* priority: 1 нисък · 2 среден · 3 висок · 4 критичен — a filter next to the pills and a selector on each order */
+  var PRIO = [[1, 'Нисък'], [2, 'Среден'], [3, 'Висок'], [4, 'Критичен']];
+  $('fPills').insertAdjacentHTML('afterend', '<div class="prioflt" id="prioFlt"><span class="muted">Приоритет:</span><button type="button" class="pill on" data-prio="">Всички</button>' +
+    PRIO.map(function (x) { return '<button type="button" class="pill" data-prio="' + x[0] + '"><i class="pdot p' + x[0] + '"></i>' + x[1] + '</button>'; }).join('') + '</div>');
+  $('prioFlt').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-prio]'); if (!b) return;
+    current.priority = b.getAttribute('data-prio');
+    [].forEach.call($('prioFlt').querySelectorAll('[data-prio]'), function (x) { x.classList.toggle('on', x === b); });
+    clearFocus(); load(1);
+  });
+  function prioSelect(o, i) {
+    return '<select class="prio p' + (o.priority || 1) + '" data-prio-set="' + i + '" title="Приоритет">' + PRIO.map(function (x) { return '<option value="' + x[0] + '"' + (x[0] === (o.priority || 1) ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select>';
+  }
   function setToPack(n) { $('toPackPill').textContent = '📦 За пакетиране' + (n != null ? ': ' + n : ''); }
   /** shipped parcels that need a look; the pill stays while it is the chosen filter */
   function setProblems(n) {
@@ -1380,11 +1407,12 @@ tr.hl td{background:#fffbe6}
   });
 
   function snapshot() {
-    current = { status: $('fStatus').value, from: $('fFrom').value, to: $('fTo').value, q: $('fQ').value.trim() };
+    current = { status: $('fStatus').value, from: $('fFrom').value, to: $('fTo').value, q: $('fQ').value.trim(), priority: current.priority || '' };
   }
   function filters() {
     var p = new URLSearchParams();
     if (current.status) p.set('status', current.status);
+    if (current.priority) p.set('priority', current.priority);
     if (current.from) p.set('from', current.from);
     if (current.to) p.set('to', current.to);
     if (current.q) p.set('q', current.q);
@@ -1501,12 +1529,15 @@ tr.hl td{background:#fffbe6}
           (o.cbCheck === 'pending' ? '<span class="dup" title="Модулът я изпрати, но ConvertBuilder още не я показва. Докато не я потвърди, няма автоматично съобщение, известие, наличности и не влиза в таблото. Ако е истинска, ще се оправи сама до минути.">непотвърдена от магазина</span>' : '') +
           '<br><a href="tel:' + esc(o.phone) + '">' + esc(o.phone) + '</a>' + (o.email ? '<br><span class="muted">' + esc(o.email) + '</span>' : '') +
           '<br>' + nkBadge(o) + (currentShop === 'all' && shopById(o.shopId) ? '<br><span class="shoptag">' + esc(shopById(o.shopId).display) + '</span>' : '') + '</td>' +
-        '<td data-label="Доставка">' + esc(o.officeText) + '<br><span class="muted">' + esc(o.city) + (o.postCode ? ' ' + esc(o.postCode) : '') + '</span></td>' +
+        '<td data-label="Доставка">' + esc(o.officeText) + (o.redirect ? '<br><span class="muted" style="text-decoration:line-through">' + esc(o.redirect.from) + '</span>' : '') + '<br><span class="muted">' + esc(o.city) + (o.postCode ? ' ' + esc(o.postCode) : '') + '</span></td>' +
         '<td data-label="Артикули">' + items + '</td>' +
         '<td data-label="Сума"><b>' + o.total.toFixed(2) + ' ' + esc(o.currency) + '</b></td>' +
-        '<td data-label="Статус"><select data-status="' + i + '">' + opts + '</select></td>' +
+        '<td data-label="Статус">' + (o.destroyed ? '<span class="stmark st-destroyed">🗑 Унищожена</span>' : '<select data-status="' + i + '">' + opts + '</select>') +
+          (o.redirect && o.status === 'shipped' ? '<span class="stmark st-redirected" title="Пренасочена от: ' + esc(o.redirect.from) + '">↪ Пренасочена</span>' : '') + prioSelect(o, i) + '</td>' +
         '<td>' + packedCell(o, i) + (['new', 'confirmed'].indexOf(o.status) >= 0 && !o.shipment && !o.waybillState && !(o.fulfilment && o.fulfilment.sentAt) ? '<button type="button" data-dl="' + i + '" title="Друг офис, автомат или адрес">📍 Доставка</button>' : '') + (o.deliveryChangedBy === 'customer' ? '<span class="tag" title="Клиентът смени доставката от страницата на поръчката">📍 сменена от клиента</span>' : '') + invoiceCell(o, i) + (['new', 'confirmed'].indexOf(o.status) >= 0 && o.phone ? '<button type="button" data-confirm="' + i + '">💬 Потвърди</button>' + (DEMO || role !== 'owner' ? '' : '<button type="button" data-call="' + i + '" title="Гласов агент звъни на клиента и пита дали потвърждава">📞 Потвърди</button>') : '') + confirmBadge(o) +
-          shipmentCell(o, i) + '<button type="button" data-slip="' + i + '" title="Лист за пакетиране с QR код">🖨 Лист</button><button type="button" data-copy="' + i + '">Копирай за товарителница</button><button type="button" class="del" data-del="' + i + '" title="Изтрий поръчката от системата">Изтрий</button></td>' +
+          shipmentCell(o, i) + (o.status === 'shipped' && o.shipment && o.shipment.number && !o.shipment.demo ? '<button type="button" data-redir="' + i + '" title="Към друг офис, автомат или адрес на същия куриер — преди пратката да се върне">↪ Пренасочи</button>' : '') +
+          (['new', 'confirmed', 'cancelled'].indexOf(o.status) >= 0 && !o.destroyed && !o.shipment ? '<button type="button" data-destroy="' + i + '" title="Фалшива, тестова или дублирана поръчка — не се брои никъде">🗑 Унищожи</button>' : '') +
+          '<button type="button" data-slip="' + i + '" title="Лист за пакетиране с QR код">🖨 Лист</button><button type="button" data-copy="' + i + '">Копирай за товарителница</button><button type="button" class="del" data-del="' + i + '" title="Изтрий поръчката от системата">Изтрий</button></td>' +
         '</tr>';
     }).join('') || '<tr><td colspan="7" class="muted">Няма поръчки.</td></tr>';
     renderScanBar();
@@ -1659,6 +1690,15 @@ tr.hl td{background:#fffbe6}
   $('prev').addEventListener('click', function () { load(page - 1); });
   $('next').addEventListener('click', function () { load(page + 1); });
   $('rows').addEventListener('change', function (e) {
+    var pi = e.target.getAttribute('data-prio-set');
+    if (pi != null) {
+      var po = orders[pi], prevP = po.priority || 1, nextP = Number(e.target.value);
+      e.target.className = 'prio p' + nextP;
+      fetch(withShop(API + 'orders'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'priority', id: po.id, priority: nextP }) })
+        .then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } if (!r.ok) throw new Error(r.status); po.priority = nextP; })
+        .catch(function (err) { e.target.value = prevP; e.target.className = 'prio p' + prevP; if (err.message !== 'auth') alert('Приоритетът не беше записан. Опитайте пак.'); });
+      return;
+    }
     var i = e.target.getAttribute('data-status');
     if (i == null) return;
     var o = orders[i], prev = o.status, next = e.target.value;
@@ -1694,6 +1734,15 @@ tr.hl td{background:#fffbe6}
     if (btn.getAttribute('data-confirm') != null) { openConfirm(orders[btn.getAttribute('data-confirm')]); return; }
     if (btn.getAttribute('data-call') != null) { voiceCall(orders[btn.getAttribute('data-call')], btn); return; }
     if (btn.getAttribute('data-dl') != null) { openDelivery(orders[btn.getAttribute('data-dl')]); return; }
+    if (btn.getAttribute('data-redir') != null) { openDelivery(orders[btn.getAttribute('data-redir')], true); return; }
+    if (btn.getAttribute('data-destroy') != null) {
+      var dz = orders[btn.getAttribute('data-destroy')];
+      if (!window.confirm('Да маркирам ли поръчката на ' + (dz.name || 'клиент без име') + ' като „Унищожена“?\n\nЗа фалшиви, тестови или дублирани поръчки: отива при отказаните, не се брои в оборота и статистиката, а наличността се връща. Може да я върнете, като ѝ смените статуса.')) return;
+      busy(btn, fetch(withShop(API + 'orders'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'destroy', id: dz.id }) })
+        .then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } if (!r.ok) throw new Error(r.status); }))
+        .then(function () { load(page); }).catch(function (err) { if (err.message !== 'auth') alert('Не стана. Опитайте пак.'); });
+      return;
+    }
     if (btn.getAttribute('data-track') != null) { openConfirm(orders[btn.getAttribute('data-track')], 'track'); return; }
     if (btn.getAttribute('data-wb') != null) { openWaybill(orders[btn.getAttribute('data-wb')]); return; }
     if (btn.getAttribute('data-wbrelease') != null) {
@@ -2742,18 +2791,26 @@ tr.hl td{background:#fffbe6}
       else dlPicker.setType(t);
     }).catch(function () { $('dlErr').textContent = 'Изборът на офис не се зареди — опитайте пак.'; });
   }
-  function openDelivery(o) {
-    dlOrder = o;
+  var dlRedirect = false;
+  function openDelivery(o, redirect) {
+    dlOrder = o; dlRedirect = Boolean(redirect);
+    $('dlTitle').textContent = dlRedirect ? 'Пренасочи пратката' : 'Смени доставката';
+    // a parcel on its way stays with its courier: only that courier's office / locker / address
+    [].forEach.call($('dlType').options, function (op) { op.hidden = op.disabled = dlRedirect && op.value.split('_')[0] !== o.courier; });
+    $('dlRedirNote').hidden = !dlRedirect;
+    if (dlRedirect) $('dlRedirNote').innerHTML = '↪ Ordyx записва новото място и маркира поръчката „Пренасочена“. <b>Заявете пренасочването и при куриера</b>' +
+      (o.shipment && o.shipment.trackUrl ? ' — <a href="' + esc(o.shipment.trackUrl) + '" target="_blank" rel="noopener">пратка ' + esc(o.shipment.number) + ' в сайта на куриера ↗</a>' : '') + '. Статусите продължават да идват сами.';
     if (dlPicker) { dlPicker.destroy(); dlPicker = null; }
     $('dlSub').textContent = (o.name || 'Клиент') + ' · сега: ' + (o.officeText || '—');
-    $('dlType').value = $('dlType').querySelector('option[value="' + o.deliveryType + '"]') ? o.deliveryType : 'econt_office';
+    var first = [].filter.call($('dlType').options, function (op) { return !op.disabled; })[0];
+    $('dlType').value = $('dlType').querySelector('option[value="' + o.deliveryType + '"]:not([disabled])') ? o.deliveryType : (first ? first.value : 'econt_office');
     $('dlCity').value = o.city || ''; $('dlPost').value = o.postCode || ''; $('dlAddress').value = o.addressText || ''; $('dlErr').textContent = '';
     $('dlModal').hidden = false;
     dlTypeChanged();
   }
   $('dlType').addEventListener('change', dlTypeChanged);
   $('dlSave').addEventListener('click', function () {
-    var t = $('dlType').value, body = { action: 'delivery', id: dlOrder.id, courier: t.split('_')[0] };
+    var t = $('dlType').value, body = { action: dlRedirect ? 'redirect' : 'delivery', id: dlOrder.id, courier: t.split('_')[0] };
     if (/_address$/.test(t)) { body.city = $('dlCity').value; body.postCode = $('dlPost').value; body.addressText = $('dlAddress').value; }
     else if (!dlChoice || !dlChoice.officeId) { $('dlErr').textContent = (dlChoice && dlChoice.error) || 'Изберете офис или автомат.'; return; }
     else body.officeId = dlChoice.officeId;
@@ -3106,9 +3163,34 @@ tr.hl td{background:#fffbe6}
         var inv = p.invoiceUrl ? '<a href="' + esc(p.invoiceUrl) + '" target="_blank" rel="noopener noreferrer">' + (p.invoiceNo ? '№ ' + esc(p.invoiceNo) : 'Отвори') + ' ↗</a>' : (p.invoiceNo ? '№ ' + esc(p.invoiceNo) : '<span class="muted">—</span>');
         return '<tr><td data-label="Дата">' + esc(dayBg(p.paidAt)) + '</td><td data-label="Период">' + (p.periodFrom ? esc(dayBg(p.periodFrom)) + ' – ' + esc(dayBg(p.periodTo)) : '—') + '</td><td data-label="Сума"><b>' + esc(money(p.amount, 'EUR')) + '</b></td><td data-label="Фактура">' + inv + '</td></tr>';
       }).join('') + '</tbody>' : '<tbody><tr><td class="muted">Още няма плащания. Първото е след безплатните 14 дни — ще получите линк.</td></tr></tbody>';
+      var pt = d.partner;
+      $('pfPartner').hidden = !pt;
+      if (pt) $('pfPartner').innerHTML = '<h2 style="margin-top:0">🤝 Партньорска програма — ' + Math.round(pt.rate * 100) + '%</h2>' +
+        '<p class="muted" style="margin:0 0 10px">Препоръчай Ordyx. За всеки, който се регистрира през твоя линк, получаваш <b>' + Math.round(pt.rate * 100) + '% от всяко негово плащане за абонамента</b> — докато плаща.</p>' +
+        '<div class="linkbox"><input type="text" id="pfRef" readonly value="' + esc(pt.link) + '"><button type="button" class="ghost" id="pfRefCopy">Копирай</button></div>' +
+        '<div class="cards" style="margin:14px 0 0"><div class="card"><div class="muted">Доведени</div><b style="font-size:24px">' + pt.clients.length + '</b><div class="muted">' + pt.clients.filter(function (c) { return c.paying; }).length + ' плащат</div></div>' +
+        '<div class="card"><div class="muted">Спечелено</div><b style="font-size:24px">' + esc(money(pt.earned, 'EUR')) + '</b></div><div class="card"><div class="muted">Изплатено</div><b style="font-size:24px">' + esc(money(pt.paidOut, 'EUR')) + '</b></div>' +
+        '<div class="card"><div class="muted">За изплащане</div><b style="font-size:24px;color:var(--ok)">' + esc(money(pt.balance, 'EUR')) + '</b></div></div>' +
+        (pt.commissions.length ? '<table style="margin-top:14px"><thead><tr><th>Дата</th><th>Клиент</th><th>Плащане</th><th>Твоите ' + Math.round(pt.rate * 100) + '%</th></tr></thead><tbody>' + pt.commissions.map(function (c) {
+          return '<tr><td data-label="Дата">' + esc(dayBg(c.paidAt)) + '</td><td data-label="Клиент">' + esc(c.name) + '</td><td data-label="Плащане">' + esc(money(c.payment, 'EUR')) + '</td><td data-label="Твоите"><b>' + esc(money(c.commission, 'EUR')) + '</b></td></tr>';
+        }).join('') + '</tbody></table>' : '') +
+        '<p class="muted" style="margin:12px 0 0">Изплащаме по банков път. За изплащане пишете на <a href="mailto:stoimenov@profitbrand.online?subject=Ordyx%20—%20партньорско%20изплащане">stoimenov@profitbrand.online</a>.</p>';
+      if (pt) $('pfRefCopy').addEventListener('click', function () {
+        var t = $('pfRef').value;
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { $('pfRefCopy').textContent = 'Копирано ✓'; setTimeout(function () { $('pfRefCopy').textContent = 'Копирай'; }, 1500); });
+        else $('pfRef').select();
+      });
       $('pfAcc').innerHTML = '<b>' + esc(d.name || '—') + '</b><br>' + esc(d.email || '') + (d.since ? '<br><span class="muted">в Ordyx от ' + esc(day(d.since)) + '</span>' : '');
     }).catch(function (e) { if (e.message !== 'auth') $('pfPlan').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; });
   }
+  var partnersData = [];
+  $('ptTable').addEventListener('click', function (e) {
+    var i = e.target.getAttribute && e.target.getAttribute('data-payout'); if (i == null) return;
+    var p = partnersData[i];
+    var amount = window.prompt('Колко изплатихте на ' + (p.name || p.email) + '? (за изплащане: ' + p.balance.toFixed(2).replace('.', ',') + ' €)', p.balance.toFixed(2).replace('.', ','));
+    if (!amount) return;
+    busy(e.target, usersApi({ action: 'payout', id: p.id, amount: amount })).then(loadClients).catch(function (err) { alert(err.message); });
+  });
   /* the owner: a client's payments — the list (with delete) and a new one */
   var payUser = null;
   function openPayments(u) {
@@ -3141,6 +3223,13 @@ tr.hl td{background:#fffbe6}
     return fetch(API + 'users', { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); }).then(function (d) {
       clientsData = d.users || [];
       renderSignup(d.signup); renderOffer(d.offer);
+      var pts = d.partners || [];
+      $('ptPanel').hidden = !pts.length;
+      $('ptTable').innerHTML = pts.length ? '<thead><tr><th>Партньор</th><th>Доведени</th><th>Спечелено</th><th>Изплатено</th><th>За изплащане</th><th></th></tr></thead><tbody>' + pts.map(function (p, i) {
+        return '<tr><td><b>' + esc(p.name || '—') + '</b><br><span class="muted">' + esc(p.email) + '</span></td><td>' + p.clients + '</td><td>' + esc(money(p.earned, 'EUR')) + '</td><td>' + esc(money(p.paidOut, 'EUR')) + '</td><td><b>' + esc(money(p.balance, 'EUR')) + '</b></td>' +
+          '<td>' + (p.balance > 0 ? '<button type="button" class="ghost" data-payout="' + i + '">Изплатено</button>' : '') + '</td></tr>';
+      }).join('') + '</tbody>' : '';
+      partnersData = pts;
       $('cFounders').textContent = d.founders ? 'Founders 20: остават ' + d.founders.left + ' от ' + d.founders.of + ' места' : '';
       $('cTable').innerHTML = table(['Клиент', 'Магазини', 'Абонамент', 'Състояние', 'Последен вход', ''], clientsData.map(function (u, i) {
         var state = !u.active ? '<span class="badge bad">спрян</span>' : u.hasPassword ? '<span class="badge ok">активен</span>' : '<span class="badge">чака парола</span>';
@@ -3954,12 +4043,12 @@ tr.hl td{background:#fffbe6}
       $('suErr').textContent = '';
       if ($('suPw').value !== $('suPw2').value) { $('suErr').textContent = 'Паролите не съвпадат.'; return; }
       busy($('suBtn'), fetch(API + 'signup', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: offerSignup ? undefined : signupCode, offer: offerSignup || undefined, plan: offerSignup ? undefined : suPick.plan, billing: offerSignup ? undefined : suPick.billing, name: $('suName').value, email: $('suEmail').value, password: $('suPw').value, website: $('suWebsite').value }) })
+        body: JSON.stringify({ code: offerSignup ? undefined : signupCode, offer: offerSignup || undefined, plan: offerSignup ? undefined : suPick.plan, billing: offerSignup ? undefined : suPick.billing, ref: new URLSearchParams(location.search).get('ref') || undefined, name: $('suName').value, email: $('suEmail').value, password: $('suPw').value, website: $('suWebsite').value }) })
         .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
         .then(function () {
           $('signupForm').hidden = true;
           if (!offerSignup) showWelcome();
-          var p = new URLSearchParams(location.search); p.delete('signup'); p.delete('offer'); p.delete('plan'); p.delete('billing');
+          var p = new URLSearchParams(location.search); p.delete('signup'); p.delete('offer'); p.delete('plan'); p.delete('billing'); p.delete('ref');
           try { history.replaceState(null, '', location.pathname + (p.toString() ? '?' + p : '') + '#start'); } catch (e2) { location.hash = '#start'; }
           load(1);
         })
