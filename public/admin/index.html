@@ -95,7 +95,13 @@ form#login{min-height:100vh;display:flex;align-items:center;justify-content:cent
 .side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);color:var(--side-text);display:flex;flex-direction:column}
 .shop{display:flex;align-items:center;gap:12px;padding:22px 20px;border-bottom:1px solid var(--side-line);width:100%;background:none;border-top:0;border-left:0;border-right:0;border-radius:0;color:inherit;text-align:left;position:relative}
 .shop:hover{background:var(--side-2)}
-.shop .caret{margin-left:auto;color:var(--side-muted);font-size:12px}
+.shop .shopwho{display:flex;flex-direction:column;min-width:0;line-height:1.2}
+.shop .shopwho small{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--side-muted);margin-bottom:2px}
+.shop .shopwho b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shop .caret{margin-left:auto;flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:var(--side-2);border:1px solid var(--side-line);color:var(--side-text);transition:transform .2s,background .2s}
+.shop .caret svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.shop:hover .caret{background:#2a2a25}
+.shop[aria-expanded="true"] .caret{transform:rotate(180deg);color:var(--accent)}
 .shopmenu{position:absolute;left:12px;right:12px;top:76px;z-index:40;background:#141412;border:1px solid var(--side-line);border-radius:12px;padding:6px;box-shadow:0 12px 30px rgba(0,0,0,.4)}
 .shopmenu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;color:var(--side-text);padding:9px 10px;border-radius:8px;text-align:left;font-weight:500}
 .shopmenu button:hover{background:var(--side-2)}
@@ -149,6 +155,18 @@ main{padding:30px 32px 56px;max-width:1440px}
 .card .val{font-size:30px;font-weight:800;line-height:1.1;margin-top:12px}
 .card .hint{font-size:12px;color:var(--muted);margin-top:6px}
 .val.ok{color:var(--ok)}.val.warn{color:var(--warn)}.val.bad,.neg{color:var(--bad)!important}
+.pfgrid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px}
+.pfgrid .panel{margin-bottom:20px}
+@media (max-width:900px){.pfgrid{grid-template-columns:1fr}}
+.pfplan .pf-name{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pfplan .pf-name b{font-size:26px;font-family:Unbounded,Inter,system-ui,sans-serif}
+.pf-price{font-size:30px;font-weight:800;margin:10px 0 2px}
+.pf-price small{font-size:15px;font-weight:600;color:var(--muted)}
+.pf-list{list-style:none;padding:0;margin:14px 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.pf-list li{background:var(--bg);border-radius:10px;padding:8px 12px;font-size:14px}
+.pf-list li b{display:block;font-size:15px}
+.pf-due{font-size:26px;font-weight:800;margin:6px 0}
+.pf-terms{font-size:13.5px;color:var(--muted);line-height:1.5;margin:10px 0 0}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px}
 /* Съветник: one card at the top of „Табло“ */
 .advisor{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px}
@@ -396,7 +414,7 @@ tr.hl td{background:#fffbe6}
 <div id="app" class="app" hidden>
   <aside class="side" id="side">
     <div class="brand"><svg class="omark" viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 60,24 40,24" fill="#FFEFA8"/><polygon points="70,4 96,30 76,40 60,24" fill="#FFDD4D"/><polygon points="96,30 96,70 76,60 76,40" fill="#F4C200"/><polygon points="96,70 70,96 60,76 76,60" fill="#D6A400"/><polygon points="70,96 30,96 40,76 60,76" fill="#C49500"/><polygon points="30,96 4,70 24,60 40,76" fill="#DDAC00"/><polygon points="4,70 4,30 24,40 24,60" fill="#FFD21F"/><polygon points="4,30 30,4 40,24 24,40" fill="#FFF3C7"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="#FFD84A"/><polygon points="40,24 60,24 67,31 33,31" fill="#FFF0B3" opacity=".7"/><g fill="none" stroke="#0d0d0c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40"/></g></svg><span>ordyx</span></div>
-    <button type="button" class="shop" id="shopBtn" aria-haspopup="true" aria-expanded="false"><span class="avatar" id="shopInitial">М</span><b id="shopName">Моят магазин</b><span class="caret">▾</span></button>
+    <button type="button" class="shop" id="shopBtn" aria-haspopup="true" aria-expanded="false"><span class="avatar" id="shopInitial">М</span><span class="shopwho"><small>Магазин</small><b id="shopName">Моят магазин</b></span><span class="caret" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg></span></button>
     <div class="shopmenu" id="shopMenu" hidden></div>
     <nav class="nav">
       <div class="sec">Основни</div>
@@ -412,6 +430,7 @@ tr.hl td{background:#fffbe6}
       <a href="#inventory" data-view="inventory"><svg viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/></svg>Наличности</a>
       <div class="sec">Система</div>
       <a href="#clients" data-view="clients" id="navClients" hidden><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Клиенти</a>
+      <a href="#profile" data-view="profile" id="navProfile" hidden><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Профил</a>
       <a href="#integrations" data-view="integrations"><svg viewBox="0 0 24 24"><path d="M9 2v6M15 2v6"/><path d="M6 8h12v4a6 6 0 0 1-12 0z"/><path d="M12 18v4"/></svg>Интеграции</a>
     </nav>
     <div class="whoami" id="whoami" hidden></div>
@@ -680,6 +699,16 @@ tr.hl td{background:#fffbe6}
           <p>Само поръчките (име, телефон, имейл, адрес/офис, артикули) — видими само за вас. Посещенията се броят анонимно, без бисквитки и без IP. Телефонът от поръчката се проверява в nekorekten.com за некоректни клиенти. Споменете това в политиката си за поверителност.</p></details>
       </div>
     </section>
+    <section id="profileView" hidden>
+      <div class="pagehead"><div><h1>Профил</h1><div class="sub">Вашият план, плащания и фактури</div></div></div>
+      <div class="pfgrid">
+        <div class="panel pfplan" id="pfPlan"><div class="muted">Зареждам…</div></div>
+        <div class="panel" id="pfNext"></div>
+      </div>
+      <div class="panel"><h2 style="margin-top:0">Плащания и фактури</h2><table id="pfPays"></table></div>
+      <div class="panel"><h2 style="margin-top:0">Акаунт</h2><div id="pfAcc"></div>
+        <p class="muted" style="margin:12px 0 0">Смяна на плана, годишно плащане или прекратяване — пишете ни на <a href="mailto:stoimenov@profitbrand.online?subject=Ordyx%20—%20моят%20план">stoimenov@profitbrand.online</a>.</p></div>
+    </section>
     <section id="clientsView" hidden>
       <div class="pagehead"><div><h1>Клиенти</h1><div class="sub">Клиентите влизат с имейл и парола и виждат само своите магазини</div></div><button type="button" class="primary" id="cNew">+ Нов клиент</button></div>
       <div class="panel" id="suPanel">
@@ -778,6 +807,23 @@ tr.hl td{background:#fffbe6}
           <label style="grid-column:1/-1">Бележка<input type="text" id="aNote" maxlength="200" placeholder="по избор"></label>
         </div>
         <div class="actions"><button type="button" class="primary" id="aSave">Запиши корекцията</button><span class="err" id="aErr"></span></div>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="payModal" hidden>
+    <div class="dialog small" role="dialog" aria-modal="true" aria-labelledby="payTitle">
+      <div class="dhead"><div><h2 id="payTitle">Плащания</h2><div class="muted" id="payWho"></div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <table id="payList" style="margin-bottom:16px"></table>
+        <h3 style="margin:0 0 8px">Ново плащане</h3>
+        <div class="fgrid">
+          <label>Дата<input type="date" id="payDate"></label>
+          <label>Сума (€)<input type="text" inputmode="decimal" id="payAmount" placeholder="цената на плана"></label>
+          <label>№ на фактура<input type="text" id="payInvNo" maxlength="60" placeholder="по избор"></label>
+          <label>Линк към фактурата<input type="url" id="payInvUrl" maxlength="500" placeholder="https://…"></label>
+        </div>
+        <div class="muted" style="margin:-8px 0 12px">Периодът се смята сам: от деня след последния платен период, за месец или година според плана. Първото плащане пуска 12-те месеца на стартовата цена.</div>
+        <div class="actions"><button type="button" class="primary" id="paySave">Запиши плащането</button><span class="err" id="payErr"></span></div>
       </div>
     </div>
   </div>
@@ -2021,10 +2067,11 @@ tr.hl td{background:#fffbe6}
       .catch(function () { $('dCards').innerHTML = '<div class="err">Грешка при зареждане на таблото. Опитайте пак.</div>'; });
   }
   /* ---- навигация: страницата е в адреса (#orders, #dash, …) ---- */
-  var VIEWS = { orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции', clients: 'Клиенти', start: 'Първи стъпки', campaigns: 'Кампании', calls: 'Обаждания', abandoned: 'Изоставени', buyers: 'Купувачи' };
+  var VIEWS = { profile: 'Профил', orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции', clients: 'Клиенти', start: 'Първи стъпки', campaigns: 'Кампании', calls: 'Обаждания', abandoned: 'Изоставени', buyers: 'Купувачи' };
   function viewFromHash() { var v = location.hash.slice(1); return Object.prototype.hasOwnProperty.call(VIEWS, v) ? v : 'orders'; }
   function showView(view) {
     if (view === 'clients' && role !== 'owner') view = 'orders'; // only the owner manages clients
+    if (view === 'profile' && role !== 'client') view = 'orders'; // the owner has no plan to pay
     [].forEach.call(document.querySelectorAll('.nav a[data-view]'), function (a) { a.classList.toggle('on', a.getAttribute('data-view') === view); });
     $('where').textContent = VIEWS[view];
     $('app').classList.remove('open');
@@ -2045,6 +2092,7 @@ tr.hl td{background:#fffbe6}
     if (view === 'costs') loadCosts();
     if (view === 'integrations') loadIntegrations();
     if (view === 'inventory') loadInventory();
+    if (view === 'profile') loadProfile();
   }
 
   /* ---- Купувачи ---- */
@@ -2255,9 +2303,11 @@ tr.hl td{background:#fffbe6}
   $('shopBtn').addEventListener('click', function (e) {
     e.stopPropagation();
     $('shopMenu').hidden = !$('shopMenu').hidden;
+    // right under the button, whatever its height (the „Магазин“ label made it taller)
+    $('shopMenu').style.top = ($('shopBtn').offsetTop + $('shopBtn').offsetHeight + 6) + 'px';
     $('shopBtn').setAttribute('aria-expanded', String(!$('shopMenu').hidden));
   });
-  document.addEventListener('click', function (e) { if (!$('shopMenu').hidden && !$('shopMenu').contains(e.target)) $('shopMenu').hidden = true; });
+  document.addEventListener('click', function (e) { if (!$('shopMenu').hidden && !$('shopMenu').contains(e.target)) { $('shopMenu').hidden = true; $('shopBtn').setAttribute('aria-expanded', 'false'); } });
   $('shopMenu').addEventListener('click', function (e) {
     var b = e.target.closest('button');
     if (!b) return;
@@ -2997,6 +3047,7 @@ tr.hl td{background:#fffbe6}
     return fetch(API + 'me', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
       role = d ? d.role : null;
       $('navClients').hidden = role !== 'owner';
+      $('navProfile').hidden = role !== 'client';
       $('callsSoon').hidden = role === 'owner'; $('callsTip').hidden = role !== 'owner'; // calls: the owner only for now
       $('callsSetSoon').hidden = role === 'owner'; $('callsSetChip').hidden = role === 'owner'; $('callsSetOwner').hidden = role !== 'owner';
       $('whoami').hidden = role !== 'client';
@@ -3029,6 +3080,62 @@ tr.hl td{background:#fffbe6}
     else if (s.trialUntil) out += '<br><span class="badge' + (new Date(s.trialUntil) < new Date() ? ' bad' : '') + '">безплатно до ' + esc(day(s.trialUntil)) + '</span>';
     return out;
   }
+  /* ---- Профил: the client's plan, next payment, payments and invoices ---- */
+  function dayBg(d) { return d ? d.split('-').reverse().join('.') : ''; }
+  function loadProfile() {
+    $('pfPlan').innerHTML = '<div class="muted">Зареждам…</div>';
+    fetch(API + 'profile', { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); }).then(function (d) {
+      var s = d.subscription, pl = d.plan;
+      if (!s) {
+        $('pfPlan').innerHTML = '<h2 style="margin-top:0">План</h2><p class="muted">Още нямате избран план. Пишете ни и ще го настроим.</p>';
+        $('pfNext').innerHTML = '';
+      } else {
+        var per = s.billing === 'yearly' ? 'година' : 'месец';
+        var state = s.paidAt ? '<span class="badge ok">активен</span>' : (s.trialUntil && new Date(s.trialUntil) > new Date() ? '<span class="badge ok">безплатно до ' + esc(day(s.trialUntil)) + '</span>' : '<span class="badge bad">чака плащане</span>');
+        $('pfPlan').innerHTML = '<div class="muted" style="font-weight:700;letter-spacing:.08em;font-size:12px;text-transform:uppercase">Вашият план</div>' +
+          '<div class="pf-name"><b>' + esc(s.planName) + '</b>' + state + (s.founder ? '<span class="badge ok">⭐ Founders 20</span>' : '') + '</div>' +
+          '<div class="pf-price">' + esc(money(s.price, 'EUR')) + ' <small>/ ' + per + ' · ' + (s.billing === 'yearly' ? 'годишно плащане' : 'месечно плащане') + '</small></div>' +
+          (s.launch && s.price !== s.regular ? '<div class="muted">Стартова цена' + (s.founder ? ' — запазена завинаги, докато подновявате същия план.' : s.lockedUntil ? ' до ' + esc(day(s.lockedUntil)) + ', после ' + esc(money(s.regular, 'EUR')) + ' / ' + per + '.' : ' за 12 месеца от първото плащане, после ' + esc(money(s.regular, 'EUR')) + ' / ' + per + '.') + '</div>' : '') +
+          (pl ? '<ul class="pf-list"><li><b>' + pl.shops + (pl.shops === 1 ? ' магазин' : ' магазина') + '</b>' + (pl.maxShops ? 'до ' + pl.maxShops + ' с добавка 7 €/мес.' : '+7 €/мес. за всеки следващ') + '</li><li><b>' + String(pl.orders).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' поръчки</b>на месец, общо за магазините</li>' +
+            '<li><b>Growth Lab</b>' + (s.plan !== 'starter' || s.billing === 'yearly' ? 'включен' : 'при годишно плащане') + '</li>' + (s.paidAt ? '<li><b>Клиент от</b>' + esc(day(s.paidAt)) + '</li>' : '') + '</ul>' : '');
+        var n = d.next;
+        $('pfNext').innerHTML = '<h2 style="margin-top:0">Следващо плащане</h2>' + (n ? '<div class="pf-due">' + esc(money(n.amount, 'EUR')) + '</div><div>на <b>' + esc(dayBg(n.date)) + '</b>' + (s.paidAt ? '' : ' — когато свършат безплатните дни') + '</div>' +
+          '<p class="pf-terms">Ще ви изпратим линк за плащане преди датата. ' + (n.regularFrom && !s.founder ? 'От ' + esc(dayBg(n.regularFrom)) + ' цената става ' + esc(money(s.regular, 'EUR')) + ' / ' + per + '. ' : '') + 'Цените са с ДДС. При прекратяване стартовата цена отпада. 30 дни гаранция за връщане на парите след първото плащане.</p>' : '<p class="muted">—</p>');
+      }
+      $('pfPays').innerHTML = d.payments.length ? '<thead><tr><th>Дата</th><th>Период</th><th>Сума</th><th>Фактура</th></tr></thead><tbody>' + d.payments.map(function (p) {
+        var inv = p.invoiceUrl ? '<a href="' + esc(p.invoiceUrl) + '" target="_blank" rel="noopener noreferrer">' + (p.invoiceNo ? '№ ' + esc(p.invoiceNo) : 'Отвори') + ' ↗</a>' : (p.invoiceNo ? '№ ' + esc(p.invoiceNo) : '<span class="muted">—</span>');
+        return '<tr><td data-label="Дата">' + esc(dayBg(p.paidAt)) + '</td><td data-label="Период">' + (p.periodFrom ? esc(dayBg(p.periodFrom)) + ' – ' + esc(dayBg(p.periodTo)) : '—') + '</td><td data-label="Сума"><b>' + esc(money(p.amount, 'EUR')) + '</b></td><td data-label="Фактура">' + inv + '</td></tr>';
+      }).join('') + '</tbody>' : '<tbody><tr><td class="muted">Още няма плащания. Първото е след безплатните 14 дни — ще получите линк.</td></tr></tbody>';
+      $('pfAcc').innerHTML = '<b>' + esc(d.name || '—') + '</b><br>' + esc(d.email || '') + (d.since ? '<br><span class="muted">в Ordyx от ' + esc(day(d.since)) + '</span>' : '');
+    }).catch(function (e) { if (e.message !== 'auth') $('pfPlan').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; });
+  }
+  /* the owner: a client's payments — the list (with delete) and a new one */
+  var payUser = null;
+  function openPayments(u) {
+    payUser = u; $('payWho').textContent = (u.name || '') + ' · ' + u.email + (u.subscription ? ' · ' + u.subscription.planName + ', ' + (u.subscription.billing === 'yearly' ? 'годишно' : 'месечно') + ' ' + money(u.subscription.price, 'EUR') : '');
+    $('payDate').value = sofiaDay(0); $('payAmount').value = u.subscription ? u.subscription.price.toFixed(2).replace('.', ',') : ''; $('payInvNo').value = ''; $('payInvUrl').value = ''; $('payErr').textContent = '';
+    $('payList').innerHTML = '<tbody><tr><td class="muted">Зареждам…</td></tr></tbody>';
+    $('payModal').hidden = false;
+    usersApi({ action: 'payments', id: u.id }).then(function (d) {
+      $('payList').innerHTML = d.payments.length ? '<thead><tr><th>Дата</th><th>Период</th><th>Сума</th><th>Фактура</th><th></th></tr></thead><tbody>' + d.payments.map(function (p) {
+        return '<tr><td>' + esc(dayBg(p.paidAt)) + '</td><td>' + esc(dayBg(p.periodFrom)) + ' – ' + esc(dayBg(p.periodTo)) + '</td><td>' + esc(money(p.amount, 'EUR')) + '</td><td>' + (p.invoiceUrl ? '<a href="' + esc(p.invoiceUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(p.invoiceNo || 'линк') + '</a>' : esc(p.invoiceNo || '—')) + '</td><td><button type="button" class="ghost" data-paydel="' + esc(p.id) + '">Изтрий</button></td></tr>';
+      }).join('') + '</tbody>' : '<tbody><tr><td class="muted">Още няма плащания.</td></tr></tbody>';
+    }).catch(function (e) { $('payList').innerHTML = '<tbody><tr><td class="err">' + esc(e.message) + '</td></tr></tbody>'; });
+  }
+  $('payList').addEventListener('click', function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute('data-paydel'); if (!id) return;
+    if (!window.confirm('Да изтрия ли това плащане? Клиентът няма да го вижда в профила си.')) return;
+    busy(e.target, usersApi({ action: 'payment_delete', paymentId: id })).then(function () { openPayments(payUser); }).catch(function (err) { alert(err.message); });
+  });
+  $('paySave').addEventListener('click', function () {
+    if (!payUser) return;
+    $('payErr').textContent = '';
+    busy($('paySave'), usersApi({ action: 'sub_paid', id: payUser.id, paidAt: $('payDate').value, amount: $('payAmount').value, invoiceNo: $('payInvNo').value, invoiceUrl: $('payInvUrl').value.trim() }))
+      .then(function (d) {
+        if (d.subscription && d.subscription.founder && !(payUser.subscription && payUser.subscription.founder)) alert('⭐ ' + payUser.email + ' е сред Founders 20 — годишната цена остава завинаги.');
+        loadClients().then(function () { var u2 = clientsData.filter(function (x) { return x.id === payUser.id; })[0]; if (u2) openPayments(u2); });
+      }).catch(function (err) { $('payErr').textContent = err.message; });
+  });
   function loadClients() {
     $('cTable').innerHTML = '<tr><td class="muted">Зареждам…</td></tr>';
     return fetch(API + 'users', { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); }).then(function (d) {
@@ -3050,7 +3157,7 @@ tr.hl td{background:#fffbe6}
           esc((u.shops || []).filter(function (sh) { return sh.approved; }).map(function (sh) { return sh.name || sh.domain; }).join(', ') || (pending ? '' : '—')) + pending, subCell(u.subscription), state, esc(when(u.lastLoginAt)),
           '<button type="button" class="ghost" data-cedit="' + i + '">Магазини</button> <button type="button" class="ghost" data-clink="' + i + '">Нов линк</button> ' +
           '<button type="button" class="ghost" data-cactive="' + i + '">' + (u.active ? 'Спри достъп' : 'Пусни достъп') + '</button>' +
-          (u.subscription && !u.subscription.paidAt ? ' <button type="button" class="ghost" data-cpaid="' + i + '">Платено</button>' : '') +
+          (u.subscription ? ' <button type="button" class="ghost" data-cpaid="' + i + '">Плащания</button>' : '') +
           ' <button type="button" class="ghost" data-cplan="' + i + '">План</button>'];
       }));
     }).catch(function (e) { if (e.message !== 'auth') $('cTable').innerHTML = '<tr><td class="err">' + esc(e.message) + '</td></tr>'; });
@@ -3136,16 +3243,7 @@ tr.hl td{background:#fffbe6}
       busy(b, usersApi({ action: 'approve_shop', shopId: b.getAttribute('data-approve') })).then(function () { loadShops().catch(function () {}); loadClients(); }).catch(function (err) { alert(err.message); });
       return;
     }
-    if (b.hasAttribute('data-cpaid')) {
-      var pu = clientsData[b.getAttribute('data-cpaid')];
-      var when2 = window.prompt('Първо плащане на ' + pu.email + ' — дата (ГГГГ-ММ-ДД). Стартовата цена се пази 12 месеца от нея.', new Date().toISOString().slice(0, 10));
-      if (!when2) return;
-      busy(b, usersApi({ action: 'sub_paid', id: pu.id, paidAt: when2 + 'T12:00:00+02:00' })).then(function (d) {
-        if (d.subscription && d.subscription.founder) alert('⭐ ' + pu.email + ' е сред Founders 20 — годишната цена остава завинаги.');
-        loadClients();
-      }).catch(function (err) { alert(err.message); });
-      return;
-    }
+    if (b.hasAttribute('data-cpaid')) { openPayments(clientsData[b.getAttribute('data-cpaid')]); return; }
     if (b.hasAttribute('data-cplan')) {
       var cu = clientsData[b.getAttribute('data-cplan')], cs = cu.subscription || {};
       var plan = window.prompt('План за ' + cu.email + ': starter, growth или business', cs.plan || 'growth');
