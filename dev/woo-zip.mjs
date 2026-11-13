@@ -23,6 +23,6 @@ const base = process.env.PUBLIC_BASE_URL || 'https://app.ordyx.eu';
 writeFileSync(path.join(out, 'woocommerce.json'), JSON.stringify({
   version, api: 1, tested: '7.1', requires: '6.4', requires_php: '7.4',
   download: `${base}/integrations/ordyx-woocommerce.zip`,
-  changelog: `${version}: първа версия — избор на офис/автомат в чекаута, поръчките в Ordyx, товарителница и проследяване обратно в WooCommerce.`,
+  changelog: '1.1.0: наличностите на продуктите отиват в Ordyx (при промяна, веднъж на ден и с бутон). 1.0.0: първа версия — избор на офис/автомат в чекаута, поръчките в Ordyx, товарителница и проследяване обратно в WooCommerce.',
 }, null, 2) + '\n');
 console.log(`written ${path.relative(root, zip)} and woocommerce.json (version ${version})`);

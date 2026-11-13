@@ -4,7 +4,7 @@ Tags: econt, speedy, boxnow, shipping, bulgaria
 Requires at least: 6.4
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 
 Избор на офис или автомат на Еконт, Спиди и BOX NOW в чекаута; поръчките влизат в Ordyx; товарителницата и проследяването се връщат в WooCommerce.
@@ -17,5 +17,8 @@ License: GPLv2 or later
 Режим „Само поръчките“: чекаутът остава както е, поръчките пак влизат в Ordyx.
 
 == Changelog ==
+= 1.1.0 =
+* Наличностите на продуктите отиват в Ordyx: при всяка промяна, веднъж на ден и с бутон.
+
 = 1.0.0 =
 * Първа версия.

@@ -339,7 +339,7 @@ textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radi
 .step summary{cursor:pointer;font-weight:700;color:var(--accent-ink)}
 .step ol,.step ul{margin:8px 0;padding-left:20px;line-height:1.6}
 .step .actions{margin:10px 0 0 38px}
-.step .note{margin:8px 0;padding:10px 12px;border-radius:10px;background:#fff7ed;color:#7c2d12;font-size:13px}
+.step .note,#invPullMsg{margin:8px 0;padding:10px 12px;border-radius:10px;background:#fff7ed;color:#7c2d12;font-size:13px}
 .codebox{display:flex;gap:8px;align-items:center;margin:8px 0}
 .codebox code{flex:1;padding:10px 12px;border-radius:10px;background:#0b0b0a;color:#facc15;font-size:12px;overflow-x:auto;white-space:nowrap}
 .progress{height:10px;border-radius:999px;background:#ecebe5;overflow:hidden;margin:8px 0 4px}
@@ -765,7 +765,8 @@ tr.hl td{background:#fffbe6}
       </div>
     </section>
     <section id="inventoryView" hidden>
-      <div class="pagehead"><div><h1>Наличности</h1><div class="sub">Намаляват автоматично с всяка поръчка</div></div><button type="button" class="primary" id="invNew">+ Създай продукт</button></div>
+      <div class="pagehead"><div><h1>Наличности</h1><div class="sub">Намаляват автоматично с всяка поръчка или идват направо от платформата ви</div></div><div class="actions" style="margin:0"><button type="button" class="ghost" id="invPull" hidden>Изтегли от ConvertBuilder</button><button type="button" class="primary" id="invNew">+ Създай продукт</button></div></div>
+      <div class="note" id="invPullMsg" hidden></div>
       <div class="cards" id="invCards"></div>
       <div class="toolbar"><input type="search" id="invQ" class="search" placeholder="Търси по име или SKU…"></div>
       <div class="pills" id="invPills">
@@ -817,6 +818,7 @@ tr.hl td{background:#fffbe6}
           <label>Праг за ниска наличност<input type="number" step="1" min="0" id="pLow" value="5"></label>
           <label>Себестойност (€ за брой)<input type="number" step="0.01" min="0" id="pCost" placeholder="0,00"></label>
         </div>
+        <p class="muted" id="pSrc" hidden></p>
         <div class="actions"><button type="button" class="primary" id="pSave">Запази</button><span class="err" id="pErr"></span></div>
       </div>
     </div>
@@ -3863,8 +3865,26 @@ tr.hl td{background:#fffbe6}
         return r.json().then(function (d) { if (!r.ok) throw new Error(d.error === 'server' ? 'Грешка на сървъра. Опитайте пак.' : d.error || ('HTTP ' + r.status)); return d; });
       });
   }
+  var SRC_LABEL = { woocommerce: 'WooCommerce', convertbuilder: 'ConvertBuilder', api: 'сайта' };
+  function srcLine(p) { return p.stockSource ? '<div class="muted">от ' + esc(SRC_LABEL[p.stockSource] || 'платформата') + (p.stockSyncedAt ? ' · ' + esc(when(p.stockSyncedAt)) : '') + '</div>' : ''; }
+  function showPull() {
+    var cb = inv && inv.convertbuilder;
+    $('invPull').hidden = !cb;
+    var m = $('invPullMsg');
+    if (cb && cb.stockApi === false) { m.hidden = false; m.textContent = 'ConvertBuilder не дава наличности през своя API за този сайт. Наличностите се водят тук и намаляват с всяка поръчка.'; }
+    else if (cb && cb.lastStockError) { m.hidden = false; m.textContent = 'Последното изтегляне от ConvertBuilder не успя: ' + cb.lastStockError; }
+    else m.hidden = true;
+  }
+  $('invPull').addEventListener('click', function () {
+    busy($('invPull'), invCall({ action: 'pull' })).then(function (r) {
+      var m = $('invPullMsg'); m.hidden = false;
+      m.textContent = r.available === false ? 'ConvertBuilder не дава наличности през своя API за този сайт. Наличностите се водят тук и намаляват с всяка поръчка.'
+        : 'Изтеглено от ConvertBuilder: ' + r.products + ' продукта · обновени ' + r.updated + ', нови ' + r.created + ', без промяна ' + r.unchanged + (r.unknown ? ', непознати варианти ' + r.unknown : '') + '.';
+      invCall().then(function (d) { inv = d; renderInventory(); });
+    }).catch(function (e) { if (e.message !== 'auth') { $('invPullMsg').hidden = false; $('invPullMsg').textContent = e.message; } });
+  });
   function loadInventory() {
-    invCall().then(function (d) { inv = d; renderInventory(); })
+    invCall().then(function (d) { inv = d; showPull(); renderInventory(); })
       .catch(function (e) { if (e.message !== 'auth') $('invTable').innerHTML = '<tbody><tr><td class="err">' + esc(e.message) + '</td></tr></tbody>'; });
   }
   function renderInventory() {
@@ -3879,7 +3899,7 @@ tr.hl td{background:#fffbe6}
     $('invTable').innerHTML = '<thead><tr><th>Продукт</th><th>SKU</th><th>Наличност</th><th>Праг</th><th>Продадени (30 дни)</th><th title="По темпото на продажбите от последните 14 дни">Ще свърши</th><th>Себестойност</th><th></th></tr></thead><tbody>' +
       list.map(function (p) {
         var i = inv.products.indexOf(p);
-        var stock = p.stock == null ? '<span class="muted">не се следи</span>' : '<span class="stock ' + p.state + '">' + p.stock + '</span><div class="muted">' + STATE_LABEL[p.state] + '</div>';
+        var stock = p.stock == null ? '<span class="muted">не се следи</span>' : '<span class="stock ' + p.state + '">' + p.stock + '</span><div class="muted">' + STATE_LABEL[p.state] + '</div>' + srcLine(p);
         var btns = p.stock == null
           ? '<button type="button" class="primary" data-inv-edit="' + i + '">Въведи наличност</button>'
           : '<button type="button" data-inv-edit="' + i + '">Редактирай</button><button type="button" data-inv-adj="' + i + '">Корекция</button><button type="button" data-inv-hist="' + i + '">История</button>';
@@ -3903,6 +3923,8 @@ tr.hl td{background:#fffbe6}
     $('pName').value = p ? p.name : ''; $('pName').readOnly = !!p;
     $('pSku').value = p ? p.sku : ''; $('pStock').value = p && p.stock != null ? p.stock : '';
     $('pLow').value = p ? p.lowStock : 5; $('pCost').value = p && p.unitCost ? p.unitCost : '';
+    $('pSrc').hidden = !(p && p.stockSource);
+    if (p && p.stockSource) $('pSrc').textContent = 'Наличността идва от ' + (SRC_LABEL[p.stockSource] || 'платформата') + ' и следващото обновяване ще я презапише. Променяйте я там.';
     $('pErr').textContent = ''; $('prodModal').hidden = false;
     (p ? $('pStock') : $('pName')).focus();
   }

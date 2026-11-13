@@ -28,7 +28,7 @@ class Ordyx_Api {
     }
 
     /** @return array{ok:bool,status:int,data:array,error:string} */
-    private static function request($method, $path, $body = null, $timeout = 8) {
+    private static function request($method, $path, $body = null, $timeout = 8, $blocking = true) {
         $key = self::key();
         if (!$key) return ['ok' => false, 'status' => 0, 'data' => [], 'error' => 'Няма ключ на магазина — поставете го в WooCommerce → Ordyx'];
         $res = wp_remote_request(self::base() . $path, [
@@ -40,7 +40,9 @@ class Ordyx_Api {
                 'X-Ordyx-Site'  => self::site_header(),
             ],
             'body' => $body === null ? null : wp_json_encode($body),
+            'blocking' => $blocking,
         ]);
+        if (!$blocking) return ['ok' => true, 'status' => 0, 'data' => [], 'error' => ''];
         if (is_wp_error($res)) return ['ok' => false, 'status' => 0, 'data' => [], 'error' => $res->get_error_message()];
         $status = (int) wp_remote_retrieve_response_code($res);
         $data = json_decode((string) wp_remote_retrieve_body($res), true);
@@ -54,6 +56,11 @@ class Ordyx_Api {
 
     public static function send_order(WC_Order $order, $timeout = 8) {
         return self::request('POST', '/api/orders', self::payload($order), $timeout);
+    }
+
+    /** Stock as WooCommerce has it: [{name, sku, stock}]. */
+    public static function send_stock(array $items, $timeout = 8, $blocking = true) {
+        return self::request('POST', '/api/orders', ['type' => 'stock', 'source' => 'woocommerce', 'items' => array_values($items)], $timeout, $blocking);
     }
 
     public static function cancel_order(WC_Order $order) {

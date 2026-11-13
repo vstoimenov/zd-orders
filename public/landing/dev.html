@@ -38,7 +38,7 @@ footer{margin:48px 0 30px;color:var(--muted);font-size:14px}
 <main class="wrap">
 <h1>Ordyx за програмисти</h1>
 <p class="lead">Собствен сайт се свързва с Ordyx по три начина, които се комбинират: изборът на офис/автомат в неговата форма (без код), API за поръчки с ключ и уебхуци за товарителниците. За WooCommerce има <a href="https://ordyx.eu/#integrations">готов плъгин</a>.</p>
-<div class="toc"><a href="#picker">1. Избор на офис във формата</a><a href="#key">2. Ключ</a><a href="#orders">3. Поръчки</a><a href="#webhooks">4. Уебхуци</a><a href="#errors">5. Грешки и лимити</a><a href="#fulfilment">6. Fulfilment склад</a></div>
+<div class="toc"><a href="#picker">1. Избор на офис във формата</a><a href="#key">2. Ключ</a><a href="#orders">3. Поръчки</a><a href="#stock">Наличности</a><a href="#webhooks">4. Уебхуци</a><a href="#errors">5. Грешки и лимити</a><a href="#fulfilment">6. Fulfilment склад</a></div>
 
 <h2 id="picker">1. Изборът на офис във вашата форма</h2>
 <p>Един скрипт и един <code>div</code> с указание кои полета да попълни. Клиентът търси офис или автомат на Еконт, Спиди или BOX NOW, вижда най-близките с „Намери ме“, карта и работно време; избраното се записва във вашите полета.</p>
@@ -115,6 +115,13 @@ X-Ordyx-Site: {"webhookUrl":"https://moiat-magazin.bg/ordyx-webhook"}
 <h3>Отказ</h3>
 <pre><code>{ "source": "api", "external_id": "10452", "status": "cancelled" }</code></pre>
 <p>Отговор: <code>{"ok":true,"cancelled":true}</code> (или <code>false</code>, когато вече е изпратена — Ordyx я пази и известява магазина; 404, ако няма такава поръчка). Преди товарителница наличността се връща.</p>
+<h3 id="stock">Наличности</h3>
+<p>Ако сайтът ви води наличности, пращайте ги със същия ключ и адрес. Ordyx записва бройката точно както е при вас; продукт, който няма, се добавя. Търси първо по <code>sku</code>, после по <code>name</code> (без значение главни/малки).</p>
+<pre><code>{ "type": "stock", "source": "api", "items": [
+  { "sku": "T-M-B", "name": "Тениска M, черна", "stock": 14 },
+  { "name": "Книга", "stock": 0 }
+] }</code></pre>
+<p>Отговор: <code>{"ok":true,"updated":1,"created":1,"unchanged":0,"skipped":0,"unknown":0}</code>. До 2000 продукта на заявка. Продукт без цяло число в <code>stock</code> се пропуска. Щом наличността на продукт идва от сайта, Ordyx спира да я намалява с поръчките (сайтът вече го е направил); пращайте я при всяка промяна или поне веднъж на ден.</p>
 <h3>PHP</h3>
 <pre><code>$ch = curl_init('https://app.ordyx.eu/api/orders');
 curl_setopt_array($ch, [
