@@ -35,7 +35,7 @@ test('the owner makes a registration link; with it anyone registers and is logge
   const res = await call({ method: 'POST', url: '/api/admin/signup', body: form(code) });
   assert.equal(res.statusCode, 200);
   const me = json(await call({ url: '/api/admin/me', cookie: cookieOf(res) }));
-  assert.deepEqual(me, { role: 'client', email: 'ivan@shop.bg', name: 'Иван Петров', plan: 'standard', freeUntil: null, subscription: null });
+  assert.deepEqual(me, { role: 'client', email: 'ivan@shop.bg', name: 'Иван Петров', plan: 'standard', freeUntil: null, subscription: null, planState: { unlimited: true } });
   assert.deepEqual(json(await call({ url: '/api/admin/shops', cookie: cookieOf(res) })).shops, []);
   const users = json(await call({ url: '/api/admin/users', cookie: owner })).users;
   assert.equal(users[0].email, 'ivan@shop.bg');
@@ -170,7 +170,7 @@ test('the plan picked at registration: 14 days free, priced, shown to the client
   assert.equal(res.statusCode, 200);
   const sub = json(await call({ url: '/api/admin/me', cookie: cookieOf(res) })).subscription;
   assert.deepEqual([sub.planName, sub.billing, sub.paidAt], ['Growth', 'yearly', null]);
-  assert.equal(sub.price, info.launch ? 232.8 : 1164);
+  assert.equal(sub.price, info.launch ? 465.6 : 1164);
   assert.ok(Date.parse(sub.trialUntil) - Date.now() > 13.9 * 864e5);
   let list = json(await call({ url: '/api/admin/users', cookie: owner }));
   const u = list.users.find((x) => x.email === 'ivan@shop.bg');

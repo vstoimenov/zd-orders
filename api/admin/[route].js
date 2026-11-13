@@ -22,9 +22,10 @@ import abandoned from '../../lib/admin/abandoned.js';
 import customers from '../../lib/admin/customers.js';
 import voice from '../../lib/admin/voice.js';
 import advisor from '../../lib/admin/advisor.js';
+import profile from '../../lib/admin/profile.js';
 import { send } from '../../lib/http.js';
 
-const ROUTES = { login, orders, waconnect, stats, costs, integrations, inventory, meta, shops, waybills, push, me, invite, users, onboarding, signup, campaigns, confirm, confirmadmin, abandoned, customers, voice, advisor };
+const ROUTES = { profile, login, orders, waconnect, stats, costs, integrations, inventory, meta, shops, waybills, push, me, invite, users, onboarding, signup, campaigns, confirm, confirmadmin, abandoned, customers, voice, advisor };
 const pick = (name) => (typeof name === 'string' && Object.hasOwn(ROUTES, name) ? ROUTES[name] : null);
 
 /** Changes only from our own pages: a request carrying another site's Origin is refused (on top of the SameSite cookie). */

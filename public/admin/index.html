@@ -77,6 +77,26 @@ form#inviteForm{min-height:100vh;display:flex;align-items:center;justify-content
 .linkbox input{flex:1;font-size:12px}
 .shopchecks{display:flex;flex-direction:column;gap:8px;margin:6px 0 16px}
 .shopchecks label{display:flex;gap:10px;align-items:center;font-weight:600}
+.prioflt{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:-4px 0 12px}
+.prioflt .muted{font-size:13px;font-weight:700;margin-right:2px}
+.pdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:0}
+.pdot.p1,.prio.p1{--pc:#9aa0a6}.pdot.p2,.prio.p2{--pc:#2f80ed}.pdot.p3,.prio.p3{--pc:#f2994a}.pdot.p4,.prio.p4{--pc:#e5484d}
+.pdot{background:var(--pc)}
+select.prio{display:block;margin-top:6px;font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;border:1.5px solid var(--pc);color:var(--pc);background:#fff;width:auto;min-height:0}
+.stmark{display:inline-block;margin-top:6px;font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px}
+.st-redirected{background:#e8f0fe;color:#1a56c4}
+.st-destroyed{background:#f1f0ec;color:#6b6960}
+.planbar{margin:0 24px;margin-top:12px;padding:10px 14px;border-radius:12px;font-size:14px;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;background:#f6f5f0;border:1px solid var(--line)}
+.planbar b{font-weight:800}
+.planbar.warn{background:#fff6cc;border-color:#f1d75c;color:#3d3300}
+.planbar.stop{background:#fdecee;border-color:#f5b5bd;color:#7a1020}
+.planbar a{font-weight:800}
+.planbar .meter{flex:1 1 140px;max-width:220px;height:8px;border-radius:99px;background:rgba(0,0,0,.08);overflow:hidden}
+.planbar .meter i{display:block;height:100%;background:var(--accent)}
+.planbar.stop .meter i{background:#e5484d}
+@media (max-width:700px){.planbar{margin:10px 12px 0}}
+.upsell{text-align:center;padding:34px 20px}
+.upsell h2{margin:8px 0}
 .badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;background:#f1f0ec;color:var(--muted)}
 .badge.ok{background:#e8f6ec;color:var(--ok)}.badge.bad{background:#fdecee;color:var(--bad)}
 form#login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--side);padding:16px}
@@ -95,7 +115,13 @@ form#login{min-height:100vh;display:flex;align-items:center;justify-content:cent
 .side{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--side);color:var(--side-text);display:flex;flex-direction:column}
 .shop{display:flex;align-items:center;gap:12px;padding:22px 20px;border-bottom:1px solid var(--side-line);width:100%;background:none;border-top:0;border-left:0;border-right:0;border-radius:0;color:inherit;text-align:left;position:relative}
 .shop:hover{background:var(--side-2)}
-.shop .caret{margin-left:auto;color:var(--side-muted);font-size:12px}
+.shop .shopwho{display:flex;flex-direction:column;min-width:0;line-height:1.2}
+.shop .shopwho small{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--side-muted);margin-bottom:2px}
+.shop .shopwho b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shop .caret{margin-left:auto;flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:var(--side-2);border:1px solid var(--side-line);color:var(--side-text);transition:transform .2s,background .2s}
+.shop .caret svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.shop:hover .caret{background:#2a2a25}
+.shop[aria-expanded="true"] .caret{transform:rotate(180deg);color:var(--accent)}
 .shopmenu{position:absolute;left:12px;right:12px;top:76px;z-index:40;background:#141412;border:1px solid var(--side-line);border-radius:12px;padding:6px;box-shadow:0 12px 30px rgba(0,0,0,.4)}
 .shopmenu button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;color:var(--side-text);padding:9px 10px;border-radius:8px;text-align:left;font-weight:500}
 .shopmenu button:hover{background:var(--side-2)}
@@ -149,6 +175,18 @@ main{padding:30px 32px 56px;max-width:1440px}
 .card .val{font-size:30px;font-weight:800;line-height:1.1;margin-top:12px}
 .card .hint{font-size:12px;color:var(--muted);margin-top:6px}
 .val.ok{color:var(--ok)}.val.warn{color:var(--warn)}.val.bad,.neg{color:var(--bad)!important}
+.pfgrid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px}
+.pfgrid .panel{margin-bottom:20px}
+@media (max-width:900px){.pfgrid{grid-template-columns:1fr}}
+.pfplan .pf-name{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pfplan .pf-name b{font-size:26px;font-family:Unbounded,Inter,system-ui,sans-serif}
+.pf-price{font-size:30px;font-weight:800;margin:10px 0 2px}
+.pf-price small{font-size:15px;font-weight:600;color:var(--muted)}
+.pf-list{list-style:none;padding:0;margin:14px 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.pf-list li{background:var(--bg);border-radius:10px;padding:8px 12px;font-size:14px}
+.pf-list li b{display:block;font-size:15px}
+.pf-due{font-size:26px;font-weight:800;margin:6px 0}
+.pf-terms{font-size:13.5px;color:var(--muted);line-height:1.5;margin:10px 0 0}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px}
 /* Съветник: one card at the top of „Табло“ */
 .advisor{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:var(--radius);padding:18px 20px;margin-bottom:20px}
@@ -396,7 +434,7 @@ tr.hl td{background:#fffbe6}
 <div id="app" class="app" hidden>
   <aside class="side" id="side">
     <div class="brand"><svg class="omark" viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 60,24 40,24" fill="#FFEFA8"/><polygon points="70,4 96,30 76,40 60,24" fill="#FFDD4D"/><polygon points="96,30 96,70 76,60 76,40" fill="#F4C200"/><polygon points="96,70 70,96 60,76 76,60" fill="#D6A400"/><polygon points="70,96 30,96 40,76 60,76" fill="#C49500"/><polygon points="30,96 4,70 24,60 40,76" fill="#DDAC00"/><polygon points="4,70 4,30 24,40 24,60" fill="#FFD21F"/><polygon points="4,30 30,4 40,24 24,40" fill="#FFF3C7"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="#FFD84A"/><polygon points="40,24 60,24 67,31 33,31" fill="#FFF0B3" opacity=".7"/><g fill="none" stroke="#0d0d0c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40"/></g></svg><span>ordyx</span></div>
-    <button type="button" class="shop" id="shopBtn" aria-haspopup="true" aria-expanded="false"><span class="avatar" id="shopInitial">М</span><b id="shopName">Моят магазин</b><span class="caret">▾</span></button>
+    <button type="button" class="shop" id="shopBtn" aria-haspopup="true" aria-expanded="false"><span class="avatar" id="shopInitial">М</span><span class="shopwho"><small>Магазин</small><b id="shopName">Моят магазин</b></span><span class="caret" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg></span></button>
     <div class="shopmenu" id="shopMenu" hidden></div>
     <nav class="nav">
       <div class="sec">Основни</div>
@@ -412,6 +450,7 @@ tr.hl td{background:#fffbe6}
       <a href="#inventory" data-view="inventory"><svg viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/></svg>Наличности</a>
       <div class="sec">Система</div>
       <a href="#clients" data-view="clients" id="navClients" hidden><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Клиенти</a>
+      <a href="#profile" data-view="profile" id="navProfile" hidden><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Профил</a>
       <a href="#integrations" data-view="integrations"><svg viewBox="0 0 24 24"><path d="M9 2v6M15 2v6"/><path d="M6 8h12v4a6 6 0 0 1-12 0z"/><path d="M12 18v4"/></svg>Интеграции</a>
     </nav>
     <div class="whoami" id="whoami" hidden></div>
@@ -421,6 +460,7 @@ tr.hl td{background:#fffbe6}
   <div class="scrim" id="scrim"></div>
   <div>
     <div class="topbar"><button type="button" class="iconbtn" id="menuBtn" aria-label="Меню"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button><span class="where" id="where"></span></div>
+    <div class="planbar" id="planBar" hidden></div>
     <main>
       <div class="demobar" id="demoBar" hidden>
         <div><b>Демо версия</b> — магазините и поръчките са измислени и се нулират. Пробвайте всичко: товарителници (Еконт работи на тестовия си сървър), финанси, наличности, интеграции. За известия: <b>🔔 Известия</b> вляво → включете → после натиснете бутона.</div>
@@ -524,6 +564,7 @@ tr.hl td{background:#fffbe6}
     </section>
     <section id="costsView" hidden>
       <div class="pagehead"><div><h1>Финанси</h1><div class="sub">Себестойност, разходи и печалба</div></div></div>
+      <div class="card upsell" id="costsUpsell" hidden><div style="font-size:36px">📈</div><h2>Колко реално ти остава?</h2><p class="muted">Чистата печалба след реклама, куриер, връщания и себестойност е в платените планове — от 40,20 € на месец.</p><a class="primary" href="#profile" style="display:inline-block;padding:12px 18px;border-radius:12px;text-decoration:none">Виж плановете →</a></div>
       <div class="panel">
         <h2>Себестойност на продуктите (€ за брой)</h2>
         <p class="muted">Бонуси, планове и аудио отбележи „дигитален“ — те нямат себестойност и не се водят в наличността.</p>
@@ -680,6 +721,17 @@ tr.hl td{background:#fffbe6}
           <p>Само поръчките (име, телефон, имейл, адрес/офис, артикули) — видими само за вас. Посещенията се броят анонимно, без бисквитки и без IP. Телефонът от поръчката се проверява в nekorekten.com за некоректни клиенти. Споменете това в политиката си за поверителност.</p></details>
       </div>
     </section>
+    <section id="profileView" hidden>
+      <div class="pagehead"><div><h1>Профил</h1><div class="sub">Вашият план, плащания и фактури</div></div></div>
+      <div class="pfgrid">
+        <div class="panel pfplan" id="pfPlan"><div class="muted">Зареждам…</div></div>
+        <div class="panel" id="pfNext"></div>
+      </div>
+      <div class="panel"><h2 style="margin-top:0">Плащания и фактури</h2><table id="pfPays"></table></div>
+      <div class="panel pfpartner" id="pfPartner"></div>
+      <div class="panel"><h2 style="margin-top:0">Акаунт</h2><div id="pfAcc"></div>
+        <p class="muted" style="margin:12px 0 0">Смяна на плана, годишно плащане или прекратяване — пишете ни на <a href="mailto:stoimenov@profitbrand.online?subject=Ordyx%20—%20моят%20план">stoimenov@profitbrand.online</a>.</p></div>
+    </section>
     <section id="clientsView" hidden>
       <div class="pagehead"><div><h1>Клиенти</h1><div class="sub">Клиентите влизат с имейл и парола и виждат само своите магазини</div></div><button type="button" class="primary" id="cNew">+ Нов клиент</button></div>
       <div class="panel" id="suPanel">
@@ -694,6 +746,7 @@ tr.hl td{background:#fffbe6}
         <div class="linkbox"><input type="text" id="ofLink" readonly value="https://ordyx.eu/oferta"><button type="button" class="ghost" id="ofCopy">Копирай</button></div>
         <div class="actions"><button type="button" class="ghost" id="ofToggle">Изключи офертата</button><a class="ghost btnlink" href="/brand/qr-oferta.png" download>⬇ QR код (PNG)</a><a class="ghost btnlink" href="/brand/qr-oferta.svg" download>⬇ QR код (SVG)</a><span class="muted" id="ofInfo"></span></div>
       </div>
+      <div class="panel" id="ptPanel" hidden><h2 style="margin-top:0">🤝 Партньори (50%)</h2><div class="muted" style="margin-bottom:10px">Клиенти, които са довели други. Комисионата е 50% от всяко плащане на доведения клиент през първите му 12 месеца.</div><table id="ptTable"></table></div>
       <div class="muted" id="cFounders" style="margin:0 0 8px;font-weight:700"></div>
       <div class="panel"><table id="cTable"></table></div>
     </section>
@@ -778,6 +831,23 @@ tr.hl td{background:#fffbe6}
           <label style="grid-column:1/-1">Бележка<input type="text" id="aNote" maxlength="200" placeholder="по избор"></label>
         </div>
         <div class="actions"><button type="button" class="primary" id="aSave">Запиши корекцията</button><span class="err" id="aErr"></span></div>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="payModal" hidden>
+    <div class="dialog small" role="dialog" aria-modal="true" aria-labelledby="payTitle">
+      <div class="dhead"><div><h2 id="payTitle">Плащания</h2><div class="muted" id="payWho"></div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dbody">
+        <table id="payList" style="margin-bottom:16px"></table>
+        <h3 style="margin:0 0 8px">Ново плащане</h3>
+        <div class="fgrid">
+          <label>Дата<input type="date" id="payDate"></label>
+          <label>Сума (€)<input type="text" inputmode="decimal" id="payAmount" placeholder="цената на плана"></label>
+          <label>№ на фактура<input type="text" id="payInvNo" maxlength="60" placeholder="по избор"></label>
+          <label>Линк към фактурата<input type="url" id="payInvUrl" maxlength="500" placeholder="https://…"></label>
+        </div>
+        <div class="muted" style="margin:-8px 0 12px">Периодът се смята сам: от деня след последния платен период, за месец или година според плана. Първото плащане пуска 12-те месеца на стартовата цена.</div>
+        <div class="actions"><button type="button" class="primary" id="paySave">Запиши плащането</button><span class="err" id="payErr"></span></div>
       </div>
     </div>
   </div>
@@ -937,6 +1007,7 @@ tr.hl td{background:#fffbe6}
           <label>Пощенски код<input type="text" id="dlPost" maxlength="12"></label>
           <label style="grid-column:1/-1">Адрес<input type="text" id="dlAddress" maxlength="200"></label>
         </div>
+        <div class="tip" id="dlRedirNote" hidden style="margin-bottom:12px"></div>
         <div class="actions"><button type="button" class="primary" id="dlSave">Запази</button><span class="muted" id="dlErr"></span></div>
       </div>
     </div>
@@ -1249,11 +1320,26 @@ tr.hl td{background:#fffbe6}
   $('fPills').innerHTML = [['', 'Всички']].concat(STATUSES).map(function (s) {
     return '<button type="button" class="pill' + (s[0] === '' ? ' on' : '') + '" data-pill="' + s[0] + '">' + s[1] + '</button>';
   }).join('') + '<button type="button" class="pill" data-pill="at_office" id="atOfficePill" hidden>📦 Чакат в офис</button>' +
+    '<button type="button" class="pill" data-pill="redirected" title="Пратки, пренасочени към друг офис или адрес по пътя">↪ Пренасочени</button>' +
+    '<button type="button" class="pill" data-pill="destroyed" title="Фалшиви, тестови или дублирани поръчки — не се броят никъде">🗑 Унищожени</button>' +
     '<button type="button" class="pill" data-pill="to_pack" id="toPackPill">📦 За пакетиране</button>' +
     '<button type="button" class="pill" data-pill="problems" id="problemsPill" hidden title="В офиса от 4-ия ден или без движение при куриера 3+ дни">⚠️ Проблемни</button>' +
     '<button type="button" class="ghost" id="refreshWb" title="Пита куриерите за всички изпратени пратки сега">↻ Обнови статусите</button>' +
     '<button type="button" class="ghost" id="slipAll" title="Лист за всяка поръчка за пакетиране, с QR код">🖨 Листове за пакетиране</button>';
   $('fPills').insertAdjacentHTML('beforebegin', '<div id="scanBar" hidden></div>');
+  /* priority: 1 нисък · 2 среден · 3 висок · 4 критичен — a filter next to the pills and a selector on each order */
+  var PRIO = [[1, 'Нисък'], [2, 'Среден'], [3, 'Висок'], [4, 'Критичен']];
+  $('fPills').insertAdjacentHTML('afterend', '<div class="prioflt" id="prioFlt"><span class="muted">Приоритет:</span><button type="button" class="pill on" data-prio="">Всички</button>' +
+    PRIO.map(function (x) { return '<button type="button" class="pill" data-prio="' + x[0] + '"><i class="pdot p' + x[0] + '"></i>' + x[1] + '</button>'; }).join('') + '</div>');
+  $('prioFlt').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-prio]'); if (!b) return;
+    current.priority = b.getAttribute('data-prio');
+    [].forEach.call($('prioFlt').querySelectorAll('[data-prio]'), function (x) { x.classList.toggle('on', x === b); });
+    clearFocus(); load(1);
+  });
+  function prioSelect(o, i) {
+    return '<select class="prio p' + (o.priority || 1) + '" data-prio-set="' + i + '" title="Приоритет">' + PRIO.map(function (x) { return '<option value="' + x[0] + '"' + (x[0] === (o.priority || 1) ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select>';
+  }
   function setToPack(n) { $('toPackPill').textContent = '📦 За пакетиране' + (n != null ? ': ' + n : ''); }
   /** shipped parcels that need a look; the pill stays while it is the chosen filter */
   function setProblems(n) {
@@ -1334,11 +1420,12 @@ tr.hl td{background:#fffbe6}
   });
 
   function snapshot() {
-    current = { status: $('fStatus').value, from: $('fFrom').value, to: $('fTo').value, q: $('fQ').value.trim() };
+    current = { status: $('fStatus').value, from: $('fFrom').value, to: $('fTo').value, q: $('fQ').value.trim(), priority: current.priority || '' };
   }
   function filters() {
     var p = new URLSearchParams();
     if (current.status) p.set('status', current.status);
+    if (current.priority) p.set('priority', current.priority);
     if (current.from) p.set('from', current.from);
     if (current.to) p.set('to', current.to);
     if (current.q) p.set('q', current.q);
@@ -1455,12 +1542,15 @@ tr.hl td{background:#fffbe6}
           (o.cbCheck === 'pending' ? '<span class="dup" title="Модулът я изпрати, но ConvertBuilder още не я показва. Докато не я потвърди, няма автоматично съобщение, известие, наличности и не влиза в таблото. Ако е истинска, ще се оправи сама до минути.">непотвърдена от магазина</span>' : '') +
           '<br><a href="tel:' + esc(o.phone) + '">' + esc(o.phone) + '</a>' + (o.email ? '<br><span class="muted">' + esc(o.email) + '</span>' : '') +
           '<br>' + nkBadge(o) + (currentShop === 'all' && shopById(o.shopId) ? '<br><span class="shoptag">' + esc(shopById(o.shopId).display) + '</span>' : '') + '</td>' +
-        '<td data-label="Доставка">' + esc(o.officeText) + '<br><span class="muted">' + esc(o.city) + (o.postCode ? ' ' + esc(o.postCode) : '') + '</span></td>' +
+        '<td data-label="Доставка">' + esc(o.officeText) + (o.redirect ? '<br><span class="muted" style="text-decoration:line-through">' + esc(o.redirect.from) + '</span>' : '') + '<br><span class="muted">' + esc(o.city) + (o.postCode ? ' ' + esc(o.postCode) : '') + '</span></td>' +
         '<td data-label="Артикули">' + items + '</td>' +
         '<td data-label="Сума"><b>' + o.total.toFixed(2) + ' ' + esc(o.currency) + '</b></td>' +
-        '<td data-label="Статус"><select data-status="' + i + '">' + opts + '</select></td>' +
+        '<td data-label="Статус">' + (o.destroyed ? '<span class="stmark st-destroyed">🗑 Унищожена</span>' : '<select data-status="' + i + '">' + opts + '</select>') +
+          (o.redirect && o.status === 'shipped' ? '<span class="stmark st-redirected" title="Пренасочена от: ' + esc(o.redirect.from) + '">↪ Пренасочена</span>' : '') + prioSelect(o, i) + '</td>' +
         '<td>' + packedCell(o, i) + (['new', 'confirmed'].indexOf(o.status) >= 0 && !o.shipment && !o.waybillState && !(o.fulfilment && o.fulfilment.sentAt) ? '<button type="button" data-dl="' + i + '" title="Друг офис, автомат или адрес">📍 Доставка</button>' : '') + (o.deliveryChangedBy === 'customer' ? '<span class="tag" title="Клиентът смени доставката от страницата на поръчката">📍 сменена от клиента</span>' : '') + invoiceCell(o, i) + (['new', 'confirmed'].indexOf(o.status) >= 0 && o.phone ? '<button type="button" data-confirm="' + i + '">💬 Потвърди</button>' + (DEMO || role !== 'owner' ? '' : '<button type="button" data-call="' + i + '" title="Гласов агент звъни на клиента и пита дали потвърждава">📞 Потвърди</button>') : '') + confirmBadge(o) +
-          shipmentCell(o, i) + '<button type="button" data-slip="' + i + '" title="Лист за пакетиране с QR код">🖨 Лист</button><button type="button" data-copy="' + i + '">Копирай за товарителница</button><button type="button" class="del" data-del="' + i + '" title="Изтрий поръчката от системата">Изтрий</button></td>' +
+          shipmentCell(o, i) + (o.status === 'shipped' && o.shipment && o.shipment.number && !o.shipment.demo ? '<button type="button" data-redir="' + i + '" title="Към друг офис, автомат или адрес на същия куриер — преди пратката да се върне">↪ Пренасочи</button>' : '') +
+          (['new', 'confirmed', 'cancelled'].indexOf(o.status) >= 0 && !o.destroyed && !o.shipment ? '<button type="button" data-destroy="' + i + '" title="Фалшива, тестова или дублирана поръчка — не се брои никъде">🗑 Унищожи</button>' : '') +
+          '<button type="button" data-slip="' + i + '" title="Лист за пакетиране с QR код">🖨 Лист</button><button type="button" data-copy="' + i + '">Копирай за товарителница</button><button type="button" class="del" data-del="' + i + '" title="Изтрий поръчката от системата">Изтрий</button></td>' +
         '</tr>';
     }).join('') || '<tr><td colspan="7" class="muted">Няма поръчки.</td></tr>';
     renderScanBar();
@@ -1613,6 +1703,15 @@ tr.hl td{background:#fffbe6}
   $('prev').addEventListener('click', function () { load(page - 1); });
   $('next').addEventListener('click', function () { load(page + 1); });
   $('rows').addEventListener('change', function (e) {
+    var pi = e.target.getAttribute('data-prio-set');
+    if (pi != null) {
+      var po = orders[pi], prevP = po.priority || 1, nextP = Number(e.target.value);
+      e.target.className = 'prio p' + nextP;
+      fetch(withShop(API + 'orders'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'priority', id: po.id, priority: nextP }) })
+        .then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } if (!r.ok) throw new Error(r.status); po.priority = nextP; })
+        .catch(function (err) { e.target.value = prevP; e.target.className = 'prio p' + prevP; if (err.message !== 'auth') alert('Приоритетът не беше записан. Опитайте пак.'); });
+      return;
+    }
     var i = e.target.getAttribute('data-status');
     if (i == null) return;
     var o = orders[i], prev = o.status, next = e.target.value;
@@ -1648,6 +1747,15 @@ tr.hl td{background:#fffbe6}
     if (btn.getAttribute('data-confirm') != null) { openConfirm(orders[btn.getAttribute('data-confirm')]); return; }
     if (btn.getAttribute('data-call') != null) { voiceCall(orders[btn.getAttribute('data-call')], btn); return; }
     if (btn.getAttribute('data-dl') != null) { openDelivery(orders[btn.getAttribute('data-dl')]); return; }
+    if (btn.getAttribute('data-redir') != null) { openDelivery(orders[btn.getAttribute('data-redir')], true); return; }
+    if (btn.getAttribute('data-destroy') != null) {
+      var dz = orders[btn.getAttribute('data-destroy')];
+      if (!window.confirm('Да маркирам ли поръчката на ' + (dz.name || 'клиент без име') + ' като „Унищожена“?\n\nЗа фалшиви, тестови или дублирани поръчки: отива при отказаните, не се брои в оборота и статистиката, а наличността се връща. Може да я върнете, като ѝ смените статуса.')) return;
+      busy(btn, fetch(withShop(API + 'orders'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'destroy', id: dz.id }) })
+        .then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } if (!r.ok) throw new Error(r.status); }))
+        .then(function () { load(page); }).catch(function (err) { if (err.message !== 'auth') alert('Не стана. Опитайте пак.'); });
+      return;
+    }
     if (btn.getAttribute('data-track') != null) { openConfirm(orders[btn.getAttribute('data-track')], 'track'); return; }
     if (btn.getAttribute('data-wb') != null) { openWaybill(orders[btn.getAttribute('data-wb')]); return; }
     if (btn.getAttribute('data-wbrelease') != null) {
@@ -2021,10 +2129,11 @@ tr.hl td{background:#fffbe6}
       .catch(function () { $('dCards').innerHTML = '<div class="err">Грешка при зареждане на таблото. Опитайте пак.</div>'; });
   }
   /* ---- навигация: страницата е в адреса (#orders, #dash, …) ---- */
-  var VIEWS = { orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции', clients: 'Клиенти', start: 'Първи стъпки', campaigns: 'Кампании', calls: 'Обаждания', abandoned: 'Изоставени', buyers: 'Купувачи' };
+  var VIEWS = { profile: 'Профил', orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции', clients: 'Клиенти', start: 'Първи стъпки', campaigns: 'Кампании', calls: 'Обаждания', abandoned: 'Изоставени', buyers: 'Купувачи' };
   function viewFromHash() { var v = location.hash.slice(1); return Object.prototype.hasOwnProperty.call(VIEWS, v) ? v : 'orders'; }
   function showView(view) {
     if (view === 'clients' && role !== 'owner') view = 'orders'; // only the owner manages clients
+    if (view === 'profile' && role !== 'client') view = 'orders'; // the owner has no plan to pay
     [].forEach.call(document.querySelectorAll('.nav a[data-view]'), function (a) { a.classList.toggle('on', a.getAttribute('data-view') === view); });
     $('where').textContent = VIEWS[view];
     $('app').classList.remove('open');
@@ -2045,6 +2154,7 @@ tr.hl td{background:#fffbe6}
     if (view === 'costs') loadCosts();
     if (view === 'integrations') loadIntegrations();
     if (view === 'inventory') loadInventory();
+    if (view === 'profile') loadProfile();
   }
 
   /* ---- Купувачи ---- */
@@ -2255,9 +2365,11 @@ tr.hl td{background:#fffbe6}
   $('shopBtn').addEventListener('click', function (e) {
     e.stopPropagation();
     $('shopMenu').hidden = !$('shopMenu').hidden;
+    // right under the button, whatever its height (the „Магазин“ label made it taller)
+    $('shopMenu').style.top = ($('shopBtn').offsetTop + $('shopBtn').offsetHeight + 6) + 'px';
     $('shopBtn').setAttribute('aria-expanded', String(!$('shopMenu').hidden));
   });
-  document.addEventListener('click', function (e) { if (!$('shopMenu').hidden && !$('shopMenu').contains(e.target)) $('shopMenu').hidden = true; });
+  document.addEventListener('click', function (e) { if (!$('shopMenu').hidden && !$('shopMenu').contains(e.target)) { $('shopMenu').hidden = true; $('shopBtn').setAttribute('aria-expanded', 'false'); } });
   $('shopMenu').addEventListener('click', function (e) {
     var b = e.target.closest('button');
     if (!b) return;
@@ -2692,18 +2804,26 @@ tr.hl td{background:#fffbe6}
       else dlPicker.setType(t);
     }).catch(function () { $('dlErr').textContent = 'Изборът на офис не се зареди — опитайте пак.'; });
   }
-  function openDelivery(o) {
-    dlOrder = o;
+  var dlRedirect = false;
+  function openDelivery(o, redirect) {
+    dlOrder = o; dlRedirect = Boolean(redirect);
+    $('dlTitle').textContent = dlRedirect ? 'Пренасочи пратката' : 'Смени доставката';
+    // a parcel on its way stays with its courier: only that courier's office / locker / address
+    [].forEach.call($('dlType').options, function (op) { op.hidden = op.disabled = dlRedirect && op.value.split('_')[0] !== o.courier; });
+    $('dlRedirNote').hidden = !dlRedirect;
+    if (dlRedirect) $('dlRedirNote').innerHTML = '↪ Ordyx записва новото място и маркира поръчката „Пренасочена“. <b>Заявете пренасочването и при куриера</b>' +
+      (o.shipment && o.shipment.trackUrl ? ' — <a href="' + esc(o.shipment.trackUrl) + '" target="_blank" rel="noopener">пратка ' + esc(o.shipment.number) + ' в сайта на куриера ↗</a>' : '') + '. Статусите продължават да идват сами.';
     if (dlPicker) { dlPicker.destroy(); dlPicker = null; }
     $('dlSub').textContent = (o.name || 'Клиент') + ' · сега: ' + (o.officeText || '—');
-    $('dlType').value = $('dlType').querySelector('option[value="' + o.deliveryType + '"]') ? o.deliveryType : 'econt_office';
+    var first = [].filter.call($('dlType').options, function (op) { return !op.disabled; })[0];
+    $('dlType').value = $('dlType').querySelector('option[value="' + o.deliveryType + '"]:not([disabled])') ? o.deliveryType : (first ? first.value : 'econt_office');
     $('dlCity').value = o.city || ''; $('dlPost').value = o.postCode || ''; $('dlAddress').value = o.addressText || ''; $('dlErr').textContent = '';
     $('dlModal').hidden = false;
     dlTypeChanged();
   }
   $('dlType').addEventListener('change', dlTypeChanged);
   $('dlSave').addEventListener('click', function () {
-    var t = $('dlType').value, body = { action: 'delivery', id: dlOrder.id, courier: t.split('_')[0] };
+    var t = $('dlType').value, body = { action: dlRedirect ? 'redirect' : 'delivery', id: dlOrder.id, courier: t.split('_')[0] };
     if (/_address$/.test(t)) { body.city = $('dlCity').value; body.postCode = $('dlPost').value; body.addressText = $('dlAddress').value; }
     else if (!dlChoice || !dlChoice.officeId) { $('dlErr').textContent = (dlChoice && dlChoice.error) || 'Изберете офис или автомат.'; return; }
     else body.officeId = dlChoice.officeId;
@@ -2997,10 +3117,12 @@ tr.hl td{background:#fffbe6}
     return fetch(API + 'me', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
       role = d ? d.role : null;
       $('navClients').hidden = role !== 'owner';
+      $('navProfile').hidden = role !== 'client';
       $('callsSoon').hidden = role === 'owner'; $('callsTip').hidden = role !== 'owner'; // calls: the owner only for now
       $('callsSetSoon').hidden = role === 'owner'; $('callsSetChip').hidden = role === 'owner'; $('callsSetOwner').hidden = role !== 'owner';
       $('whoami').hidden = role !== 'client';
       if (role === 'client') $('whoami').innerHTML = '<b>' + esc(d.name || 'Клиент') + '</b>' + esc(d.email) + freeLine(d.freeUntil) + subLine(d.subscription);
+      planState = (d && d.planState) || null; renderPlanBar();
     }).catch(function () {});
   }
   function shopName(id) { var s = shopById(id); return s ? s.display : '—'; }
@@ -3011,6 +3133,23 @@ tr.hl td{background:#fffbe6}
     var left = Math.ceil((new Date(iso) - Date.now()) / 864e5);
     if (left <= 0) return '<span class="free warn">Безплатният период изтече на ' + esc(day(iso)) + '</span>';
     return '<span class="free' + (left <= 7 ? ' warn' : '') + '">🎟️ Безплатно до ' + esc(day(iso)) + (left <= 7 ? ' · остават ' + left + (left === 1 ? ' ден' : ' дни') : '') + '</span>';
+  }
+  /** the reverse trial: 14 days on the chosen plan, then Free (1 shop, 50 orders a month) unless paid */
+  var planState = null;
+  function renderPlanBar() {
+    var st = planState, bar = $('planBar');
+    if (!st || st.unlimited || (st.paid && !st.blocked)) { bar.hidden = true; return; }
+    var left = st.trialUntil ? Math.ceil((new Date(st.trialUntil) - Date.now()) / 864e5) : 0;
+    var up = ' <a href="#profile">Премини на платен план →</a>';
+    bar.className = 'planbar' + (st.blocked ? ' stop' : st.warn ? ' warn' : '');
+    if (st.trial) bar.innerHTML = '🎁 Пробваш <b>' + esc(st.chosen) + '</b> — остават <b>' + left + (left === 1 ? ' ден' : ' дни') + '</b>. После минаваш на безплатния план (1 магазин, 50 поръчки на месец), ако не платиш.' + up;
+    else {
+      var pct = Math.min(100, Math.round(st.used / st.limit * 100));
+      bar.innerHTML = '<span><b>Free план</b> · ' + st.used + ' от ' + st.limit + ' поръчки този месец</span><span class="meter"><i style="width:' + pct + '%"></i></span>' +
+        (st.blocked ? '<span><b>Лимитът е достигнат.</b> Новите поръчки се пазят, товарителници — от 1-во число или веднага с платен план.' + up + '</span>'
+          : st.warn ? '<span>Остават <b>' + (st.limit - st.used) + '</b> поръчки до лимита.' + up + '</span>' : '<span>' + up + '</span>');
+    }
+    bar.hidden = false;
   }
   /** the plan: name, period, price; the free days left before the first payment */
   function subLine(s) {
@@ -3029,11 +3168,101 @@ tr.hl td{background:#fffbe6}
     else if (s.trialUntil) out += '<br><span class="badge' + (new Date(s.trialUntil) < new Date() ? ' bad' : '') + '">безплатно до ' + esc(day(s.trialUntil)) + '</span>';
     return out;
   }
+  /* ---- Профил: the client's plan, next payment, payments and invoices ---- */
+  function dayBg(d) { return d ? d.split('-').reverse().join('.') : ''; }
+  function loadProfile() {
+    $('pfPlan').innerHTML = '<div class="muted">Зареждам…</div>';
+    fetch(API + 'profile', { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); }).then(function (d) {
+      var s = d.subscription, pl = d.plan;
+      if (!s) {
+        $('pfPlan').innerHTML = '<h2 style="margin-top:0">План</h2><p class="muted">Още нямате избран план. Пишете ни и ще го настроим.</p>';
+        $('pfNext').innerHTML = '';
+      } else {
+        var per = s.billing === 'yearly' ? 'година' : 'месец';
+        var state = s.paidAt ? '<span class="badge ok">активен</span>' : (s.trialUntil && new Date(s.trialUntil) > new Date() ? '<span class="badge ok">безплатно до ' + esc(day(s.trialUntil)) + '</span>' : '<span class="badge bad">чака плащане</span>');
+        $('pfPlan').innerHTML = '<div class="muted" style="font-weight:700;letter-spacing:.08em;font-size:12px;text-transform:uppercase">Вашият план</div>' +
+          '<div class="pf-name"><b>' + esc(s.planName) + '</b>' + state + (s.founder ? '<span class="badge ok">⭐ Founders 20</span>' : '') + '</div>' +
+          '<div class="pf-price">' + esc(money(s.price, 'EUR')) + ' <small>/ ' + per + ' · ' + (s.billing === 'yearly' ? 'годишно плащане' : 'месечно плащане') + '</small></div>' +
+          (s.launch && s.price !== s.regular ? '<div class="muted">Стартова цена' + (s.founder ? ' — запазена завинаги, докато подновявате същия план.' : s.lockedUntil ? ' до ' + esc(day(s.lockedUntil)) + ', после ' + esc(money(s.regular, 'EUR')) + ' / ' + per + '.' : ' за 12 месеца от първото плащане, после ' + esc(money(s.regular, 'EUR')) + ' / ' + per + '.') + '</div>' : '') +
+          (pl ? '<ul class="pf-list"><li><b>' + pl.shops + (pl.shops === 1 ? ' магазин' : ' магазина') + '</b>' + (pl.maxShops ? 'до ' + pl.maxShops + ' с добавка 7 €/мес.' : '+7 €/мес. за всеки следващ') + '</li><li><b>' + String(pl.orders).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' поръчки</b>на месец, общо за магазините</li>' +
+            '<li><b>Growth Lab</b>' + (s.plan !== 'starter' || s.billing === 'yearly' ? 'включен' : 'при годишно плащане') + '</li>' + (s.paidAt ? '<li><b>Клиент от</b>' + esc(day(s.paidAt)) + '</li>' : '') + '</ul>' : '');
+        var n = d.next;
+        var pst = planState;
+        if (pst && !pst.unlimited && !pst.paid && !pst.trial) $('pfPlan').insertAdjacentHTML('afterbegin', '<div class="planbar warn" style="margin:0 0 12px;display:block">Безплатните дни свършиха — сега си на <b>Free</b> (1 магазин, 50 поръчки на месец). Планът ' + esc(s.planName) + ' тръгва отново с първото плащане — пишете ни и ще ви изпратим линк.</div>');
+        $('pfNext').innerHTML = '<h2 style="margin-top:0">Следващо плащане</h2>' + (n ? '<div class="pf-due">' + esc(money(n.amount, 'EUR')) + '</div><div>на <b>' + esc(dayBg(n.date)) + '</b>' + (s.paidAt ? '' : ' — когато свършат безплатните дни') + '</div>' +
+          '<p class="pf-terms">Ще ви изпратим линк за плащане преди датата. ' + (n.regularFrom && !s.founder ? 'От ' + esc(dayBg(n.regularFrom)) + ' цената става ' + esc(money(s.regular, 'EUR')) + ' / ' + per + '. ' : '') + 'Цените са с ДДС. При прекратяване стартовата цена отпада. 30 дни гаранция за връщане на парите след първото плащане.</p>' : '<p class="muted">—</p>');
+      }
+      $('pfPays').innerHTML = d.payments.length ? '<thead><tr><th>Дата</th><th>Период</th><th>Сума</th><th>Фактура</th></tr></thead><tbody>' + d.payments.map(function (p) {
+        var inv = p.invoiceUrl ? '<a href="' + esc(p.invoiceUrl) + '" target="_blank" rel="noopener noreferrer">' + (p.invoiceNo ? '№ ' + esc(p.invoiceNo) : 'Отвори') + ' ↗</a>' : (p.invoiceNo ? '№ ' + esc(p.invoiceNo) : '<span class="muted">—</span>');
+        return '<tr><td data-label="Дата">' + esc(dayBg(p.paidAt)) + '</td><td data-label="Период">' + (p.periodFrom ? esc(dayBg(p.periodFrom)) + ' – ' + esc(dayBg(p.periodTo)) : '—') + '</td><td data-label="Сума"><b>' + esc(money(p.amount, 'EUR')) + '</b></td><td data-label="Фактура">' + inv + '</td></tr>';
+      }).join('') + '</tbody>' : '<tbody><tr><td class="muted">Още няма плащания. Първото е след безплатните 14 дни — ще получите линк.</td></tr></tbody>';
+      var pt = d.partner;
+      $('pfPartner').hidden = !pt;
+      if (pt) $('pfPartner').innerHTML = '<h2 style="margin-top:0">🤝 Партньорска програма — ' + Math.round(pt.rate * 100) + '%</h2>' +
+        '<p class="muted" style="margin:0 0 10px">Препоръчай Ordyx. За всеки, който се регистрира през твоя линк, получаваш <b>' + Math.round(pt.rate * 100) + '% от всяко негово плащане за абонамента</b> през първите 12 месеца.</p>' +
+        '<div class="linkbox"><input type="text" id="pfRef" readonly value="' + esc(pt.link) + '"><button type="button" class="ghost" id="pfRefCopy">Копирай</button></div>' +
+        '<div class="cards" style="margin:14px 0 0"><div class="card"><div class="muted">Доведени</div><b style="font-size:24px">' + pt.clients.length + '</b><div class="muted">' + pt.clients.filter(function (c) { return c.paying; }).length + ' плащат</div></div>' +
+        '<div class="card"><div class="muted">Спечелено</div><b style="font-size:24px">' + esc(money(pt.earned, 'EUR')) + '</b></div><div class="card"><div class="muted">Изплатено</div><b style="font-size:24px">' + esc(money(pt.paidOut, 'EUR')) + '</b></div>' +
+        '<div class="card"><div class="muted">За изплащане</div><b style="font-size:24px;color:var(--ok)">' + esc(money(pt.balance, 'EUR')) + '</b></div></div>' +
+        (pt.commissions.length ? '<table style="margin-top:14px"><thead><tr><th>Дата</th><th>Клиент</th><th>Плащане</th><th>Твоите ' + Math.round(pt.rate * 100) + '%</th></tr></thead><tbody>' + pt.commissions.map(function (c) {
+          return '<tr><td data-label="Дата">' + esc(dayBg(c.paidAt)) + '</td><td data-label="Клиент">' + esc(c.name) + '</td><td data-label="Плащане">' + esc(money(c.payment, 'EUR')) + '</td><td data-label="Твоите"><b>' + esc(money(c.commission, 'EUR')) + '</b></td></tr>';
+        }).join('') + '</tbody></table>' : '') +
+        '<p class="muted" style="margin:12px 0 0">Изплащаме по банков път. За изплащане пишете на <a href="mailto:stoimenov@profitbrand.online?subject=Ordyx%20—%20партньорско%20изплащане">stoimenov@profitbrand.online</a>.</p>';
+      if (pt) $('pfRefCopy').addEventListener('click', function () {
+        var t = $('pfRef').value;
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { $('pfRefCopy').textContent = 'Копирано ✓'; setTimeout(function () { $('pfRefCopy').textContent = 'Копирай'; }, 1500); });
+        else $('pfRef').select();
+      });
+      $('pfAcc').innerHTML = '<b>' + esc(d.name || '—') + '</b><br>' + esc(d.email || '') + (d.since ? '<br><span class="muted">в Ordyx от ' + esc(day(d.since)) + '</span>' : '');
+    }).catch(function (e) { if (e.message !== 'auth') $('pfPlan').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; });
+  }
+  var partnersData = [];
+  $('ptTable').addEventListener('click', function (e) {
+    var i = e.target.getAttribute && e.target.getAttribute('data-payout'); if (i == null) return;
+    var p = partnersData[i];
+    var amount = window.prompt('Колко изплатихте на ' + (p.name || p.email) + '? (за изплащане: ' + p.balance.toFixed(2).replace('.', ',') + ' €)', p.balance.toFixed(2).replace('.', ','));
+    if (!amount) return;
+    busy(e.target, usersApi({ action: 'payout', id: p.id, amount: amount })).then(loadClients).catch(function (err) { alert(err.message); });
+  });
+  /* the owner: a client's payments — the list (with delete) and a new one */
+  var payUser = null;
+  function openPayments(u) {
+    payUser = u; $('payWho').textContent = (u.name || '') + ' · ' + u.email + (u.subscription ? ' · ' + u.subscription.planName + ', ' + (u.subscription.billing === 'yearly' ? 'годишно' : 'месечно') + ' ' + money(u.subscription.price, 'EUR') : '');
+    $('payDate').value = sofiaDay(0); $('payAmount').value = u.subscription ? u.subscription.price.toFixed(2).replace('.', ',') : ''; $('payInvNo').value = ''; $('payInvUrl').value = ''; $('payErr').textContent = '';
+    $('payList').innerHTML = '<tbody><tr><td class="muted">Зареждам…</td></tr></tbody>';
+    $('payModal').hidden = false;
+    usersApi({ action: 'payments', id: u.id }).then(function (d) {
+      $('payList').innerHTML = d.payments.length ? '<thead><tr><th>Дата</th><th>Период</th><th>Сума</th><th>Фактура</th><th></th></tr></thead><tbody>' + d.payments.map(function (p) {
+        return '<tr><td>' + esc(dayBg(p.paidAt)) + '</td><td>' + esc(dayBg(p.periodFrom)) + ' – ' + esc(dayBg(p.periodTo)) + '</td><td>' + esc(money(p.amount, 'EUR')) + '</td><td>' + (p.invoiceUrl ? '<a href="' + esc(p.invoiceUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(p.invoiceNo || 'линк') + '</a>' : esc(p.invoiceNo || '—')) + '</td><td><button type="button" class="ghost" data-paydel="' + esc(p.id) + '">Изтрий</button></td></tr>';
+      }).join('') + '</tbody>' : '<tbody><tr><td class="muted">Още няма плащания.</td></tr></tbody>';
+    }).catch(function (e) { $('payList').innerHTML = '<tbody><tr><td class="err">' + esc(e.message) + '</td></tr></tbody>'; });
+  }
+  $('payList').addEventListener('click', function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute('data-paydel'); if (!id) return;
+    if (!window.confirm('Да изтрия ли това плащане? Клиентът няма да го вижда в профила си.')) return;
+    busy(e.target, usersApi({ action: 'payment_delete', paymentId: id })).then(function () { openPayments(payUser); }).catch(function (err) { alert(err.message); });
+  });
+  $('paySave').addEventListener('click', function () {
+    if (!payUser) return;
+    $('payErr').textContent = '';
+    busy($('paySave'), usersApi({ action: 'sub_paid', id: payUser.id, paidAt: $('payDate').value, amount: $('payAmount').value, invoiceNo: $('payInvNo').value, invoiceUrl: $('payInvUrl').value.trim() }))
+      .then(function (d) {
+        if (d.subscription && d.subscription.founder && !(payUser.subscription && payUser.subscription.founder)) alert('⭐ ' + payUser.email + ' е сред Founders 20 — годишната цена остава завинаги.');
+        loadClients().then(function () { var u2 = clientsData.filter(function (x) { return x.id === payUser.id; })[0]; if (u2) openPayments(u2); });
+      }).catch(function (err) { $('payErr').textContent = err.message; });
+  });
   function loadClients() {
     $('cTable').innerHTML = '<tr><td class="muted">Зареждам…</td></tr>';
     return fetch(API + 'users', { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); }).then(function (d) {
       clientsData = d.users || [];
       renderSignup(d.signup); renderOffer(d.offer);
+      var pts = d.partners || [];
+      $('ptPanel').hidden = !pts.length;
+      $('ptTable').innerHTML = pts.length ? '<thead><tr><th>Партньор</th><th>Доведени</th><th>Спечелено</th><th>Изплатено</th><th>За изплащане</th><th></th></tr></thead><tbody>' + pts.map(function (p, i) {
+        return '<tr><td><b>' + esc(p.name || '—') + '</b><br><span class="muted">' + esc(p.email) + '</span></td><td>' + p.clients + '</td><td>' + esc(money(p.earned, 'EUR')) + '</td><td>' + esc(money(p.paidOut, 'EUR')) + '</td><td><b>' + esc(money(p.balance, 'EUR')) + '</b></td>' +
+          '<td>' + (p.balance > 0 ? '<button type="button" class="ghost" data-payout="' + i + '">Изплатено</button>' : '') + '</td></tr>';
+      }).join('') + '</tbody>' : '';
+      partnersData = pts;
       $('cFounders').textContent = d.founders ? 'Founders 20: остават ' + d.founders.left + ' от ' + d.founders.of + ' места' : '';
       $('cTable').innerHTML = table(['Клиент', 'Магазини', 'Абонамент', 'Състояние', 'Последен вход', ''], clientsData.map(function (u, i) {
         var state = !u.active ? '<span class="badge bad">спрян</span>' : u.hasPassword ? '<span class="badge ok">активен</span>' : '<span class="badge">чака парола</span>';
@@ -3050,7 +3279,7 @@ tr.hl td{background:#fffbe6}
           esc((u.shops || []).filter(function (sh) { return sh.approved; }).map(function (sh) { return sh.name || sh.domain; }).join(', ') || (pending ? '' : '—')) + pending, subCell(u.subscription), state, esc(when(u.lastLoginAt)),
           '<button type="button" class="ghost" data-cedit="' + i + '">Магазини</button> <button type="button" class="ghost" data-clink="' + i + '">Нов линк</button> ' +
           '<button type="button" class="ghost" data-cactive="' + i + '">' + (u.active ? 'Спри достъп' : 'Пусни достъп') + '</button>' +
-          (u.subscription && !u.subscription.paidAt ? ' <button type="button" class="ghost" data-cpaid="' + i + '">Платено</button>' : '') +
+          (u.subscription ? ' <button type="button" class="ghost" data-cpaid="' + i + '">Плащания</button>' : '') +
           ' <button type="button" class="ghost" data-cplan="' + i + '">План</button>'];
       }));
     }).catch(function (e) { if (e.message !== 'auth') $('cTable').innerHTML = '<tr><td class="err">' + esc(e.message) + '</td></tr>'; });
@@ -3136,16 +3365,7 @@ tr.hl td{background:#fffbe6}
       busy(b, usersApi({ action: 'approve_shop', shopId: b.getAttribute('data-approve') })).then(function () { loadShops().catch(function () {}); loadClients(); }).catch(function (err) { alert(err.message); });
       return;
     }
-    if (b.hasAttribute('data-cpaid')) {
-      var pu = clientsData[b.getAttribute('data-cpaid')];
-      var when2 = window.prompt('Първо плащане на ' + pu.email + ' — дата (ГГГГ-ММ-ДД). Стартовата цена се пази 12 месеца от нея.', new Date().toISOString().slice(0, 10));
-      if (!when2) return;
-      busy(b, usersApi({ action: 'sub_paid', id: pu.id, paidAt: when2 + 'T12:00:00+02:00' })).then(function (d) {
-        if (d.subscription && d.subscription.founder) alert('⭐ ' + pu.email + ' е сред Founders 20 — годишната цена остава завинаги.');
-        loadClients();
-      }).catch(function (err) { alert(err.message); });
-      return;
-    }
+    if (b.hasAttribute('data-cpaid')) { openPayments(clientsData[b.getAttribute('data-cpaid')]); return; }
     if (b.hasAttribute('data-cplan')) {
       var cu = clientsData[b.getAttribute('data-cplan')], cs = cu.subscription || {};
       var plan = window.prompt('План за ' + cu.email + ': starter, growth или business', cs.plan || 'growth');
@@ -3729,7 +3949,11 @@ tr.hl td{background:#fffbe6}
   var costsData = null;
   function costsFetch(method, body) {
     return fetch(withShop(API + 'costs'), { method: method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
-      .then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } if (!r.ok) throw new Error(r.status); return r.json(); });
+      .then(function (r) {
+        if (r.status === 401) { showLogin(); throw new Error('auth'); }
+        if (r.status === 402) return r.json().then(function (d) { var e = new Error(d.error || 'upgrade'); e.upgrade = true; throw e; });
+        if (!r.ok) throw new Error(r.status); return r.json();
+      });
   }
   function num(v) { return v == null ? '' : String(v); }
   function renderCosts() {
@@ -3749,7 +3973,14 @@ tr.hl td{background:#fffbe6}
   }
   function loadCosts() {
     if (!$('eDate').value) $('eDate').value = sofiaDay(0);
-    costsFetch('GET').then(function (d) { costsData = d; renderCosts(); }).catch(function (e) { if (e.message !== 'auth') alert('Разходите не се заредиха. Опитайте пак.'); });
+    $('costsUpsell').hidden = true; [].forEach.call($('costsView').querySelectorAll('.panel'), function (p) { p.hidden = false; });
+    costsFetch('GET').then(function (d) { costsData = d; renderCosts(); }).catch(function (e) {
+      if (e.upgrade) { // Free: the profit analysis is in the paid plans
+        [].forEach.call($('costsView').querySelectorAll('.panel'), function (p) { p.hidden = true; });
+        $('costsUpsell').hidden = false; return;
+      }
+      if (e.message !== 'auth') alert('Разходите не се заредиха. Опитайте пак.');
+    });
   }
   $('cSave').addEventListener('click', function () {
     var products = [].map.call(document.querySelectorAll('[data-pi]'), function (inp) {
@@ -3801,9 +4032,9 @@ tr.hl td{background:#fffbe6}
   var inviteToken = new URLSearchParams(location.search).get('invite');
   /* ---- плановете при регистрацията (цените са с ДДС; стартовите — до 30.11.2026 23:59) ---- */
   var PLAN_LIST = [
-    { key: 'starter', name: 'Starter', what: '1 магазин · 300 поръчки на месец', monthly: 67, launchMonthly: 40.2, launchYearly: 160.8 },
-    { key: 'growth', name: 'Growth', what: '3 магазина · 1 000 поръчки · Growth Lab', monthly: 97, launchMonthly: 58.2, launchYearly: 232.8 },
-    { key: 'business', name: 'Business', what: '6 магазина · 4 000 поръчки · Growth Lab', monthly: 147, launchMonthly: 88.2, launchYearly: 352.8 },
+    { key: 'starter', name: 'Starter', what: '1 магазин · 300 поръчки на месец', monthly: 67, launchMonthly: 40.2, launchYearly: 321.6 },
+    { key: 'growth', name: 'Growth', what: '3 магазина · 1 000 поръчки · Growth Lab', monthly: 97, launchMonthly: 58.2, launchYearly: 465.6 },
+    { key: 'business', name: 'Business', what: '6 магазина · 4 000 поръчки · Growth Lab', monthly: 147, launchMonthly: 88.2, launchYearly: 705.6 },
   ];
   var suPick = { plan: 'growth', billing: 'monthly' }, suInfo = { launch: true, foundersLeft: 20 };
   function eurS(v) { v = Math.round(v * 100) / 100; var t = v.toFixed(v % 1 ? 2 : 0).split('.'); return t[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (t[1] ? ',' + t[1] : '') + ' €'; }
@@ -3818,7 +4049,7 @@ tr.hl td{background:#fffbe6}
     }).join('');
     var p = PLAN_LIST.filter(function (x) { return x.key === suPick.plan; })[0], price = eurS(planPrice(p, suPick.billing));
     // the renewal terms, plainly, before anything is paid
-    $('suTerms').innerHTML = '<b>Условия:</b> 14 дни безплатно, без карта. След това плащате по линк, който ще ви изпратим. ' + (suInfo.launch
+    $('suTerms').innerHTML = '<b>Условия:</b> 14 дни безплатно, без карта. След това плащате по линк, който ще ви изпратим — или оставате на безплатния план Free (1 магазин, до 50 поръчки на месец). ' + (suInfo.launch
       ? (suPick.billing === 'yearly'
         ? 'Годишно: ' + price + ' за първите 12 месеца (предплащане). После абонаментът се подновява по редовната цена — ' + eurS(p.monthly * 12) + ' на година. ' +
           (suInfo.foundersLeft > 0 ? '<b>Founders 20:</b> първите 20 платили годишен абонамент запазват цената ' + price + ' завинаги, докато го подновяват без прекъсване (остават ' + suInfo.foundersLeft + ').' : '')
@@ -3856,12 +4087,12 @@ tr.hl td{background:#fffbe6}
       $('suErr').textContent = '';
       if ($('suPw').value !== $('suPw2').value) { $('suErr').textContent = 'Паролите не съвпадат.'; return; }
       busy($('suBtn'), fetch(API + 'signup', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: offerSignup ? undefined : signupCode, offer: offerSignup || undefined, plan: offerSignup ? undefined : suPick.plan, billing: offerSignup ? undefined : suPick.billing, name: $('suName').value, email: $('suEmail').value, password: $('suPw').value, website: $('suWebsite').value }) })
+        body: JSON.stringify({ code: offerSignup ? undefined : signupCode, offer: offerSignup || undefined, plan: offerSignup ? undefined : suPick.plan, billing: offerSignup ? undefined : suPick.billing, ref: new URLSearchParams(location.search).get('ref') || undefined, name: $('suName').value, email: $('suEmail').value, password: $('suPw').value, website: $('suWebsite').value }) })
         .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
         .then(function () {
           $('signupForm').hidden = true;
           if (!offerSignup) showWelcome();
-          var p = new URLSearchParams(location.search); p.delete('signup'); p.delete('offer'); p.delete('plan'); p.delete('billing');
+          var p = new URLSearchParams(location.search); p.delete('signup'); p.delete('offer'); p.delete('plan'); p.delete('billing'); p.delete('ref');
           try { history.replaceState(null, '', location.pathname + (p.toString() ? '?' + p : '') + '#start'); } catch (e2) { location.hash = '#start'; }
           load(1);
         })
