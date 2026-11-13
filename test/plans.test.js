@@ -14,8 +14,8 @@ const row = async (id) => (await q(`select ${SUB_COLS} from zd.users where id = 
 
 test('launch prices until 30.11.2026 23:59 in Sofia, regular after; with VAT', () => {
   assert.deepEqual(quote('starter', 'monthly', BEFORE), { plan: 'starter', billing: 'monthly', launch: true, price: 40.2, regular: 67 });
-  assert.deepEqual(quote('growth', 'yearly', BEFORE), { plan: 'growth', billing: 'yearly', launch: true, price: 232.8, regular: 1164 });
-  assert.equal(quote('business', 'yearly', BEFORE).price, 352.8);
+  assert.deepEqual(quote('growth', 'yearly', BEFORE), { plan: 'growth', billing: 'yearly', launch: true, price: 465.6, regular: 1164 });
+  assert.equal(quote('business', 'yearly', BEFORE).price, 705.6);
   assert.deepEqual(quote('growth', 'monthly', AFTER), { plan: 'growth', billing: 'monthly', launch: false, price: 97, regular: 97 });
   assert.throws(() => quote('pro', 'monthly'), /план/);
   assert.throws(() => quote('growth', 'weekly'), /месечно или годишно/);
@@ -26,7 +26,7 @@ test('the plan picked at registration: 14 days free; a change keeps the launch p
   let s = await chooseSubscription(q, id, { plan: 'growth', billing: 'monthly' }, BEFORE);
   assert.equal(s.price, 58.2); assert.equal(s.trialUntil, '2026-12-14T21:59:00.000Z'); assert.equal(s.launchActive, true);
   s = await chooseSubscription(q, id, { plan: 'business', billing: 'yearly' }, AFTER);
-  assert.deepEqual([s.planName, s.billing, s.price, s.regular, s.launch], ['Business', 'yearly', 352.8, 1764, true]);
+  assert.deepEqual([s.planName, s.billing, s.price, s.regular, s.launch], ['Business', 'yearly', 705.6, 1764, true]);
   assert.equal(s.trialUntil, '2026-12-14T21:59:00.000Z', 'the free period is not restarted');
   const late = await user();
   assert.equal((await chooseSubscription(q, late, { plan: 'growth', billing: 'monthly' }, AFTER)).price, 97);
@@ -54,7 +54,7 @@ test('Founders 20: the first 20 yearly payers keep the launch price for good; th
   const late = await markPaid(q, ids[20]);
   assert.equal(late.founder, false);
   const far = new Date(Date.now() + 3 * 365 * 864e5);
-  assert.equal(subscriptionView(await row(ids[0]), far).price, 232.8, 'a founder keeps it');
+  assert.equal(subscriptionView(await row(ids[0]), far).price, 465.6, 'a founder keeps it');
   assert.equal(subscriptionView(await row(ids[20]), far).price, 1164);
   await assert.rejects(chooseSubscription(q, ids[0], { plan: 'business', billing: 'yearly' }), /Founders/);
 });

@@ -3801,9 +3801,9 @@ tr.hl td{background:#fffbe6}
   var inviteToken = new URLSearchParams(location.search).get('invite');
   /* ---- плановете при регистрацията (цените са с ДДС; стартовите — до 30.11.2026 23:59) ---- */
   var PLAN_LIST = [
-    { key: 'starter', name: 'Starter', what: '1 магазин · 300 поръчки на месец', monthly: 67, launchMonthly: 40.2, launchYearly: 160.8 },
-    { key: 'growth', name: 'Growth', what: '3 магазина · 1 000 поръчки · Growth Lab', monthly: 97, launchMonthly: 58.2, launchYearly: 232.8 },
-    { key: 'business', name: 'Business', what: '6 магазина · 4 000 поръчки · Growth Lab', monthly: 147, launchMonthly: 88.2, launchYearly: 352.8 },
+    { key: 'starter', name: 'Starter', what: '1 магазин · 300 поръчки на месец', monthly: 67, launchMonthly: 40.2, launchYearly: 321.6 },
+    { key: 'growth', name: 'Growth', what: '3 магазина · 1 000 поръчки · Growth Lab', monthly: 97, launchMonthly: 58.2, launchYearly: 465.6 },
+    { key: 'business', name: 'Business', what: '6 магазина · 4 000 поръчки · Growth Lab', monthly: 147, launchMonthly: 88.2, launchYearly: 705.6 },
   ];
   var suPick = { plan: 'growth', billing: 'monthly' }, suInfo = { launch: true, foundersLeft: 20 };
   function eurS(v) { v = Math.round(v * 100) / 100; var t = v.toFixed(v % 1 ? 2 : 0).split('.'); return t[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (t[1] ? ',' + t[1] : '') + ' €'; }

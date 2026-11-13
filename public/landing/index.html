@@ -24,6 +24,7 @@
 :root{--ink:#0d0d0d;--ink2:#1a1a18;--paper:#f4f2ec;--card:#fff;--line:#e4e1d8;--muted:#5f5d57;--y:#ffd21f;--y2:#f5c400;--ysoft:#fff6cc;--ok:#15803d;--bad:#b91c1c;--r:18px}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
+#prices{scroll-margin-top:60px}
 body{margin:0;font:16px/1.6 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
 h1,h2,h3,.uf{font-family:Unbounded,Manrope,sans-serif;letter-spacing:-.01em;line-height:1.15;margin:0}
 a{color:inherit}
@@ -495,7 +496,7 @@ footer a{color:#e9e7df;text-decoration:none}
       <b>ordyx</b>
     </a>
     <nav aria-label="Основно меню"><a href="#how">Как работи</a><a href="#features">Възможности</a><a href="#prices">Цени</a><a href="#faq">ЧЗВ</a><a href="https://app.ordyx.eu/admin/">Вход</a></nav>
-    <a class="btn" data-cta href="#">Започни безплатно</a>
+    <a class="btn" data-cta href="#prices">Започни безплатно</a>
   </div>
 </header>
 
@@ -507,7 +508,7 @@ footer a{color:#e9e7df;text-decoration:none}
       <div class="who"><i></i>За онлайн магазини, които искат пълния контрол и цялата картина на едно място</div>
       <h1>Всичко след „Поръчай“ — <em>на един екран</em>, на телефона ти</h1>
       <p class="sub">Един ред код в магазина. Офис, товарителница, потвърждение и печалба — без програмист.</p>
-      <div><a class="btn" data-cta href="#">Започни безплатно →</a></div>
+      <div><a class="btn" data-cta href="#prices">Започни безплатно →</a></div>
       <div class="trust"><span>14 дни безплатно</span><span>Без карта</span><span>Включване за 10 минути</span></div>
     </div>
     <div class="stage" aria-hidden="true">
@@ -793,7 +794,7 @@ footer a{color:#e9e7df;text-decoration:none}
       <div><b>Стартови цени до 30 ноември! Заключи цената си за 12 месеца.</b><br>Първите 20 годишни клиента я запазват завинаги!</div>
       <div class="cd" id="cd"><span id="cdD">0<small>дни</small></span><span id="cdH">0<small>часа</small></span><span id="cdM">0<small>мин</small></span><span id="cdS">0<small>сек</small></span></div>
     </div>
-    <div class="billtog" role="group" aria-label="Плащане"><button type="button" class="on" data-billing="monthly">Месечно</button><button type="button" data-billing="yearly">Годишно <span class="save" data-old>до −80%</span></button></div>
+    <div class="billtog" role="group" aria-label="Плащане"><button type="button" class="on" data-billing="monthly">Месечно</button><button type="button" data-billing="yearly">Годишно <span class="save" data-old>−60%</span></button></div>
     <div class="plans">
       <div class="plan"><h3>Starter</h3><div class="sub2">1 магазин · 300 поръчки на месец</div><div class="was" data-old><span class="disc" data-dsc>−40%</span><s data-reg="0">67 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="0">40,20 €</span><small data-per>/месец</small></div><div class="yr" data-alt="0"></div><div class="addon">+1 магазин за 7 €/мес.<small>до 2 магазина общо · лимитът на поръчките остава 300</small></div><ul><li><b>Ordyx Съветник</b> — какво да промениш днес и колко носи</li><li>чекаут с офиси и автомати на Еконт, Спиди и BOX NOW</li><li>товарителници с един клик и проследяване на пратката</li><li>потвърждение по WhatsApp, SMS и гласов агент (0,60 € на разговор)</li><li>проверка на телефона за некоректни клиенти</li><li>изоставени колички с напомняне</li><li>наличности с прогноза кога ще свършат</li><li>чиста печалба: реклама, доставка, връщания, себестойност</li><li>Meta, Google и TikTok Ads — поръчки и печалба по източник</li><li>приложение и известия на телефона</li><li>Growth Lab — безплатно при годишен абонамент</li></ul><a class="btn" data-cta data-plan="starter" href="#">Започни безплатно</a></div>
       <div class="plan star"><span class="badge"><svg aria-hidden="true"><use href="#i-star"/></svg>Най-популярен</span><h3>Growth</h3><div class="sub2">3 магазина · 1 000 поръчки на месец</div><div class="was" data-old><span class="disc" data-dsc>−40%</span><s data-reg="1">97 €</s> редовна цена от 1 декември</div><div class="now"><span data-pp="1">58,20 €</span><small data-per>/месец</small></div><div class="yr" data-alt="1"></div><div class="addon">+ до 2 магазина по 7 €/мес.<small>до 5 магазина общо · лимитът на поръчките остава 1 000</small></div><ul><li class="all">Всичко от Starter, плюс:</li><li><b>Growth Lab включен</b> — стойност 20 €/мес.</li><li>3 магазина на един екран</li><li>1 000 поръчки на месец</li></ul><a class="btn" data-cta data-plan="growth" href="#">Започни безплатно</a></div>
@@ -816,7 +817,7 @@ footer a{color:#e9e7df;text-decoration:none}
       <ul>
         <li>Купиш ли Ordyx на стартовите цени до 30 ноември 2026 г., 23:59 ч., запазваш цената 12 месеца от датата на покупката — с месечно или с годишно плащане.</li>
         <li><b>Месечно:</b> 40,20 / 58,20 / 88,20 € на месец за 12 последователни месеца, докато абонаментът е активен.</li>
-        <li><b>Годишно:</b> предплащаш 12 месеца — 160,80 / 232,80 / 352,80 €.</li>
+        <li><b>Годишно:</b> предплащаш 12 месеца — 321,60 / 465,60 / 705,60 € (−60% от редовната годишна цена).</li>
         <li><b>Founders 20:</b> първите 20 платили годишен абонамент запазват същата годишна цена завинаги при непрекъснато подновяване на същия план.</li>
         <li>След 12-те месеца абонаментът продължава по редовните цени: 67 / 97 / 147 € на месец.</li>
         <li>След 30 ноември новите клиенти получават редовните цени. При прекратяване стартовата цена отпада.</li>
@@ -867,7 +868,7 @@ footer a{color:#e9e7df;text-decoration:none}
   <div class="wrap">
     <h2>Вечер поглеждаш телефона — и всичко е наред.</h2>
     <p>Поръчките са потвърдени, товарителниците са готови, печалбата е пред теб. 14 дни безплатно, без карта, и 30 дни гаранция след първото плащане.</p>
-    <a class="btn" data-cta href="#">Започни безплатно →</a>
+    <a class="btn" data-cta href="#prices">Започни безплатно →</a>
   </div>
 </section>
 </main>
@@ -881,7 +882,7 @@ footer a{color:#e9e7df;text-decoration:none}
   </div>
 </footer>
 
-<div class="mcta" id="mcta"><a class="btn" data-cta href="#">Започни безплатно — 14 дни</a></div>
+<div class="mcta" id="mcta"><a class="btn" data-cta href="#prices">Започни безплатно — 14 дни</a></div>
 
 <script>window.__zdoLogoBase = "https://app.ordyx.eu/logos/";</script>
 <script src="https://app.ordyx.eu/checkout.js" defer></script>
@@ -898,7 +899,8 @@ footer a{color:#e9e7df;text-decoration:none}
 
   // a plan's button opens the registration with that plan (and monthly or yearly) picked
   var billing = 'monthly';
-  function ctas() { [].forEach.call(document.querySelectorAll('[data-cta]'), function (a) { a.href = SIGNUP + (a.getAttribute('data-plan') ? '&plan=' + a.getAttribute('data-plan') + (billing === 'yearly' ? '&billing=yearly' : '') : ''); }); }
+  // the plans' buttons open the registration with that plan; every other „Започни безплатно“ leads to the price list first
+  function ctas() { [].forEach.call(document.querySelectorAll('[data-cta]'), function (a) { var pl = a.getAttribute('data-plan'); a.href = pl ? SIGNUP + '&plan=' + pl + (billing === 'yearly' ? '&billing=yearly' : '') : '#prices'; }); }
   ctas();
 
   /* integrations: N slots, each showing one chip; every 2.4 s one slot (in turn) swaps to the next logo not shown elsewhere */
@@ -1079,9 +1081,9 @@ footer a{color:#e9e7df;text-decoration:none}
   /* pricing: 3 plans + 7 € a store; founders −40% on the plan until 30.11.2026 23:59 (the 7 € add-on is fixed); the order
      limit is shared by the plan's stores and an added store does not raise it; 5 € for every 250 orders above it */
   var PLANS = [
-    { name: 'Starter', shops: 1, max: 2, orders: 300, price: 67, launchYear: 160.8 },
-    { name: 'Growth', shops: 3, max: 5, orders: 1000, price: 97, launchYear: 232.8 },
-    { name: 'Business', shops: 6, max: Infinity, orders: 4000, price: 147, launchYear: 352.8 },
+    { name: 'Starter', shops: 1, max: 2, orders: 300, price: 67, launchYear: 321.6 },
+    { name: 'Growth', shops: 3, max: 5, orders: 1000, price: 97, launchYear: 465.6 },
+    { name: 'Business', shops: 6, max: Infinity, orders: 4000, price: 147, launchYear: 705.6 },
   ];
   var ADDON = 7, OVER_STEP = 250, OVER_EUR = 5;
   var r2 = function (v) { return Math.round(v * 100) / 100; };
@@ -1102,10 +1104,10 @@ footer a{color:#e9e7df;text-decoration:none}
     [].forEach.call(document.querySelectorAll('[data-per]'), function (el) { el.textContent = yearly ? '/година' : '/месец'; });
     var plansEl = document.querySelector('.plans'); if (plansEl) plansEl.classList.toggle('yearly', yearly); // a year's price is longer: a smaller size keeps it on one line
     [].forEach.call(document.querySelectorAll('[data-reg]'), function (el) { var pl = PLANS[+el.getAttribute('data-reg')]; el.textContent = thousands(eur(yearly ? pl.price * 12 : pl.price)); });
-    [].forEach.call(document.querySelectorAll('[data-dsc]'), function (el) { el.textContent = yearly ? '−80%' : '−40%'; });
+    [].forEach.call(document.querySelectorAll('[data-dsc]'), function (el) { el.textContent = yearly ? '−60%' : '−40%'; });
     [].forEach.call(document.querySelectorAll('[data-alt]'), function (el) {
       var pl = PLANS[+el.getAttribute('data-alt')];
-      el.innerHTML = yearly ? 'предплащаш 12 месеца · или <b>' + money(month(pl)) + '</b> на месец' : 'или <b>' + thousands(money(year(pl))) + '</b> за година' + (f ? ' <span class="disc sm">−80%</span>' : '');
+      el.innerHTML = yearly ? 'предплащаш 12 месеца · или <b>' + money(month(pl)) + '</b> на месец' : 'или <b>' + thousands(money(year(pl))) + '</b> за година' + (f ? ' <span class="disc sm">−60%</span>' : '');
     });
     [].forEach.call(document.querySelectorAll('[data-billing]'), function (b) { b.classList.toggle('on', b.getAttribute('data-billing') === billing); });
     ctas();

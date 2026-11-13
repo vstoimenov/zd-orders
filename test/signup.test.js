@@ -170,7 +170,7 @@ test('the plan picked at registration: 14 days free, priced, shown to the client
   assert.equal(res.statusCode, 200);
   const sub = json(await call({ url: '/api/admin/me', cookie: cookieOf(res) })).subscription;
   assert.deepEqual([sub.planName, sub.billing, sub.paidAt], ['Growth', 'yearly', null]);
-  assert.equal(sub.price, info.launch ? 232.8 : 1164);
+  assert.equal(sub.price, info.launch ? 465.6 : 1164);
   assert.ok(Date.parse(sub.trialUntil) - Date.now() > 13.9 * 864e5);
   let list = json(await call({ url: '/api/admin/users', cookie: owner }));
   const u = list.users.find((x) => x.email === 'ivan@shop.bg');
