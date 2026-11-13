@@ -184,3 +184,17 @@ test('the plan picked at registration: 14 days free, priced, shown to the client
   list = json(await call({ url: '/api/admin/users', cookie: owner }));
   assert.equal(list.founders.left, info.launch ? 19 : 20);
 });
+
+test('the Free plan can be picked in the form; the owner hears it is Free', async () => {
+  const sent = [];
+  setPushSenderForTests(async (sub, payload) => { sent.push(JSON.parse(payload)); return { statusCode: 201 }; });
+  await saveSubscription(q, { subscription: { endpoint: 'https://fcm.googleapis.com/fcm/send/o', keys: { p256dh: 'p', auth: 'a' } }, shopId: null });
+  const code = await signupLink();
+  const res = await call({ method: 'POST', url: '/api/admin/signup', body: form(code, { plan: 'free', billing: 'monthly' }) });
+  assert.equal(res.statusCode, 200);
+  const me = json(await call({ url: '/api/admin/me', cookie: cookieOf(res) }));
+  assert.equal(me.subscription.wantsFree, true);
+  assert.equal(me.subscription.plan, 'starter');
+  assert.match(sent.at(-1).body, /Free/);
+  assert.equal((await call({ method: 'POST', url: '/api/admin/signup', body: form(code, { email: 'x@shop.bg', plan: 'pro' }) })).statusCode, 400);
+});
