@@ -51,3 +51,17 @@ test('an unknown or malformed code changes nothing; the first referrer stays', a
   assert.equal(res.statusCode, 200);
   assert.equal((await q(`select referred_by from zd.users where email = 'b@shop.bg'`))[0].referred_by, null);
 });
+
+test('a commission only for the referred client\'s first 12 months of payments (from its first payment)', async () => {
+  const c = await createClient(q, { email: 'p2@x.bg', name: 'Партньор' });
+  const code = await ensureRefCode(q, c.id);
+  const link = new URL(json(await call({ method: 'POST', url: '/api/admin/users', cookie: owner, body: { action: 'signup_link' } })).link).searchParams.get('signup');
+  await call({ method: 'POST', url: '/api/admin/signup', body: { code: link, ref: code, name: 'Вера', email: 'vera@shop.bg', password: 'vera-pass-123', website: '', plan: 'starter', billing: 'monthly' } });
+  const [v] = await q(`select id from zd.users where email = 'vera@shop.bg'`);
+  for (const d of ['2026-12-04', '2027-06-04', '2027-12-03', '2027-12-04', '2028-01-04']) await addPayment(q, v.id, { paidAt: d, amount: 40.2 });
+  const s = await affiliateSummary(q, c.id);
+  assert.deepEqual(s.commissions.map((x) => x.paidAt).sort(), ['2026-12-04', '2027-06-04', '2027-12-03'], 'the 12 months end on 2027-12-04');
+  assert.equal(s.earned, 60.3);
+  const list = json(await call({ url: '/api/admin/users', cookie: owner })).partners;
+  assert.equal(list.find((p) => p.email === 'p2@x.bg').earned, 60.3);
+});
