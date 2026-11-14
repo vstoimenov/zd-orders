@@ -144,6 +144,11 @@ form#login{min-height:100vh;display:flex;align-items:center;justify-content:cent
 .nav svg,.logout svg,.iconbtn svg{width:19px;height:19px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .npreview{margin:12px 0;padding:12px 14px;border-radius:14px;background:#f1f0ec;display:flex;flex-direction:column;gap:2px;font-size:14px}
 .partnerbox{border:1.5px solid var(--accent);border-radius:14px;padding:16px;margin-bottom:16px;background:#fffdf2}
+.syncbox[hidden]{display:none}
+.partnerbox>summary{font-weight:800;font-size:16px;cursor:pointer;margin-bottom:8px}
+.partnerbox.alt{border:1px solid var(--line);background:#fafaf7}.partnerbox.alt>summary{font-size:14px;font-weight:700;color:var(--muted);margin:0}
+.partnerbox .btnlink{display:inline-block;margin-top:6px;padding:6px 12px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px}
+.ownsw{display:flex;gap:10px;align-items:flex-start;margin:0 0 16px;padding:12px 14px;border:1px dashed var(--line);border-radius:10px;font-size:14px;line-height:1.45;cursor:pointer}.ownsw input{width:18px;height:18px;margin:2px 0 0;flex:none}
 .partnerbox .steps{margin:0 0 10px;padding-left:20px}
 .partnerbox .steps li{margin:4px 0}
 .navbadge{margin-left:auto;min-width:20px;padding:1px 7px;border-radius:999px;background:var(--accent);color:#111;font-size:11px;font-weight:800;text-align:center}
@@ -217,6 +222,16 @@ main{padding:30px 32px 56px;max-width:1440px}
 .advisor .afun{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px}
 .advisor .afun td{padding:5px 6px;border-top:1px solid var(--line);vertical-align:middle}
 .advisor .afun td.n{text-align:right;font-weight:700;white-space:nowrap}
+.gpath .gsub{color:var(--muted);font-size:13px;margin:-4px 0 12px}
+.gpath .gop{font-size:18px;font-weight:800;margin:0 0 2px}.gpath .gaxis{display:inline-block;font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;background:#f1f0ec;color:var(--muted);margin-left:6px;vertical-align:middle}
+.gpath .gstop{font-size:15px;font-weight:700;margin:8px 0}
+.gpath ol{margin:8px 0 0;padding-left:20px}.gpath ol li{margin:6px 0;line-height:1.45}
+.gpath .gq{font-size:16px;font-weight:700;margin:4px 0 10px}.gpath .gopts{display:flex;flex-direction:column;gap:8px}
+.gpath .gopts button{text-align:left;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;font:inherit;font-size:14px;cursor:pointer}
+.gpath .gopts button:hover{border-color:var(--accent);background:var(--accent-soft)}
+.gpath .gcheck{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:#fafaf7;border:1px solid var(--line);font-size:14px;line-height:1.5}
+.gpath .gcheck.met{background:#e7f6ec;border-color:#bfe5cc}.gpath .gcheck.late{background:#fff3e0;border-color:#f5d6a8}
+.gpath .gsteps li{font-size:13px}.gpath .gsteps .by{color:var(--muted);font-size:12px}
 .advisor .afun .bar{height:8px;border-radius:4px;background:var(--accent);min-width:2px}
 .advisor .afun .lost{color:var(--bad);white-space:nowrap}
 .advisor .amonth{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 14px;padding:10px 14px;border-radius:10px;background:#eef6ff;color:#1e3a5f;font-size:14px;line-height:1.45}
@@ -480,6 +495,7 @@ tr.hl td{background:#fffbe6}
         </form>
       </div>
       <div class="advisor" id="advisor" hidden aria-live="polite"></div>
+      <div class="advisor gpath" id="gpath" hidden aria-live="polite"></div>
       <div class="cards" id="dCards"></div>
       <div class="panel" id="dByShopPanel" hidden><h2>По магазини</h2><table id="dByShop"></table></div>
       <div class="panel" id="beCalc">
@@ -863,17 +879,23 @@ tr.hl td{background:#fffbe6}
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="metaTitle">
       <div class="dhead"><div class="tile meta">∞<img src="https://www.google.com/s2/favicons?domain=facebook.com&amp;sz=128" alt="" referrerpolicy="no-referrer" onerror="this.remove()"></div><div><h2 id="metaTitle">Meta реклами <span class="chip" id="iMetaChip2"></span></h2><div class="muted" style="font-size:15px">Рекламен разход, ROAS, CPA и CPM в таблото</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
       <div class="dbody">
-        <div class="partnerbox" id="iMetaPartner">
-          <h3 style="margin:0 0 8px">Свържи чрез споделяне</h3>
+        <div id="iMetaOauthBox" hidden>
+          <div class="fbbox">
+            <a class="primary fb" href="/api/admin/meta?start=1" id="iMetaFb"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12z"/></svg>Вход с Facebook</a>
+            <span class="muted">Влизате с профила, който управлява рекламите, и избирате рекламния акаунт от списък.</span>
+          </div>
+        </div>
+        <label class="ownsw" id="iMetaLoginPublicBox" hidden><input type="checkbox" id="iMetaLoginPublic"> <span><b>„Вход с Facebook“ и за клиентите</b><br><span class="muted">Включи го в деня, в който Meta одобри приложението (App Review за ads_read). Дотогава клиентите свързват рекламите чрез споделяне — Meta иначе им показва грешка.</span></span></label>
+        <details class="partnerbox" id="iMetaPartner" open>
+          <summary id="iMetaPartnerTitle">Свържи рекламите си в 3 стъпки</summary>
           <div class="muted" id="iMetaPartnerOff" hidden>Още не е включено от собственика на Ordyx.</div>
           <div id="iMetaPartnerOn" hidden>
             <ol class="steps">
-              <li>Отворете <a href="https://business.facebook.com/settings/ad-accounts" target="_blank" rel="noopener">Business Manager → Рекламни акаунти</a> и изберете рекламния акаунт на магазина.</li>
-              <li>Натиснете <b>Assign partner</b> (Възлагане на партньор) → <b>Business ID</b> и въведете <b id="iMetaBiz"></b> <button type="button" class="ghost" id="iMetaBizCopy" style="padding:2px 10px;font-size:12px">Копирай</button></li>
-              <li>Изберете право <b>„View performance“</b> (Преглед на ефективността) и потвърдете.</li>
-              <li>Въведете ID на рекламния акаунт тук (числото след <b>act=</b> в Ads Manager) и натиснете „Свържи“.</li>
+              <li><b>Отвори Business Manager</b> и избери рекламния акаунт на магазина.<br><a class="ghost btnlink" href="https://business.facebook.com/settings/ad-accounts" target="_blank" rel="noopener">Отвори Business Manager ↗</a></li>
+              <li>Натисни <b>Assign partner</b> (Възлагане на партньор) → <b>Business ID</b>, постави <b id="iMetaBiz"></b> <button type="button" class="ghost" id="iMetaBizCopy" style="padding:2px 10px;font-size:12px">Копирай</button> и избери право <b>„View performance“</b> (Преглед на ефективността).</li>
+              <li>Постави тук <b>линка от Ads Manager</b> или само номера на рекламния акаунт и натисни „Свържи“.</li>
             </ol>
-            <div class="actions"><input type="text" id="iMetaPartnerId" placeholder="ID на рекламния акаунт, напр. 1234567890" style="min-width:240px"><button type="button" class="primary" id="iMetaPartnerGo">Свържи</button></div>
+            <div class="actions"><input type="text" id="iMetaPartnerId" placeholder="Линк от Ads Manager или номер, напр. 1234567890" style="min-width:260px;flex:1"><button type="button" class="primary" id="iMetaPartnerGo">Свържи</button></div>
             <div class="muted" id="iMetaPartnerInfo" style="margin-top:8px"></div>
           </div>
           <details id="iMetaPlatformBox" hidden style="margin-top:12px"><summary>Собственик: ключ на платформата за споделяне</summary>
@@ -881,11 +903,7 @@ tr.hl td{background:#fffbe6}
             <div class="fgrid"><label>System user token<input type="password" id="iMetaPlatToken" autocomplete="off" placeholder="поставете ключа"></label><label>ID на бизнеса<input type="text" id="iMetaPlatBiz" value="1286604839444018"></label></div>
             <div class="actions"><button type="button" class="primary" id="iMetaPlatSave">Запази и включи</button><span class="muted" id="iMetaPlatInfo"></span></div>
           </details>
-        </div>
-        <div class="fbbox" id="iMetaOauthBox" hidden>
-          <a class="primary fb" href="/api/admin/meta?start=1" id="iMetaFb"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12z"/></svg>Вход с Facebook</a>
-          <span class="muted">Влизате с профила, който управлява рекламите, и избирате рекламния акаунт от списък.</span>
-        </div>
+        </details>
         <div class="warn" id="iMetaExpiry" hidden></div>
         <div id="iMetaPick" hidden></div>
         <details class="manual" id="iMetaManual">
@@ -902,7 +920,7 @@ tr.hl td{background:#fffbe6}
         </div>
         <div class="actions"><button type="button" class="primary" id="iMetaSave">Запази и свържи</button><button type="button" class="ghost" id="iMetaList">Покажи акаунтите</button><button type="button" class="ghost" id="iMetaTest">Тествай връзката</button></div>
         </details>
-        <div class="syncbox">
+        <div class="syncbox" id="iMetaSyncBox">
           <h3>Синхронизация на рекламния разход</h3>
           <div class="actions">
             <input type="date" id="iMetaFrom" title="от дата"><input type="date" id="iMetaTo" title="до дата">
@@ -1966,12 +1984,81 @@ tr.hl td{background:#fffbe6}
   var adv = null, advAt = 0, advGear = false, advGuide = '';
   function loadAdvisor() {
     var box = $('advisor');
+    loadPath();
     if (currentShop === 'all') { if (role === 'owner' && !DEMO) loadAdvisorReport(); else box.hidden = true; return; }
     fetch(withShop(API + 'advisor'), { credentials: 'same-origin' })
       .then(function (res) { if (!res.ok) throw new Error(res.status); return res.json(); })
       .then(function (d) { if (d.all) { box.hidden = true; return; } adv = d; advAt = 0; renderAdvisor(); })
       .catch(function () { box.hidden = true; });
   }
+  /* ---- Пътят на растежа: Ordyx минава по въпросите сам (данни), пита за останалото и спира на една операция (docs/superpowers/specs/2026-11-14-growth-path-design.md) ---- */
+  var gp = null, gpOpen = false;
+  try { gpOpen = localStorage.getItem('zdPathOpen') === '1'; } catch (e) { /* private mode */ }
+  var GP_PCT = { conversion: 1, completion: 1, retention90: 1, channelShare: 1, returnsRate: 1 }, GP_EUR = { aov: 1, marginPerOrder: 1, revenue7: 1, cac: 1, blockedValue: 1 };
+  function gpFmt(metric, v) {
+    if (v == null) return '—';
+    if (GP_PCT[metric]) return (Math.round(v * 1000) / 10).toString().replace('.', ',') + '%';
+    if (GP_EUR[metric]) return Math.round(v).toLocaleString('bg-BG') + ' €';
+    if (metric === 'payback' || metric === 'buysPerYear') return (Math.round(v * 100) / 100).toString().replace('.', ',');
+    return String(Math.round(v));
+  }
+  function loadPath() {
+    var box = $('gpath');
+    if (currentShop === 'all' || DEMO) { box.hidden = true; return; }
+    if (!gpOpen) { gp = null; renderPath(); return; }
+    box.hidden = false; box.innerHTML = '<div class="ahead"><h2>🧭 Пътят на растежа</h2></div><div class="muted">Минавам по числата ти…</div>';
+    fetch(withShop(API + 'advisor?path=1'), { credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (d) { gp = d; renderPath(); })
+      .catch(function () { box.innerHTML = '<div class="ahead"><h2>🧭 Пътят на растежа</h2></div><div class="err">Не успях да заредя пътя. Опитай пак.</div>'; });
+  }
+  function gpOpView(o, active) {
+    var h = '<div class="gop">' + esc(o.name) + '<span class="gaxis">' + esc(o.axis) + '</span></div>' +
+      '<div class="gstop">' + esc(o.stop) + '</div><div class="muted" style="font-size:13px;line-height:1.5"><b>Кога:</b> ' + esc(o.when) + '<br><b>Как:</b> ' + esc(o.how) + '</div>' +
+      '<b style="display:block;margin-top:12px">Първите три хода</b><ol>' + o.moves.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ol>';
+    if (active) {
+      var a = active, cls = a.met ? ' met' : a.overdue ? ' late' : '';
+      h += '<div class="gcheck' + cls + '"><b>Проверка:</b> ' + esc(o.checkText) +
+        (a.measured ? '<br>Сега <b>' + esc(gpFmt(a.metric, a.now)) + '</b> → цел <b>' + esc(gpFmt(a.metric, a.goal)) + '</b> до <b>' + esc(fmtDay(a.until)) + '</b>' +
+          (a.start != null ? ' <span class="muted">(в началото: ' + esc(gpFmt(a.metric, a.start)) + ')</span>' : '') : '<br>До <b>' + esc(fmtDay(a.until)) + '</b>. Ти казваш дали е изпълнена.') +
+        (a.met ? '<br><b>✓ Проверката е изпълнена.</b> Операцията остава да работи — минаваме пътя отначало за следващото счупено място.' : '') +
+        (a.overdue ? '<br><b>Срокът мина.</b> Не сменяй операцията — поправи това, което казва проверката, и мери пак.' : '') + '</div>' +
+        '<div class="abtns" style="margin-top:12px">' + (a.met || !a.measured ? '<button type="button" class="primary" data-gp-end="1">' + (a.met ? 'Следващата стъпка' : 'Изпълнено') + '</button>' : '') +
+        '<button type="button" class="ghost" data-gp-end="0">Спри операцията</button></div>';
+    } else {
+      h += '<div class="gcheck"><b>Проверка за ' + o.days + ' дни:</b> ' + esc(o.checkText) + '</div>' +
+        '<div class="abtns" style="margin-top:12px"><button type="button" class="primary" data-gp-start>Започвам</button><button type="button" class="ghost" data-gp-reset>Отговори наново</button></div>';
+    }
+    return h;
+  }
+  function renderPath() {
+    var box = $('gpath'), d = gp;
+    box.hidden = currentShop === 'all' || DEMO;
+    var h = '<div class="ahead"><h2>🧭 Пътят на растежа</h2><button type="button" class="aset" data-gp-toggle aria-expanded="' + gpOpen + '">' + (gpOpen ? 'Скрий' : 'Покажи') + '</button></div>';
+    if (!gpOpen || !d) { box.innerHTML = h + '<div class="gsub" style="margin:0">Една операция за следващите 90 дни: какво точно те спира, първите три хода и едно число за проверка.</div>'; return; }
+    h += '<div class="gsub">Минавам по числата ти и питам само каквото не мога да измеря. Работиш по една операция, докато проверката ѝ се изпълни.</div>';
+    if (d.active) h += gpOpView(d.active, d.active);
+    else if (d.ask) {
+      h += '<div class="gq">' + esc(d.ask.text) + '</div><div class="gopts">' + d.ask.options.map(function (o) { return '<button type="button" data-gp-key="' + esc(d.ask.key) + '" data-gp-val="' + esc(o.value) + '">' + esc(o.label) + '</button>'; }).join('') + '</div>';
+    } else if (d.op) h += gpOpView(d.op, null);
+    if (d.steps && d.steps.length) {
+      h += '<details><summary>Как стигнах дотук (' + d.steps.length + ')</summary><ul class="gsteps">' + d.steps.map(function (st) {
+        return '<li>' + esc(st.text) + ' — <b>' + esc(st.answer) + '</b> <span class="by">' + (st.by === 'data' ? 'по данните' : 'твой отговор') + '</span></li>';
+      }).join('') + '</ul></details>';
+    }
+    if (d.done && d.done.length) h += '<details><summary>Минали операции</summary><ul>' + d.done.map(function (x) { return '<li>' + esc(x.name) + ' · ' + esc(fmtDay(x.at)) + (x.met ? ' · ✓ изпълнена' : ' · спряна') + '</li>'; }).join('') + '</ul></details>';
+    box.innerHTML = h;
+  }
+  $('gpath').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.hasAttribute('data-gp-toggle')) { gpOpen = !gpOpen; try { localStorage.setItem('zdPathOpen', gpOpen ? '1' : '0'); } catch (err) { /* private mode */ } loadPath(); return; }
+    var body = b.hasAttribute('data-gp-key') ? { action: 'path_answer', key: b.getAttribute('data-gp-key'), value: b.getAttribute('data-gp-val') }
+      : b.hasAttribute('data-gp-start') ? { action: 'path_start' } : b.hasAttribute('data-gp-reset') ? { action: 'path_reset' }
+      : b.hasAttribute('data-gp-end') ? { action: 'path_end', met: b.getAttribute('data-gp-end') === '1' } : null;
+    if (!body) return;
+    if (body.action === 'path_end' && !body.met && !confirm('Да спра ли операцията? Пътят ще мине отначало.')) return;
+    busy(b, advisorPost(body)).then(function (d) { gp = d; renderPath(); }, function (err) { alert(err.message); });
+  });
   /** „All shops“, the owner: how each metric does across shops, and the thresholds to tune by it. */
   function loadAdvisorReport() {
     var box = $('advisor');
@@ -2530,6 +2617,14 @@ tr.hl td{background:#fffbe6}
     // clients: sharing only, until Meta approves the app (Facebook login and a pasted token stay with the owner)
     var loginOpen = m.loginOpen !== false;
     $('iMetaOauthBox').hidden = !m.oauth || !loginOpen;
+    // with Facebook login open, sharing is the other way (closed); without it, it is the way
+    var alt = !!(m.oauth && loginOpen);
+    $('iMetaPartner').classList.toggle('alt', alt);
+    $('iMetaPartnerTitle').textContent = alt ? 'Друг начин: сподели рекламния акаунт с Ordyx' : 'Свържи рекламите си в 3 стъпки';
+    if (!lastMeta) $('iMetaPartner').open = !alt;
+    $('iMetaLoginPublicBox').hidden = role !== 'owner';
+    $('iMetaSyncBox').hidden = !m.configured; // nothing to sync or disconnect before an account is connected
+    $('iMetaLoginPublic').checked = !!m.loginPublic;
     $('iMetaManual').hidden = !loginOpen;
     $('iMetaManual').open = !m.oauth && loginOpen;
     $('iMetaExpiry').hidden = !(daysLeft != null && daysLeft <= 10);
@@ -3078,7 +3173,9 @@ tr.hl td{background:#fffbe6}
         body: '<p>Скоро тук ще свържете рекламния си акаунт с един бутон и таблото ще показва разхода, ROAS и CPA. Ще ви уведомим.</p>' } :
       { title: 'Рекламите от Meta (ROAS, CPA)', optional: true, done: Boolean(d.meta),
         state: d.meta ? 'Свързан ✓' : 'Не е свързан.',
-        body: '<ol><li><b>Интеграции → Meta реклами → „+ Свържи“ → „Вход с Facebook“</b>.</li><li>Влезте с профила, който управлява рекламите, и изберете бизнес портфолиото и рекламния акаунт.</li>' +
+        body: d.metaLogin === false ? '<ol><li><b>Интеграции → Meta реклами → „+ Свържи“</b>.</li><li>„Отвори Business Manager“ → рекламният акаунт → <b>Assign partner</b> → Business ID на Ordyx (копира се с едно натискане) → право „View performance“.</li>' +
+          '<li>Поставете линка от Ads Manager → <b>„Свържи“</b>. Разходът за последните 30 дни се изтегля веднага, после всяка нощ.</li></ol>' :
+          '<ol><li><b>Интеграции → Meta реклами → „+ Свържи“ → „Вход с Facebook“</b>.</li><li>Влезте с профила, който управлява рекламите, и изберете бизнес портфолиото и рекламния акаунт.</li>' +
           '<li>Изберете акаунта от списъка → <b>„Свържи избрания акаунт“</b>. Разходът за последните 30 дни се изтегля веднага, после всяка нощ.</li></ol>',
         actions: [{ id: 'integrations', label: 'Отвори Интеграции' }] },
       { title: 'Известия на телефона за всяка нова поръчка', optional: true, done: false,
@@ -3793,6 +3890,12 @@ tr.hl td{background:#fffbe6}
     busy($('iMetaTest'), integ({ action: 'test_meta' }))
       .then(function (d) { $('iMetaInfo').textContent = 'Връзката работи ✓ ' + d.accountName + ' (' + d.currency + ')'; })
       .catch(function (e) { showErr('iMetaInfo', e); });
+  });
+  $('iMetaLoginPublic').addEventListener('change', function () {
+    var box = this, on = box.checked;
+    if (on && !confirm('Одобри ли Meta приложението (ads_read)? Ако не е одобрено, клиентите ще видят грешка от Facebook.')) { box.checked = false; return; }
+    box.disabled = true;
+    integ({ action: 'meta_login_public', on: on }).then(function () { box.disabled = false; }, function (e) { box.disabled = false; box.checked = !on; alert(e.message); });
   });
   $('iMetaBizCopy').addEventListener('click', function () { if (navigator.clipboard) navigator.clipboard.writeText($('iMetaBiz').textContent); $('iMetaBizCopy').textContent = 'Копирано ✓'; });
   $('iMetaPartnerGo').addEventListener('click', function () {

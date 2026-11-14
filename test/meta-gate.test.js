@@ -73,3 +73,28 @@ test('switching Meta off works even when another shop uses the same ad account',
   const r = await call(owner, { method: 'POST', url: `/api/admin/integrations?shop=${B}`, body: { action: 'save_meta', accountId: '555', active: false } });
   assert.equal(r.statusCode, 200, r.body);
 });
+
+test('the owner opens „Вход с Facebook“ to clients with a switch (no deploy); only the owner can', async () => {
+  assert.equal(json(await call(client)).meta.loginOpen, false);
+  assert.equal(json(await call(owner)).meta.loginPublic, false);
+  assert.equal((await call(client, { method: 'POST', body: { action: 'meta_login_public', on: true } })).statusCode, 403);
+  assert.equal((await call(owner, { method: 'POST', body: { action: 'meta_login_public', on: true } })).statusCode, 200);
+  assert.equal(json(await call(client)).meta.loginOpen, true);
+  assert.equal(json(await call(owner)).meta.loginPublic, true);
+  assert.equal(json(await call(client, { url: `/api/admin/onboarding?shop=${SHOP}` })).metaLogin, true);
+  const login = await call(client, { url: `/api/admin/meta?start=1&shop=${SHOP}` });
+  assert.match(login.headers.location, /facebook\.com/);
+  await call(owner, { method: 'POST', body: { action: 'meta_login_public', on: false } });
+  assert.equal(json(await call(client)).meta.loginOpen, false);
+});
+
+test('sharing is open to clients in „Първи стъпки“ as soon as the owner set it up; a link from Ads Manager is accepted', async () => {
+  const { seal } = await import('../lib/secretbox.js');
+  const { normalizeAccountId } = await import('../lib/meta.js');
+  await q(`insert into zd.settings (key, value) values ('meta_platform', jsonb_build_object('token', $1::text, 'systemUserId', '9', 'businessId', '8'))`, [seal('PLATFORM')]);
+  const o = json(await call(client, { url: `/api/admin/onboarding?shop=${SHOP}` }));
+  assert.deepEqual([o.metaOpen, o.metaLogin, o.metaShare], [true, false, true]);
+  assert.equal(normalizeAccountId('https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=27849667521369581&business_id=1'), '27849667521369581');
+  assert.equal(normalizeAccountId('act_123'), '123');
+  assert.throws(() => normalizeAccountId('https://facebook.com/x'), /Невалиден/);
+});

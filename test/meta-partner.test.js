@@ -15,7 +15,7 @@ process.env.INTEGRATIONS_SECRET = 'test-secret';
 process.env.VAPID_PUBLIC_KEY = 'B'; process.env.VAPID_PRIVATE_KEY = 'p';
 const SHOP = '00000000-0000-4000-8000-000000000001';
 const owner = `zdo_admin=${signSession('secret')}`;
-let q, calls, shared, pushed;
+let q, calls, shared, pushed, acceptsUser;
 
 const ok = (d) => ({ ok: true, status: 200, json: async () => d });
 const bad = (code, message) => ({ ok: false, status: 400, json: async () => ({ error: { code, message } }) });
@@ -28,10 +28,11 @@ globalThis.fetch = async (url, init = {}) => {
   const path = u.pathname.replace(/^\/v\d+\.\d+/, '');
   if (token !== 'PLATFORM') return bad(190, 'Invalid OAuth access token');
   if (path === '/me') return ok({ id: 'SU1', name: 'Ordyx' });
+  if (path === '/1286604839444018/system_users') return ok({ data: [{ id: 'CAPI', name: 'Conversions API System User' }, { id: 'BIZ1', name: 'Ordyx' }] });
   const m = path.match(/^\/act_(\d+)(\/.*)?$/);
   if (m) {
     if (!shared.has(m[1])) return bad(200, '(#200) Missing Permissions');
-    if (m[2] === '/assigned_users' && init.method === 'POST') { assert.equal(body.user, 'SU1'); return ok({ success: true }); }
+    if (m[2] === '/assigned_users' && init.method === 'POST') return acceptsUser(body.user) ? ok({ success: true }) : bad(100, 'Invalid user id');
     if (m[2] === '/insights') return ok({ data: [{ date_start: '2026-10-17', spend: '12.5', impressions: '1000', clicks: '20', actions: [] }] });
     if (!m[2]) return ok({ id: `act_${m[1]}`, name: `Акаунт ${m[1]}`, currency: 'EUR', account_status: 1 });
   }
@@ -47,7 +48,7 @@ const enable = () => call({ body: { action: 'meta_platform', token: 'PLATFORM', 
 
 beforeEach(async () => {
   q = await makeTestQuery(); setQueryForTests(q);
-  calls = []; shared = new Set(['123']); pushed = [];
+  calls = []; shared = new Set(['123']); pushed = []; acceptsUser = (u) => u === 'BIZ1';
   setPushSenderForTests(async (s, payload) => { pushed.push(JSON.parse(payload)); return { statusCode: 201 }; });
   await saveSubscription(q, { subscription: { endpoint: 'https://fcm.googleapis.com/fcm/send/owner', keys: { p256dh: 'p', auth: 'a' } }, shopId: null });
 });
@@ -152,4 +153,27 @@ test('sharing is open to clients as soon as the platform is on — no META_PUBLI
   assert.equal((await call({ url, cookie: c, body: { action: 'meta_partner', accountId: '123' } })).statusCode, 200);
   assert.equal((await call({ url, cookie: c, body: { action: 'save_meta', accountId: '123', token: 'x' } })).statusCode, 403);
   assert.equal((await call({ url, cookie: c, body: { action: 'meta_accounts', token: 'x' } })).statusCode, 403);
+});
+
+test('the system user is assigned by the id Business Manager shows; the app-scoped id is the fallback; an account already readable connects', async () => {
+  await enable();
+  const [st] = await q(`select value from zd.settings where key = 'meta_platform'`);
+  const v = typeof st.value === 'string' ? JSON.parse(st.value) : st.value;
+  assert.deepEqual([v.systemUserId, v.bizUserId], ['SU1', 'BIZ1']);
+  let res = await call({ body: { action: 'meta_partner', accountId: '123' } });
+  assert.equal(res.statusCode, 200, res.body);
+  assert.deepEqual(calls.filter((c) => c.path === '/act_123/assigned_users').map((c) => c.body.user), ['BIZ1']);
+  // Meta wants the app-scoped id: tried next
+  calls = []; acceptsUser = (u) => u === 'SU1';
+  res = await call({ body: { action: 'meta_partner', accountId: '123' } });
+  assert.equal(res.statusCode, 200, res.body);
+  assert.deepEqual(calls.filter((c) => c.path === '/act_123/assigned_users').map((c) => c.body.user), ['BIZ1', 'SU1']);
+  // neither assignment goes through, but the account is readable: connected all the same
+  acceptsUser = () => false;
+  res = await call({ body: { action: 'meta_partner', accountId: '123' } });
+  assert.equal(res.statusCode, 200, res.body);
+  // not shared at all: the clear message
+  res = await call({ body: { action: 'meta_partner', accountId: '999' } });
+  assert.equal(res.statusCode, 400);
+  assert.match(json(res).error, /още не е споделен/);
 });
