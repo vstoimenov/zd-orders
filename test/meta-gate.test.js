@@ -98,3 +98,11 @@ test('sharing is open to clients in „Първи стъпки“ as soon as the
   assert.equal(normalizeAccountId('act_123'), '123');
   assert.throws(() => normalizeAccountId('https://facebook.com/x'), /Невалиден/);
 });
+
+test('Meta\'s reviewer gets „Вход с Facebook“ by email before it opens to every client', async () => {
+  await q(`insert into zd.settings (key, value) values ('meta_login_testers', '{"emails":["other@x.bg"]}'::jsonb)`);
+  assert.equal(json(await call(client)).meta.loginOpen, false);
+  await q(`update zd.settings set value = '{"emails":["other@x.bg"," C@X.bg "]}'::jsonb where key = 'meta_login_testers'`);
+  assert.equal(json(await call(client)).meta.loginOpen, true);
+  assert.match((await call(client, { url: `/api/admin/meta?start=1&shop=${SHOP}` })).headers.location, /facebook\.com/);
+});
