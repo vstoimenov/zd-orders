@@ -5,6 +5,7 @@ import { nekorektenKey } from '../../lib/nekorekten.js';
 import { send, safeEqual, searchParams } from '../../lib/http.js';
 import { sendMonthlySummaries } from '../../lib/advisor/repo.js';
 import { notifyShop } from '../../lib/push.js';
+import { sendPathNudges } from '../../lib/advisor/path-repo.js';
 
 const BATCH = 4; // free plan: 5 API requests/min and 30 searches/day
 
@@ -16,10 +17,12 @@ export default async function handler(req, res) {
     const q = getQuery();
     // the advisor's month summary as a push on the first days of a month (this light job has time to spare; no e-mail in Ordyx)
     const advisor = await sendMonthlySummaries(q, notifyShop).catch((err) => { console.error('[cron] advisor summary failed', err); return { error: err.message }; });
+    // Пътят на растежа: the move that stands for days, and „Стана ли?“ on the check's day
+    const path = await sendPathNudges(q, notifyShop).catch((err) => { console.error('[cron] path nudges failed', err); return { error: err.message }; });
     const apiKey = nekorektenKey();
-    if (!apiKey) return send(res, 200, { skipped: 'nekorekten is not connected', advisor });
+    if (!apiKey) return send(res, 200, { skipped: 'nekorekten is not connected', advisor, path });
     const summary = await checkOrders(q, await pendingNekorekten(q, BATCH), apiKey);
-    const out = { summary, advisor };
+    const out = { summary, advisor, path };
     if (searchParams(req).get('debug') === '1') {
       const r = await fetch('https://api.nekorekten.com/api/v1/api-keys/current/usage', { headers: { 'Api-Key': apiKey, Accept: 'application/json' } });
       out.usage = { status: r.status, body: await r.json().catch(() => null) };
