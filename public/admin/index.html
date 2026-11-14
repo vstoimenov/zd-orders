@@ -217,6 +217,16 @@ main{padding:30px 32px 56px;max-width:1440px}
 .advisor .afun{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px}
 .advisor .afun td{padding:5px 6px;border-top:1px solid var(--line);vertical-align:middle}
 .advisor .afun td.n{text-align:right;font-weight:700;white-space:nowrap}
+.gpath .gsub{color:var(--muted);font-size:13px;margin:-4px 0 12px}
+.gpath .gop{font-size:18px;font-weight:800;margin:0 0 2px}.gpath .gaxis{display:inline-block;font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;background:#f1f0ec;color:var(--muted);margin-left:6px;vertical-align:middle}
+.gpath .gstop{font-size:15px;font-weight:700;margin:8px 0}
+.gpath ol{margin:8px 0 0;padding-left:20px}.gpath ol li{margin:6px 0;line-height:1.45}
+.gpath .gq{font-size:16px;font-weight:700;margin:4px 0 10px}.gpath .gopts{display:flex;flex-direction:column;gap:8px}
+.gpath .gopts button{text-align:left;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;font:inherit;font-size:14px;cursor:pointer}
+.gpath .gopts button:hover{border-color:var(--accent);background:var(--accent-soft)}
+.gpath .gcheck{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:#fafaf7;border:1px solid var(--line);font-size:14px;line-height:1.5}
+.gpath .gcheck.met{background:#e7f6ec;border-color:#bfe5cc}.gpath .gcheck.late{background:#fff3e0;border-color:#f5d6a8}
+.gpath .gsteps li{font-size:13px}.gpath .gsteps .by{color:var(--muted);font-size:12px}
 .advisor .afun .bar{height:8px;border-radius:4px;background:var(--accent);min-width:2px}
 .advisor .afun .lost{color:var(--bad);white-space:nowrap}
 .advisor .amonth{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 14px;padding:10px 14px;border-radius:10px;background:#eef6ff;color:#1e3a5f;font-size:14px;line-height:1.45}
@@ -480,6 +490,7 @@ tr.hl td{background:#fffbe6}
         </form>
       </div>
       <div class="advisor" id="advisor" hidden aria-live="polite"></div>
+      <div class="advisor gpath" id="gpath" hidden aria-live="polite"></div>
       <div class="cards" id="dCards"></div>
       <div class="panel" id="dByShopPanel" hidden><h2>По магазини</h2><table id="dByShop"></table></div>
       <div class="panel" id="beCalc">
@@ -1966,12 +1977,81 @@ tr.hl td{background:#fffbe6}
   var adv = null, advAt = 0, advGear = false, advGuide = '';
   function loadAdvisor() {
     var box = $('advisor');
+    loadPath();
     if (currentShop === 'all') { if (role === 'owner' && !DEMO) loadAdvisorReport(); else box.hidden = true; return; }
     fetch(withShop(API + 'advisor'), { credentials: 'same-origin' })
       .then(function (res) { if (!res.ok) throw new Error(res.status); return res.json(); })
       .then(function (d) { if (d.all) { box.hidden = true; return; } adv = d; advAt = 0; renderAdvisor(); })
       .catch(function () { box.hidden = true; });
   }
+  /* ---- Пътят на растежа: Ordyx минава по въпросите сам (данни), пита за останалото и спира на една операция (docs/superpowers/specs/2026-11-14-growth-path-design.md) ---- */
+  var gp = null, gpOpen = false;
+  try { gpOpen = localStorage.getItem('zdPathOpen') === '1'; } catch (e) { /* private mode */ }
+  var GP_PCT = { conversion: 1, completion: 1, retention90: 1, channelShare: 1, returnsRate: 1 }, GP_EUR = { aov: 1, marginPerOrder: 1, revenue7: 1, cac: 1, blockedValue: 1 };
+  function gpFmt(metric, v) {
+    if (v == null) return '—';
+    if (GP_PCT[metric]) return (Math.round(v * 1000) / 10).toString().replace('.', ',') + '%';
+    if (GP_EUR[metric]) return Math.round(v).toLocaleString('bg-BG') + ' €';
+    if (metric === 'payback' || metric === 'buysPerYear') return (Math.round(v * 100) / 100).toString().replace('.', ',');
+    return String(Math.round(v));
+  }
+  function loadPath() {
+    var box = $('gpath');
+    if (currentShop === 'all' || DEMO) { box.hidden = true; return; }
+    if (!gpOpen) { gp = null; renderPath(); return; }
+    box.hidden = false; box.innerHTML = '<div class="ahead"><h2>🧭 Пътят на растежа</h2></div><div class="muted">Минавам по числата ти…</div>';
+    fetch(withShop(API + 'advisor?path=1'), { credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (d) { gp = d; renderPath(); })
+      .catch(function () { box.innerHTML = '<div class="ahead"><h2>🧭 Пътят на растежа</h2></div><div class="err">Не успях да заредя пътя. Опитай пак.</div>'; });
+  }
+  function gpOpView(o, active) {
+    var h = '<div class="gop">' + esc(o.name) + '<span class="gaxis">' + esc(o.axis) + '</span></div>' +
+      '<div class="gstop">' + esc(o.stop) + '</div><div class="muted" style="font-size:13px;line-height:1.5"><b>Кога:</b> ' + esc(o.when) + '<br><b>Как:</b> ' + esc(o.how) + '</div>' +
+      '<b style="display:block;margin-top:12px">Първите три хода</b><ol>' + o.moves.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ol>';
+    if (active) {
+      var a = active, cls = a.met ? ' met' : a.overdue ? ' late' : '';
+      h += '<div class="gcheck' + cls + '"><b>Проверка:</b> ' + esc(o.checkText) +
+        (a.measured ? '<br>Сега <b>' + esc(gpFmt(a.metric, a.now)) + '</b> → цел <b>' + esc(gpFmt(a.metric, a.goal)) + '</b> до <b>' + esc(fmtDay(a.until)) + '</b>' +
+          (a.start != null ? ' <span class="muted">(в началото: ' + esc(gpFmt(a.metric, a.start)) + ')</span>' : '') : '<br>До <b>' + esc(fmtDay(a.until)) + '</b>. Ти казваш дали е изпълнена.') +
+        (a.met ? '<br><b>✓ Проверката е изпълнена.</b> Операцията остава да работи — минаваме пътя отначало за следващото счупено място.' : '') +
+        (a.overdue ? '<br><b>Срокът мина.</b> Не сменяй операцията — поправи това, което казва проверката, и мери пак.' : '') + '</div>' +
+        '<div class="abtns" style="margin-top:12px">' + (a.met || !a.measured ? '<button type="button" class="primary" data-gp-end="1">' + (a.met ? 'Следващата стъпка' : 'Изпълнено') + '</button>' : '') +
+        '<button type="button" class="ghost" data-gp-end="0">Спри операцията</button></div>';
+    } else {
+      h += '<div class="gcheck"><b>Проверка за ' + o.days + ' дни:</b> ' + esc(o.checkText) + '</div>' +
+        '<div class="abtns" style="margin-top:12px"><button type="button" class="primary" data-gp-start>Започвам</button><button type="button" class="ghost" data-gp-reset>Отговори наново</button></div>';
+    }
+    return h;
+  }
+  function renderPath() {
+    var box = $('gpath'), d = gp;
+    box.hidden = currentShop === 'all' || DEMO;
+    var h = '<div class="ahead"><h2>🧭 Пътят на растежа</h2><button type="button" class="aset" data-gp-toggle aria-expanded="' + gpOpen + '">' + (gpOpen ? 'Скрий' : 'Покажи') + '</button></div>';
+    if (!gpOpen || !d) { box.innerHTML = h + '<div class="gsub" style="margin:0">Една операция за следващите 90 дни: какво точно те спира, първите три хода и едно число за проверка.</div>'; return; }
+    h += '<div class="gsub">Минавам по числата ти и питам само каквото не мога да измеря. Работиш по една операция, докато проверката ѝ се изпълни.</div>';
+    if (d.active) h += gpOpView(d.active, d.active);
+    else if (d.ask) {
+      h += '<div class="gq">' + esc(d.ask.text) + '</div><div class="gopts">' + d.ask.options.map(function (o) { return '<button type="button" data-gp-key="' + esc(d.ask.key) + '" data-gp-val="' + esc(o.value) + '">' + esc(o.label) + '</button>'; }).join('') + '</div>';
+    } else if (d.op) h += gpOpView(d.op, null);
+    if (d.steps && d.steps.length) {
+      h += '<details><summary>Как стигнах дотук (' + d.steps.length + ')</summary><ul class="gsteps">' + d.steps.map(function (st) {
+        return '<li>' + esc(st.text) + ' — <b>' + esc(st.answer) + '</b> <span class="by">' + (st.by === 'data' ? 'по данните' : 'твой отговор') + '</span></li>';
+      }).join('') + '</ul></details>';
+    }
+    if (d.done && d.done.length) h += '<details><summary>Минали операции</summary><ul>' + d.done.map(function (x) { return '<li>' + esc(x.name) + ' · ' + esc(fmtDay(x.at)) + (x.met ? ' · ✓ изпълнена' : ' · спряна') + '</li>'; }).join('') + '</ul></details>';
+    box.innerHTML = h;
+  }
+  $('gpath').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.hasAttribute('data-gp-toggle')) { gpOpen = !gpOpen; try { localStorage.setItem('zdPathOpen', gpOpen ? '1' : '0'); } catch (err) { /* private mode */ } loadPath(); return; }
+    var body = b.hasAttribute('data-gp-key') ? { action: 'path_answer', key: b.getAttribute('data-gp-key'), value: b.getAttribute('data-gp-val') }
+      : b.hasAttribute('data-gp-start') ? { action: 'path_start' } : b.hasAttribute('data-gp-reset') ? { action: 'path_reset' }
+      : b.hasAttribute('data-gp-end') ? { action: 'path_end', met: b.getAttribute('data-gp-end') === '1' } : null;
+    if (!body) return;
+    if (body.action === 'path_end' && !body.met && !confirm('Да спра ли операцията? Пътят ще мине отначало.')) return;
+    busy(b, advisorPost(body)).then(function (d) { gp = d; renderPath(); }, function (err) { alert(err.message); });
+  });
   /** „All shops“, the owner: how each metric does across shops, and the thresholds to tune by it. */
   function loadAdvisorReport() {
     var box = $('advisor');
