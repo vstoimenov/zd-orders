@@ -1518,7 +1518,8 @@ tr.hl td{background:#fffbe6}
         (w.status ? '<br><span class="muted">' + esc(w.status) + '</span>' : '') +
         (w.atOfficeDay ? '<br>' + (w.atOfficeDay >= 4
           ? '<span class="dup" title="Обадете се или пишете на клиента, преди пратката да се върне">📦 ' + w.atOfficeDay + '-и ден в офиса — звъннете</span>' + (o.phoneNorm ? ' <a href="tel:' + esc(o.phoneNorm) + '">📞 ' + esc(o.phoneNorm) + '</a>' : '')
-          : '<span class="muted">📦 ' + (w.atOfficeDay === 1 ? 'пристигна в офиса днес' : 'в офиса от ' + w.atOfficeDay + ' дни') + '</span>') : '') +
+          : '<span class="muted">📦 ' + (w.atOfficeDay === 1 ? 'пристигна в офиса днес' : 'в офиса от ' + w.atOfficeDay + ' дни') + '</span>') +
+          (o.phone && !w.demo ? '<br><button type="button" data-remind="' + i + '" title="Готово съобщение до клиента: къде го чака пратката и от колко дни. Изпращате го вие.">💬 Напомни на клиента</button>' : '') : '') +
         (o.quietDays >= 3 ? '<br><span class="dup" title="Куриерът не е сменил статуса — проверете при него или звъннете на клиента">⏸ без движение ' + o.quietDays + ' дни</span>' : '') +
         (!w.demo && o.phone && ['shipped', 'delivered'].indexOf(o.status) >= 0 ? '<br><button type="button" data-track="' + i + '">💬 Проследяване</button>' : '') +
         (w.external ? '</span>' : '<br>' + (w.pdf ? '<a href="' + esc(pdfHref(w.pdf)) + '" target="_blank" rel="noopener">PDF за печат</a> · ' : '') +
@@ -1761,6 +1762,7 @@ tr.hl td{background:#fffbe6}
       return;
     }
     if (btn.getAttribute('data-track') != null) { openConfirm(orders[btn.getAttribute('data-track')], 'track'); return; }
+    if (btn.getAttribute('data-remind') != null) { openConfirm(orders[btn.getAttribute('data-remind')], 'remind'); return; }
     if (btn.getAttribute('data-wb') != null) { openWaybill(orders[btn.getAttribute('data-wb')]); return; }
     if (btn.getAttribute('data-wbrelease') != null) {
       e.preventDefault();
@@ -2860,15 +2862,16 @@ tr.hl td{background:#fffbe6}
       .catch(function (e) { btn.disabled = false; btn.textContent = was; if (e.message !== 'auth') alert(e.message); });
   }
   function openConfirm(o, kind) {
-    var track = kind === 'track';
-    $('cfTitle').textContent = track ? 'Проследяване за клиента' : 'Потвърждение от клиента';
-    $('cfHint').textContent = track ? 'Отваря WhatsApp/SMS на вашето устройство с готовото съобщение — натиснете „Изпрати“ там. Линкът показва на клиента къде е пратката, с часове и офиса.'
+    var track = kind === 'track' || kind === 'remind';
+    $('cfTitle').textContent = kind === 'remind' ? 'Напомняне: пратката чака в офиса' : track ? 'Проследяване за клиента' : 'Потвърждение от клиента';
+    $('cfHint').textContent = kind === 'remind' ? 'Отваря WhatsApp/SMS на вашето устройство с готовото съобщение — натиснете „Изпрати“ там. Ordyx не праща нищо сам.'
+      : track ? 'Отваря WhatsApp/SMS на вашето устройство с готовото съобщение — натиснете „Изпрати“ там. Линкът показва на клиента къде е пратката, с часове и офиса.'
       : 'Отваря WhatsApp/SMS на вашето устройство с готовото съобщение — натиснете „Изпрати“ там. Когато клиентът отговори през линка, статусът се сменя сам.';
     $('cfWho').textContent = (o.name || 'Клиент') + ' · ' + o.phone;
     $('cfMsg').textContent = 'Зареждам…';
     $('cfWa').removeAttribute('href'); $('cfSms').removeAttribute('href');
     $('confirmModal').hidden = false;
-    fetch(withShop(API + 'confirmadmin'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: track ? 'track' : 'link', id: o.id }) })
+    fetch(withShop(API + 'confirmadmin'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: kind === 'remind' ? 'remind' : track ? 'track' : 'link', id: o.id }) })
       .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); })
       .then(function (d) {
         $('cfMsg').textContent = d.message;

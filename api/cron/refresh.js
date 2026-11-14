@@ -9,7 +9,7 @@ import { cbConfig, syncOrders, pullCbStock } from '../../lib/cb-sync.js';
 import { metaConfig, syncMeta } from '../../lib/meta.js';
 import { listShops } from '../../lib/shops.js';
 import { anonymiseOld } from '../../lib/abandoned.js';
-import { econtStatus, syncEcontStatuses, findEcontWaybills, speedyStatus, syncSpeedyStatuses, boxnowStatus, syncBoxnowStatuses } from '../../lib/waybills.js';
+import { econtStatus, syncEcontStatuses, findEcontWaybills, speedyStatus, syncSpeedyStatuses, boxnowStatus, syncBoxnowStatuses, officeAlerts } from '../../lib/waybills.js';
 import { retryCallbacks } from '../../lib/woo-callback.js';
 import { retryDue } from '../../lib/fulfilment.js';
 
@@ -143,6 +143,12 @@ export default async function handler(req, res) {
       console.error('[cron] boxnow waybill sync failed', shop.domain, err);
       (result.boxnowWaybills ??= {})[shop.domain] = { error: err.message };
     }
+  }
+  // after the couriers answered: each shop hears how many parcels wait at the office since the 4th day
+  try {
+    result.officeAlerts = await officeAlerts(q);
+  } catch (err) {
+    console.error('[cron] office alerts failed', err);
   }
   return econtOk ? send(res, 200, result) : send(res, 500, { error: 'server', ...result });
 }
