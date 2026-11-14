@@ -144,6 +144,7 @@ form#login{min-height:100vh;display:flex;align-items:center;justify-content:cent
 .nav svg,.logout svg,.iconbtn svg{width:19px;height:19px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .npreview{margin:12px 0;padding:12px 14px;border-radius:14px;background:#f1f0ec;display:flex;flex-direction:column;gap:2px;font-size:14px}
 .partnerbox{border:1.5px solid var(--accent);border-radius:14px;padding:16px;margin-bottom:16px;background:#fffdf2}
+.syncbox[hidden]{display:none}
 .partnerbox>summary{font-weight:800;font-size:16px;cursor:pointer;margin-bottom:8px}
 .partnerbox.alt{border:1px solid var(--line);background:#fafaf7}.partnerbox.alt>summary{font-size:14px;font-weight:700;color:var(--muted);margin:0}
 .partnerbox .btnlink{display:inline-block;margin-top:6px;padding:6px 12px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px}
@@ -919,7 +920,7 @@ tr.hl td{background:#fffbe6}
         </div>
         <div class="actions"><button type="button" class="primary" id="iMetaSave">Запази и свържи</button><button type="button" class="ghost" id="iMetaList">Покажи акаунтите</button><button type="button" class="ghost" id="iMetaTest">Тествай връзката</button></div>
         </details>
-        <div class="syncbox">
+        <div class="syncbox" id="iMetaSyncBox">
           <h3>Синхронизация на рекламния разход</h3>
           <div class="actions">
             <input type="date" id="iMetaFrom" title="от дата"><input type="date" id="iMetaTo" title="до дата">
@@ -2622,6 +2623,7 @@ tr.hl td{background:#fffbe6}
     $('iMetaPartnerTitle').textContent = alt ? 'Друг начин: сподели рекламния акаунт с Ordyx' : 'Свържи рекламите си в 3 стъпки';
     if (!lastMeta) $('iMetaPartner').open = !alt;
     $('iMetaLoginPublicBox').hidden = role !== 'owner';
+    $('iMetaSyncBox').hidden = !m.configured; // nothing to sync or disconnect before an account is connected
     $('iMetaLoginPublic').checked = !!m.loginPublic;
     $('iMetaManual').hidden = !loginOpen;
     $('iMetaManual').open = !m.oauth && loginOpen;
