@@ -6,7 +6,7 @@ import { fakeRes, json } from './helpers/http.js';
 import { setQueryForTests } from '../lib/db.js';
 import { insertOrder, updateStatus } from '../lib/orders-repo.js';
 import { signSession } from '../lib/auth.js';
-import { pathExtras, getPath, answerPath, startPath, endPath } from '../lib/advisor/path-repo.js';
+import { pathExtras, getPath, answerPath, startPath, endPath, tickPath, sendPathNudges } from '../lib/advisor/path-repo.js';
 import router from '../api/admin/[route].js';
 
 process.env.ADMIN_SECRET = 'secret';
@@ -80,4 +80,61 @@ test('the API: GET ?path=1 and the answer actions, for the chosen shop', async (
   assert.equal(json(res).active.goal, 20);
   res = await call('POST', `/api/admin/advisor?shop=${SHOP}`, { action: 'path_answer', key: 'nope', value: 'x' });
   assert.equal(res.statusCode, 400);
+});
+
+test('step by step: each move ticked, the next one is the one to do now; a standing move gets a push, the check day asks „Стана ли?“', async () => {
+  for (let i = 0; i < 5; i++) await order({ daysAgo: 1 + i });
+  let p = await startPath(q, SHOP, DAY);
+  assert.deepEqual(p.active.ticks, [false, false, false]);
+  assert.equal(p.active.next, 0);
+  assert.equal(p.active.daysLeft, 60);
+  assert.equal(p.active.stuck, false);
+  p = await tickPath(q, SHOP, { i: 0 }, DAY);
+  assert.equal(p.active.next, 1);
+  assert.equal(p.active.doneMoves, 1);
+  await assert.rejects(tickPath(q, SHOP, { i: 7 }, DAY), /Невалиден/);
+  const res = await call('POST', `/api/admin/advisor?shop=${SHOP}`, { action: 'path_tick', i: 1 });
+  assert.equal(json(res).active.next, 2);
+  p = await tickPath(q, SHOP, { i: 1, on: false }, DAY);
+  assert.equal(p.active.next, 1, 'an undone move is the one to do again');
+  p = await tickPath(q, SHOP, { i: 0 }, DAY); // the last tick on DAY (the API one was today)
+
+  const sent = [], notify = async (_q, shopId, m) => sent.push({ shopId, ...m });
+  assert.equal((await sendPathNudges(q, notify, '2026-11-12')).sent, 0, 'two days: no reminder yet');
+  assert.equal((await sendPathNudges(q, notify, '2026-11-13')).sent, 1);
+  assert.match(sent[0].body, /ход 2 от 3/);
+  assert.match(sent[0].url, new RegExp(SHOP));
+  assert.equal((await sendPathNudges(q, notify, '2026-11-14')).sent, 0, 'not every day');
+  assert.equal((await sendPathNudges(q, notify, '2026-11-16')).sent, 1);
+  p = await getPath(q, SHOP, '2026-11-16');
+  assert.equal(p.active.stuck, true);
+
+  const until = p.active.until;
+  assert.equal((await sendPathNudges(q, notify, until)).sent, 1);
+  assert.match(sent.at(-1).title, /стана ли/i);
+  assert.equal((await sendPathNudges(q, notify, until)).sent, 0, '„Стана ли?“ once');
+  assert.equal((await getPath(q, SHOP, until)).active.ask, true);
+  await endPath(q, SHOP, { met: false }, until);
+  assert.equal((await sendPathNudges(q, notify, until)).sent, 0, 'no operation, no push');
+});
+
+test('what the numbers say: the shop\'s own figures worst first, the operation\'s number on top; a week later „действа“ or „не помръдва“', async () => {
+  for (let i = 0; i < 5; i++) await order({ daysAgo: 1 + i });
+  let p = await getPath(q, SHOP, DAY);
+  assert.ok(Array.isArray(p.numbers));
+  for (const x of p.numbers) { assert.ok(x.label && x.now && x.tip, x.metric); assert.equal(typeof x.bad, 'boolean'); }
+  p = await startPath(q, SHOP, DAY);
+  assert.equal(p.active.key, 'first20');
+  assert.equal(p.active.trend.state, 'early');
+  assert.match(p.active.trend.text, /Продажби: 5 → 5/);
+  // a week later 3 more sales: the operation's number moved up
+  for (let i = 0; i < 3; i++) await order({ daysAgo: 0 });
+  const later = '2026-11-17';
+  await q(`update zd.orders set created_at = $1::timestamptz where created_at > now() - interval '1 hour'`, [`${later}T09:00:00Z`]);
+  p = await getPath(q, SHOP, later);
+  assert.equal(p.active.trend.state, 'up');
+  assert.match(p.active.trend.text, /5 → 8 за 7 дни\. Действа/);
+  const sent = [];
+  assert.equal((await sendPathNudges(q, async (_q, _s, m) => sent.push(m), later)).sent, 1);
+  assert.match(sent[0].title, /действа/);
 });

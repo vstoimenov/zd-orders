@@ -103,3 +103,14 @@ test('the goal is fixed at the start; the check is met when the number gets ther
   assert.equal(goalFor('wake', { ...base, sleeping: 400 }).goal, 380);
   assert.equal(T4.payback, 1);
 });
+
+test('numbers(): each number against its norm with the shop\'s own figures, worst first; missing numbers left out', async () => {
+  const { numbers } = await import('../lib/advisor/path.js');
+  const n = numbers({ conversion: 0.011, completion: 0.7, payback: 0.8, ads: true, sleeping: 240, kind: 'consumable', retention90: 0.12 });
+  assert.deepEqual(n.filter((x) => x.bad).map((x) => x.metric), ['retention90', 'conversion', 'payback', 'sleeping']);
+  assert.equal(n.at(-1).metric, 'completion');
+  assert.match(n.find((x) => x.metric === 'conversion').tip, /От 1 000 посещения поръчват 11, нормата е 15/);
+  assert.match(n.find((x) => x.metric === 'payback').tip, /1 € реклама се връщат 0,8 €/);
+  assert.deepEqual(numbers({}), []);
+  assert.equal(numbers({ payback: 0.5, ads: false }).length, 0, 'no ads, no payback');
+});

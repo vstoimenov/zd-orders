@@ -232,6 +232,19 @@ main{padding:30px 32px 56px;max-width:1440px}
 .gpath .gcheck{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:#fafaf7;border:1px solid var(--line);font-size:14px;line-height:1.5}
 .gpath .gcheck.met{background:#e7f6ec;border-color:#bfe5cc}.gpath .gcheck.late{background:#fff3e0;border-color:#f5d6a8}
 .gpath .gsteps li{font-size:13px}.gpath .gsteps .by{color:var(--muted);font-size:12px}
+.gpath .gbar{height:8px;border-radius:999px;background:#f1f0ec;overflow:hidden;margin:10px 0 4px}.gpath .gbar i{display:block;height:100%;background:var(--accent);border-radius:999px}
+.gpath .gmoves{list-style:none;padding:0;margin:8px 0 0}.gpath .gmoves li{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin:6px 0;line-height:1.45;background:#fff}
+.gpath .gmoves li.done{opacity:.6}.gpath .gmoves li.done .gtxt{text-decoration:line-through}.gpath .gmoves li.now{border-color:var(--accent);background:var(--accent-soft)}
+.gpath .gmoves li.later{opacity:.55}.gpath .gtick{flex:0 0 auto;width:24px;height:24px;border-radius:6px;border:2px solid var(--line);background:#fff;cursor:pointer;font-size:14px;line-height:18px;padding:0;text-align:center}
+.gpath .gmoves li.done .gtick{background:var(--accent);border-color:var(--accent);color:#1a1a1a}.gpath .gnow{display:block;font-size:12px;font-weight:800;color:#7a5c00;margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em}
+.gpath .gnudge{margin:10px 0 0;padding:10px 12px;border-radius:10px;background:#fff3e0;border:1px solid #f5d6a8;font-size:14px;line-height:1.5}
+.gpath .gnums{margin:4px 0 14px;display:flex;flex-direction:column;gap:8px}
+.gpath .gnum{padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff}.gpath .gnum.bad{border-color:#f5c2b8;background:#fff6f4}.gpath .gnum.focus{box-shadow:0 0 0 2px var(--accent) inset}
+.gpath .gnum .gh{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:14px}.gpath .gnum .gv{font-weight:800;white-space:nowrap}
+.gpath .gnum .gv small{font-weight:600;color:var(--muted)}.gpath .gnum .gt{font-size:13px;line-height:1.5;margin-top:4px}.gpath .gnum .gtag{font-size:11px;font-weight:700;color:#b3261e;margin-left:6px}
+.gpath .gtrend{margin:12px 0 0;padding:10px 12px;border-radius:10px;font-size:14px;line-height:1.5;border:1px solid var(--line);background:#fafaf7}
+.gpath .gtrend.up{background:#e7f6ec;border-color:#bfe5cc}.gpath .gtrend.down{background:#fff6f4;border-color:#f5c2b8}.gpath .gtrend.flat{background:#fff3e0;border-color:#f5d6a8}
+.gpath .gask{margin:12px 0 0;padding:12px 14px;border-radius:12px;background:#eef4ff;border:1px solid #c9dafc}.gpath .gask b.big{display:block;font-size:17px;margin-bottom:4px}
 .advisor .afun .bar{height:8px;border-radius:4px;background:var(--accent);min-width:2px}
 .advisor .afun .lost{color:var(--bad);white-space:nowrap}
 .advisor .amonth{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 14px;padding:10px 14px;border-radius:10px;background:#eef6ff;color:#1e3a5f;font-size:14px;line-height:1.45}
@@ -2014,8 +2027,9 @@ tr.hl td{background:#fffbe6}
   }
   function gpOpView(o, active) {
     var h = '<div class="gop">' + esc(o.name) + '<span class="gaxis">' + esc(o.axis) + '</span></div>' +
-      '<div class="gstop">' + esc(o.stop) + '</div><div class="muted" style="font-size:13px;line-height:1.5"><b>Кога:</b> ' + esc(o.when) + '<br><b>Как:</b> ' + esc(o.how) + '</div>' +
-      '<b style="display:block;margin-top:12px">Първите три хода</b><ol>' + o.moves.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ol>';
+      '<div class="gstop">' + esc(o.stop) + '</div><div class="muted" style="font-size:13px;line-height:1.5"><b>Кога:</b> ' + esc(o.when) + '<br><b>Как:</b> ' + esc(o.how) + '</div>';
+    if (active && active.ticks) return h + gpSteps(o, active);
+    h += '<b style="display:block;margin-top:12px">Първите три хода</b><ol>' + o.moves.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ol>';
     if (active) {
       var a = active, cls = a.met ? ' met' : a.overdue ? ' late' : '';
       h += '<div class="gcheck' + cls + '"><b>Проверка:</b> ' + esc(o.checkText) +
@@ -2031,12 +2045,70 @@ tr.hl td{background:#fffbe6}
     }
     return h;
   }
+  var gpLater = false; // „Не още“ on the check's day: the question steps aside until the next opening
+  /** Step by step: the moves as a checklist, the one to do now, a nudge when it stands, „Стана ли?“ on the check's day. */
+  function gpSteps(o, a) {
+    var n = o.moves.length, pct = Math.round(a.doneMoves / n * 100), h = '';
+    h += '<div class="gbar" role="progressbar" aria-valuemin="0" aria-valuemax="' + n + '" aria-valuenow="' + a.doneMoves + '"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="muted" style="font-size:13px">' + (a.next == null ? 'Всички ' + n + ' хода са направени' : 'Ход ' + (a.next + 1) + ' от ' + n) +
+      ' · ' + (a.ask ? 'днес е проверката' : 'остават ' + a.daysLeft + ' ' + (a.daysLeft === 1 ? 'ден' : 'дни') + ' до проверката') + '</div>';
+    if (a.trend) h += '<div class="gtrend ' + esc(a.trend.state) + '"><b>' + (a.trend.state === 'up' ? '📈 Действа' : a.trend.state === 'down' ? '📉 Влошава се' : a.trend.state === 'flat' ? '⏸ Не помръдва' : '⏳ Още е рано') + '</b><br>' + esc(a.trend.text) + '</div>';
+    if (a.ask && !gpLater) {
+      if (!a.measured) {
+        h += '<div class="gask"><b class="big">Стана ли?</b>' + esc(o.checkText) +
+          '<div class="abtns" style="margin-top:10px"><button type="button" class="primary" data-gp-end="1">Да, стана</button><button type="button" class="ghost" data-gp-later>Не още</button></div></div>';
+      } else if (a.met) {
+        h += '<div class="gask"><b class="big">✓ Стана!</b>' + esc(o.checkText) + '<br>Сега <b>' + esc(gpFmt(a.metric, a.now)) + '</b>, целта беше <b>' + esc(gpFmt(a.metric, a.goal)) + '</b>.' +
+          '<div class="abtns" style="margin-top:10px"><button type="button" class="primary" data-gp-end="1">Следващата операция</button></div></div>';
+      } else {
+        h += '<div class="gask"><b class="big">Още не е стигнато</b>' + esc(o.checkText) + '<br>Сега <b>' + esc(gpFmt(a.metric, a.now)) + '</b>, целта е <b>' + esc(gpFmt(a.metric, a.goal)) + '</b>' +
+          (a.start != null ? ' <span class="muted">(в началото: ' + esc(gpFmt(a.metric, a.start)) + ')</span>' : '') + '.' +
+          '<br>Не сменяй операцията. Поправи това, което проверката сочи, и мери пак.<div class="abtns" style="margin-top:10px"><button type="button" class="primary" data-gp-later>Продължавам</button></div></div>';
+      }
+    } else if (a.ask && gpLater) {
+      h += '<div class="gnudge">Не сменяй операцията. Поправи това, което казва проверката, и мери пак след седмица.</div>';
+    }
+    h += '<ul class="gmoves">' + o.moves.map(function (m, i) {
+      var done = a.ticks[i], now = i === a.next, cls = done ? 'done' : now ? 'now' : 'later';
+      return '<li class="' + cls + '"><button type="button" class="gtick" data-gp-tick="' + i + '" data-gp-on="' + (done ? '0' : '1') + '" aria-pressed="' + done + '" aria-label="' + (done ? 'Не е направено' : 'Направено') + '">' + (done ? '✓' : '') + '</button>' +
+        '<span><span class="gtxt">' + (now ? '<span class="gnow">Сега</span>' : '') + esc(m) + '</span></span></li>';
+    }).join('') + '</ul>';
+    if (a.next != null && !a.ask) {
+      h += a.stuck
+        ? '<div class="gnudge">Стоиш на този ход ' + a.idleDays + ' дни. Не го прави цял — направи днес първата малка част и го отметни.<div class="abtns" style="margin-top:8px"><button type="button" class="primary" data-gp-tick="' + a.next + '" data-gp-on="1">Направих го</button></div></div>'
+        : '<div class="abtns" style="margin-top:10px"><button type="button" class="primary" data-gp-tick="' + a.next + '" data-gp-on="1">Готово, следващият ход</button></div>';
+    } else if (a.next == null && !a.ask) {
+      h += '<div class="gcheck' + (a.met ? ' met' : '') + '"><b>Сега мери.</b> ' + esc(o.checkText) +
+        (a.measured ? '<br>Сега <b>' + esc(gpFmt(a.metric, a.now)) + '</b> → цел <b>' + esc(gpFmt(a.metric, a.goal)) + '</b>' : '') +
+        '<br>Проверката е на <b>' + esc(fmtDay(a.until)) + '</b>. Ordyx ще те попита тогава.' + (a.met ? '<br><b>✓ Целта вече е стигната.</b>' : '') + '</div>';
+      if (a.met || !a.measured) h += '<div class="abtns" style="margin-top:10px"><button type="button" class="primary" data-gp-end="1">' + (a.met ? 'Следващата операция' : 'Изпълнено') + '</button></div>';
+    }
+    h += '<div class="abtns" style="margin-top:8px"><button type="button" class="ghost" data-gp-end="0">Спри операцията</button></div>';
+    return h;
+  }
+  var gpAllNums = false;
+  /** What the numbers say: the shop's own figures against the norm, worst first, each with one thing to do. */
+  function gpNumbers(d) {
+    var list = d.numbers || [];
+    if (!list.length) return '';
+    var bad = list.filter(function (x) { return x.bad; }), shown = gpAllNums ? list : (bad.length ? bad.slice(0, 3) : list.slice(0, 2));
+    var h = '<b style="display:block;margin:2px 0 6px">📊 Какво казват числата ти</b>';
+    if (!bad.length) h += '<div class="muted" style="font-size:13px;margin-bottom:6px">Нито едно число не е под нормата. Растежът е в операцията по-долу.</div>';
+    h += '<div class="gnums">' + shown.map(function (x) {
+      return '<div class="gnum' + (x.bad ? ' bad' : '') + (x.metric === d.focus ? ' focus' : '') + '"><div class="gh"><span>' + esc(x.label) +
+        (x.metric === d.focus ? '<span class="gtag" style="color:#7a5c00">работиш по него</span>' : x.bad ? '<span class="gtag">за подобрение</span>' : '') + '</span>' +
+        '<span class="gv">' + esc(x.now) + ' <small>/ норма ' + esc(x.norm) + '</small></span></div><div class="gt">' + esc(x.tip) + '</div></div>';
+    }).join('') + '</div>';
+    if (list.length > shown.length || gpAllNums) h += '<button type="button" class="aset" data-gp-nums style="margin:-6px 0 12px">' + (gpAllNums ? 'Покажи само важните' : 'Всички числа (' + list.length + ')') + '</button>';
+    return h;
+  }
   function renderPath() {
     var box = $('gpath'), d = gp;
     box.hidden = currentShop === 'all' || DEMO;
     var h = '<div class="ahead"><h2>🧭 Пътят на растежа</h2><button type="button" class="aset" data-gp-toggle aria-expanded="' + gpOpen + '">' + (gpOpen ? 'Скрий' : 'Покажи') + '</button></div>';
     if (!gpOpen || !d) { box.innerHTML = h + '<div class="gsub" style="margin:0">Една операция за следващите 90 дни: какво точно те спира, първите три хода и едно число за проверка.</div>'; return; }
     h += '<div class="gsub">Минавам по числата ти и питам само каквото не мога да измеря. Работиш по една операция, докато проверката ѝ се изпълни.</div>';
+    h += gpNumbers(d);
     if (d.active) h += gpOpView(d.active, d.active);
     else if (d.ask) {
       h += '<div class="gq">' + esc(d.ask.text) + '</div><div class="gopts">' + d.ask.options.map(function (o) { return '<button type="button" data-gp-key="' + esc(d.ask.key) + '" data-gp-val="' + esc(o.value) + '">' + esc(o.label) + '</button>'; }).join('') + '</div>';
@@ -2052,7 +2124,10 @@ tr.hl td{background:#fffbe6}
   $('gpath').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
     if (b.hasAttribute('data-gp-toggle')) { gpOpen = !gpOpen; try { localStorage.setItem('zdPathOpen', gpOpen ? '1' : '0'); } catch (err) { /* private mode */ } loadPath(); return; }
-    var body = b.hasAttribute('data-gp-key') ? { action: 'path_answer', key: b.getAttribute('data-gp-key'), value: b.getAttribute('data-gp-val') }
+    if (b.hasAttribute('data-gp-later')) { gpLater = true; renderPath(); return; }
+    if (b.hasAttribute('data-gp-nums')) { gpAllNums = !gpAllNums; renderPath(); return; }
+    var body = b.hasAttribute('data-gp-tick') ? { action: 'path_tick', i: Number(b.getAttribute('data-gp-tick')), on: b.getAttribute('data-gp-on') === '1' }
+      : b.hasAttribute('data-gp-key') ? { action: 'path_answer', key: b.getAttribute('data-gp-key'), value: b.getAttribute('data-gp-val') }
       : b.hasAttribute('data-gp-start') ? { action: 'path_start' } : b.hasAttribute('data-gp-reset') ? { action: 'path_reset' }
       : b.hasAttribute('data-gp-end') ? { action: 'path_end', met: b.getAttribute('data-gp-end') === '1' } : null;
     if (!body) return;
