@@ -693,10 +693,12 @@ tr.hl td{background:#fffbe6}
       </div>
     </section>
     <section id="campaignsView" hidden>
-      <div class="pagehead"><div><h1>Кампании</h1><div class="sub">SMS и WhatsApp съобщения до клиентите ви от поръчките</div></div><button type="button" class="primary" id="kNew">+ Нова SMS кампания</button></div>
-      <div class="kseg" id="kTabs"><button type="button" class="on" data-ktab="sms">📱 SMS кампании</button><button type="button" data-ktab="whatsapp">💬 WhatsApp кампании</button></div>
+      <div class="pagehead"><div><h1>Кампании</h1><div class="sub">SMS, WhatsApp и имейл съобщения до клиентите ви от поръчките</div></div><button type="button" class="primary" id="kNew">+ Нова SMS кампания</button></div>
+      <div class="kseg" id="kTabs"><button type="button" class="on" data-ktab="sms">📱 SMS кампании</button><button type="button" data-ktab="whatsapp">💬 WhatsApp кампании</button><button type="button" data-ktab="email">✉️ Имейл кампании</button></div>
       <div class="tip" id="kTipSms">📱 <b>SMS</b> стига до всеки телефон. Цената е на SMS: на кирилица едно SMS е до <b>70 знака</b> (на латиница — 160), по-дългите съобщения стават 2–3 SMS. Изпращането директно оттук идва със свързването на SMS доставчик (Интеграции → Съобщения). Дотогава: готова кампания → <b>„Експорт CSV“</b> → качете файла във вашата SMS услуга (там са телефон, име и попълненото съобщение за всеки клиент).</div>
       <div class="tip" id="kTipWa" hidden>💬 <b>WhatsApp</b>: по-евтин и с картинки/бутони, но само за клиенти с WhatsApp. През WhatsApp Business (Meta) се плаща на съобщение: <b>рекламни ~0,09 €</b>, <b>за поръчки ~0,02 €</b>, отговори до 24 ч след писмо от клиента — безплатно (ориентировъчни цени за България). Рекламните съобщения минават през одобрен от Meta шаблон. Автоматичното изпращане идва със свързването на WhatsApp Business; дотогава — „Експорт CSV“, а за единични съобщения — бутонът <b>„💬 Потвърди“</b> при поръчката (безплатно, от вашия телефон).</div>
+      <div class="tip" id="kTipEmail" hidden>✉️ <b>Имейл</b>: Ordyx го изпраща сам — от името на магазина, с отговор към вашия имейл и линк за отписване във всеки имейл. Получатели са клиентите с имейл от поръчките. <b>Безплатно</b> за вас. Първо пратете тест на себе си.</div>
+      <div class="tip" id="kEmailOff" hidden>⚠️ Изпращането на имейли още не е включено в платформата (липсва ключ за доставчика). Кампаниите се пазят и ще тръгнат, щом бъде включено.</div>
       <div class="panel" id="kListPanel"><table id="kTable"></table></div>
       <div class="panel" id="kEditor" hidden>
         <h2 style="margin-top:0" id="kTitle">Нова кампания</h2>
@@ -704,7 +706,7 @@ tr.hl td{background:#fffbe6}
           <div>
             <div class="fgrid">
               <label>Име на кампанията<input type="text" id="kName" maxlength="80" placeholder="напр. Благодарност за поръчката"></label>
-              <label hidden>Канал<select id="kChannel"><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option></select></label>
+              <label hidden>Канал<select id="kChannel"><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option><option value="email">Имейл</option></select></label>
             </div>
             <h3 style="margin:0 0 4px">Кои клиенти</h3>
             <div class="muted">Един човек = един телефон, от поръчките на този магазин.</div>
@@ -716,19 +718,30 @@ tr.hl td{background:#fffbe6}
               <label>Поне брой поръчки<input type="number" id="kMin" min="1" max="100" value="1"></label>
               <label class="check"><input type="checkbox" id="kNoFlag" checked> Без клиенти със сигнали в НЕкоректен</label>
             </div>
-            <h3 style="margin:0 0 4px">Съобщение</h3>
+            <div id="kEmailFields" hidden>
+              <h3 style="margin:0 0 4px">Имейл</h3>
+              <div class="fgrid">
+                <label style="grid-column:1/-1">Тема<input type="text" id="kSubject" maxlength="150" placeholder="напр. {име}, нещо ново за вас в {магазин}"></label>
+                <label>Бутон (текст, по избор)<input type="text" id="kBtnText" maxlength="60" placeholder="Виж продуктите"></label>
+                <label>Линк на бутона<input type="url" id="kBtnUrl" maxlength="500" placeholder="https://…"></label>
+                <label style="grid-column:1/-1">Картинка (линк, по избор)<input type="url" id="kImgUrl" maxlength="500" placeholder="https://…/snimka.jpg"></label>
+              </div>
+            </div>
+            <h3 style="margin:0 0 4px" id="kMsgH">Съобщение</h3>
             <div class="vars" id="kPresets"></div>
             <textarea id="kMsg" maxlength="1000" placeholder="Здравейте, {име}! …"></textarea>
             <div class="vars" id="kVars"></div>
             <label class="check" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="kConsent"> Имам съгласието на тези клиенти да получават такива съобщения</label>
             <div class="muted">Маркетингови SMS/WhatsApp съобщения изискват съгласие на клиента (GDPR / ЗЕС). Добавяйте „За отказ отговорете STOP“ и вписвайте отказалите в списъка „Не изпращай“ по-долу.</div>
-            <div class="actions" style="margin-top:12px"><button type="button" class="ghost" id="kSave">Запази чернова</button><button type="button" class="primary" id="kReady">Готова кампания</button><button type="button" class="ghost" id="kExport" hidden>Експорт CSV</button><button type="button" class="ghost" id="kSend" disabled title="Свържете SMS доставчик / WhatsApp Business (скоро)">Изпрати (скоро)</button><button type="button" class="ghost" id="kClose">Затвори</button></div>
+            <div class="actions" style="margin-top:12px"><button type="button" class="ghost" id="kSave">Запази чернова</button><button type="button" class="primary" id="kReady">Готова кампания</button><button type="button" class="ghost" id="kTest" hidden>✉️ Тест до мен</button><button type="button" class="primary" id="kSend" hidden>Изпрати</button><button type="button" class="ghost" id="kExport" hidden>Експорт CSV</button><button type="button" class="ghost" id="kSend" disabled title="Свържете SMS доставчик / WhatsApp Business (скоро)">Изпрати (скоро)</button><button type="button" class="ghost" id="kClose">Затвори</button></div>
             <div class="err" id="kErr"></div>
           </div>
           <div>
             <h3 style="margin:0 0 4px">Преглед</h3>
             <div class="kpis" id="kKpis"></div>
+            <div id="kSendBox" hidden></div>
             <div id="kSample"></div>
+            <div id="kEmailPreview" hidden><iframe id="kEmailFrame" title="Преглед на имейла" sandbox="" style="width:100%;height:520px;border:1px solid var(--line);border-radius:12px;background:#f4f4f1"></iframe></div>
           </div>
         </div>
       </div>
@@ -746,6 +759,11 @@ tr.hl td{background:#fffbe6}
           <textarea id="kOptText" style="min-height:80px" placeholder="0888 123 456"></textarea>
           <div class="actions"><button type="button" class="ghost" id="kOptAdd">Добави</button><span class="muted" id="kOptInfo"></span></div>
           <div id="kOptList" class="muted" style="margin-top:8px;max-height:200px;overflow:auto"></div>
+          <div id="kEmailOptBox" hidden><h3 style="margin:16px 0 4px">Отписани имейли</h3>
+          <div class="muted" style="margin-bottom:8px">Отписалите се сами, върнатите (bounce) и оплакалите се влизат тук автоматично. Може да добавите и ръчно, по един на ред.</div>
+          <textarea id="kEOptText" style="min-height:60px" placeholder="ime@domain.bg"></textarea>
+          <div class="actions"><button type="button" class="ghost" id="kEOptAdd">Добави</button><span class="muted" id="kEOptInfo"></span></div>
+          <div id="kEOptList" class="muted" style="margin-top:8px;max-height:200px;overflow:auto"></div></div>
           <div id="kPriceBox"><h3 style="margin:16px 0 4px">Цена на SMS</h3>
           <div class="actions"><input type="text" inputmode="decimal" id="kPrice" style="width:110px"> €/SMS <button type="button" class="ghost" id="kPriceSave">Запази</button></div></div>
         </div>
@@ -3135,15 +3153,28 @@ tr.hl td{background:#fffbe6}
     ['Върни клиента', 'Здравейте, {име}! Отдавна не сте ни посещавали — новите продукти в {магазин} ви чакат: {линк} За отказ: STOP'],
   ];
   var VARS = ['{име}', '{пълно_име}', '{продукт}', '{магазин}', '{линк}'];
-  var kEditing = null, kTimer = null, kList = [], kTab = 'sms';
+  var EMAIL_PRESET = { subject: '{име}, нещо ново за вас в {магазин}', body: 'Здравейте, {име}!\n\nБлагодарим, че поръчахте {продукт} от {магазин}. Подготвихме нещо, което смятаме, че ще ви хареса.\n\nПоздрави,\nекипът на {магазин}' };
+  var kEditing = null, kTimer = null, kList = [], kTab = 'sms', kEmailOn = true, kSendTimer = null;
+  var KTAB_NAME = { sms: 'SMS', whatsapp: 'WhatsApp', email: 'имейл' };
   function setKTab(tab) {
-    kTab = tab === 'whatsapp' ? 'whatsapp' : 'sms';
+    kTab = tab === 'whatsapp' ? 'whatsapp' : tab === 'email' ? 'email' : 'sms';
     [].forEach.call(document.querySelectorAll('#kTabs button'), function (b) { b.classList.toggle('on', b.getAttribute('data-ktab') === kTab); });
-    $('kTipSms').hidden = kTab !== 'sms'; $('kTipWa').hidden = kTab !== 'whatsapp'; $('kPriceBox').hidden = kTab !== 'sms';
-    $('kNew').textContent = kTab === 'sms' ? '+ Нова SMS кампания' : '+ Нова WhatsApp кампания';
+    $('kTipSms').hidden = kTab !== 'sms'; $('kTipWa').hidden = kTab !== 'whatsapp'; $('kTipEmail').hidden = kTab !== 'email'; $('kEmailOff').hidden = !(kTab === 'email' && !kEmailOn);
+    $('kPriceBox').hidden = kTab !== 'sms'; $('kEmailOptBox').hidden = kTab !== 'email';
+    $('kNew').textContent = '+ Нова ' + KTAB_NAME[kTab] + ' кампания';
     if (kEditing && kEditing.channel !== kTab) $('kEditor').hidden = true;
-    if (!kEditing && !$('kEditor').hidden) { $('kChannel').value = kTab; kPreview(); }
+    if (!kEditing && !$('kEditor').hidden) { $('kChannel').value = kTab; kChannelUi(); kPreview(); }
     renderKList();
+  }
+  /** what the editor shows for the channel: the e-mail fields and buttons, or the SMS ones */
+  function kChannelUi() {
+    var em = $('kChannel').value === 'email', locked = Boolean(kEditing && (kEditing.status === 'sent' || kEditing.status === 'sending'));
+    $('kEmailFields').hidden = !em; $('kPresets').hidden = em; $('kMsgH').textContent = em ? 'Текст на имейла' : 'Съобщение';
+    $('kMsg').placeholder = em ? 'Здравейте, {име}! …  (празен ред = нов абзац)' : 'Здравейте, {име}! …';
+    $('kEmailPreview').hidden = !em; $('kSample').hidden = em;
+    $('kTest').hidden = !(em && kEditing); $('kSend').hidden = !(em && kEditing && !locked); $('kReady').hidden = em; $('kExport').hidden = em || !(kEditing && kEditing.consent);
+    $('kSave').disabled = locked; $('kSave').textContent = em ? 'Запази' : 'Запази чернова';
+    ['kName', 'kSubject', 'kBtnText', 'kBtnUrl', 'kImgUrl', 'kMsg', 'kConsent'].forEach(function (id) { $(id).disabled = locked; });
   }
   $('kPresets').innerHTML = PRESETS.map(function (p, i) { return '<button type="button" class="ghost" data-preset="' + i + '">' + esc(p[0]) + '</button>'; }).join('');
   $('kVars').innerHTML = VARS.map(function (v) { return '<button type="button" class="ghost" data-var="' + v + '">' + v + '</button>'; }).join('');
@@ -3160,6 +3191,15 @@ tr.hl td{background:#fffbe6}
   function kPreview() {
     clearTimeout(kTimer);
     kTimer = setTimeout(function () {
+      if ($('kChannel').value === 'email') {
+        kApi({ action: 'preview', channel: 'email', subject: $('kSubject').value, message: $('kMsg').value, buttonText: $('kBtnText').value, buttonUrl: $('kBtnUrl').value, imageUrl: $('kImgUrl').value, segment: kSegment() }).then(function (p) {
+          $('kKpis').innerHTML = '<div><b>' + p.count + '</b><div class="muted">получатели с имейл</div></div><div><b>0 €</b><div class="muted">имейлите са безплатни за вас</div></div>';
+          $('kEmailFrame').srcdoc = p.html;
+          $('kSend').textContent = 'Изпрати на ' + p.count + (p.count === 1 ? ' клиент' : ' клиенти');
+          $('kSend').disabled = !p.count;
+        }).catch(function (e) { if (e.message !== 'auth') $('kKpis').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; });
+        return;
+      }
       kApi({ action: 'preview', channel: $('kChannel').value, message: $('kMsg').value, segment: kSegment() }).then(function (p) {
         var sms = $('kChannel').value === 'sms';
         $('kKpis').innerHTML = '<div><b>' + p.count + '</b><div class="muted">получатели</div></div>' +
@@ -3174,43 +3214,76 @@ tr.hl td{background:#fffbe6}
   function openCampaign(c) {
     kEditing = c || null;
     $('kTitle').textContent = c ? 'Кампания: ' + c.name : 'Нова кампания';
-    $('kName').value = c ? c.name : ''; $('kChannel').value = c ? c.channel : kTab; $('kMsg').value = c ? c.message : PRESETS[0][1];
-    $('kTitle').textContent = (c ? 'Кампания: ' + c.name : 'Нова ' + (kTab === 'sms' ? 'SMS' : 'WhatsApp') + ' кампания');
+    var em = (c ? c.channel : kTab) === 'email';
+    $('kName').value = c ? c.name : ''; $('kChannel').value = c ? c.channel : kTab; $('kMsg').value = c ? c.message : em ? EMAIL_PRESET.body : PRESETS[0][1];
+    $('kSubject').value = c ? c.subject || '' : EMAIL_PRESET.subject; $('kBtnText').value = c ? c.buttonText || '' : ''; $('kBtnUrl').value = c ? c.buttonUrl || '' : ''; $('kImgUrl').value = c ? c.imageUrl || '' : '';
+    $('kTitle').textContent = (c ? 'Кампания: ' + c.name : 'Нова ' + KTAB_NAME[kTab] + ' кампания');
+    $('kSendBox').hidden = true;
+    if (c && c.channel === 'email' && c.stats) kSendProgress(c.stats, c);
     var sg = (c && c.segment) || {};
     [].forEach.call(document.querySelectorAll('#kStatuses input'), function (x) { x.checked = (sg.statuses || ['delivered']).indexOf(x.value) >= 0; });
     $('kFrom').value = sg.from || ''; $('kTo').value = sg.to || ''; $('kProduct').value = sg.product || ''; $('kMin').value = sg.minOrders || 1; $('kNoFlag').checked = sg.excludeFlagged !== false;
     $('kConsent').checked = Boolean(c && c.consent);
     $('kExport').hidden = !(c && c.consent);
     $('kErr').textContent = '';
+    kChannelUi();
     $('kEditor').hidden = false; $('kEditor').scrollIntoView({ behavior: 'smooth' });
     kPreview();
   }
+  /** the sending of an e-mail campaign: the bar, then what came back */
+  function kSendProgress(p, c) {
+    var pc = function (a, b) { return b ? Math.round(a / b * 100) + '%' : '—'; };
+    var done = p.done || (c && c.status === 'sent');
+    $('kSendBox').hidden = false;
+    $('kSendBox').innerHTML = (done ? '<div style="font-weight:700;margin:6px 0">✓ Изпратена' + (c && c.sentAt ? ' на ' + esc(when(c.sentAt)) : '') + '</div>' :
+        '<div style="font-weight:700;margin:6px 0">Изпраща се… ' + (p.total - p.queued) + ' от ' + p.total + '</div><div class="progress"><div style="width:' + (p.total ? Math.round((p.total - p.queued) / p.total * 100) : 0) + '%"></div></div>') +
+      '<div class="kpis" style="margin-top:8px"><div><b>' + p.sent + '</b><div class="muted">изпратени</div></div><div><b>' + pc(p.delivered, p.sent) + '</b><div class="muted">доставени</div></div>' +
+      '<div><b>' + pc(p.opened, p.sent) + '</b><div class="muted">отворени</div></div><div><b>' + pc(p.clicked, p.sent) + '</b><div class="muted">кликнали</div></div>' +
+      '<div><b>' + (p.bounced + (p.complained || 0)) + '</b><div class="muted">върнати / оплакали се</div></div><div><b>' + (p.unsubscribed || 0) + '</b><div class="muted">отписали се</div></div></div>' +
+      (p.failed ? '<div class="err" style="margin-top:8px">' + p.failed + ' не тръгнаха' + (p.error ? ': ' + esc(p.error) : '') + ' <button type="button" class="ghost" id="kRetry">Опитай пак</button></div>' : '') +
+      '<div class="muted" style="margin-top:6px">Доставени, отворени и кликнали се попълват през следващите часове.</div>';
+    var rb = $('kRetry'); if (rb) rb.addEventListener('click', function () { busy(rb, kApi({ action: 'email_retry', id: kEditing.id })).then(function (d) { kSendLoop(d.progress); }).catch(function (e) { alert(e.message); }); });
+  }
+  function kSendLoop(p) {
+    kSendProgress(p, kEditing);
+    if (p.done || p.error) { loadCampaignList().then(function () { var c = kList.filter(function (x) { return kEditing && x.id === kEditing.id; })[0]; if (c) { kEditing = c; kChannelUi(); kSendProgress(c.stats || p, c); } }); return; }
+    clearTimeout(kSendTimer);
+    kSendTimer = setTimeout(function () { kApi({ action: 'email_more', id: kEditing.id }).then(function (d) { kSendLoop(d.progress); }).catch(function (e) { $('kErr').textContent = e.message; }); }, 400);
+  }
   function kSaveAs(status, btn) {
     $('kErr').textContent = '';
-    busy(btn, kApi({ action: 'save', id: kEditing ? kEditing.id : undefined, name: $('kName').value, channel: $('kChannel').value, message: $('kMsg').value, segment: kSegment(), consent: $('kConsent').checked, status: status }))
-      .then(function (d) { kEditing = d.campaign; $('kTitle').textContent = 'Кампания: ' + d.campaign.name; $('kExport').hidden = !d.campaign.consent; loadCampaignList(); $('kErr').innerHTML = '<span style="color:var(--ok)">Запазено ✓ (' + d.campaign.recipients + ' получатели)</span>'; })
+    return busy(btn, kApi({ action: 'save', id: kEditing ? kEditing.id : undefined, name: $('kName').value, channel: $('kChannel').value, message: $('kMsg').value, segment: kSegment(), consent: $('kConsent').checked, status: status,
+      subject: $('kSubject').value, buttonText: $('kBtnText').value, buttonUrl: $('kBtnUrl').value, imageUrl: $('kImgUrl').value }))
+      .then(function (d) { kEditing = d.campaign; $('kTitle').textContent = 'Кампания: ' + d.campaign.name; $('kExport').hidden = !d.campaign.consent; kChannelUi(); loadCampaignList(); $('kErr').innerHTML = '<span style="color:var(--ok)">Запазено ✓ (' + d.campaign.recipients + ' получатели)</span>'; })
       .catch(function (e) { $('kErr').textContent = e.message; });
   }
   function loadCampaignList() {
     return fetch(withShop(API + 'campaigns'), { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); }).then(function (d) {
       kList = d.campaigns || [];
+      kEmailOn = d.emailOn !== false; $('kEmailOff').hidden = !(kTab === 'email' && !kEmailOn);
       $('kPrice').value = String(d.smsPrice).replace('.', ',');
       renderKList();
     }).catch(function () {});
   }
   /** only the campaigns of the open tab (SMS or WhatsApp) */
+  function kStatusBadge(c) {
+    if (c.status === 'sent') { var st = c.stats || {}; return '<span class="badge ok">изпратена</span>' + (st.sent ? ' <span class="muted">' + st.sent + ' · отворени ' + (st.sent ? Math.round((st.opened || 0) / st.sent * 100) : 0) + '%</span>' : ''); }
+    if (c.status === 'sending') return '<span class="badge">изпраща се</span>';
+    return c.status === 'ready' ? '<span class="badge ok">готова</span>' : '<span class="badge">чернова</span>';
+  }
   function renderKList() {
-    var name = kTab === 'sms' ? 'SMS' : 'WhatsApp';
+    var name = KTAB_NAME[kTab];
     var rows = [];
     kList.forEach(function (c, i) {
       if (c.channel !== kTab) return;
-      rows.push(['<b>' + esc(c.name) + '</b>', String(c.recipients), c.status === 'ready' ? '<span class="badge ok">готова</span>' : '<span class="badge">чернова</span>', esc(when(c.updatedAt)),
+      rows.push(['<b>' + esc(c.name) + '</b>' + (c.channel === 'email' && c.subject ? '<br><span class="muted">' + esc(c.subject) + '</span>' : ''), String(c.recipients), kStatusBadge(c), esc(when(c.updatedAt)),
         '<button type="button" class="ghost" data-kopen="' + i + '">Отвори</button>' + (c.consent ? ' <button type="button" class="ghost" data-kexport="' + esc(c.id) + '">Експорт CSV</button>' : '') + ' <button type="button" class="del" data-kdel="' + i + '">Изтрий</button>']);
     });
     $('kTable').innerHTML = rows.length ? table([name + ' кампания', 'Получатели', 'Състояние', 'Обновена', ''], rows) : '<tr><td class="muted">Още няма ' + name + ' кампании. Натиснете „+ Нова ' + name + ' кампания“.</td></tr>';
   }
   function loadCampaigns() {
     loadCampaignList();
+    loadEmailOptouts();
     fetch(withShop(API + 'confirmadmin'), { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (d) { $('kConfirmMsg').value = d.template || ''; }).catch(function () {});
     kApi({ action: 'optouts' }).then(function (d) { $('kOptList').innerHTML = d.optouts.length ? d.optouts.map(function (o) { return esc(o.phone) + ' <a href="#" data-kunopt="' + esc(o.phone) + '">махни</a>'; }).join('<br>') : 'Няма.'; }).catch(function () {});
   }
@@ -3223,6 +3296,33 @@ tr.hl td{background:#fffbe6}
   $('kPresets').addEventListener('click', function (e) { var i = e.target.getAttribute('data-preset'); if (i != null) { $('kMsg').value = PRESETS[i][1]; kPreview(); } });
   $('kVars').addEventListener('click', function (e) { var v = e.target.getAttribute('data-var'); if (v) { insertAt($('kMsg'), v); kPreview(); } });
   $('kSave').addEventListener('click', function () { kSaveAs('draft', $('kSave')); });
+  ['kSubject', 'kBtnText', 'kBtnUrl', 'kImgUrl'].forEach(function (id) { $(id).addEventListener('input', kPreview); });
+  $('kChannel').addEventListener('change', kChannelUi);
+  $('kTest').addEventListener('click', function () {
+    if (!kEditing) return;
+    var to = window.prompt('На кой имейл да пратя теста?', (window.meEmail || '')); if (!to) return;
+    $('kErr').textContent = '';
+    kSaveAs('draft', $('kTest')).then(function () { return busy($('kTest'), kApi({ action: 'email_test', id: kEditing.id, to: to })); })
+      .then(function () { $('kErr').innerHTML = '<span style="color:var(--ok)">Тестът тръгна към ' + esc(to) + ' ✓ (провери и в „Спам“)</span>'; }).catch(function (e) { $('kErr').textContent = e.message; });
+  });
+  $('kSend').addEventListener('click', function () {
+    if (!kEditing) return;
+    if (!$('kConsent').checked) { $('kErr').textContent = 'Потвърдете, че клиентите може да получават такива имейли (отметката по-горе).'; return; }
+    var n = ($('kSend').textContent.match(/\d+/) || ['0'])[0];
+    if (!window.confirm('Да изпратя ли имейла на ' + n + ' клиенти? Това не може да се отмени.')) return;
+    $('kErr').textContent = '';
+    kSaveAs('draft', $('kSend')).then(function () { return busy($('kSend'), kApi({ action: 'email_send', id: kEditing.id })); })
+      .then(function (d) { kEditing.status = 'sending'; kChannelUi(); kSendLoop(d.progress); }).catch(function (e) { $('kErr').textContent = e.message; });
+  });
+  $('kEOptAdd').addEventListener('click', function () {
+    busy($('kEOptAdd'), kApi({ action: 'email_optout_add', emails: $('kEOptText').value })).then(function (d) { $('kEOptText').value = ''; $('kEOptInfo').textContent = 'Добавени: ' + d.added; loadEmailOptouts(); kPreview(); }).catch(function (e) { $('kEOptInfo').textContent = e.message; });
+  });
+  function loadEmailOptouts() {
+    kApi({ action: 'email_optouts' }).then(function (d) {
+      var R = { manual: 'ръчно', link: 'отписа се', bounce: 'върнат', complaint: 'оплакване' };
+      $('kEOptList').innerHTML = d.optouts.length ? d.optouts.map(function (o) { return esc(o.email) + ' <span class="muted">· ' + esc(R[o.reason] || (o.reason.indexOf('campaign:') === 0 ? 'отписа се' : o.reason)) + '</span> <a href="#" data-keunopt="' + esc(o.email) + '">махни</a>'; }).join('<br>') : 'Няма.';
+    }).catch(function () {});
+  }
   $('kReady').addEventListener('click', function () { kSaveAs('ready', $('kReady')); });
   $('kExport').addEventListener('click', function () { if (kEditing) location.href = withShop(API + 'campaigns?export=' + encodeURIComponent(kEditing.id)); });
   $('kTable').addEventListener('click', function (e) {
@@ -3239,6 +3339,8 @@ tr.hl td{background:#fffbe6}
     var v = e.target.getAttribute('data-cvar'); if (v) insertAt($('kConfirmMsg'), v);
     var un = e.target.getAttribute('data-kunopt');
     if (un) { e.preventDefault(); kApi({ action: 'optout_remove', phone: un }).then(loadCampaigns); }
+    var eun = e.target.getAttribute('data-keunopt');
+    if (eun) { e.preventDefault(); kApi({ action: 'email_optout_remove', email: eun }).then(loadEmailOptouts); }
   });
   $('kConfirmSave').addEventListener('click', function () {
     busy($('kConfirmSave'), fetch(withShop(API + 'confirmadmin'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'template', text: $('kConfirmMsg').value }) })
