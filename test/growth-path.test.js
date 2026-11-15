@@ -11,10 +11,9 @@ const base = {
 };
 const go = (patch = {}, answers = {}) => walk({ ...base, ...patch }, { capacity: 'yes', ...answers });
 
-test('under 20 sales the only operation is proving the offer', () => {
-  const w = walk({ ...base, ordersTotal: 7 });
-  assert.equal(w.op, 'first20');
-  assert.match(w.steps[0].answer, /Не — 7/);
+test('a shop with few orders in Ordyx is a working shop: no „start“ operation, the walk goes on', () => {
+  assert.equal(OPS.first20, undefined);
+  assert.deepEqual(walk({ ...base, ordersTotal: 7 }), walk(base));
 });
 
 test('the owner is asked only what the data cannot say, one question at a time', () => {
