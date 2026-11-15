@@ -7,6 +7,7 @@ import { sendMonthlySummaries } from '../../lib/advisor/repo.js';
 import { notifyShop } from '../../lib/push.js';
 import { sendPathNudges } from '../../lib/advisor/path-repo.js';
 
+const PATH_ON = false; // Пътят на растежа is hidden in the admin
 const BATCH = 4; // free plan: 5 API requests/min and 30 searches/day
 
 /** Daily (Vercel Cron, Bearer CRON_SECRET): retries orders whose nekorekten.com check is pending or failed. ?debug=1 adds the plan usage. */
@@ -18,7 +19,8 @@ export default async function handler(req, res) {
     // the advisor's month summary as a push on the first days of a month (this light job has time to spare; no e-mail in Ordyx)
     const advisor = await sendMonthlySummaries(q, notifyShop).catch((err) => { console.error('[cron] advisor summary failed', err); return { error: err.message }; });
     // Пътят на растежа: the move that stands for days, and „Стана ли?“ on the check's day
-    const path = await sendPathNudges(q, notifyShop).catch((err) => { console.error('[cron] path nudges failed', err); return { error: err.message }; });
+    // (hidden for now, like its section in the admin: no pushes either)
+    const path = PATH_ON ? await sendPathNudges(q, notifyShop).catch((err) => { console.error('[cron] path nudges failed', err); return { error: err.message }; }) : { off: true };
     const apiKey = nekorektenKey();
     if (!apiKey) return send(res, 200, { skipped: 'nekorekten is not connected', advisor, path });
     const summary = await checkOrders(q, await pendingNekorekten(q, BATCH), apiKey);

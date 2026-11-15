@@ -77,9 +77,10 @@ test('sync pulls daily spend (all pages) into ad_spend; profit and totals includ
   assert.deepEqual(json(res).result, { days: 3 });
   const totals = await adSpendTotals(q, { from: today(), to: today() });
   assert.deepEqual(totals, { spend: 10, impressions: 1000, clicks: 25, purchases: 2, purchaseValue: 41.1, unconverted: [] });
-  await insertOrder(q, { cbOrderId: 'adhdbg.eu:1', name: 'К', phone: '', phoneNorm: '', email: '', deliveryType: 'econt_office', courier: 'econt', officeId: '',
+  const o = await insertOrder(q, { cbOrderId: 'adhdbg.eu:1', name: 'К', phone: '', phoneNorm: '', email: '', deliveryType: 'econt_office', courier: 'econt', officeId: '',
     officeText: 'ЕКОНТ', city: 'Х', postCode: '', addressText: '', items: [{ name: 'Книга', qty: 1, price: 30 }], total: 30, currency: 'EUR',
     paymentMethod: 'cod', pageUrl: '', ip: '1', userAgent: '' });
+  await q(`update zd.orders set status = 'delivered' where id = $1::uuid`, [o.id]); // ended: nothing expected back
   const p = await getProfit(q, { from: today(), to: today() });
   assert.deepEqual([p.adSpend, p.profitBeforeAds, p.profit], [10, 30, 20]);
   await q(`update zd.ad_spend set currency = 'BGN', spend = 19.56`);

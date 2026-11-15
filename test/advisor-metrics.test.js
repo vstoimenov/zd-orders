@@ -107,7 +107,9 @@ test('the margin is the same as „Финанси“ (profit before ads) for the
   await order({ daysAgo: 35, total: 40 }); // outside
   const m = await shopMetrics(q, SHOP, DAY);
   const p = await getProfit(q, { from: '2026-10-11', to: '2026-11-09', shopId: SHOP });
-  assert.ok(Math.abs(m.contribution30 - p.profitBeforeAds) < 0.02, `${m.contribution30} vs ${p.profitBeforeAds}`);
+  // „Финанси“ also holds back the expected returns of the parcels still on the way; the advisor's margin is the realised one
+  assert.ok(p.expectedReturns > 0);
+  assert.ok(Math.abs(m.contribution30 - (p.profitBeforeAds + p.expectedReturns)) < 0.02, `${m.contribution30} vs ${p.profitBeforeAds} + ${p.expectedReturns}`);
   assert.equal(m.orders30, 4);
 });
 

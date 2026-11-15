@@ -37,7 +37,7 @@ test('the delivery mix: courier × kind with shares, delivered, returned and the
   const s = await getStats(q, { ...period(), shopId: SHOP });
   const econt = s.deliveryMix.find((r) => r.courier === 'econt' && r.kind === 'office');
   assert.deepEqual({ ...econt, revenue: undefined }, { courier: 'econt', kind: 'office', orders: 8, share: 0.8, delivered: 6, returned: 1, returnRate: 1 / 7, revenue: undefined });
-  assert.equal(econt.revenue, 80);
+  assert.equal(econt.revenue, 70, 'the returned parcel brought nothing in');
   assert.equal(s.deliveryMix[0].courier, 'econt', 'sorted by orders');
   const box = s.deliveryMix.find((r) => r.kind === 'locker');
   assert.equal(box.returnRate, 0);
