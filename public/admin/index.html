@@ -3429,7 +3429,7 @@ tr.hl td{background:#fffbe6}
   /* ---- Първи стъпки: подробен водач, отметките идват от реалните данни ---- */
   function go(hash) { location.hash = hash; }
   function stepHtml(n, st) {
-    var body = st.body ? '<details' + (st.done ? '' : ' open') + '><summary>' + (st.done ? 'Виж как (готово)' : 'Как се прави') + '</summary>' + st.body + '</details>' : '';
+    var body = st.body ? '<details' + (st.done ? '' : ' open') + '><summary>' + (st.done ? 'Виж как (готово)' : 'Как се прави') + '</summary>' + st.body + (st.video ? videoFor(st.video) : '') + '</details>' : '';
     var acts = (st.actions || []).map(function (a) { return '<button type="button" class="' + (a.primary ? 'primary' : 'ghost') + '" data-st="' + a.id + '">' + esc(a.label) + '</button>'; }).join(' ');
     return '<div class="step' + (st.done ? ' done' : '') + '"><h3><span class="num">' + (st.done ? '✓' : n) + '</span>' + esc(st.title) + (st.optional ? ' <span class="badge">по желание</span>' : '') + '</h3>' +
       (st.state ? '<div class="state ' + (st.done ? 'ok' : st.wait ? 'wait' : '') + '">' + esc(st.state) + '</div>' : '') + body + (acts ? '<div class="actions">' + acts + '</div>' : '') + '</div>';
@@ -3459,7 +3459,7 @@ tr.hl td{background:#fffbe6}
           '<li>Отворете чекаута си — трябва да видите „До офис или автомат на Еконт“ и „Спиди“.</li></ol>' +
           '<div class="note">⚠️ Не поставяйте кода в „Код за текущата страница“ — там ConvertBuilder понякога трие кода при запазване. Само в „Код за целия сайт“.</div>' +
           '<p class="muted">Отметката светва след първото посещение на сайта ви (за нов магазин — след одобрението).</p>' },
-      { title: 'Свържете ConvertBuilder (поръчките идват веднага)', done: Boolean(cb.connected),
+      { title: 'Свържете ConvertBuilder (поръчките идват веднага)', done: Boolean(cb.connected), video: 'cb',
         state: cb.connected ? 'Свързан ✓' + (cb.webhook ? ' · поръчките идват веднага' : '') + (cb.lastSyncAt ? ' · синхронизация ' + when(cb.lastSyncAt) : '') : (cb.lastError ? 'Грешка: ' + cb.lastError : 'Не е свързан.'),
         body: '<ol><li>В ConvertBuilder отворете <b>Website Settings → Applications</b> и копирайте <b>API Key</b> (ако няма — създайте).</li>' +
           '<li>Тук отворете <b>Интеграции → ConvertBuilder → „Свържи“</b> → раздел <b>„Връзка и синхронизация“</b>.</li>' +
@@ -3471,7 +3471,7 @@ tr.hl td{background:#fffbe6}
         body: '<ol><li>Отворете чекаута си като клиент, изберете продукт и <b>офис на Еконт или Спиди</b>.</li><li>Завършете поръчката.</li>' +
           '<li>До секунди тя трябва да се появи в <b>„Поръчки“</b> с офиса. После я изтрийте оттам с „Изтрий“ (в ConvertBuilder остава — изтрийте я и там).</li></ol>',
         actions: [{ id: 'orders', label: 'Отвори Поръчки' }] },
-      { title: 'Товарителници с Еконт', optional: true, done: Boolean(d.econt),
+      { title: 'Товарителници с Еконт', optional: true, done: Boolean(d.econt), video: 'econt',
         state: d.econt ? 'Свързан ✓' : 'Не е свързан.',
         body: '<p>Създавате товарителници от поръчката с един бутон — нужен е само <b>профил в e-Econt</b> (ee.econt.com), без договор.</p>' +
           '<ol><li><b>Интеграции → Еконт → „+ Товарителници“</b>.</li><li>Въведете потребителското име и паролата от e-Econt → <b>„Зареди профила“</b>.</li>' +
@@ -3784,17 +3784,19 @@ tr.hl td{background:#fffbe6}
   var ovResizeT = null;
   window.addEventListener('resize', function () { if ($('profileView').hidden) return; clearTimeout(ovResizeT); ovResizeT = setTimeout(renderOvChart, 120); });
   /* ---- видео ръководства (Първи стъпки) ---- */
+  // step: the „Първи стъпки“ step the video also sits in
   var ONBOARDING_VIDEOS = [
-    { id: '2lDkfi9Y7Wc', title: 'Видео ръководство 1' },
-    { id: 'aN6btabhLA0', title: 'Видео ръководство 2' },
-    { id: 'EDRdak4u2RM', title: 'Видео ръководство 3' },
+    { id: 'aN6btabhLA0', title: 'Свържи ConvertBuilder: поръчките идват веднага', step: 'cb' },
+    { id: 'EDRdak4u2RM', title: 'Товарителници с Еконт: пратка с един клик', step: 'econt' },
   ];
-  $('stVideoList').innerHTML = ONBOARDING_VIDEOS.map(function (v, i) {
-    return '<div><div class="vid"><button type="button" data-vid="' + i + '" aria-label="Пусни: ' + esc(v.title) + '" style="background-image:url(https://i.ytimg.com/vi/' + v.id + '/hqdefault.jpg)"></button></div><div class="vidcap">' + esc(v.title) + '</div></div>';
-  }).join('');
-  $('stVideoList').addEventListener('click', function (e) {
+  function videoTile(v) {
+    return '<div><div class="vid"><button type="button" data-vid="' + esc(v.id) + '" aria-label="Пусни видеото: ' + esc(v.title) + '" style="background-image:url(https://i.ytimg.com/vi/' + v.id + '/hqdefault.jpg)"></button></div><div class="vidcap">▶ ' + esc(v.title) + '</div></div>';
+  }
+  function videoFor(step) { var v = ONBOARDING_VIDEOS.filter(function (x) { return x.step === step; })[0]; return v ? '<div class="vidgrid" style="max-width:420px">' + videoTile(v) + '</div>' : ''; }
+  $('stVideoList').innerHTML = ONBOARDING_VIDEOS.map(videoTile).join('');
+  document.querySelector('#startView').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-vid]'); if (!b) return;
-    var v = ONBOARDING_VIDEOS[b.getAttribute('data-vid')];
+    var v = ONBOARDING_VIDEOS.filter(function (x) { return x.id === b.getAttribute('data-vid'); })[0]; if (!v) return;
     var f = document.createElement('iframe');
     f.src = 'https://www.youtube-nocookie.com/embed/' + v.id + '?autoplay=1&rel=0&modestbranding=1';
     f.title = v.title; f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen'; f.allowFullscreen = true;
