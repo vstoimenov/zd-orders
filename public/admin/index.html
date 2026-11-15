@@ -1970,7 +1970,9 @@ tr.hl td{background:#fffbe6}
       }));
     }
     var c = d.cards, period = d.period.from === d.period.to ? d.period.from : d.period.from + ' – ' + d.period.to;
-    $('dCards').innerHTML = dashWarnings(d) + card('Оборот', moneyList(c.revenue), 'без отказаните и върнатите') + card('Реален приход', moneyList(c.delivered), 'само доставените', 'ok') +
+    var cur = (currentShop !== 'all' && shopById(currentShop) || {}).currency || 'EUR', zero = money(0, cur); // no sales: a zero, not a dash
+    $('dCards').innerHTML = dashWarnings(d) + card('Оборот', c.revenue && c.revenue.length ? moneyList(c.revenue) : zero, 'без отказаните и върнатите') +
+      card('Реален приход', c.delivered && c.delivered.length ? moneyList(c.delivered) : zero, 'само доставените', 'ok') +
       card('Поръчки', String(c.orders), period) + card('Средна поръчка (AOV)', moneyList(c.aov), 'без отказаните и върнатите') +
       card('Върнати', c.finished ? pct(c.returnRate) : '—', c.finished ? c.finished + ' пратки с известен край' + (c.inTransit ? ' · ' + c.inTransit + ' още на път' : '') : 'няма приключили пратки за периода', 'warn') + abandonedCard(d.abandoned) + customersCards(d.customers) + card('⚠️ В НЕкоректен', String(c.nkFlagged), pct(c.nkFlaggedPct) + ' от поръчките', c.nkFlagged ? 'bad' : '') + adCards(d) + profitCards(d.profit);
     fillCalc(false);
