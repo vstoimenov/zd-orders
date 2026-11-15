@@ -193,6 +193,10 @@ main{padding:30px 32px 56px;max-width:1440px}
 .sp-msg.bot{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
 .sp-msg.me{align-self:flex-end;background:var(--accent-soft);border:1px solid #f3e7a6;border-bottom-right-radius:4px}
 .sp-msg.typing{color:var(--muted)}
+.sp-msg.bot{white-space:normal}.sp-msg.bot p{margin:0 0 6px}.sp-msg.bot p:last-child{margin-bottom:0}
+.sp-msg.bot ol,.sp-msg.bot ul{margin:4px 0 6px;padding-left:20px}.sp-msg.bot li{margin:2px 0}
+.sp-msg.bot code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;background:#f1f0ec;border-radius:5px;padding:1px 5px;word-break:break-all}
+.sp-msg.bot a{color:inherit;text-decoration:underline}
 .sp-chips{display:flex;flex-wrap:wrap;gap:6px}.sp-chips button{font-size:12.5px;padding:6px 10px;border-radius:999px;background:#fff;cursor:pointer}
 .sp-human{display:flex;align-items:center;justify-content:center;gap:6px;margin:0;padding:9px 12px;border-radius:12px;background:#e8f6ec;border:1px solid #bfe5cc;color:var(--ok);font-weight:700;text-decoration:none;font-size:14px}
 .sp-human:hover{background:#dcf1e3}
@@ -3781,11 +3785,31 @@ tr.hl td{background:#fffbe6}
     var text = 'Здравей! Пиша от Ordyx.' + (spMe.name ? '\nИме: ' + spMe.name : '') + (spMe.email ? '\nИмейл: ' + spMe.email : '') + (sh ? '\nМагазин: ' + (sh.display || sh.domain) : '') + (last ? '\nВъпрос: ' + last.content.slice(0, 600) : '');
     return spPhone ? 'https://wa.me/' + spPhone.replace(/^\+/, '') + '?text=' + encodeURIComponent(text) : 'mailto:stoimenov@profitbrand.online?subject=' + encodeURIComponent('Ordyx — помощ') + '&body=' + encodeURIComponent(text);
   }
+  /** the bot's answer: escaped, then **bold**, `code`, lists and paragraphs; links only to https pages or the admin's own screens */
+  function spMd(text) {
+    var inline = function (t) {
+      return esc(t).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+        .replace(/\[([^\]]+)\]\((https:\/\/[^\s)]+|#[a-z]+)\)/g, function (m, label, url) { return '<a href="' + url + '"' + (url.charAt(0) === '#' ? '' : ' target="_blank" rel="noopener"') + '>' + label + '</a>'; });
+    };
+    var out = [], list = null;
+    String(text).replace(/\r/g, '').split('\n').forEach(function (line) {
+      var m = line.match(/^\s*(\d+)[.)]\s+(.*)$/), b = line.match(/^\s*[-•*]\s+(.*)$/), kind = m ? 'ol' : b ? 'ul' : null;
+      if (kind) {
+        if (!list || list.kind !== kind) { if (list) out.push('</' + list.kind + '>'); list = { kind: kind }; out.push('<' + kind + '>'); }
+        out.push('<li>' + inline(m ? m[2] : b[1]) + '</li>');
+        return;
+      }
+      if (list) { out.push('</' + list.kind + '>'); list = null; }
+      if (line.trim()) out.push('<p>' + inline(line.replace(/^#+\s*/, '')) + '</p>');
+    });
+    if (list) out.push('</' + list.kind + '>');
+    return out.join('');
+  }
   function spRender() {
     var h = '<div class="sp-msg bot">Здравей' + (spMe.name ? ', ' + esc(spMe.name.split(' ')[0]) : '') + '! Питай ме за настройката на Ordyx: чекаута, куриерите, поръчките, рекламите, плановете.' + (spOn ? '' : '\n\nАсистентът още не е включен — пиши директно на колегата.') + '</div>';
     if (!spMsgs.length && spOn) h += '<div class="sp-chips">' + SP_STARTERS.map(function (t) { return '<button type="button" class="ghost" data-sp="' + esc(t) + '">' + esc(t) + '</button>'; }).join('') + '</div>';
     spMsgs.forEach(function (m) {
-      h += '<div class="sp-msg ' + (m.role === 'user' ? 'me' : 'bot') + '">' + esc(m.content) + '</div>';
+      h += '<div class="sp-msg ' + (m.role === 'user' ? 'me' : 'bot') + '">' + (m.role === 'user' ? esc(m.content) : spMd(m.content)) + '</div>';
       if (m.handoff) h += '<a class="sp-human" target="_blank" rel="noopener" href="' + esc(spHumanUrl()) + '">💬 Пиши на човек в WhatsApp</a>';
     });
     if (spBusy) h += '<div class="sp-msg bot typing">Пише…</div>';
@@ -3799,7 +3823,7 @@ tr.hl td{background:#fffbe6}
     text = String(text || '').trim(); if (!text || spBusy) return;
     spMsgs.push({ role: 'user', content: text }); spBusy = true; spSave(); spRender();
     fetch(API + 'support', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: spMsgs.map(function (m) { return { role: m.role, content: m.content }; }) }) })
+      body: JSON.stringify({ view: (location.hash || '').slice(1), messages: spMsgs.map(function (m) { return { role: m.role, content: m.content }; }) }) })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('Грешка ' + r.status)); return d; }); })
       .then(function (d) { spMsgs.push({ role: 'assistant', content: d.answer, handoff: d.handoff }); })
       .catch(function (e) { spMsgs.push({ role: 'assistant', content: e.message, handoff: true }); })
@@ -3819,6 +3843,7 @@ tr.hl td{background:#fffbe6}
   $('spClose').addEventListener('click', function () { spOpen(false); $('spFab').focus(); });
   $('spBox').addEventListener('keydown', function (e) { if (e.key === 'Escape') { spOpen(false); $('spFab').focus(); } });
   $('spLog').addEventListener('click', function (e) { var t = e.target.getAttribute && e.target.getAttribute('data-sp'); if (t) spAsk(t); });
+  // the first greeting is not a bot turn: it is never sent to the model
   $('spForm').addEventListener('submit', function (e) { e.preventDefault(); var t = $('spIn').value; $('spIn').value = ''; spAsk(t); });
   $('spIn').addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('spForm').requestSubmit ? $('spForm').requestSubmit() : $('spSend').click(); } });
   $('spPhoneSave').addEventListener('click', function () {

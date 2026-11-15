@@ -30,17 +30,19 @@ const call = async (cookie, body, method = 'POST') => { const res = fakeRes(); a
 
 test('an answer: Claude Opus 5.5 at low effort with server-side fallbacks, the knowledge cached, only this client\'s shops in the context', async () => {
   setClientForTests(fake(text('Сложи кода в „Код за целия сайт“ → Body и натисни „Публикувай“.')));
-  const res = await call(client, { messages: [{ role: 'user', content: 'Не виждам офисите в чекаута' }] });
+  const res = await call(client, { view: 'orders', messages: [{ role: 'user', content: 'Не виждам офисите в чекаута' }] });
   assert.equal(res.statusCode, 200);
   assert.deepEqual(json(res), { ok: true, answer: 'Сложи кода в „Код за целия сайт“ → Body и натисни „Публикувай“.', handoff: false });
   const p = calls[0];
   assert.equal(p.model, MODEL); assert.equal(p.model, 'claude-opus-5-5');
-  assert.deepEqual(p.output_config, { effort: 'low' });
+  assert.deepEqual(p.output_config, { effort: 'medium' });
   assert.deepEqual(p.betas, ['server-side-fallback-2026-07-01']); assert.equal(p.fallbacks, 'default');
   assert.equal(p.thinking, undefined, 'thinking stays at the model default');
   assert.equal(p.system[0].text, KNOWLEDGE); assert.deepEqual(p.system[0].cache_control, { type: 'ephemeral' });
   assert.match(p.system[1].text, /Мария Петрова/);
   assert.doesNotMatch(p.system[1].text, /chuzhd/, 'another shop never reaches the model');
+  assert.match(p.system[1].text, /на екран: Поръчки/);
+  for (const s of ['Код за целия сайт', 'Assign partner', 'MySpeedy', 'Тестов режим', 'Обнови статусите', 'Финанси']) assert.ok(KNOWLEDGE.includes(s), s);
   assert.match(KNOWLEDGE, /1286604839444018/); assert.match(KNOWLEDGE, /Starter/);
 });
 
