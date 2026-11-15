@@ -58,7 +58,10 @@ test('getStats computes return rate, nekorekten share and breakdowns', async () 
   const flagged = await add({ deliveryType: 'speedy_address', courier: 'speedy' });
   await saveNekorekten(q, flagged.id, { status: 'flagged', count: 1, reportIds: ['9'] });
   const s = await getStats(q, { from: today(), to: today() });
-  assert.equal(s.cards.returnRate, 1 / 3);
+  assert.equal(s.cards.returnRate, 1 / 2, 'of the parcels whose end is known; the one on the way is not counted');
+  assert.equal(s.cards.finished, 2);
+  assert.equal(s.cards.inTransit, 1);
+  assert.equal(s.cards.stale, 0);
   assert.equal(s.cards.nkFlagged, 1);
   assert.equal(s.cards.nkFlaggedPct, 0.25);
   const byDelivery = Object.fromEntries(s.byDelivery.map((d) => [d.deliveryType, d.orders]));
@@ -167,4 +170,23 @@ test('stats include the customers summary (all time)', async () => {
   await add({ phoneNorm: '+359888000002', total: 30 });
   const s = await getStats(q, { from: today(), to: today() });
   assert.deepEqual(s.customers, { customers: 2, repeat: 1, repeatShare: 0.5, avgValue: 30 });
+});
+
+test('a parcel still „Изпратена“ after 21 days is counted as stale (its status is not being updated)', async () => {
+  const old = await add({}, 'shipped');
+  await add({}, 'shipped');
+  await q(`update zd.orders set created_at = now() - interval '30 days', status_changed_at = now() - interval '30 days' where id = $1::uuid`, [old.id]);
+  const from = new Date(Date.now() - 40 * 864e5).toLocaleDateString('sv-SE', { timeZone: 'Europe/Sofia' });
+  const s = await getStats(q, { from, to: today() });
+  assert.equal(s.cards.stale, 1);
+  assert.equal(s.cards.staleDays, 21);
+  assert.equal(s.cards.returnRate, null, 'no parcel has ended');
+});
+
+test('revenue and AOV leave out returned parcels', async () => {
+  await add({ total: 30 }, 'delivered');
+  await add({ total: 10 }, 'returned');
+  const s = await getStats(q, { from: today(), to: today() });
+  assert.deepEqual(s.cards.revenue, [{ currency: 'EUR', amount: 30 }]);
+  assert.deepEqual(s.cards.aov, [{ currency: 'EUR', amount: 30 }]);
 });

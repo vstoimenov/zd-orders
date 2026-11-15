@@ -57,8 +57,8 @@ test('expenses are added, listed newest first and deleted', async () => {
 
 test('getProfit applies product costs, packaging, COD fee, free shipping, returns and expenses', async () => {
   await saveCosts(q, { products: [{ name: 'Книга', unitCost: 4 }], settings: { packaging: 0.5, codFeePct: 2, freeShippingEcont: 3.55, freeShippingSpeedy: 2.48, returnCost: 7 } });
-  await add();                                                                                  // customer pays shipping: 12.90 items, 16.45 total
-  await add({ items: [{ name: 'Книга', qty: 2, price: 25.8 }], total: 25.8, courier: 'speedy' });  // free shipping (total = items) → shop pays Speedy 2.48
+  await add({}, 'delivered');                                                                   // customer pays shipping: 12.90 items, 16.45 total
+  await add({ items: [{ name: 'Книга', qty: 2, price: 25.8 }], total: 25.8, courier: 'speedy' }, 'delivered');  // free shipping (total = items) → shop pays Speedy 2.48
   await add({}, 'returned');                                                                    // return: −7, packaging only
   await add({}, 'cancelled');                                                                   // ignored
   await add({ currency: 'USD', cbOrderId: 'test:1' });                                          // other currency → ignored
@@ -67,6 +67,10 @@ test('getProfit applies product costs, packaging, COD fee, free shipping, return
   assert.deepEqual(p, {
     currency: 'EUR', itemsRevenue: 38.7, productCost: 12, packaging: 1.5, codFee: 0.85, freeShipping: 2.48, returns: 7,
     expenses: 10, otherCosts: 21.83, adSpend: 0, profitBeforeAds: 4.87, profit: 4.87, margin: 0.1258,
+    // every parcel has ended: nothing expected back
+    expectedReturns: 0, openOrders: 0, expectedReturnRate: 0.1, returnRateFrom: 'default',
+    // „Бонус“ has no unit cost: the profit says it is not real yet
+    missingCosts: { products: 1, of: 2, revenue: 0 }, costsSet: true,
     // not registered for VAT: no VAT figures, 10% profit tax on the whole profit
     vatRegistered: false, profitTaxPct: 10, vatOnSales: 0, vatOnCosts: 0, vatDue: 0, adVat: 0, netRevenue: 38.7,
     accountingProfit: 4.87, profitTax: 0.49, netProfit: 4.38, yearRevenue: 42.25, vatThreshold: 51130,
@@ -76,8 +80,8 @@ test('getProfit applies product costs, packaging, COD fee, free shipping, return
 /** the fixture of the profit test: 38.70 items, 33.83 costs with VAT, profit 4.87 */
 async function profitFixture(settings) {
   await saveCosts(q, { products: [{ name: 'Книга', unitCost: 4 }], settings: { packaging: 0.5, codFeePct: 2, freeShippingEcont: 3.55, freeShippingSpeedy: 2.48, returnCost: 7, ...settings } });
-  await add();
-  await add({ items: [{ name: 'Книга', qty: 2, price: 25.8 }], total: 25.8, courier: 'speedy' });
+  await add({}, 'delivered');
+  await add({ items: [{ name: 'Книга', qty: 2, price: 25.8 }], total: 25.8, courier: 'speedy' }, 'delivered');
   await add({}, 'returned');
   await addExpense(q, { spentOn: today(), name: 'Реклама извън Meta', amount: 10 });
   return getProfit(q, { from: today(), to: today() });
@@ -179,4 +183,30 @@ test('a digital product: 0 is its true cost, kept with the flag; a typed cost is
   assert.deepEqual([book.unitCost, book.digital], [6.2, false]);
   await saveCosts(q, { products: [{ name: 'Аудио книга', unitCost: 0, digital: false }], shopId: SHOP });
   assert.equal((await getCosts(q, { shopId: SHOP })).products.find((p) => p.name === 'Аудио книга').digital, false, 'can be unticked');
+});
+
+test('parcels still on the way: the expected returns take their margin and the return cost; the shop\'s own rate after 20 ended parcels', async () => {
+  await saveCosts(q, { products: [{ name: 'Книга', unitCost: 4 }, { name: 'Бонус', unitCost: 0.5 }], settings: { codFeePct: 2, returnCost: 7 } });
+  for (let i = 0; i < 10; i++) await add({}, 'shipped'); // 10 on the way: 12.90 items, 4.50 cost, 0.33 COD fee each
+  let p = await getProfit(q, { from: today(), to: today() });
+  assert.equal(p.openOrders, 10);
+  assert.equal(p.returnRateFrom, 'default');
+  assert.equal(p.expectedReturnRate, 0.1);
+  // 10% × (129 items − 45 cost − 3.29 COD fee not paid on a return + 10 × 7 return cost)
+  assert.equal(p.expectedReturns, 15.07);
+  assert.deepEqual(p.missingCosts, { products: 0, of: 2, revenue: 0 });
+  // 25 ended parcels of which 5 came back: the shop's own 20%
+  for (let i = 0; i < 20; i++) await add({ total: 1, items: [{ name: 'Книга', qty: 1, price: 1 }] }, 'delivered');
+  for (let i = 0; i < 5; i++) await add({ total: 1, items: [{ name: 'Книга', qty: 1, price: 1 }] }, 'returned');
+  p = await getProfit(q, { from: today(), to: today() });
+  assert.equal(p.returnRateFrom, 'shop');
+  assert.equal(p.expectedReturnRate, 0.2);
+  assert.equal(p.expectedReturns, 30.14);
+});
+
+test('the COD fee is paid only on parcels paid in cash', async () => {
+  await saveCosts(q, { products: [], settings: { codFeePct: 2 } });
+  await add({}, 'delivered');
+  await add({ paymentMethod: 'card' }, 'delivered');
+  assert.equal((await getProfit(q, { from: today(), to: today() })).codFee, 0.33);
 });

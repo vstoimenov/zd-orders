@@ -1909,19 +1909,37 @@ tr.hl td{background:#fffbe6}
   BE_FIELDS.concat(['beMargin']).forEach(function (id) { $(id).addEventListener('input', function () { if (id !== 'beMargin') beTouched = true; renderCalc(); }); });
   $('beFill').addEventListener('click', function () { fillCalc(true); });
 
+  /** What makes the dashboard's numbers unreliable, said first and plainly. */
+  function dashWarnings(d) {
+    var c = d.cards, p = d.profit, out = '';
+    if (p && p.missingCosts && p.missingCosts.products) {
+      out += card('⚠️ Печалбата не е вярна', p.missingCosts.products + ' от ' + p.missingCosts.of + ' продукта', 'нямат себестойност (' + money(p.missingCosts.revenue, 'EUR') + ' от оборота се смятат като чиста печалба). Въведи я във „Финанси“.', 'bad');
+    }
+    if (p && p.costsSet === false && currentShop !== 'all') {
+      out += card('⚠️ Разходи на поръчка', 'не са въведени', 'опаковка, наложен платеж и връщане се смятат като 0 €. Въведи ги във „Финанси“.', 'warn');
+    }
+    if (c.stale) {
+      out += card('⚠️ Статусите не се обновяват', c.stale + ' пратки', 'стоят „Изпратена“ над ' + c.staleDays + ' дни. Доставени, върнати и реалният приход не са точни, докато не се отбележат.', 'warn');
+    }
+    return out;
+  }
   function profitCards(p) {
     if (!p) return '';
     var other = 'опаковки ' + money(p.packaging, 'EUR') + ' · НП ' + money(p.codFee, 'EUR') + ' · доставки ' + money(p.freeShipping, 'EUR') +
-      ' · връщания ' + money(p.returns, 'EUR') + ' · разходи ' + money(p.expenses, 'EUR');
+      ' · връщания ' + money(p.returns, 'EUR') + (p.expectedReturns ? ' · очаквани връщания ' + money(p.expectedReturns, 'EUR') : '') + ' · разходи ' + money(p.expenses, 'EUR');
+    var expected = p.expectedReturns && p.expectedReturnRate != null
+      ? card('Очаквани връщания', money(p.expectedReturns, 'EUR'), p.openOrders + ' поръчки още на път × ' + pct(p.expectedReturnRate) + (p.returnRateFrom === 'shop' ? ' (твоят процент за година)' : ' (обичаен процент, докато нямаш 20 приключили пратки)'), 'warn') : '';
     return card('Разход за продукти', money(p.productCost, 'EUR'), 'себестойност (въвежда се във „Финанси“)') +
-      card('Други разходи', money(p.otherCosts, 'EUR'), other) +
-      card('Печалба преди ДДС', money(p.profit, 'EUR'), 'от приход от артикули ' + money(p.itemsRevenue, 'EUR') + (p.adSpend ? ', след реклама ' + money(p.adSpend, 'EUR') : ''), p.profit < 0 ? 'bad' : 'ok') +
+      card('Други разходи', money(p.otherCosts, 'EUR'), other) + expected +
+      card('Печалба преди ДДС', money(p.profit, 'EUR'), (p.missingCosts && p.missingCosts.products ? 'НЕ Е ВЯРНА — липсват себестойности · ' : '') + 'от приход от артикули ' + money(p.itemsRevenue, 'EUR') + (p.adSpend ? ', след реклама ' + money(p.adSpend, 'EUR') : ''),
+        p.missingCosts && p.missingCosts.products ? 'warn' : p.profit < 0 ? 'bad' : 'ok') +
       card('Марж', pct(p.margin), 'печалба ÷ приход') + taxCards(p);
   }
   /** VAT, accounting profit and profit tax — orientation only (settings in Финанси → Данъци) */
   function taxCards(p) {
     if (p.netProfit == null) return '';
-    var tone = function (v) { return v < 0 ? 'bad' : 'ok'; };
+    var unreal = p.missingCosts && p.missingCosts.products; // without unit costs no profit figure is real: never shown green
+    var tone = function (v) { return v < 0 ? 'bad' : unreal ? 'warn' : 'ok'; };
     var out = '';
     if (p.vatRegistered || p.vatDue) {
       var refund = p.vatDue < 0; // more VAT in the costs than in the sales (e.g. a stock-up month)
@@ -1950,9 +1968,9 @@ tr.hl td{background:#fffbe6}
       }));
     }
     var c = d.cards, period = d.period.from === d.period.to ? d.period.from : d.period.from + ' – ' + d.period.to;
-    $('dCards').innerHTML = card('Оборот', moneyList(c.revenue), 'без отказаните') + card('Реален приход', moneyList(c.delivered), 'само доставените', 'ok') +
-      card('Поръчки', String(c.orders), period) + card('Средна поръчка (AOV)', moneyList(c.aov)) +
-      card('Върнати', pct(c.returnRate), 'от изпратените', 'warn') + abandonedCard(d.abandoned) + customersCards(d.customers) + card('⚠️ В НЕкоректен', String(c.nkFlagged), pct(c.nkFlaggedPct) + ' от поръчките', c.nkFlagged ? 'bad' : '') + adCards(d) + profitCards(d.profit);
+    $('dCards').innerHTML = dashWarnings(d) + card('Оборот', moneyList(c.revenue), 'без отказаните и върнатите') + card('Реален приход', moneyList(c.delivered), 'само доставените', 'ok') +
+      card('Поръчки', String(c.orders), period) + card('Средна поръчка (AOV)', moneyList(c.aov), 'без отказаните и върнатите') +
+      card('Върнати', c.finished ? pct(c.returnRate) : '—', c.finished ? c.finished + ' пратки с известен край' + (c.inTransit ? ' · ' + c.inTransit + ' още на път' : '') : 'няма приключили пратки за периода', 'warn') + abandonedCard(d.abandoned) + customersCards(d.customers) + card('⚠️ В НЕкоректен', String(c.nkFlagged), pct(c.nkFlaggedPct) + ' от поръчките', c.nkFlagged ? 'bad' : '') + adCards(d) + profitCards(d.profit);
     fillCalc(false);
     $('dSources').innerHTML = table(['Източник', 'Посещения', 'Поръчки', 'CR'], (d.sources || []).map(function (x) {
       return [esc(SOURCE_LABEL[x.source] || x.source), String(x.visits), String(x.orders), x.visits ? esc(pct(x.orders / x.visits)) : '—'];
@@ -2015,9 +2033,10 @@ tr.hl td{background:#fffbe6}
     if (metric === 'payback' || metric === 'buysPerYear') return (Math.round(v * 100) / 100).toString().replace('.', ',');
     return String(Math.round(v));
   }
+  var SHOW_PATH = false; // Пътят на растежа is hidden for now (the owner did not like it); true brings it back
   function loadPath() {
     var box = $('gpath');
-    if (currentShop === 'all' || DEMO) { box.hidden = true; return; }
+    if (!SHOW_PATH || currentShop === 'all' || DEMO) { box.hidden = true; return; }
     if (!gpOpen) { gp = null; renderPath(); return; }
     box.hidden = false; box.innerHTML = '<div class="ahead"><h2>🧭 Пътят на растежа</h2></div><div class="muted">Минавам по числата ти…</div>';
     fetch(withShop(API + 'advisor?path=1'), { credentials: 'same-origin' })
@@ -2104,7 +2123,8 @@ tr.hl td{background:#fffbe6}
   }
   function renderPath() {
     var box = $('gpath'), d = gp;
-    box.hidden = currentShop === 'all' || DEMO;
+    box.hidden = !SHOW_PATH || currentShop === 'all' || DEMO;
+    if (box.hidden) return;
     var h = '<div class="ahead"><h2>🧭 Пътят на растежа</h2><button type="button" class="aset" data-gp-toggle aria-expanded="' + gpOpen + '">' + (gpOpen ? 'Скрий' : 'Покажи') + '</button></div>';
     if (!gpOpen || !d) { box.innerHTML = h + '<div class="gsub" style="margin:0">Една операция за следващите 90 дни: какво точно те спира, първите три хода и едно число за проверка.</div>'; return; }
     h += '<div class="gsub">Минавам по числата ти и питам само каквото не мога да измеря. Работиш по една операция, докато проверката ѝ се изпълни.</div>';
