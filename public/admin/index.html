@@ -2108,6 +2108,7 @@ tr.hl td{background:#fffbe6}
     var h = '<div class="ahead"><h2>🧭 Пътят на растежа</h2><button type="button" class="aset" data-gp-toggle aria-expanded="' + gpOpen + '">' + (gpOpen ? 'Скрий' : 'Покажи') + '</button></div>';
     if (!gpOpen || !d) { box.innerHTML = h + '<div class="gsub" style="margin:0">Една операция за следващите 90 дни: какво точно те спира, първите три хода и едно число за проверка.</div>'; return; }
     h += '<div class="gsub">Минавам по числата ти и питам само каквото не мога да измеря. Работиш по една операция, докато проверката ѝ се изпълни.</div>';
+    if (d.young) h += '<div class="gnudge" style="margin:0 0 12px">Ordyx има още малко история за този магазин (' + d.young.orders + ' поръчки за ' + d.young.days + ' дни). Числата стават по-точни с всяка поръчка — дотогава разчитам повече на твоите отговори.</div>';
     h += gpNumbers(d);
     if (d.active) h += gpOpView(d.active, d.active);
     else if (d.ask) {

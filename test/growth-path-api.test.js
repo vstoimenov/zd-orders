@@ -27,6 +27,7 @@ async function order({ daysAgo = 1, phone = null, price = 35, name = 'Крем' 
   await updateStatus(q, r.id, 'delivered');
   await q(`update zd.orders set created_at = $2::timestamptz where id = $1::uuid`, [r.id, ago(daysAgo)]);
 }
+const toHands = async () => { for (const [key, value] of [['kind', 'consumable'], ['capacity', 'no'], ['standard', 'no']]) await answerPath(q, SHOP, { key, value }, DAY); };
 const call = async (method, url, body) => {
   const res = fakeRes();
   await router({ method, url, headers: { cookie: owner }, body: body === undefined ? undefined : JSON.stringify(body), socket: {} }, res);
@@ -51,7 +52,7 @@ test('answers, „Започвам“ with a measured goal, and the end starts t
   for (let i = 0; i < 25; i++) await order({ daysAgo: 1 + i });
   let p = await getPath(q, SHOP, DAY);
   assert.equal(p.ask.key, 'kind');
-  assert.equal(p.steps[0].by, 'data');
+  assert.equal(p.steps.length, 0, 'no „20 sales“ step: the walk starts from what the shop sells');
   p = await answerPath(q, SHOP, { key: 'kind', value: 'consumable' }, DAY);
   assert.equal(p.ask.key, 'capacity');
   await assert.rejects(answerPath(q, SHOP, { key: 'capacity', value: 'maybe' }, DAY), /Невалиден/);
@@ -73,17 +74,20 @@ test('the API: GET ?path=1 and the answer actions, for the chosen shop', async (
   for (let i = 0; i < 5; i++) await order({ daysAgo: 1 + i });
   let res = await call('GET', `/api/admin/advisor?shop=${SHOP}&path=1`);
   assert.equal(res.statusCode, 200);
-  assert.equal(json(res).op.key, 'first20');
+  assert.equal(json(res).ask.key, 'kind', 'a few orders: still a working shop, the walk asks');
+  assert.equal(json(res).young.orders, 5, 'little history in Ordyx is said, not treated as a new shop');
+  assert.equal((await call('POST', `/api/admin/advisor?shop=${SHOP}`, { action: 'path_start' })).statusCode, 400);
+  for (const [key, value] of [['kind', 'consumable'], ['capacity', 'no'], ['standard', 'no']]) res = await call('POST', `/api/admin/advisor?shop=${SHOP}`, { action: 'path_answer', key, value });
+  assert.equal(json(res).op.key, 'hands');
   res = await call('POST', `/api/admin/advisor?shop=${SHOP}`, { action: 'path_start' });
-  assert.equal(json(res).active.key, 'first20');
-  assert.equal(json(res).active.start, 5);
-  assert.equal(json(res).active.goal, 20);
+  assert.equal(json(res).active.key, 'hands');
   res = await call('POST', `/api/admin/advisor?shop=${SHOP}`, { action: 'path_answer', key: 'nope', value: 'x' });
   assert.equal(res.statusCode, 400);
 });
 
 test('step by step: each move ticked, the next one is the one to do now; a standing move gets a push, the check day asks „Стана ли?“', async () => {
   for (let i = 0; i < 5; i++) await order({ daysAgo: 1 + i });
+  await toHands();
   let p = await startPath(q, SHOP, DAY);
   assert.deepEqual(p.active.ticks, [false, false, false]);
   assert.equal(p.active.next, 0);
@@ -123,10 +127,11 @@ test('what the numbers say: the shop\'s own figures worst first, the operation\'
   let p = await getPath(q, SHOP, DAY);
   assert.ok(Array.isArray(p.numbers));
   for (const x of p.numbers) { assert.ok(x.label && x.now && x.tip, x.metric); assert.equal(typeof x.bad, 'boolean'); }
+  await toHands();
   p = await startPath(q, SHOP, DAY);
-  assert.equal(p.active.key, 'first20');
+  assert.equal(p.active.key, 'hands');
   assert.equal(p.active.trend.state, 'early');
-  assert.match(p.active.trend.text, /Продажби: 5 → 5/);
+  assert.match(p.active.trend.text, /Поръчки за 30 дни: 5 → 5/, 'the owner checks „hands“: followed by its orders');
   // a week later 3 more sales: the operation's number moved up
   for (let i = 0; i < 3; i++) await order({ daysAgo: 0 });
   const later = '2026-11-17';
