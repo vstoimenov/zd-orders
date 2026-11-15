@@ -181,6 +181,14 @@ main{padding:30px 32px 56px;max-width:1440px}
 .card .hint{font-size:12px;color:var(--muted);margin-top:6px}
 .val.ok{color:var(--ok)}.val.warn{color:var(--warn)}.val.bad,.neg{color:var(--bad)!important}
 .pfgrid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px}
+/* ---- onboarding videos ---- */
+.vidgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:10px}
+.vid{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#111;border:1px solid var(--line)}
+.vid button{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;cursor:pointer;background:#111 center/cover no-repeat}
+.vid button::after{content:'';position:absolute;left:50%;top:50%;width:64px;height:44px;margin:-22px 0 0 -32px;border-radius:12px;background:rgba(255,210,31,.95) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5v14l11-7z' fill='%23111'/%3E%3C/svg%3E") center/26px no-repeat;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.vid button:hover::after{background-color:#ffd21f;transform:scale(1.05)}
+.vid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vidcap{font-size:13px;font-weight:600;margin-top:6px}
 /* ---- support chat ---- */
 .sp-fab{position:fixed;right:20px;bottom:20px;z-index:60;display:flex;align-items:center;gap:8px;height:48px;padding:0 18px;border-radius:999px;border:0;background:var(--accent);color:#111;font-weight:800;box-shadow:0 8px 24px rgba(20,20,15,.18);cursor:pointer}
 .sp-fab:hover{background:var(--accent-strong)}
@@ -796,6 +804,7 @@ tr.hl td{background:#fffbe6}
     </section>
     <section id="startView" hidden>
       <div class="pagehead"><div><h1>Първи стъпки</h1><div class="sub">Свържете магазина си сами — стъпка по стъпка. Отметките светват сами, когато нещо заработи.</div></div></div>
+      <div class="panel" id="stVideos"><h2 style="margin:0">🎬 Гледай как се свързва</h2><div class="muted">Видео ръководства стъпка по стъпка. Пускат се оттук; YouTube се зарежда чак когато натиснеш.</div><div class="vidgrid" id="stVideoList"></div></div>
       <div class="panel" id="stProgressBox"><b id="stProgressText"></b><div class="progress"><div id="stProgress" style="width:0"></div></div><div class="muted" id="stShopLine"></div></div>
       <div class="steps" id="stSteps"></div>
       <div class="panel faq" style="margin-top:18px">
@@ -3774,6 +3783,22 @@ tr.hl td{background:#fffbe6}
   });
   var ovResizeT = null;
   window.addEventListener('resize', function () { if ($('profileView').hidden) return; clearTimeout(ovResizeT); ovResizeT = setTimeout(renderOvChart, 120); });
+  /* ---- видео ръководства (Първи стъпки) ---- */
+  var ONBOARDING_VIDEOS = [
+    { id: '2lDkfi9Y7Wc', title: 'Видео ръководство 1' },
+    { id: 'aN6btabhLA0', title: 'Видео ръководство 2' },
+  ];
+  $('stVideoList').innerHTML = ONBOARDING_VIDEOS.map(function (v, i) {
+    return '<div><div class="vid"><button type="button" data-vid="' + i + '" aria-label="Пусни: ' + esc(v.title) + '" style="background-image:url(https://i.ytimg.com/vi/' + v.id + '/hqdefault.jpg)"></button></div><div class="vidcap">' + esc(v.title) + '</div></div>';
+  }).join('');
+  $('stVideoList').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-vid]'); if (!b) return;
+    var v = ONBOARDING_VIDEOS[b.getAttribute('data-vid')];
+    var f = document.createElement('iframe');
+    f.src = 'https://www.youtube-nocookie.com/embed/' + v.id + '?autoplay=1&rel=0&modestbranding=1';
+    f.title = v.title; f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen'; f.allowFullscreen = true;
+    b.replaceWith(f);
+  });
   /* ---- чат за поддръжка ---- */
   var spMsgs = [], spPhone = '', spOn = false, spBusy = false, spMe = { name: '', email: '' };
   try { spMsgs = JSON.parse(sessionStorage.getItem('zdSupport') || '[]'); } catch (e) { spMsgs = []; }
@@ -3789,7 +3814,8 @@ tr.hl td{background:#fffbe6}
   function spMd(text) {
     var inline = function (t) {
       return esc(t).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
-        .replace(/\[([^\]]+)\]\((https:\/\/[^\s)]+|#[a-z]+)\)/g, function (m, label, url) { return '<a href="' + url + '"' + (url.charAt(0) === '#' ? '' : ' target="_blank" rel="noopener"') + '>' + label + '</a>'; });
+        .replace(/\[([^\]]+)\]\((https:\/\/[^\s)]+|#[a-z]+)\)/g, function (m, label, url) { return '<a href="' + url + '"' + (url.charAt(0) === '#' ? '' : ' target="_blank" rel="noopener"') + '>' + label + '</a>'; })
+        .replace(/(^|[\s(])(https:\/\/[^\s<)]+[^\s<).,;:!?])/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>'); // a bare link
     };
     var out = [], list = null;
     String(text).replace(/\r/g, '').split('\n').forEach(function (line) {
