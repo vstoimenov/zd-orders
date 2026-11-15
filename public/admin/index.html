@@ -709,7 +709,7 @@ tr.hl td{background:#fffbe6}
               <label hidden>Канал<select id="kChannel"><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option><option value="email">Имейл</option></select></label>
             </div>
             <h3 style="margin:0 0 4px">Кои клиенти</h3>
-            <div class="muted">Един човек = един телефон, от поръчките на този магазин.</div>
+            <div class="muted" id="kWhoNote">Един човек = един телефон, от поръчките на този магазин.</div>
             <div class="chk" id="kStatuses"></div>
             <div class="fgrid">
               <label>Поръчали от<input type="date" id="kFrom"></label>
@@ -732,8 +732,8 @@ tr.hl td{background:#fffbe6}
             <textarea id="kMsg" maxlength="1000" placeholder="Здравейте, {име}! …"></textarea>
             <div class="vars" id="kVars"></div>
             <label class="check" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="kConsent"> Имам съгласието на тези клиенти да получават такива съобщения</label>
-            <div class="muted">Маркетингови SMS/WhatsApp съобщения изискват съгласие на клиента (GDPR / ЗЕС). Добавяйте „За отказ отговорете STOP“ и вписвайте отказалите в списъка „Не изпращай“ по-долу.</div>
-            <div class="actions" style="margin-top:12px"><button type="button" class="ghost" id="kSave">Запази чернова</button><button type="button" class="primary" id="kReady">Готова кампания</button><button type="button" class="ghost" id="kTest" hidden>✉️ Тест до мен</button><button type="button" class="primary" id="kSend" hidden>Изпрати</button><button type="button" class="ghost" id="kExport" hidden>Експорт CSV</button><button type="button" class="ghost" id="kSend" disabled title="Свържете SMS доставчик / WhatsApp Business (скоро)">Изпрати (скоро)</button><button type="button" class="ghost" id="kClose">Затвори</button></div>
+            <div class="muted" id="kLegal">Маркетингови SMS/WhatsApp съобщения изискват съгласие на клиента (GDPR / ЗЕС). Добавяйте „За отказ отговорете STOP“ и вписвайте отказалите в списъка „Не изпращай“ по-долу.</div>
+            <div class="actions" style="margin-top:12px"><button type="button" class="ghost" id="kSave">Запази чернова</button><button type="button" class="primary" id="kReady">Готова кампания</button><button type="button" class="ghost" id="kTest" hidden>✉️ Тест до мен</button><button type="button" class="primary" id="kSend" hidden>Изпрати</button><button type="button" class="ghost" id="kExport" hidden>Експорт CSV</button><button type="button" class="ghost" id="kSendSoon" disabled title="Свържете SMS доставчик / WhatsApp Business (скоро)">Изпрати (скоро)</button><button type="button" class="ghost" id="kClose">Затвори</button></div>
             <div class="err" id="kErr"></div>
           </div>
           <div>
@@ -3155,7 +3155,7 @@ tr.hl td{background:#fffbe6}
   var VARS = ['{име}', '{пълно_име}', '{продукт}', '{магазин}', '{линк}'];
   var EMAIL_PRESET = { subject: '{име}, нещо ново за вас в {магазин}', body: 'Здравейте, {име}!\n\nБлагодарим, че поръчахте {продукт} от {магазин}. Подготвихме нещо, което смятаме, че ще ви хареса.\n\nПоздрави,\nекипът на {магазин}' };
   var kEditing = null, kTimer = null, kList = [], kTab = 'sms', kEmailOn = true, kSendTimer = null;
-  var KTAB_NAME = { sms: 'SMS', whatsapp: 'WhatsApp', email: 'имейл' };
+  var KTAB_NAME = { sms: 'SMS', whatsapp: 'WhatsApp', email: 'имейл' }, kLegalSms = '';
   function setKTab(tab) {
     kTab = tab === 'whatsapp' ? 'whatsapp' : tab === 'email' ? 'email' : 'sms';
     [].forEach.call(document.querySelectorAll('#kTabs button'), function (b) { b.classList.toggle('on', b.getAttribute('data-ktab') === kTab); });
@@ -3173,7 +3173,10 @@ tr.hl td{background:#fffbe6}
     $('kMsg').placeholder = em ? 'Здравейте, {име}! …  (празен ред = нов абзац)' : 'Здравейте, {име}! …';
     $('kEmailPreview').hidden = !em; $('kSample').hidden = em;
     $('kTest').hidden = !(em && kEditing); $('kSend').hidden = !(em && kEditing && !locked); $('kReady').hidden = em; $('kExport').hidden = em || !(kEditing && kEditing.consent);
-    $('kSave').disabled = locked; $('kSave').textContent = em ? 'Запази' : 'Запази чернова';
+    $('kSave').disabled = locked; $('kSave').textContent = em ? 'Запази' : 'Запази чернова'; $('kSendSoon').hidden = em;
+    $('kWhoNote').textContent = em ? 'Един човек = един имейл, от поръчките на този магазин. Отписалите се не получават.' : 'Един човек = един телефон, от поръчките на този магазин.';
+    if (!kLegalSms) kLegalSms = $('kLegal').innerHTML;
+    $('kLegal').innerHTML = em ? 'Маркетинговите имейли изискват съгласие на клиента (GDPR / ЗЕС). Линкът за отписване се слага сам във всеки имейл, а отписалите се, върнатите и оплакалите се не получават повече.' : kLegalSms;
     ['kName', 'kSubject', 'kBtnText', 'kBtnUrl', 'kImgUrl', 'kMsg', 'kConsent'].forEach(function (id) { $(id).disabled = locked; });
   }
   $('kPresets').innerHTML = PRESETS.map(function (p, i) { return '<button type="button" class="ghost" data-preset="' + i + '">' + esc(p[0]) + '</button>'; }).join('');
@@ -3277,7 +3280,7 @@ tr.hl td{background:#fffbe6}
     kList.forEach(function (c, i) {
       if (c.channel !== kTab) return;
       rows.push(['<b>' + esc(c.name) + '</b>' + (c.channel === 'email' && c.subject ? '<br><span class="muted">' + esc(c.subject) + '</span>' : ''), String(c.recipients), kStatusBadge(c), esc(when(c.updatedAt)),
-        '<button type="button" class="ghost" data-kopen="' + i + '">Отвори</button>' + (c.consent ? ' <button type="button" class="ghost" data-kexport="' + esc(c.id) + '">Експорт CSV</button>' : '') + ' <button type="button" class="del" data-kdel="' + i + '">Изтрий</button>']);
+        '<button type="button" class="ghost" data-kopen="' + i + '">Отвори</button>' + (c.consent && c.channel !== 'email' ? ' <button type="button" class="ghost" data-kexport="' + esc(c.id) + '">Експорт CSV</button>' : '') + ' <button type="button" class="del" data-kdel="' + i + '">Изтрий</button>']);
     });
     $('kTable').innerHTML = rows.length ? table([name + ' кампания', 'Получатели', 'Състояние', 'Обновена', ''], rows) : '<tr><td class="muted">Още няма ' + name + ' кампании. Натиснете „+ Нова ' + name + ' кампания“.</td></tr>';
   }
