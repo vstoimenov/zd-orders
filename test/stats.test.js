@@ -189,4 +189,7 @@ test('revenue and AOV leave out returned parcels', async () => {
   const s = await getStats(q, { from: today(), to: today() });
   assert.deepEqual(s.cards.revenue, [{ currency: 'EUR', amount: 30 }]);
   assert.deepEqual(s.cards.aov, [{ currency: 'EUR', amount: 30 }]);
+  await add({ total: 5 }, 'cancelled');
+  const t = await getStats(q, { from: today(), to: today() });
+  assert.deepEqual({ orders: t.cards.orders, placed: t.cards.placed, sold: t.cards.sold }, { orders: 3, placed: 2, sold: 1 });
 });

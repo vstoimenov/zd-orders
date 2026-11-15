@@ -1868,14 +1868,16 @@ tr.hl td{background:#fffbe6}
     var eur = (c.revenue || []).filter(function (m) { return m.currency === 'EUR'; })[0];
     var rev = eur ? eur.amount : 0, spend = a.spend;
     var ratio = function (v) { return spend ? v.toFixed(2).replace('.', ',') : '—'; };
+    // without unit costs the profit, and so break-even and POAS, say nothing yet
+    var unreal = p.missingCosts && p.missingCosts.products, note = unreal ? ' · ненадеждно, липсват себестойности' : '';
     var extra = a.unconverted && a.unconverted.length ? 'и ' + a.unconverted.map(function (u) { return money(u.amount, u.currency); }).join(', ') + ' без превръщане' : 'Meta реклами';
     return visitCards +
       card('Рекламен разход', money(spend, 'EUR'), extra, 'bad') +
-      card('ROAS', ratio(rev / spend), 'оборот ÷ рекламен разход', spend && p.profitBeforeAds > 0 ? (rev / spend >= rev / p.profitBeforeAds ? 'ok' : 'bad') : '') +
-      card('Break-even ROAS', p.profitBeforeAds > 0 ? (rev / p.profitBeforeAds).toFixed(2).replace('.', ',') : '—', 'над това рекламите се изплащат', 'warn') +
-      card('CPA', spend && c.orders ? money(spend / c.orders, 'EUR') : '—', 'разход за една поръчка') +
+      card('ROAS', ratio(rev / spend), 'оборот ÷ рекламен разход', spend && p.profitBeforeAds > 0 && !unreal ? (rev / spend >= rev / p.profitBeforeAds ? 'ok' : 'bad') : '') +
+      card('Break-even ROAS', p.profitBeforeAds > 0 ? (rev / p.profitBeforeAds).toFixed(2).replace('.', ',') : '—', 'над това рекламите се изплащат' + note, 'warn') +
+      card('CPA', spend && c.placed ? money(spend / c.placed, 'EUR') : '—', 'разход за една поръчка (без отказаните)') +
       card('CPM', spend && a.impressions ? money(spend / a.impressions * 1000, 'EUR') : '—', 'цена за 1000 показвания') +
-      card('POAS', ratio((p.profitBeforeAds || 0) / spend), 'печалба преди реклама ÷ рекламен разход');
+      card('POAS', ratio((p.profitBeforeAds || 0) / spend), 'печалба преди реклама ÷ рекламен разход' + note, unreal ? 'warn' : '');
   }
   /* ---- калкулатор break-even ROAS (формулите са в roas.js) ---- */
   var beTouched = false, beData = null;
@@ -1895,7 +1897,7 @@ tr.hl td{background:#fffbe6}
   function fillCalc(force) {
     if (!beData || (beTouched && !force)) { renderCalc(); return; }
     var d = beData, p = d.profit || {}, c = d.cards;
-    var count = (d.byStatus || []).reduce(function (n, x) { return n + (x.status === 'cancelled' ? 0 : x.orders); }, 0);
+    var count = c.sold || 0; // the product cost is of the sold orders only
     var aov = (c.aov || []).filter(function (a) { return a.currency === 'EUR'; })[0];
     var put = function (id, val) { $(id).value = val == null || !Number.isFinite(val) ? '' : Math.round(val * 100) / 100; };
     put('beAov', aov ? aov.amount : null);

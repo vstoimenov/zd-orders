@@ -85,6 +85,9 @@ test('summary for the dashboard: customers, repeat share and average lifetime va
   await order({ phone: '+359888000001', total: 10 });
   await order({ phone: '+359888000002', total: 20, daysAgo: 1 }); await order({ phone: '+359888000002', total: 30 });
   assert.deepEqual(await customerSummary(q, { shopId: SHOP }), { customers: 2, repeat: 1, repeatShare: 0.5, avgValue: 30 });
+  // a second order that was refused does not make a repeat buyer
+  await order({ phone: '+359888000001', total: 10, status: 'cancelled' });
+  assert.equal((await customerSummary(q, { shopId: SHOP })).repeat, 1);
 });
 
 test('admin route: owner lists and exports; a client only its shops; login needed', async () => {
