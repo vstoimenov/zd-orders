@@ -181,6 +181,27 @@ main{padding:30px 32px 56px;max-width:1440px}
 .card .hint{font-size:12px;color:var(--muted);margin-top:6px}
 .val.ok{color:var(--ok)}.val.warn{color:var(--warn)}.val.bad,.neg{color:var(--bad)!important}
 .pfgrid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px}
+/* ---- support chat ---- */
+.sp-fab{position:fixed;right:20px;bottom:20px;z-index:60;display:flex;align-items:center;gap:8px;height:48px;padding:0 18px;border-radius:999px;border:0;background:var(--accent);color:#111;font-weight:800;box-shadow:0 8px 24px rgba(20,20,15,.18);cursor:pointer}
+.sp-fab:hover{background:var(--accent-strong)}
+.sp-box{position:fixed;right:20px;bottom:80px;z-index:61;width:min(380px,calc(100vw - 32px));height:min(560px,calc(100vh - 120px));display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 16px 48px rgba(20,20,15,.18);overflow:hidden}
+.sp-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.sp-head b{font-size:15px}.sp-head .muted{display:block;font-size:12px}
+.sp-head button{border:0;background:transparent;font-size:20px;line-height:1;padding:4px 8px;cursor:pointer;color:var(--muted)}
+.sp-log{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:#fafaf7}
+.sp-msg{max-width:88%;padding:9px 12px;border-radius:14px;font-size:14px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word}
+.sp-msg.bot{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
+.sp-msg.me{align-self:flex-end;background:var(--accent-soft);border:1px solid #f3e7a6;border-bottom-right-radius:4px}
+.sp-msg.typing{color:var(--muted)}
+.sp-chips{display:flex;flex-wrap:wrap;gap:6px}.sp-chips button{font-size:12.5px;padding:6px 10px;border-radius:999px;background:#fff;cursor:pointer}
+.sp-human{display:flex;align-items:center;justify-content:center;gap:6px;margin:0;padding:9px 12px;border-radius:12px;background:#e8f6ec;border:1px solid #bfe5cc;color:var(--ok);font-weight:700;text-decoration:none;font-size:14px}
+.sp-human:hover{background:#dcf1e3}
+.sp-form{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);background:#fff}
+.sp-form textarea{flex:1;resize:none;height:42px;min-height:42px;max-height:120px;margin:0;font:inherit;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+.sp-form button{flex:0 0 auto;border-radius:12px;align-self:flex-end;height:42px}
+.sp-foot{padding:6px 12px 10px;font-size:11.5px;color:var(--muted);background:#fff;text-align:center}
+.sp-foot a{color:var(--muted)}
+@media (max-width:600px){.sp-box{right:8px;left:8px;width:auto;bottom:76px;height:calc(100vh - 100px)}.sp-fab{right:12px;bottom:12px}}
 /* ---- Профил: the whole picture ---- */
 .ovrange{display:inline-grid;grid-template-columns:repeat(4,1fr);position:relative;padding:3px;border:1px solid var(--line);border-radius:11px;background:#efeee9;box-shadow:inset 0 1px 2px rgba(20,20,15,.06)}
 .ovrange i{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/4);border-radius:8px;background:#fff;box-shadow:0 1px 2px rgba(20,20,15,.08),0 0 0 1px var(--line);transition:transform .22s cubic-bezier(.23,1,.32,1)}
@@ -812,6 +833,12 @@ tr.hl td{background:#fffbe6}
         <section class="panel" aria-labelledby="ovShopsH"><div class="ovhead"><h2 id="ovShopsH">По магазини</h2><span class="muted" id="ovShopsTotal"></span></div><ul class="ovshops" id="ovShops"></ul></section>
       </div>
       <section class="panel ovrecent" style="margin-bottom:16px"><div class="ovhead"><h2>Последни поръчки</h2><span class="muted">от всички магазини</span></div><table id="ovRecent" style="margin-top:10px"></table></section>
+      <section class="panel" id="spPanel" hidden>
+        <h2 style="margin-top:0">💬 Чат за поддръжка</h2>
+        <div class="muted" style="margin-bottom:10px">Асистентът отговаря на клиентите в панела. Когато не може да помогне, им показва бутон „Пиши на човек“, който отваря твоя WhatsApp с готов текст: въпроса, името и имейла на клиента.</div>
+        <div class="fgrid"><label>Твоят WhatsApp<input type="tel" id="spPhone" placeholder="0888 123 456"></label></div>
+        <div class="actions"><button type="button" class="primary" id="spPhoneSave">Запази</button><span class="muted" id="spPhoneInfo"></span></div>
+      </section>
       <section class="panel" id="trPanel" hidden>
         <h2 style="margin-top:0">📈 Проследяване на Ordyx</h2>
         <div class="muted" style="margin-bottom:12px">За рекламата на самия Ordyx (ordyx.eu и регистрацията). Pixel и GA4 тръгват само след „Приемам“ в банера за бисквитки. Регистрацията и плащането на абонамент отиват и от сървъра (Conversions API, GA4 Measurement Protocol) — по-точно от браузъра и без двойно броене.</div>
@@ -905,6 +932,13 @@ tr.hl td{background:#fffbe6}
       <div class="pager"><button id="prev" type="button">‹ Назад</button><span id="pageInfo" class="muted"></span><button id="next" type="button">Напред ›</button></div>
     </section>
     </main>
+    <button type="button" class="sp-fab" id="spFab" aria-expanded="false" aria-controls="spBox" hidden>💬 Помощ</button>
+    <section class="sp-box" id="spBox" role="dialog" aria-label="Помощ" hidden>
+      <div class="sp-head"><div><b>Помощ за Ordyx</b><span class="muted">Отговаря асистент · за всичко друго — колега</span></div><button type="button" id="spClose" aria-label="Затвори">×</button></div>
+      <div class="sp-log" id="spLog" aria-live="polite"></div>
+      <form class="sp-form" id="spForm"><textarea id="spIn" rows="1" maxlength="2000" placeholder="Напиши въпрос…" aria-label="Въпрос"></textarea><button type="submit" class="primary" id="spSend">Прати</button></form>
+      <div class="sp-foot"><a href="#" id="spHumanLink">Пиши на човек в WhatsApp</a></div>
+    </section>
   </div>
   <div class="modal" id="shopModal" hidden>
     <div class="dialog small" role="dialog" aria-modal="true" aria-labelledby="shopTitle">
@@ -3497,6 +3531,7 @@ tr.hl td{background:#fffbe6}
       $('whoami').hidden = role !== 'client';
       if (role === 'client') $('whoami').innerHTML = '<b>' + esc(d.name || 'Клиент') + '</b>' + esc(d.email) + freeLine(d.freeUntil) + subLine(d.subscription);
       planState = (d && d.planState) || null; renderPlanBar();
+      if (role) initSupport(d);
     }).catch(function () {});
   }
   function shopName(id) { var s = shopById(id); return s ? s.display : '—'; }
@@ -3552,7 +3587,10 @@ tr.hl td{background:#fffbe6}
   function dayBg(d) { return d ? d.split('-').reverse().join('.') : ''; }
   function loadProfile() {
     loadOverview();
-    $('trPanel').hidden = role !== 'owner';
+    $('trPanel').hidden = role !== 'owner'; $('spPanel').hidden = role !== 'owner';
+    if (role === 'owner') fetch(API + 'support', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : {}; }).then(function (d) {
+      $('spPhone').value = d.whatsapp || ''; $('spPhoneInfo').textContent = d.on ? '' : 'Асистентът чака ключ за Claude (ANTHROPIC_API_KEY във Vercel). Дотогава бутонът води направо към WhatsApp.';
+    }).catch(function () {});
     if (role === 'owner') loadTracking();
     $('pfClientOnly').hidden = role !== 'client'; // the owner has no plan to pay
     if (role !== 'client') return;
@@ -3732,6 +3770,63 @@ tr.hl td{background:#fffbe6}
   });
   var ovResizeT = null;
   window.addEventListener('resize', function () { if ($('profileView').hidden) return; clearTimeout(ovResizeT); ovResizeT = setTimeout(renderOvChart, 120); });
+  /* ---- чат за поддръжка ---- */
+  var spMsgs = [], spPhone = '', spOn = false, spBusy = false, spMe = { name: '', email: '' };
+  try { spMsgs = JSON.parse(sessionStorage.getItem('zdSupport') || '[]'); } catch (e) { spMsgs = []; }
+  var SP_STARTERS = ['Не виждам офисите в чекаута', 'Поръчките не идват', 'Как да свържа Еконт?', 'Как да свържа Meta рекламите?'];
+  function spSave() { try { sessionStorage.setItem('zdSupport', JSON.stringify(spMsgs.slice(-30))); } catch (e) { /* private mode */ } }
+  function spHumanUrl() {
+    var last = spMsgs.filter(function (m) { return m.role === 'user'; }).slice(-1)[0];
+    var sh = currentShop && currentShop !== 'all' && shopById(currentShop);
+    var text = 'Здравей! Пиша от Ordyx.' + (spMe.name ? '\nИме: ' + spMe.name : '') + (spMe.email ? '\nИмейл: ' + spMe.email : '') + (sh ? '\nМагазин: ' + (sh.display || sh.domain) : '') + (last ? '\nВъпрос: ' + last.content.slice(0, 600) : '');
+    return spPhone ? 'https://wa.me/' + spPhone.replace(/^\+/, '') + '?text=' + encodeURIComponent(text) : 'mailto:stoimenov@profitbrand.online?subject=' + encodeURIComponent('Ordyx — помощ') + '&body=' + encodeURIComponent(text);
+  }
+  function spRender() {
+    var h = '<div class="sp-msg bot">Здравей' + (spMe.name ? ', ' + esc(spMe.name.split(' ')[0]) : '') + '! Питай ме за настройката на Ordyx: чекаута, куриерите, поръчките, рекламите, плановете.' + (spOn ? '' : '\n\nАсистентът още не е включен — пиши директно на колегата.') + '</div>';
+    if (!spMsgs.length && spOn) h += '<div class="sp-chips">' + SP_STARTERS.map(function (t) { return '<button type="button" class="ghost" data-sp="' + esc(t) + '">' + esc(t) + '</button>'; }).join('') + '</div>';
+    spMsgs.forEach(function (m) {
+      h += '<div class="sp-msg ' + (m.role === 'user' ? 'me' : 'bot') + '">' + esc(m.content) + '</div>';
+      if (m.handoff) h += '<a class="sp-human" target="_blank" rel="noopener" href="' + esc(spHumanUrl()) + '">💬 Пиши на човек в WhatsApp</a>';
+    });
+    if (spBusy) h += '<div class="sp-msg bot typing">Пише…</div>';
+    if (!spOn) h += '<a class="sp-human" target="_blank" rel="noopener" href="' + esc(spHumanUrl()) + '">💬 Пиши на човек в WhatsApp</a>';
+    $('spLog').innerHTML = h;
+    $('spLog').scrollTop = $('spLog').scrollHeight;
+    $('spHumanLink').href = spHumanUrl(); $('spHumanLink').target = '_blank'; $('spHumanLink').rel = 'noopener';
+    $('spIn').disabled = !spOn || spBusy; $('spSend').disabled = !spOn || spBusy;
+  }
+  function spAsk(text) {
+    text = String(text || '').trim(); if (!text || spBusy) return;
+    spMsgs.push({ role: 'user', content: text }); spBusy = true; spSave(); spRender();
+    fetch(API + 'support', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: spMsgs.map(function (m) { return { role: m.role, content: m.content }; }) }) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('Грешка ' + r.status)); return d; }); })
+      .then(function (d) { spMsgs.push({ role: 'assistant', content: d.answer, handoff: d.handoff }); })
+      .catch(function (e) { spMsgs.push({ role: 'assistant', content: e.message, handoff: true }); })
+      .then(function () { spBusy = false; spSave(); spRender(); $('spIn').focus(); });
+  }
+  function spOpen(open) {
+    $('spBox').hidden = !open; $('spFab').setAttribute('aria-expanded', String(open));
+    if (open) { spRender(); setTimeout(function () { $('spIn').focus(); }, 50); }
+  }
+  function initSupport(me) {
+    if (DEMO) return;
+    spMe = { name: (me && me.name) || '', email: (me && me.email) || '' };
+    $('spFab').hidden = false;
+    fetch(API + 'support', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : {}; }).then(function (d) { spOn = Boolean(d.on); spPhone = d.whatsapp || ''; if (!$('spBox').hidden) spRender(); }).catch(function () {});
+  }
+  $('spFab').addEventListener('click', function () { spOpen($('spBox').hidden); });
+  $('spClose').addEventListener('click', function () { spOpen(false); $('spFab').focus(); });
+  $('spBox').addEventListener('keydown', function (e) { if (e.key === 'Escape') { spOpen(false); $('spFab').focus(); } });
+  $('spLog').addEventListener('click', function (e) { var t = e.target.getAttribute && e.target.getAttribute('data-sp'); if (t) spAsk(t); });
+  $('spForm').addEventListener('submit', function (e) { e.preventDefault(); var t = $('spIn').value; $('spIn').value = ''; spAsk(t); });
+  $('spIn').addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('spForm').requestSubmit ? $('spForm').requestSubmit() : $('spSend').click(); } });
+  $('spPhoneSave').addEventListener('click', function () {
+    busy($('spPhoneSave'), fetch(API + 'support', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'settings', whatsapp: $('spPhone').value }) })
+      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
+      .then(function (d) { $('spPhone').value = d.whatsapp; spPhone = d.whatsapp; $('spPhoneInfo').innerHTML = '<span style="color:var(--ok)">Запазено ✓</span>'; })
+      .catch(function (e) { $('spPhoneInfo').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; });
+  });
   /* ---- Профил (собственик): проследяване на ordyx.eu ---- */
   function trFill(t) {
     $('trPixel').value = t.pixelId || ''; $('trTest').value = t.testCode || ''; $('trGa4').value = t.ga4Id || ''; $('trGsc').value = t.gscFile ? t.gscFile + '.html' : '';
