@@ -181,6 +181,39 @@ main{padding:30px 32px 56px;max-width:1440px}
 .card .hint{font-size:12px;color:var(--muted);margin-top:6px}
 .val.ok{color:var(--ok)}.val.warn{color:var(--warn)}.val.bad,.neg{color:var(--bad)!important}
 .pfgrid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px}
+/* ---- Профил: the whole picture ---- */
+.ovrange{display:inline-grid;grid-template-columns:repeat(4,1fr);position:relative;padding:3px;border:1px solid var(--line);border-radius:11px;background:#efeee9;box-shadow:inset 0 1px 2px rgba(20,20,15,.06)}
+.ovrange i{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/4);border-radius:8px;background:#fff;box-shadow:0 1px 2px rgba(20,20,15,.08),0 0 0 1px var(--line);transition:transform .22s cubic-bezier(.23,1,.32,1)}
+.ovrange button{position:relative;z-index:1;height:28px;min-width:52px;padding:0 10px;border:0;background:transparent;border-radius:8px;font:600 12px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);cursor:pointer}
+.ovrange button[aria-checked="true"]{color:var(--ink)}.ovrange button:hover{color:var(--ink)}
+.ovkpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:16px}
+@media (max-width:860px){.ovkpis{grid-template-columns:1fr}}
+.ovkpi{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;box-shadow:0 1px 2px rgba(20,20,15,.03);display:flex;flex-direction:column;min-width:0}
+.ovkpi .l{font-size:12.5px;font-weight:600;color:var(--muted)}
+.ovkpi .row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:12px}
+.ovkpi .v{font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ovkpi .v.warn{color:var(--warn)}
+.ovkpi .d{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;color:var(--muted)}
+.ovpill{display:inline-flex;align-items:center;gap:2px;padding:2px 7px;border-radius:6px;font:600 11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;background:#f1f0ec;color:var(--muted)}
+.ovpill.up{background:#e8f6ec;color:var(--ok)}.ovpill.down{background:#fdecee;color:var(--bad)}
+.ovkpi svg.spark{flex:0 0 auto;overflow:visible}
+.ovkpi .h{font-size:12px;color:var(--muted);margin-top:8px}
+.ovgrid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;margin-bottom:16px}
+@media (max-width:1000px){.ovgrid{grid-template-columns:1fr}}
+.ovhead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ovhead h2{margin:0;font-size:14px}.ovhead .big{font-size:19px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-right:6px}
+.ovlegend{display:flex;gap:14px;margin:0;padding:0;list-style:none;font-size:11.5px;color:var(--muted)}.ovlegend li{display:flex;align-items:center;gap:6px}
+.ovlegend .ln{display:inline-block;width:14px;height:2px;border-radius:2px;background:var(--accent-strong)}.ovlegend .ln.prev{background:repeating-linear-gradient(90deg,#b5b3aa 0 3px,transparent 3px 6px)}
+.ovplot{position:relative;height:236px;margin:10px -6px 0;cursor:crosshair;outline:none;border-radius:12px}.ovplot:focus-visible{box-shadow:0 0 0 2px var(--accent)}
+.ovplot svg{display:block;overflow:visible}.ovplot text{font:11px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#8e8c84}
+.ovtip{position:absolute;top:8px;z-index:3;width:184px;pointer-events:none;background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:0 8px 24px rgba(20,20,15,.1);backdrop-filter:blur(8px);font-size:12px}
+.ovtip .t{font-weight:600;color:var(--muted);font-size:11.5px}.ovtip dl{margin:6px 0 0;display:grid;grid-template-columns:1fr auto;gap:4px 10px}.ovtip dt{color:#55544e;display:flex;align-items:center;gap:6px}.ovtip dd{margin:0;font-variant-numeric:tabular-nums;text-align:right}
+.ovtip .delta{margin-top:6px;padding-top:6px;border-top:1px solid var(--line);font:600 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace}
+.ovshops{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:14px}
+.ovshops .r{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;align-items:baseline}.ovshops .r b{font-weight:600}.ovshops .r span{font-variant-numeric:tabular-nums;white-space:nowrap}
+.ovshops .bar{height:6px;border-radius:999px;background:#f1f0ec;overflow:hidden;margin-top:6px}.ovshops .bar i{display:block;height:100%;border-radius:999px;background:var(--accent-strong)}
+.ovrecent td .sh{display:inline-block;padding:1px 8px;border-radius:999px;background:#f1f0ec;font-size:11px;font-weight:600;color:var(--muted);margin-left:6px}
+.ovempty{padding:28px 0;text-align:center;color:var(--muted)}
 .pfgrid .panel{margin-bottom:20px}
 @media (max-width:900px){.pfgrid{grid-template-columns:1fr}}
 .pfplan .pf-name{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -660,10 +693,12 @@ tr.hl td{background:#fffbe6}
       </div>
     </section>
     <section id="campaignsView" hidden>
-      <div class="pagehead"><div><h1>Кампании</h1><div class="sub">SMS и WhatsApp съобщения до клиентите ви от поръчките</div></div><button type="button" class="primary" id="kNew">+ Нова SMS кампания</button></div>
-      <div class="kseg" id="kTabs"><button type="button" class="on" data-ktab="sms">📱 SMS кампании</button><button type="button" data-ktab="whatsapp">💬 WhatsApp кампании</button></div>
+      <div class="pagehead"><div><h1>Кампании</h1><div class="sub">SMS, WhatsApp и имейл съобщения до клиентите ви от поръчките</div></div><button type="button" class="primary" id="kNew">+ Нова SMS кампания</button></div>
+      <div class="kseg" id="kTabs"><button type="button" class="on" data-ktab="sms">📱 SMS кампании</button><button type="button" data-ktab="whatsapp">💬 WhatsApp кампании</button><button type="button" data-ktab="email">✉️ Имейл кампании</button></div>
       <div class="tip" id="kTipSms">📱 <b>SMS</b> стига до всеки телефон. Цената е на SMS: на кирилица едно SMS е до <b>70 знака</b> (на латиница — 160), по-дългите съобщения стават 2–3 SMS. Изпращането директно оттук идва със свързването на SMS доставчик (Интеграции → Съобщения). Дотогава: готова кампания → <b>„Експорт CSV“</b> → качете файла във вашата SMS услуга (там са телефон, име и попълненото съобщение за всеки клиент).</div>
       <div class="tip" id="kTipWa" hidden>💬 <b>WhatsApp</b>: по-евтин и с картинки/бутони, но само за клиенти с WhatsApp. През WhatsApp Business (Meta) се плаща на съобщение: <b>рекламни ~0,09 €</b>, <b>за поръчки ~0,02 €</b>, отговори до 24 ч след писмо от клиента — безплатно (ориентировъчни цени за България). Рекламните съобщения минават през одобрен от Meta шаблон. Автоматичното изпращане идва със свързването на WhatsApp Business; дотогава — „Експорт CSV“, а за единични съобщения — бутонът <b>„💬 Потвърди“</b> при поръчката (безплатно, от вашия телефон).</div>
+      <div class="tip" id="kTipEmail" hidden>✉️ <b>Имейл</b>: Ordyx го изпраща сам — от името на магазина, с отговор към вашия имейл и линк за отписване във всеки имейл. Получатели са клиентите с имейл от поръчките. <b>Безплатно</b> за вас. Първо пратете тест на себе си.</div>
+      <div class="tip" id="kEmailOff" hidden>⚠️ Изпращането на имейли още не е включено в платформата (липсва ключ за доставчика). Кампаниите се пазят и ще тръгнат, щом бъде включено.</div>
       <div class="panel" id="kListPanel"><table id="kTable"></table></div>
       <div class="panel" id="kEditor" hidden>
         <h2 style="margin-top:0" id="kTitle">Нова кампания</h2>
@@ -671,10 +706,10 @@ tr.hl td{background:#fffbe6}
           <div>
             <div class="fgrid">
               <label>Име на кампанията<input type="text" id="kName" maxlength="80" placeholder="напр. Благодарност за поръчката"></label>
-              <label hidden>Канал<select id="kChannel"><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option></select></label>
+              <label hidden>Канал<select id="kChannel"><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option><option value="email">Имейл</option></select></label>
             </div>
             <h3 style="margin:0 0 4px">Кои клиенти</h3>
-            <div class="muted">Един човек = един телефон, от поръчките на този магазин.</div>
+            <div class="muted" id="kWhoNote">Един човек = един телефон, от поръчките на този магазин.</div>
             <div class="chk" id="kStatuses"></div>
             <div class="fgrid">
               <label>Поръчали от<input type="date" id="kFrom"></label>
@@ -683,19 +718,30 @@ tr.hl td{background:#fffbe6}
               <label>Поне брой поръчки<input type="number" id="kMin" min="1" max="100" value="1"></label>
               <label class="check"><input type="checkbox" id="kNoFlag" checked> Без клиенти със сигнали в НЕкоректен</label>
             </div>
-            <h3 style="margin:0 0 4px">Съобщение</h3>
+            <div id="kEmailFields" hidden>
+              <h3 style="margin:0 0 4px">Имейл</h3>
+              <div class="fgrid">
+                <label style="grid-column:1/-1">Тема<input type="text" id="kSubject" maxlength="150" placeholder="напр. {име}, нещо ново за вас в {магазин}"></label>
+                <label>Бутон (текст, по избор)<input type="text" id="kBtnText" maxlength="60" placeholder="Виж продуктите"></label>
+                <label>Линк на бутона<input type="url" id="kBtnUrl" maxlength="500" placeholder="https://…"></label>
+                <label style="grid-column:1/-1">Картинка (линк, по избор)<input type="url" id="kImgUrl" maxlength="500" placeholder="https://…/snimka.jpg"></label>
+              </div>
+            </div>
+            <h3 style="margin:0 0 4px" id="kMsgH">Съобщение</h3>
             <div class="vars" id="kPresets"></div>
             <textarea id="kMsg" maxlength="1000" placeholder="Здравейте, {име}! …"></textarea>
             <div class="vars" id="kVars"></div>
             <label class="check" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" id="kConsent"> Имам съгласието на тези клиенти да получават такива съобщения</label>
-            <div class="muted">Маркетингови SMS/WhatsApp съобщения изискват съгласие на клиента (GDPR / ЗЕС). Добавяйте „За отказ отговорете STOP“ и вписвайте отказалите в списъка „Не изпращай“ по-долу.</div>
-            <div class="actions" style="margin-top:12px"><button type="button" class="ghost" id="kSave">Запази чернова</button><button type="button" class="primary" id="kReady">Готова кампания</button><button type="button" class="ghost" id="kExport" hidden>Експорт CSV</button><button type="button" class="ghost" id="kSend" disabled title="Свържете SMS доставчик / WhatsApp Business (скоро)">Изпрати (скоро)</button><button type="button" class="ghost" id="kClose">Затвори</button></div>
+            <div class="muted" id="kLegal">Маркетингови SMS/WhatsApp съобщения изискват съгласие на клиента (GDPR / ЗЕС). Добавяйте „За отказ отговорете STOP“ и вписвайте отказалите в списъка „Не изпращай“ по-долу.</div>
+            <div class="actions" style="margin-top:12px"><button type="button" class="ghost" id="kSave">Запази чернова</button><button type="button" class="primary" id="kReady">Готова кампания</button><button type="button" class="ghost" id="kTest" hidden>✉️ Тест до мен</button><button type="button" class="primary" id="kSend" hidden>Изпрати</button><button type="button" class="ghost" id="kExport" hidden>Експорт CSV</button><button type="button" class="ghost" id="kSendSoon" disabled title="Свържете SMS доставчик / WhatsApp Business (скоро)">Изпрати (скоро)</button><button type="button" class="ghost" id="kClose">Затвори</button></div>
             <div class="err" id="kErr"></div>
           </div>
           <div>
             <h3 style="margin:0 0 4px">Преглед</h3>
             <div class="kpis" id="kKpis"></div>
+            <div id="kSendBox" hidden></div>
             <div id="kSample"></div>
+            <div id="kEmailPreview" hidden><iframe id="kEmailFrame" title="Преглед на имейла" sandbox="" style="width:100%;height:520px;border:1px solid var(--line);border-radius:12px;background:#f4f4f1"></iframe></div>
           </div>
         </div>
       </div>
@@ -713,6 +759,11 @@ tr.hl td{background:#fffbe6}
           <textarea id="kOptText" style="min-height:80px" placeholder="0888 123 456"></textarea>
           <div class="actions"><button type="button" class="ghost" id="kOptAdd">Добави</button><span class="muted" id="kOptInfo"></span></div>
           <div id="kOptList" class="muted" style="margin-top:8px;max-height:200px;overflow:auto"></div>
+          <div id="kEmailOptBox" hidden><h3 style="margin:16px 0 4px">Отписани имейли</h3>
+          <div class="muted" style="margin-bottom:8px">Отписалите се сами, върнатите (bounce) и оплакалите се влизат тук автоматично. Може да добавите и ръчно, по един на ред.</div>
+          <textarea id="kEOptText" style="min-height:60px" placeholder="ime@domain.bg"></textarea>
+          <div class="actions"><button type="button" class="ghost" id="kEOptAdd">Добави</button><span class="muted" id="kEOptInfo"></span></div>
+          <div id="kEOptList" class="muted" style="margin-top:8px;max-height:200px;overflow:auto"></div></div>
           <div id="kPriceBox"><h3 style="margin:16px 0 4px">Цена на SMS</h3>
           <div class="actions"><input type="text" inputmode="decimal" id="kPrice" style="width:110px"> €/SMS <button type="button" class="ghost" id="kPriceSave">Запази</button></div></div>
         </div>
@@ -751,7 +802,38 @@ tr.hl td{background:#fffbe6}
       </div>
     </section>
     <section id="profileView" hidden>
-      <div class="pagehead"><div><h1>Профил</h1><div class="sub">Вашият план, плащания и фактури</div></div></div>
+      <div class="pagehead"><div><h1>Профил</h1><div class="sub" id="ovSub">Общата картина на всички магазини</div></div>
+        <div class="ovrange" id="ovRange" role="radiogroup" aria-label="Период"><i></i><button type="button" role="radio" data-ov="7d" aria-label="Последните 7 дни">7Д</button><button type="button" role="radio" data-ov="30d" aria-label="Последните 30 дни">30Д</button><button type="button" role="radio" data-ov="90d" aria-label="Последните 90 дни">90Д</button><button type="button" role="radio" data-ov="12m" aria-label="Последните 12 месеца">12М</button></div></div>
+      <div class="ovkpis" id="ovKpis" aria-label="Най-важните числа"></div>
+      <div class="ovgrid">
+        <section class="panel" aria-labelledby="ovChartH"><div class="ovhead"><div><h2 id="ovChartH">Оборот</h2><div class="muted" id="ovTotal" style="margin-top:4px"></div></div>
+          <ul class="ovlegend"><li><span class="ln"></span>този период</li><li><span class="ln prev"></span>предния период</li></ul></div>
+          <div class="ovplot" id="ovPlot" tabindex="0" role="img" aria-label="Оборот по дни, този период срещу предния"></div></section>
+        <section class="panel" aria-labelledby="ovShopsH"><div class="ovhead"><h2 id="ovShopsH">По магазини</h2><span class="muted" id="ovShopsTotal"></span></div><ul class="ovshops" id="ovShops"></ul></section>
+      </div>
+      <section class="panel ovrecent" style="margin-bottom:16px"><div class="ovhead"><h2>Последни поръчки</h2><span class="muted">от всички магазини</span></div><table id="ovRecent" style="margin-top:10px"></table></section>
+      <section class="panel" id="trPanel" hidden>
+        <h2 style="margin-top:0">📈 Проследяване на Ordyx</h2>
+        <div class="muted" style="margin-bottom:12px">За рекламата на самия Ordyx (ordyx.eu и регистрацията). Pixel и GA4 тръгват само след „Приемам“ в банера за бисквитки. Регистрацията и плащането на абонамент отиват и от сървъра (Conversions API, GA4 Measurement Protocol) — по-точно от браузъра и без двойно броене.</div>
+        <div class="fgrid">
+          <label>Meta Pixel ID<input type="text" id="trPixel" inputmode="numeric" placeholder="1150537077523379"></label>
+          <label>Conversions API токен<input type="password" id="trCapi" autocomplete="off" placeholder="EAA…"><span class="muted" id="trCapiState"></span></label>
+          <label>Тестов код (Events Manager, по избор)<input type="text" id="trTest" placeholder="TEST12345"></label>
+          <label>GA4 Measurement ID<input type="text" id="trGa4" placeholder="G-XXXXXXXXXX"></label>
+          <label>GA4 API secret (Measurement Protocol)<input type="password" id="trGa4Secret" autocomplete="off" placeholder="…"><span class="muted" id="trGa4State"></span></label>
+          <label>Search Console файл<input type="text" id="trGsc" placeholder="google1234abcd5678.html"></label>
+        </div>
+        <details class="muted" style="margin:6px 0 10px"><summary>Откъде се взимат</summary>
+          <ul style="margin:6px 0 0;padding-left:18px;line-height:1.6">
+            <li><b>Pixel ID и токен:</b> Meta Events Manager → твоят пиксел → Settings → „Conversions API“ → Generate access token.</li>
+            <li><b>Тестов код:</b> Events Manager → Test events. Махни го, щом видиш, че събитията идват.</li>
+            <li><b>GA4:</b> Admin → Data streams → уеб потокът за ordyx.eu → Measurement ID; там → Measurement Protocol API secrets → Create.</li>
+            <li><b>Search Console:</b> добави ordyx.eu като „URL prefix“ → метод „HTML file“ → постави тук името на файла. Ordyx го сервира сам на ordyx.eu/&lt;файла&gt;. (Или потвърди през DNS при регистратора на домейна — тогава тук не трябва нищо.)</li>
+          </ul></details>
+        <div class="actions"><button type="button" class="primary" id="trSave">Запази</button><button type="button" class="ghost" id="trClearCapi" hidden>Махни токена</button><button type="button" class="ghost" id="trClearGa4" hidden>Махни GA4 secret</button><span class="muted" id="trInfo"></span></div>
+      </section>
+      <div id="pfClientOnly">
+      <div class="pagehead" style="margin-top:8px"><div><h1 style="font-size:22px">Вашият план</h1><div class="sub">План, плащания и фактури</div></div></div>
       <div class="pfgrid">
         <div class="panel pfplan" id="pfPlan"><div class="muted">Зареждам…</div></div>
         <div class="panel" id="pfNext"></div>
@@ -760,6 +842,7 @@ tr.hl td{background:#fffbe6}
       <div class="panel pfpartner" id="pfPartner"></div>
       <div class="panel"><h2 style="margin-top:0">Акаунт</h2><div id="pfAcc"></div>
         <p class="muted" style="margin:12px 0 0">Смяна на плана, годишно плащане или прекратяване — пишете ни на <a href="mailto:stoimenov@profitbrand.online?subject=Ordyx%20—%20моят%20план">stoimenov@profitbrand.online</a>.</p></div>
+      </div>
     </section>
     <section id="clientsView" hidden>
       <div class="pagehead"><div><h1>Клиенти</h1><div class="sub">Клиентите влизат с имейл и парола и виждат само своите магазини</div></div><button type="button" class="primary" id="cNew">+ Нов клиент</button></div>
@@ -1326,6 +1409,7 @@ tr.hl td{background:#fffbe6}
 </div>
 <script src="/couriers-eu.js"></script>
 <script src="roas.js"></script>
+<script src="/ordyx-track.js"></script>
 <script>
 (function () {
   // the same page is the public demo at /demo/ (sample data, no password) — then it talks to /api/demo/
@@ -2326,7 +2410,6 @@ tr.hl td{background:#fffbe6}
   function viewFromHash() { var v = location.hash.slice(1); return Object.prototype.hasOwnProperty.call(VIEWS, v) ? v : 'orders'; }
   function showView(view) {
     if (view === 'clients' && role !== 'owner') view = 'orders'; // only the owner manages clients
-    if (view === 'profile' && role !== 'client') view = 'orders'; // the owner has no plan to pay
     [].forEach.call(document.querySelectorAll('.nav a[data-view]'), function (a) { a.classList.toggle('on', a.getAttribute('data-view') === view); });
     $('where').textContent = VIEWS[view];
     $('app').classList.remove('open');
@@ -3091,15 +3174,31 @@ tr.hl td{background:#fffbe6}
     ['Върни клиента', 'Здравейте, {име}! Отдавна не сте ни посещавали — новите продукти в {магазин} ви чакат: {линк} За отказ: STOP'],
   ];
   var VARS = ['{име}', '{пълно_име}', '{продукт}', '{магазин}', '{линк}'];
-  var kEditing = null, kTimer = null, kList = [], kTab = 'sms';
+  var EMAIL_PRESET = { subject: '{име}, нещо ново за вас в {магазин}', body: 'Здравейте, {име}!\n\nБлагодарим, че поръчахте {продукт} от {магазин}. Подготвихме нещо, което смятаме, че ще ви хареса.\n\nПоздрави,\nекипът на {магазин}' };
+  var kEditing = null, kTimer = null, kList = [], kTab = 'sms', kEmailOn = true, kSendTimer = null;
+  var KTAB_NAME = { sms: 'SMS', whatsapp: 'WhatsApp', email: 'имейл' }, kLegalSms = '';
   function setKTab(tab) {
-    kTab = tab === 'whatsapp' ? 'whatsapp' : 'sms';
+    kTab = tab === 'whatsapp' ? 'whatsapp' : tab === 'email' ? 'email' : 'sms';
     [].forEach.call(document.querySelectorAll('#kTabs button'), function (b) { b.classList.toggle('on', b.getAttribute('data-ktab') === kTab); });
-    $('kTipSms').hidden = kTab !== 'sms'; $('kTipWa').hidden = kTab !== 'whatsapp'; $('kPriceBox').hidden = kTab !== 'sms';
-    $('kNew').textContent = kTab === 'sms' ? '+ Нова SMS кампания' : '+ Нова WhatsApp кампания';
+    $('kTipSms').hidden = kTab !== 'sms'; $('kTipWa').hidden = kTab !== 'whatsapp'; $('kTipEmail').hidden = kTab !== 'email'; $('kEmailOff').hidden = !(kTab === 'email' && !kEmailOn);
+    $('kPriceBox').hidden = kTab !== 'sms'; $('kEmailOptBox').hidden = kTab !== 'email';
+    $('kNew').textContent = '+ Нова ' + KTAB_NAME[kTab] + ' кампания';
     if (kEditing && kEditing.channel !== kTab) $('kEditor').hidden = true;
-    if (!kEditing && !$('kEditor').hidden) { $('kChannel').value = kTab; kPreview(); }
+    if (!kEditing && !$('kEditor').hidden) { $('kChannel').value = kTab; kChannelUi(); kPreview(); }
     renderKList();
+  }
+  /** what the editor shows for the channel: the e-mail fields and buttons, or the SMS ones */
+  function kChannelUi() {
+    var em = $('kChannel').value === 'email', locked = Boolean(kEditing && (kEditing.status === 'sent' || kEditing.status === 'sending'));
+    $('kEmailFields').hidden = !em; $('kPresets').hidden = em; $('kMsgH').textContent = em ? 'Текст на имейла' : 'Съобщение';
+    $('kMsg').placeholder = em ? 'Здравейте, {име}! …  (празен ред = нов абзац)' : 'Здравейте, {име}! …';
+    $('kEmailPreview').hidden = !em; $('kSample').hidden = em;
+    $('kTest').hidden = !(em && kEditing); $('kSend').hidden = !(em && kEditing && !locked); $('kReady').hidden = em; $('kExport').hidden = em || !(kEditing && kEditing.consent);
+    $('kSave').disabled = locked; $('kSave').textContent = em ? 'Запази' : 'Запази чернова'; $('kSendSoon').hidden = em;
+    $('kWhoNote').textContent = em ? 'Един човек = един имейл, от поръчките на този магазин. Отписалите се не получават.' : 'Един човек = един телефон, от поръчките на този магазин.';
+    if (!kLegalSms) kLegalSms = $('kLegal').innerHTML;
+    $('kLegal').innerHTML = em ? 'Маркетинговите имейли изискват съгласие на клиента (GDPR / ЗЕС). Линкът за отписване се слага сам във всеки имейл, а отписалите се, върнатите и оплакалите се не получават повече.' : kLegalSms;
+    ['kName', 'kSubject', 'kBtnText', 'kBtnUrl', 'kImgUrl', 'kMsg', 'kConsent'].forEach(function (id) { $(id).disabled = locked; });
   }
   $('kPresets').innerHTML = PRESETS.map(function (p, i) { return '<button type="button" class="ghost" data-preset="' + i + '">' + esc(p[0]) + '</button>'; }).join('');
   $('kVars').innerHTML = VARS.map(function (v) { return '<button type="button" class="ghost" data-var="' + v + '">' + v + '</button>'; }).join('');
@@ -3116,6 +3215,15 @@ tr.hl td{background:#fffbe6}
   function kPreview() {
     clearTimeout(kTimer);
     kTimer = setTimeout(function () {
+      if ($('kChannel').value === 'email') {
+        kApi({ action: 'preview', channel: 'email', subject: $('kSubject').value, message: $('kMsg').value, buttonText: $('kBtnText').value, buttonUrl: $('kBtnUrl').value, imageUrl: $('kImgUrl').value, segment: kSegment() }).then(function (p) {
+          $('kKpis').innerHTML = '<div><b>' + p.count + '</b><div class="muted">получатели с имейл</div></div><div><b>0 €</b><div class="muted">имейлите са безплатни за вас</div></div>';
+          $('kEmailFrame').srcdoc = p.html;
+          $('kSend').textContent = 'Изпрати на ' + p.count + (p.count === 1 ? ' клиент' : ' клиенти');
+          $('kSend').disabled = !p.count;
+        }).catch(function (e) { if (e.message !== 'auth') $('kKpis').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; });
+        return;
+      }
       kApi({ action: 'preview', channel: $('kChannel').value, message: $('kMsg').value, segment: kSegment() }).then(function (p) {
         var sms = $('kChannel').value === 'sms';
         $('kKpis').innerHTML = '<div><b>' + p.count + '</b><div class="muted">получатели</div></div>' +
@@ -3130,43 +3238,76 @@ tr.hl td{background:#fffbe6}
   function openCampaign(c) {
     kEditing = c || null;
     $('kTitle').textContent = c ? 'Кампания: ' + c.name : 'Нова кампания';
-    $('kName').value = c ? c.name : ''; $('kChannel').value = c ? c.channel : kTab; $('kMsg').value = c ? c.message : PRESETS[0][1];
-    $('kTitle').textContent = (c ? 'Кампания: ' + c.name : 'Нова ' + (kTab === 'sms' ? 'SMS' : 'WhatsApp') + ' кампания');
+    var em = (c ? c.channel : kTab) === 'email';
+    $('kName').value = c ? c.name : ''; $('kChannel').value = c ? c.channel : kTab; $('kMsg').value = c ? c.message : em ? EMAIL_PRESET.body : PRESETS[0][1];
+    $('kSubject').value = c ? c.subject || '' : EMAIL_PRESET.subject; $('kBtnText').value = c ? c.buttonText || '' : ''; $('kBtnUrl').value = c ? c.buttonUrl || '' : ''; $('kImgUrl').value = c ? c.imageUrl || '' : '';
+    $('kTitle').textContent = (c ? 'Кампания: ' + c.name : 'Нова ' + KTAB_NAME[kTab] + ' кампания');
+    $('kSendBox').hidden = true;
+    if (c && c.channel === 'email' && c.stats) kSendProgress(c.stats, c);
     var sg = (c && c.segment) || {};
     [].forEach.call(document.querySelectorAll('#kStatuses input'), function (x) { x.checked = (sg.statuses || ['delivered']).indexOf(x.value) >= 0; });
     $('kFrom').value = sg.from || ''; $('kTo').value = sg.to || ''; $('kProduct').value = sg.product || ''; $('kMin').value = sg.minOrders || 1; $('kNoFlag').checked = sg.excludeFlagged !== false;
     $('kConsent').checked = Boolean(c && c.consent);
     $('kExport').hidden = !(c && c.consent);
     $('kErr').textContent = '';
+    kChannelUi();
     $('kEditor').hidden = false; $('kEditor').scrollIntoView({ behavior: 'smooth' });
     kPreview();
   }
+  /** the sending of an e-mail campaign: the bar, then what came back */
+  function kSendProgress(p, c) {
+    var pc = function (a, b) { return b ? Math.round(a / b * 100) + '%' : '—'; };
+    var done = p.done || (c && c.status === 'sent');
+    $('kSendBox').hidden = false;
+    $('kSendBox').innerHTML = (done ? '<div style="font-weight:700;margin:6px 0">✓ Изпратена' + (c && c.sentAt ? ' на ' + esc(when(c.sentAt)) : '') + '</div>' :
+        '<div style="font-weight:700;margin:6px 0">Изпраща се… ' + (p.total - p.queued) + ' от ' + p.total + '</div><div class="progress"><div style="width:' + (p.total ? Math.round((p.total - p.queued) / p.total * 100) : 0) + '%"></div></div>') +
+      '<div class="kpis" style="margin-top:8px"><div><b>' + p.sent + '</b><div class="muted">изпратени</div></div><div><b>' + pc(p.delivered, p.sent) + '</b><div class="muted">доставени</div></div>' +
+      '<div><b>' + pc(p.opened, p.sent) + '</b><div class="muted">отворени</div></div><div><b>' + pc(p.clicked, p.sent) + '</b><div class="muted">кликнали</div></div>' +
+      '<div><b>' + (p.bounced + (p.complained || 0)) + '</b><div class="muted">върнати / оплакали се</div></div><div><b>' + (p.unsubscribed || 0) + '</b><div class="muted">отписали се</div></div></div>' +
+      (p.failed ? '<div class="err" style="margin-top:8px">' + p.failed + ' не тръгнаха' + (p.error ? ': ' + esc(p.error) : '') + ' <button type="button" class="ghost" id="kRetry">Опитай пак</button></div>' : '') +
+      '<div class="muted" style="margin-top:6px">Доставени, отворени и кликнали се попълват през следващите часове.</div>';
+    var rb = $('kRetry'); if (rb) rb.addEventListener('click', function () { busy(rb, kApi({ action: 'email_retry', id: kEditing.id })).then(function (d) { kSendLoop(d.progress); }).catch(function (e) { alert(e.message); }); });
+  }
+  function kSendLoop(p) {
+    kSendProgress(p, kEditing);
+    if (p.done || p.error) { loadCampaignList().then(function () { var c = kList.filter(function (x) { return kEditing && x.id === kEditing.id; })[0]; if (c) { kEditing = c; kChannelUi(); kSendProgress(c.stats || p, c); } }); return; }
+    clearTimeout(kSendTimer);
+    kSendTimer = setTimeout(function () { kApi({ action: 'email_more', id: kEditing.id }).then(function (d) { kSendLoop(d.progress); }).catch(function (e) { $('kErr').textContent = e.message; }); }, 400);
+  }
   function kSaveAs(status, btn) {
     $('kErr').textContent = '';
-    busy(btn, kApi({ action: 'save', id: kEditing ? kEditing.id : undefined, name: $('kName').value, channel: $('kChannel').value, message: $('kMsg').value, segment: kSegment(), consent: $('kConsent').checked, status: status }))
-      .then(function (d) { kEditing = d.campaign; $('kTitle').textContent = 'Кампания: ' + d.campaign.name; $('kExport').hidden = !d.campaign.consent; loadCampaignList(); $('kErr').innerHTML = '<span style="color:var(--ok)">Запазено ✓ (' + d.campaign.recipients + ' получатели)</span>'; })
+    return busy(btn, kApi({ action: 'save', id: kEditing ? kEditing.id : undefined, name: $('kName').value, channel: $('kChannel').value, message: $('kMsg').value, segment: kSegment(), consent: $('kConsent').checked, status: status,
+      subject: $('kSubject').value, buttonText: $('kBtnText').value, buttonUrl: $('kBtnUrl').value, imageUrl: $('kImgUrl').value }))
+      .then(function (d) { kEditing = d.campaign; $('kTitle').textContent = 'Кампания: ' + d.campaign.name; $('kExport').hidden = !d.campaign.consent; kChannelUi(); loadCampaignList(); $('kErr').innerHTML = '<span style="color:var(--ok)">Запазено ✓ (' + d.campaign.recipients + ' получатели)</span>'; })
       .catch(function (e) { $('kErr').textContent = e.message; });
   }
   function loadCampaignList() {
     return fetch(withShop(API + 'campaigns'), { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); }).then(function (d) {
       kList = d.campaigns || [];
+      kEmailOn = d.emailOn !== false; $('kEmailOff').hidden = !(kTab === 'email' && !kEmailOn);
       $('kPrice').value = String(d.smsPrice).replace('.', ',');
       renderKList();
     }).catch(function () {});
   }
   /** only the campaigns of the open tab (SMS or WhatsApp) */
+  function kStatusBadge(c) {
+    if (c.status === 'sent') { var st = c.stats || {}; return '<span class="badge ok">изпратена</span>' + (st.sent ? ' <span class="muted">' + st.sent + ' · отворени ' + (st.sent ? Math.round((st.opened || 0) / st.sent * 100) : 0) + '%</span>' : ''); }
+    if (c.status === 'sending') return '<span class="badge">изпраща се</span>';
+    return c.status === 'ready' ? '<span class="badge ok">готова</span>' : '<span class="badge">чернова</span>';
+  }
   function renderKList() {
-    var name = kTab === 'sms' ? 'SMS' : 'WhatsApp';
+    var name = KTAB_NAME[kTab];
     var rows = [];
     kList.forEach(function (c, i) {
       if (c.channel !== kTab) return;
-      rows.push(['<b>' + esc(c.name) + '</b>', String(c.recipients), c.status === 'ready' ? '<span class="badge ok">готова</span>' : '<span class="badge">чернова</span>', esc(when(c.updatedAt)),
-        '<button type="button" class="ghost" data-kopen="' + i + '">Отвори</button>' + (c.consent ? ' <button type="button" class="ghost" data-kexport="' + esc(c.id) + '">Експорт CSV</button>' : '') + ' <button type="button" class="del" data-kdel="' + i + '">Изтрий</button>']);
+      rows.push(['<b>' + esc(c.name) + '</b>' + (c.channel === 'email' && c.subject ? '<br><span class="muted">' + esc(c.subject) + '</span>' : ''), String(c.recipients), kStatusBadge(c), esc(when(c.updatedAt)),
+        '<button type="button" class="ghost" data-kopen="' + i + '">Отвори</button>' + (c.consent && c.channel !== 'email' ? ' <button type="button" class="ghost" data-kexport="' + esc(c.id) + '">Експорт CSV</button>' : '') + ' <button type="button" class="del" data-kdel="' + i + '">Изтрий</button>']);
     });
     $('kTable').innerHTML = rows.length ? table([name + ' кампания', 'Получатели', 'Състояние', 'Обновена', ''], rows) : '<tr><td class="muted">Още няма ' + name + ' кампании. Натиснете „+ Нова ' + name + ' кампания“.</td></tr>';
   }
   function loadCampaigns() {
     loadCampaignList();
+    loadEmailOptouts();
     fetch(withShop(API + 'confirmadmin'), { credentials: 'same-origin' }).then(function (r) { return r.json(); }).then(function (d) { $('kConfirmMsg').value = d.template || ''; }).catch(function () {});
     kApi({ action: 'optouts' }).then(function (d) { $('kOptList').innerHTML = d.optouts.length ? d.optouts.map(function (o) { return esc(o.phone) + ' <a href="#" data-kunopt="' + esc(o.phone) + '">махни</a>'; }).join('<br>') : 'Няма.'; }).catch(function () {});
   }
@@ -3179,6 +3320,33 @@ tr.hl td{background:#fffbe6}
   $('kPresets').addEventListener('click', function (e) { var i = e.target.getAttribute('data-preset'); if (i != null) { $('kMsg').value = PRESETS[i][1]; kPreview(); } });
   $('kVars').addEventListener('click', function (e) { var v = e.target.getAttribute('data-var'); if (v) { insertAt($('kMsg'), v); kPreview(); } });
   $('kSave').addEventListener('click', function () { kSaveAs('draft', $('kSave')); });
+  ['kSubject', 'kBtnText', 'kBtnUrl', 'kImgUrl'].forEach(function (id) { $(id).addEventListener('input', kPreview); });
+  $('kChannel').addEventListener('change', kChannelUi);
+  $('kTest').addEventListener('click', function () {
+    if (!kEditing) return;
+    var to = window.prompt('На кой имейл да пратя теста?', (window.meEmail || '')); if (!to) return;
+    $('kErr').textContent = '';
+    kSaveAs('draft', $('kTest')).then(function () { return busy($('kTest'), kApi({ action: 'email_test', id: kEditing.id, to: to })); })
+      .then(function () { $('kErr').innerHTML = '<span style="color:var(--ok)">Тестът тръгна към ' + esc(to) + ' ✓ (провери и в „Спам“)</span>'; }).catch(function (e) { $('kErr').textContent = e.message; });
+  });
+  $('kSend').addEventListener('click', function () {
+    if (!kEditing) return;
+    if (!$('kConsent').checked) { $('kErr').textContent = 'Потвърдете, че клиентите може да получават такива имейли (отметката по-горе).'; return; }
+    var n = ($('kSend').textContent.match(/\d+/) || ['0'])[0];
+    if (!window.confirm('Да изпратя ли имейла на ' + n + ' клиенти? Това не може да се отмени.')) return;
+    $('kErr').textContent = '';
+    kSaveAs('draft', $('kSend')).then(function () { return busy($('kSend'), kApi({ action: 'email_send', id: kEditing.id })); })
+      .then(function (d) { kEditing.status = 'sending'; kChannelUi(); kSendLoop(d.progress); }).catch(function (e) { $('kErr').textContent = e.message; });
+  });
+  $('kEOptAdd').addEventListener('click', function () {
+    busy($('kEOptAdd'), kApi({ action: 'email_optout_add', emails: $('kEOptText').value })).then(function (d) { $('kEOptText').value = ''; $('kEOptInfo').textContent = 'Добавени: ' + d.added; loadEmailOptouts(); kPreview(); }).catch(function (e) { $('kEOptInfo').textContent = e.message; });
+  });
+  function loadEmailOptouts() {
+    kApi({ action: 'email_optouts' }).then(function (d) {
+      var R = { manual: 'ръчно', link: 'отписа се', bounce: 'върнат', complaint: 'оплакване' };
+      $('kEOptList').innerHTML = d.optouts.length ? d.optouts.map(function (o) { return esc(o.email) + ' <span class="muted">· ' + esc(R[o.reason] || (o.reason.indexOf('campaign:') === 0 ? 'отписа се' : o.reason)) + '</span> <a href="#" data-keunopt="' + esc(o.email) + '">махни</a>'; }).join('<br>') : 'Няма.';
+    }).catch(function () {});
+  }
   $('kReady').addEventListener('click', function () { kSaveAs('ready', $('kReady')); });
   $('kExport').addEventListener('click', function () { if (kEditing) location.href = withShop(API + 'campaigns?export=' + encodeURIComponent(kEditing.id)); });
   $('kTable').addEventListener('click', function (e) {
@@ -3195,6 +3363,8 @@ tr.hl td{background:#fffbe6}
     var v = e.target.getAttribute('data-cvar'); if (v) insertAt($('kConfirmMsg'), v);
     var un = e.target.getAttribute('data-kunopt');
     if (un) { e.preventDefault(); kApi({ action: 'optout_remove', phone: un }).then(loadCampaigns); }
+    var eun = e.target.getAttribute('data-keunopt');
+    if (eun) { e.preventDefault(); kApi({ action: 'email_optout_remove', email: eun }).then(loadEmailOptouts); }
   });
   $('kConfirmSave').addEventListener('click', function () {
     busy($('kConfirmSave'), fetch(withShop(API + 'confirmadmin'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'template', text: $('kConfirmMsg').value }) })
@@ -3321,7 +3491,7 @@ tr.hl td{background:#fffbe6}
     return fetch(API + 'me', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
       role = d ? d.role : null;
       $('navClients').hidden = role !== 'owner';
-      $('navProfile').hidden = role !== 'client';
+      $('navProfile').hidden = false; // the owner and the clients: the whole picture; the plan below it for a client
       $('callsSoon').hidden = role === 'owner'; $('callsTip').hidden = role !== 'owner'; // calls: the owner only for now
       $('callsSetSoon').hidden = role === 'owner'; $('callsSetChip').hidden = role === 'owner'; $('callsSetOwner').hidden = role !== 'owner';
       $('whoami').hidden = role !== 'client';
@@ -3381,6 +3551,11 @@ tr.hl td{background:#fffbe6}
   /* ---- Профил: the client's plan, next payment, payments and invoices ---- */
   function dayBg(d) { return d ? d.split('-').reverse().join('.') : ''; }
   function loadProfile() {
+    loadOverview();
+    $('trPanel').hidden = role !== 'owner';
+    if (role === 'owner') loadTracking();
+    $('pfClientOnly').hidden = role !== 'client'; // the owner has no plan to pay
+    if (role !== 'client') return;
     $('pfPlan').innerHTML = '<div class="muted">Зареждам…</div>';
     fetch(API + 'profile', { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } return r.json(); }).then(function (d) {
       var s = d.subscription, pl = d.plan;
@@ -3433,6 +3608,151 @@ tr.hl td{background:#fffbe6}
       $('pfAcc').innerHTML = '<b>' + esc(d.name || '—') + '</b><br>' + esc(d.email || '') + (d.since ? '<br><span class="muted">в Ordyx от ' + esc(day(d.since)) + '</span>' : '');
     }).catch(function (e) { if (e.message !== 'auth') $('pfPlan').innerHTML = '<div class="err">' + esc(e.message) + '</div>'; });
   }
+  /* ---- Профил: the whole picture across the shops ---- */
+  var ovRange = '30d', ovData = null, ovHover = null;
+  try { ovRange = localStorage.getItem('zdOvRange') || '30d'; } catch (e) { /* private mode */ }
+  var OV_RANGES = ['7d', '30d', '90d', '12m'], OV_LONG = { '7d': 'Последните 7 дни', '30d': 'Последните 30 дни', '90d': 'Последните 90 дни', '12m': 'Последните 12 месеца' };
+  function ovNum(v) { return Math.round(v).toLocaleString('bg-BG'); }
+  function ovMoney(v) { return ovNum(v) + ' €'; }
+  function ovCompact(v) { return v >= 10000 ? (Math.round(v / 100) / 10).toLocaleString('bg-BG') + ' k €' : ovNum(v) + ' €'; }
+  function ovChange(now, prev) {
+    if (!prev) return now ? { text: 'ново', cls: '' } : { text: '—', cls: '' };
+    var c = (now - prev) / Math.abs(prev) * 100, up = c >= 0;
+    return { text: (up ? '↗ +' : '↘ −') + Math.abs(c).toFixed(1).replace('.', ',') + '%', cls: Math.abs(c) < 0.05 ? '' : up ? 'up' : 'down' };
+  }
+  // monotone cubic path through the points: the curve never overshoots the data
+  function ovSmooth(pts) {
+    if (pts.length < 2) return pts.length ? 'M ' + pts[0][0] + ' ' + pts[0][1] : '';
+    var n = pts.length, dx = [], sl = [], m = [], i;
+    for (i = 0; i < n - 1; i++) { dx.push(pts[i + 1][0] - pts[i][0]); sl.push((pts[i + 1][1] - pts[i][1]) / (dx[i] || 1)); }
+    m.push(sl[0]);
+    for (i = 1; i < n - 1; i++) m.push(sl[i - 1] * sl[i] <= 0 ? 0 : 3 * (dx[i - 1] + dx[i]) / ((2 * dx[i] + dx[i - 1]) / sl[i - 1] + (dx[i] + 2 * dx[i - 1]) / sl[i]));
+    m.push(sl[n - 2]);
+    var d = 'M ' + pts[0][0].toFixed(2) + ' ' + pts[0][1].toFixed(2);
+    for (i = 0; i < n - 1; i++) { var h = dx[i] / 3; d += ' C ' + (pts[i][0] + h).toFixed(2) + ' ' + (pts[i][1] + m[i] * h).toFixed(2) + ', ' + (pts[i + 1][0] - h).toFixed(2) + ' ' + (pts[i + 1][1] - m[i + 1] * h).toFixed(2) + ', ' + pts[i + 1][0].toFixed(2) + ' ' + pts[i + 1][1].toFixed(2); }
+    return d;
+  }
+  function ovNiceMax(v) {
+    if (!(v > 0)) return 1;
+    var e = Math.pow(10, Math.floor(Math.log10(v))), f = v / e, steps = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10], k = 0;
+    while (steps[k] < f) k++;
+    return steps[k] * e;
+  }
+  function ovSpark(values, good) {
+    if (!values || values.length < 2) return '';
+    var w = 76, h = 30, min = Math.min.apply(null, values), max = Math.max.apply(null, values);
+    var pts = values.map(function (v, i) { return [i / (values.length - 1) * (w - 4) + 2, h - 3 - (v - min) / (max - min || 1) * (h - 6)]; });
+    var d = ovSmooth(pts), last = pts[pts.length - 1];
+    return '<svg class="spark" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" aria-hidden="true"><path d="' + d + ' L ' + last[0] + ' ' + h + ' L ' + pts[0][0] + ' ' + h + ' Z" fill="rgba(20,20,15,.06)"/>' +
+      '<path d="' + d + '" fill="none" stroke="#9c9a92" stroke-width="1.5" stroke-linecap="round"/><circle cx="' + last[0] + '" cy="' + last[1] + '" r="2.75" fill="' + (good ? 'var(--ok)' : 'var(--bad)') + '" stroke="#fff" stroke-width="1.5"/></svg>';
+  }
+  function loadOverview() {
+    [].forEach.call(document.querySelectorAll('#ovRange button'), function (b) { b.setAttribute('aria-checked', b.getAttribute('data-ov') === ovRange); b.tabIndex = b.getAttribute('data-ov') === ovRange ? 0 : -1; });
+    $('ovRange').querySelector('i').style.transform = 'translateX(' + OV_RANGES.indexOf(ovRange) * 100 + '%)';
+    $('ovKpis').innerHTML = '<div class="ovkpi"><div class="l">Зареждам…</div></div>';
+    fetch(API + 'overview?range=' + ovRange, { credentials: 'same-origin' }).then(function (r) { if (r.status === 401) { showLogin(); throw new Error('auth'); } if (!r.ok) throw new Error('Грешка ' + r.status); return r.json(); })
+      .then(function (d) { ovData = d; ovHover = null; renderOverview(); })
+      .catch(function (e) { if (e.message !== 'auth') $('ovKpis').innerHTML = '<div class="ovkpi"><div class="err">' + esc(e.message) + '</div></div>'; });
+  }
+  function renderOverview() {
+    var d = ovData; if (!d) return;
+    $('ovSub').textContent = (d.shops === 1 ? 'Твоят магазин' : 'Общата картина на ' + d.shops + ' магазина') + ' · ' + OV_LONG[d.range].toLowerCase() + ' спрямо предните';
+    $('ovKpis').innerHTML = d.kpis.map(function (k) {
+      var ch = ovChange(k.value, k.previous), val = k.format === 'currency' ? ovMoney(k.value) : ovNum(k.value), good = ch.cls !== 'down';
+      return '<article class="ovkpi"><div class="l">' + esc(k.label) + '</div><div class="row"><div><div class="v' + (k.unreal ? ' warn' : '') + '">' + esc(val) + '</div>' +
+        '<div class="d"><span class="ovpill ' + ch.cls + '">' + esc(ch.text) + '</span><span>спрямо предните ' + (d.range === '12m' ? '12 месеца' : OV_LONG[d.range].replace('Последните ', '')) + '</span></div></div>' + ovSpark(k.spark, good) + '</div>' +
+        (k.hint ? '<div class="h' + (k.unreal ? ' err' : '') + '">' + (k.unreal ? '⚠️ ' : '') + esc(k.hint) + '</div>' : '') + '</article>';
+    }).join('');
+    var total = d.points.reduce(function (s, p) { return s + p.current; }, 0), prevTotal = d.points.reduce(function (s, p) { return s + p.previous; }, 0), ch = ovChange(total, prevTotal);
+    $('ovTotal').innerHTML = '<span class="big">' + esc(ovMoney(total)) + '</span><span class="ovpill ' + ch.cls + '">' + esc(ch.text) + '</span> <span class="muted">предния период ' + esc(ovMoney(prevTotal)) + '</span>';
+    renderOvChart();
+    var shops = d.byShop, max = Math.max.apply(null, shops.map(function (s) { return s.revenue; }).concat([1])), sum = shops.reduce(function (s, x) { return s + x.revenue; }, 0);
+    $('ovShopsTotal').textContent = ovMoney(sum);
+    $('ovShops').innerHTML = shops.length ? shops.map(function (s, i) {
+      var c = ovChange(s.revenue, s.previous);
+      return '<li><div class="r"><b>' + esc(s.name) + '</b><span>' + esc(ovMoney(s.revenue)) + ' <span class="muted" style="display:inline-block;width:3.4ch;text-align:right">' + (sum ? Math.round(s.revenue / sum * 100) : 0) + '%</span> <span class="ovpill ' + c.cls + '">' + esc(c.text) + '</span></span></div>' +
+        '<div class="bar"><i style="width:' + Math.round(s.revenue / max * 100) + '%;opacity:' + Math.max(.35, 1 - i * .14) + '"></i></div></li>';
+    }).join('') : '<li class="ovempty">Няма поръчки за периода.</li>';
+    $('ovRecent').innerHTML = d.recent.length ? table(['Кога', 'Клиент', 'Сума', 'Статус'], d.recent.map(function (o) {
+      var dt = new Date(o.createdAt).toLocaleString('bg-BG', { timeZone: 'Europe/Sofia', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+      return [esc(dt), esc(o.name) + (d.shops > 1 ? '<span class="sh">' + esc(o.shop) + '</span>' : ''), esc(money(o.total, o.currency)), esc(STATUS_LABEL[o.status] || o.status)];
+    })) : '<tbody><tr><td class="ovempty">Още няма поръчки.</td></tr></tbody>';
+  }
+  var OV_H = 236, OV_PAD = { top: 16, right: 12, bottom: 28, left: 56 };
+  function renderOvChart() {
+    var d = ovData, box = $('ovPlot'); if (!d) return;
+    var pts = d.points, w = Math.max(box.clientWidth || 600, 240), iw = w - OV_PAD.left - OV_PAD.right, ih = OV_H - OV_PAD.top - OV_PAD.bottom;
+    if (!pts.length) { box.innerHTML = '<div class="ovempty">Няма данни.</div>'; return; }
+    var max = ovNiceMax(Math.max.apply(null, pts.map(function (p) { return Math.max(p.current, p.previous); })) * 1.08);
+    var x = function (i) { return OV_PAD.left + (pts.length === 1 ? iw / 2 : i / (pts.length - 1) * iw); }, y = function (v) { return OV_PAD.top + ih - v / max * ih; };
+    var cur = pts.map(function (p, i) { return [x(i), y(p.current)]; }), prev = pts.map(function (p, i) { return [x(i), y(p.previous)]; });
+    var curD = ovSmooth(cur), prevD = ovSmooth(prev), areaD = curD + ' L ' + x(pts.length - 1) + ' ' + (OV_PAD.top + ih) + ' L ' + x(0) + ' ' + (OV_PAD.top + ih) + ' Z';
+    var every = Math.ceil(pts.length / Math.max(2, Math.floor(iw / 64))), last = pts.length - 1, h = '';
+    h += '<svg width="' + w + '" height="' + OV_H + '" aria-hidden="true"><defs><linearGradient id="ovg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#eab308" stop-opacity=".28"/><stop offset="1" stop-color="#eab308" stop-opacity="0"/></linearGradient></defs>';
+    [0, .25, .5, .75, 1].forEach(function (t) { var v = t * max; h += '<line x1="' + OV_PAD.left + '" x2="' + (w - OV_PAD.right) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--line)"' + (t ? ' stroke-dasharray="2 4"' : '') + '/><text x="' + (OV_PAD.left - 10) + '" y="' + y(v) + '" dy=".32em" text-anchor="end">' + esc(ovCompact(v)) + '</text>'; });
+    pts.forEach(function (p, i) { if (!(i === last || (i % every === 0 && last - i >= every * .7))) return; h += '<text x="' + x(i) + '" y="' + (OV_H - 8) + '" text-anchor="' + (i === 0 ? 'start' : i === last ? 'end' : 'middle') + '">' + esc(p.tick) + '</text>'; });
+    h += '<path d="' + prevD + '" fill="none" stroke="#b5b3aa" stroke-width="1.5" stroke-dasharray="4 4" stroke-linecap="round"/><path d="' + areaD + '" fill="url(#ovg)"/><path d="' + curD + '" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+    if (ovHover != null) {
+      var p = pts[ovHover];
+      h += '<line x1="' + x(ovHover) + '" x2="' + x(ovHover) + '" y1="' + OV_PAD.top + '" y2="' + (OV_PAD.top + ih) + '" stroke="#c9c7bf"/><circle cx="' + x(ovHover) + '" cy="' + y(p.previous) + '" r="3.5" fill="#fff" stroke="#b5b3aa" stroke-width="1.5"/><circle cx="' + x(ovHover) + '" cy="' + y(p.current) + '" r="4.5" fill="#eab308" stroke="#fff" stroke-width="2"/>';
+    }
+    h += '</svg>';
+    if (ovHover != null) {
+      var a = pts[ovHover], dl = ovChange(a.current, a.previous), left = x(ovHover), flip = left > w - 200;
+      h += '<div class="ovtip" style="left:' + (flip ? left - 184 - 12 : left + 12) + 'px"><div class="t">' + esc(a.label) + '</div><dl><dt><span class="ln" style="display:inline-block;width:10px;height:2px;background:#eab308"></span>този период</dt><dd><b>' + esc(ovMoney(a.current)) + '</b></dd>' +
+        '<dt><span style="display:inline-block;width:10px;height:2px;background:#b5b3aa"></span>предния</dt><dd class="muted">' + esc(ovMoney(a.previous)) + '</dd><dt>поръчки</dt><dd>' + a.orders + '</dd></dl><div class="delta ' + (dl.cls === 'down' ? 'err' : '') + '"' + (dl.cls === 'up' ? ' style="color:var(--ok)"' : '') + '>' + esc(dl.text) + '</div></div>';
+    }
+    box.innerHTML = h;
+  }
+  function ovPick(clientX) {
+    var box = $('ovPlot'), r = box.getBoundingClientRect(), pts = (ovData || {}).points || [];
+    if (!pts.length) return null;
+    var iw = Math.max(box.clientWidth, 240) - OV_PAD.left - OV_PAD.right;
+    return Math.max(0, Math.min(pts.length - 1, Math.round((clientX - r.left - OV_PAD.left) / iw * (pts.length - 1))));
+  }
+  $('ovPlot').addEventListener('mousemove', function (e) { var i = ovPick(e.clientX); if (i !== ovHover) { ovHover = i; renderOvChart(); } });
+  $('ovPlot').addEventListener('mouseleave', function () { if (ovHover != null) { ovHover = null; renderOvChart(); } });
+  $('ovPlot').addEventListener('keydown', function (e) {
+    var pts = (ovData || {}).points || [], last = pts.length - 1; if (last < 0) return;
+    var at = ovHover == null ? last : ovHover, next = null;
+    if (e.key === 'ArrowRight') next = Math.min(last, ovHover == null ? last : at + 1); else if (e.key === 'ArrowLeft') next = Math.max(0, ovHover == null ? last : at - 1);
+    else if (e.key === 'Home') next = 0; else if (e.key === 'End') next = last; else if (e.key === 'Escape') { ovHover = null; renderOvChart(); return; } else return;
+    e.preventDefault(); ovHover = next; renderOvChart();
+  });
+  $('ovRange').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-ov]'); if (!b) return;
+    ovRange = b.getAttribute('data-ov'); try { localStorage.setItem('zdOvRange', ovRange); } catch (err) { /* private mode */ }
+    loadOverview();
+  });
+  $('ovRange').addEventListener('keydown', function (e) {
+    var i = OV_RANGES.indexOf(ovRange), n = null;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') n = (i + 1) % 4; else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') n = (i + 3) % 4; else if (e.key === 'Home') n = 0; else if (e.key === 'End') n = 3; else return;
+    e.preventDefault(); ovRange = OV_RANGES[n]; try { localStorage.setItem('zdOvRange', ovRange); } catch (err) { /* private mode */ }
+    loadOverview(); $('ovRange').querySelector('[data-ov="' + ovRange + '"]').focus();
+  });
+  var ovResizeT = null;
+  window.addEventListener('resize', function () { if ($('profileView').hidden) return; clearTimeout(ovResizeT); ovResizeT = setTimeout(renderOvChart, 120); });
+  /* ---- Профил (собственик): проследяване на ordyx.eu ---- */
+  function trFill(t) {
+    $('trPixel').value = t.pixelId || ''; $('trTest').value = t.testCode || ''; $('trGa4').value = t.ga4Id || ''; $('trGsc').value = t.gscFile ? t.gscFile + '.html' : '';
+    $('trCapi').value = ''; $('trGa4Secret').value = '';
+    $('trCapiState').textContent = t.capiSet ? '✓ запазен (празно = остава)' : 'не е въведен'; $('trGa4State').textContent = t.ga4SecretSet ? '✓ запазен (празно = остава)' : 'не е въведен';
+    $('trClearCapi').hidden = !t.capiSet; $('trClearGa4').hidden = !t.ga4SecretSet;
+  }
+  function trApi(body) {
+    return fetch(API + 'track' + (body ? '' : '?settings=1'), body ? { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { credentials: 'same-origin' })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); });
+  }
+  function loadTracking() { trApi().then(trFill).catch(function (e) { $('trInfo').textContent = e.message; }); }
+  function trSave(extra, btn) {
+    $('trInfo').textContent = '';
+    busy(btn, trApi(Object.assign({ pixelId: $('trPixel').value, capiToken: $('trCapi').value, testCode: $('trTest').value, ga4Id: $('trGa4').value, ga4Secret: $('trGa4Secret').value, gscFile: $('trGsc').value }, extra || {})))
+      .then(function (d) { trFill(d.settings); $('trInfo').innerHTML = '<span style="color:var(--ok)">Запазено ✓</span>'; })
+      .catch(function (e) { $('trInfo').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; });
+  }
+  $('trSave').addEventListener('click', function () { trSave(null, $('trSave')); });
+  $('trClearCapi').addEventListener('click', function () { if (window.confirm('Да махна ли Conversions API токена?')) trSave({ capiToken: '', clearCapi: true }, $('trClearCapi')); });
+  $('trClearGa4').addEventListener('click', function () { if (window.confirm('Да махна ли GA4 API secret?')) trSave({ ga4Secret: '', clearGa4Secret: true }, $('trClearGa4')); });
   var partnersData = [];
   $('ptTable').addEventListener('click', function (e) {
     var i = e.target.getAttribute && e.target.getAttribute('data-payout'); if (i == null) return;
@@ -4336,9 +4656,10 @@ tr.hl td{background:#fffbe6}
       $('suErr').textContent = '';
       if ($('suPw').value !== $('suPw2').value) { $('suErr').textContent = 'Паролите не съвпадат.'; return; }
       busy($('suBtn'), fetch(API + 'signup', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: offerSignup ? undefined : signupCode, offer: offerSignup || undefined, plan: offerSignup ? undefined : suPick.plan, billing: offerSignup ? undefined : suPick.billing, ref: new URLSearchParams(location.search).get('ref') || undefined, name: $('suName').value, email: $('suEmail').value, password: $('suPw').value, website: $('suWebsite').value }) })
+        body: JSON.stringify({ consent: Boolean(window.ordyxTrack && ordyxTrack.consent()), code: offerSignup ? undefined : signupCode, offer: offerSignup || undefined, plan: offerSignup ? undefined : suPick.plan, billing: offerSignup ? undefined : suPick.billing, ref: new URLSearchParams(location.search).get('ref') || undefined, name: $('suName').value, email: $('suEmail').value, password: $('suPw').value, website: $('suWebsite').value }) })
         .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
-        .then(function () {
+        .then(function (d) {
+          if (window.ordyxTrack && d && d.eventId) ordyxTrack.registered(d.eventId); // the browser half of the same registration (Meta deduplicates)
           $('signupForm').hidden = true;
           if (!offerSignup) showWelcome();
           var p = new URLSearchParams(location.search); p.delete('signup'); p.delete('offer'); p.delete('plan'); p.delete('billing'); p.delete('ref');

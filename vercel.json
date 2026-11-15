@@ -166,6 +166,10 @@
   ],
   "rewrites": [
     {
+      "source": "/:file(google[0-9a-fA-F]+\\.html)",
+      "destination": "/api/admin/track?gsc=:file"
+    },
+    {
       "source": "/data-deletion",
       "has": [
         {
