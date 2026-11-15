@@ -28,6 +28,9 @@ import email from '../../lib/admin/email.js';
 import track from '../../lib/admin/track.js';
 import support from '../../lib/admin/support.js';
 import { send } from '../../lib/http.js';
+import { getQuery } from '../../lib/db.js';
+import { isBlocked } from '../../lib/blocklist.js';
+import { adminUser } from '../../lib/users.js';
 
 const ROUTES = { profile, overview, email, track, support, login, orders, waconnect, stats, costs, integrations, inventory, meta, shops, waybills, push, me, invite, users, onboarding, signup, campaigns, confirm, confirmadmin, abandoned, customers, voice, advisor };
 const pick = (name) => (typeof name === 'string' && Object.hasOwn(ROUTES, name) ? ROUTES[name] : null);
@@ -40,10 +43,16 @@ function foreignOrigin(req) {
   try { return new URL(origin).host !== String(req.headers.host || ''); } catch { return true; }
 }
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (foreignOrigin(req)) return send(res, 403, { error: 'origin' });
   const segment = new URL(req.url || '/', 'http://localhost').pathname.replace(/\/+$/, '').split('/').pop();
   const route = pick(segment) || pick(req.query?.route); // Vercel also passes the [route] segment as a query value
   if (!route) return send(res, 404, { error: 'not found' });
+  // a banned person (by IP or browser) gets nothing: no registration, no data; never blocks the platform on a DB hiccup.
+  // the owner is never locked out: the password login and an owner's session pass
+  if (route !== login && await isBlocked(getQuery(), req).catch(() => false) && !(await adminUser(req, getQuery()).catch(() => null))?.owner) {
+    return send(res, 403, { error: 'Достъпът е отказан' });
+  }
+
   return route(req, res);
 }

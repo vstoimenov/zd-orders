@@ -3964,7 +3964,8 @@ tr.hl td{background:#fffbe6}
           // the client's approved shops by name (their own shops are not in the owner's shop list)
           esc((u.shops || []).filter(function (sh) { return sh.approved; }).map(function (sh) { return sh.name || sh.domain; }).join(', ') || (pending ? '' : '—')) + pending, subCell(u.subscription), state, esc(when(u.lastLoginAt)),
           '<button type="button" class="ghost" data-cedit="' + i + '">Магазини</button> <button type="button" class="ghost" data-clink="' + i + '">Нов линк</button> ' +
-          '<button type="button" class="ghost" data-cactive="' + i + '">' + (u.active ? 'Спри достъп' : 'Пусни достъп') + '</button>' +
+          (u.blocked ? '<span class="badge bad">🚫 блокиран</span> <button type="button" class="ghost" data-cunblock="' + i + '">Отблокирай</button>' :
+            '<button type="button" class="ghost" data-cactive="' + i + '">' + (u.active ? 'Спри достъп' : 'Пусни достъп') + '</button> <button type="button" class="del" data-cblock="' + i + '">🚫 Блокирай</button>') +
           (u.subscription ? ' <button type="button" class="ghost" data-cpaid="' + i + '">Плащания</button>' : '') +
           ' <button type="button" class="ghost" data-cplan="' + i + '">План</button>'];
       }));
@@ -4059,6 +4060,12 @@ tr.hl td{background:#fffbe6}
       var bill = window.prompt('Плащане: monthly (месечно) или yearly (годишно)', cs.billing || 'monthly');
       if (!bill) return;
       busy(b, usersApi({ action: 'sub_set', id: cu.id, plan: plan.trim().toLowerCase(), billing: bill.trim().toLowerCase() })).then(loadClients).catch(function (err) { alert(err.message); });
+      return;
+    }
+    if (b.hasAttribute('data-cblock') || b.hasAttribute('data-cunblock')) {
+      var bu = clientsData[b.getAttribute('data-cblock') || b.getAttribute('data-cunblock')], block = b.hasAttribute('data-cblock');
+      if (block && !window.confirm('Да блокирам ли ' + bu.email + '?\n\nАкаунтът спира веднага и излиза отвсякъде. Имейлът и браузърът му не могат повече да се регистрират или да ползват Ordyx, а IP адресът — 30 дни.')) return;
+      busy(b, usersApi({ action: block ? 'block' : 'unblock', id: bu.id })).then(loadClients).catch(function (err) { alert(err.message); });
       return;
     }
     var u = clientsData[b.getAttribute('data-cedit') || b.getAttribute('data-clink') || b.getAttribute('data-cactive')];
