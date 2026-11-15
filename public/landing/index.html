@@ -1216,5 +1216,9 @@ footer a{color:#e9e7df;text-decoration:none}
   prices(); countdown(); setInterval(countdown, 1000);
 })();
 </script>
+<script src="https://app.ordyx.eu/ordyx-track.js"></script>
+<script>window.ordyxTrack && ordyxTrack.banner();
+  /* a click towards the registration (a plan or the event offer) is a lead */
+  document.addEventListener('click', function (e) { var a = e.target.closest && e.target.closest('a[href*="signup="], a[href*="offer="], a[data-plan]'); if (a && window.ordyxTrack) ordyxTrack.lead(a.getAttribute('data-plan') || ''); }, true);</script>
 </body>
 </html>

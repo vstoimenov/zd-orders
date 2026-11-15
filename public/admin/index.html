@@ -812,6 +812,26 @@ tr.hl td{background:#fffbe6}
         <section class="panel" aria-labelledby="ovShopsH"><div class="ovhead"><h2 id="ovShopsH">По магазини</h2><span class="muted" id="ovShopsTotal"></span></div><ul class="ovshops" id="ovShops"></ul></section>
       </div>
       <section class="panel ovrecent" style="margin-bottom:16px"><div class="ovhead"><h2>Последни поръчки</h2><span class="muted">от всички магазини</span></div><table id="ovRecent" style="margin-top:10px"></table></section>
+      <section class="panel" id="trPanel" hidden>
+        <h2 style="margin-top:0">📈 Проследяване на Ordyx</h2>
+        <div class="muted" style="margin-bottom:12px">За рекламата на самия Ordyx (ordyx.eu и регистрацията). Pixel и GA4 тръгват само след „Приемам“ в банера за бисквитки. Регистрацията и плащането на абонамент отиват и от сървъра (Conversions API, GA4 Measurement Protocol) — по-точно от браузъра и без двойно броене.</div>
+        <div class="fgrid">
+          <label>Meta Pixel ID<input type="text" id="trPixel" inputmode="numeric" placeholder="1150537077523379"></label>
+          <label>Conversions API токен<input type="password" id="trCapi" autocomplete="off" placeholder="EAA…"><span class="muted" id="trCapiState"></span></label>
+          <label>Тестов код (Events Manager, по избор)<input type="text" id="trTest" placeholder="TEST12345"></label>
+          <label>GA4 Measurement ID<input type="text" id="trGa4" placeholder="G-XXXXXXXXXX"></label>
+          <label>GA4 API secret (Measurement Protocol)<input type="password" id="trGa4Secret" autocomplete="off" placeholder="…"><span class="muted" id="trGa4State"></span></label>
+          <label>Search Console файл<input type="text" id="trGsc" placeholder="google1234abcd5678.html"></label>
+        </div>
+        <details class="muted" style="margin:6px 0 10px"><summary>Откъде се взимат</summary>
+          <ul style="margin:6px 0 0;padding-left:18px;line-height:1.6">
+            <li><b>Pixel ID и токен:</b> Meta Events Manager → твоят пиксел → Settings → „Conversions API“ → Generate access token.</li>
+            <li><b>Тестов код:</b> Events Manager → Test events. Махни го, щом видиш, че събитията идват.</li>
+            <li><b>GA4:</b> Admin → Data streams → уеб потокът за ordyx.eu → Measurement ID; там → Measurement Protocol API secrets → Create.</li>
+            <li><b>Search Console:</b> добави ordyx.eu като „URL prefix“ → метод „HTML file“ → постави тук името на файла. Ordyx го сервира сам на ordyx.eu/&lt;файла&gt;. (Или потвърди през DNS при регистратора на домейна — тогава тук не трябва нищо.)</li>
+          </ul></details>
+        <div class="actions"><button type="button" class="primary" id="trSave">Запази</button><button type="button" class="ghost" id="trClearCapi" hidden>Махни токена</button><button type="button" class="ghost" id="trClearGa4" hidden>Махни GA4 secret</button><span class="muted" id="trInfo"></span></div>
+      </section>
       <div id="pfClientOnly">
       <div class="pagehead" style="margin-top:8px"><div><h1 style="font-size:22px">Вашият план</h1><div class="sub">План, плащания и фактури</div></div></div>
       <div class="pfgrid">
@@ -1389,6 +1409,7 @@ tr.hl td{background:#fffbe6}
 </div>
 <script src="/couriers-eu.js"></script>
 <script src="roas.js"></script>
+<script src="/ordyx-track.js"></script>
 <script>
 (function () {
   // the same page is the public demo at /demo/ (sample data, no password) — then it talks to /api/demo/
@@ -3531,6 +3552,8 @@ tr.hl td{background:#fffbe6}
   function dayBg(d) { return d ? d.split('-').reverse().join('.') : ''; }
   function loadProfile() {
     loadOverview();
+    $('trPanel').hidden = role !== 'owner';
+    if (role === 'owner') loadTracking();
     $('pfClientOnly').hidden = role !== 'client'; // the owner has no plan to pay
     if (role !== 'client') return;
     $('pfPlan').innerHTML = '<div class="muted">Зареждам…</div>';
@@ -3709,6 +3732,27 @@ tr.hl td{background:#fffbe6}
   });
   var ovResizeT = null;
   window.addEventListener('resize', function () { if ($('profileView').hidden) return; clearTimeout(ovResizeT); ovResizeT = setTimeout(renderOvChart, 120); });
+  /* ---- Профил (собственик): проследяване на ordyx.eu ---- */
+  function trFill(t) {
+    $('trPixel').value = t.pixelId || ''; $('trTest').value = t.testCode || ''; $('trGa4').value = t.ga4Id || ''; $('trGsc').value = t.gscFile ? t.gscFile + '.html' : '';
+    $('trCapi').value = ''; $('trGa4Secret').value = '';
+    $('trCapiState').textContent = t.capiSet ? '✓ запазен (празно = остава)' : 'не е въведен'; $('trGa4State').textContent = t.ga4SecretSet ? '✓ запазен (празно = остава)' : 'не е въведен';
+    $('trClearCapi').hidden = !t.capiSet; $('trClearGa4').hidden = !t.ga4SecretSet;
+  }
+  function trApi(body) {
+    return fetch(API + 'track' + (body ? '' : '?settings=1'), body ? { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { credentials: 'same-origin' })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); });
+  }
+  function loadTracking() { trApi().then(trFill).catch(function (e) { $('trInfo').textContent = e.message; }); }
+  function trSave(extra, btn) {
+    $('trInfo').textContent = '';
+    busy(btn, trApi(Object.assign({ pixelId: $('trPixel').value, capiToken: $('trCapi').value, testCode: $('trTest').value, ga4Id: $('trGa4').value, ga4Secret: $('trGa4Secret').value, gscFile: $('trGsc').value }, extra || {})))
+      .then(function (d) { trFill(d.settings); $('trInfo').innerHTML = '<span style="color:var(--ok)">Запазено ✓</span>'; })
+      .catch(function (e) { $('trInfo').innerHTML = '<span class="err">' + esc(e.message) + '</span>'; });
+  }
+  $('trSave').addEventListener('click', function () { trSave(null, $('trSave')); });
+  $('trClearCapi').addEventListener('click', function () { if (window.confirm('Да махна ли Conversions API токена?')) trSave({ capiToken: '', clearCapi: true }, $('trClearCapi')); });
+  $('trClearGa4').addEventListener('click', function () { if (window.confirm('Да махна ли GA4 API secret?')) trSave({ ga4Secret: '', clearGa4Secret: true }, $('trClearGa4')); });
   var partnersData = [];
   $('ptTable').addEventListener('click', function (e) {
     var i = e.target.getAttribute && e.target.getAttribute('data-payout'); if (i == null) return;
@@ -4612,9 +4656,10 @@ tr.hl td{background:#fffbe6}
       $('suErr').textContent = '';
       if ($('suPw').value !== $('suPw2').value) { $('suErr').textContent = 'Паролите не съвпадат.'; return; }
       busy($('suBtn'), fetch(API + 'signup', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: offerSignup ? undefined : signupCode, offer: offerSignup || undefined, plan: offerSignup ? undefined : suPick.plan, billing: offerSignup ? undefined : suPick.billing, ref: new URLSearchParams(location.search).get('ref') || undefined, name: $('suName').value, email: $('suEmail').value, password: $('suPw').value, website: $('suWebsite').value }) })
+        body: JSON.stringify({ consent: Boolean(window.ordyxTrack && ordyxTrack.consent()), code: offerSignup ? undefined : signupCode, offer: offerSignup || undefined, plan: offerSignup ? undefined : suPick.plan, billing: offerSignup ? undefined : suPick.billing, ref: new URLSearchParams(location.search).get('ref') || undefined, name: $('suName').value, email: $('suEmail').value, password: $('suPw').value, website: $('suWebsite').value }) })
         .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
-        .then(function () {
+        .then(function (d) {
+          if (window.ordyxTrack && d && d.eventId) ordyxTrack.registered(d.eventId); // the browser half of the same registration (Meta deduplicates)
           $('signupForm').hidden = true;
           if (!offerSignup) showWelcome();
           var p = new URLSearchParams(location.search); p.delete('signup'); p.delete('offer'); p.delete('plan'); p.delete('billing'); p.delete('ref');
