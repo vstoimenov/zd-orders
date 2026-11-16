@@ -292,7 +292,7 @@ html[data-skin="new"] #rows td:last-child{min-width:0;width:1%}
   html[data-skin="new"] #rows td{overflow-wrap:break-word}
   html[data-skin="new"] #rows select[data-status]{max-width:100%}
 }
-html[data-skin="new"] #rows .oacts>button{margin:0;max-width:100%;white-space:normal;text-align:center;line-height:1.25}
+html[data-skin="new"] #rows td:last-child .oacts>button{margin:0;max-width:100%;white-space:normal;text-align:center;line-height:1.25}
 .odate{display:none}
 .oacts .wb{white-space:normal;font-size:12.5px;max-width:240px;text-align:left}
 html[data-skin="new"] #rows .omore{width:34px;height:34px;padding:0;margin:0;border-radius:50%;display:grid;place-items:center;font-size:18px;line-height:1;background:var(--surface-3);border:1px solid var(--line);color:var(--ink);flex:none}
@@ -405,8 +405,12 @@ html[data-skin="new"] #rows select[data-status] option{color:var(--ink);backgrou
   html[data-skin="new"] #rows td:last-child{grid-column:1/-1;width:auto;padding-top:4px;border-top:1px solid var(--line)}
   html[data-skin="new"] #rows .oacts{justify-content:flex-start;padding-top:10px}
   html[data-skin="new"] #rows .oacts .omore{margin-left:auto}
-  html[data-skin="new"] #rows .oacts{flex-wrap:nowrap}
-  html[data-skin="new"] #rows .oacts>button{white-space:nowrap;font-size:12px;padding:6px 10px}
+  html[data-skin="new"] #rows .oacts{flex-wrap:wrap;row-gap:8px}
+  html[data-skin="new"] #rows .oacts>button{white-space:nowrap;font-size:11.5px;padding:6px 9px}
+  html[data-skin="new"] #rows .oacts .cbadge{order:5;margin:0;max-width:100%;white-space:normal}
+  html[data-skin="new"] #rows .oacts .wb{flex-basis:100%;max-width:100%}
+  html[data-skin="new"] #rows td{min-width:0;overflow-wrap:anywhere}
+  html[data-skin="new"] main,html[data-skin="new"] .app>div:not(.scrim){overflow-x:clip;min-width:0}
   /* Интеграции: two to a row */
   html[data-skin="new"] .igrid{grid-template-columns:1fr 1fr;gap:10px}
   html[data-skin="new"] .icard{padding:14px;gap:10px;border-radius:18px}
