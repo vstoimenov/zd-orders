@@ -50,3 +50,17 @@ test('Интеграции → Куриери picks a country; its couriers come
   assert.match(admin, /var EU = window\.ORDYX_EU;/);
   assert.match(admin, /if \(EU\) \{/, 'the page still works if the list did not load');
 });
+
+test('the landing (ordyx.eu) sells Europe honestly: the same shared list, the vote, no made-up claims', () => {
+  const europa = landing;
+  assert.match(europa, /<script src="\/couriers-eu\.js"><\/script>/);
+  assert.match(europa, /id="euList"/); assert.match(europa, /id="euPanel"/);
+  assert.match(europa, /\/api\/admin\/euvote/, 'the vote goes to the shared counter');
+  assert.match(europa, /Еконт, Спиди и BOX NOW в България/, 'what works today is said plainly');
+  assert.doesNotMatch(europa, /\[ПРОВЕРИ/, 'no copy placeholders left in');
+  assert.doesNotMatch(europa, /Връщанията в Румъния са 19%/, 'the advisor does not promise what it cannot compare yet');
+  assert.doesNotMatch(europa, /На езика на държавата му/, 'the confirmation language is not promised as done');
+  assert.match(europa, /rel="canonical" href="https:\/\/ordyx\.eu\/"/);
+  const vercel = readFileSync(new URL('../vercel.json', import.meta.url), 'utf8');
+  assert.match(vercel, /"source": "\/europa",\s*"destination": "\/"/, 'the old address still lands on the page');
+});

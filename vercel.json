@@ -260,6 +260,11 @@
   ],
   "redirects": [
     {
+      "source": "/europa",
+      "destination": "/",
+      "permanent": true
+    },
+    {
       "source": "/demo/",
       "has": [
         {
