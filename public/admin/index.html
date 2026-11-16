@@ -187,6 +187,80 @@ html[data-theme="light"] .st-stat.shipped{color:#8a6100}
 .st-list li.go{cursor:pointer}
 @media (max-width:1180px){.st-row2{grid-template-columns:1fr}}
 @media (max-width:700px){.st-table .hide-s{display:none}}
+/* ---- the liquid glass (new look): spheres behind frosted panels drift on every screen change, the menu highlight slides,
+   screens and cards glide in, numbers count up ---- */
+.liquid{display:none}
+html[data-skin="new"] .liquid{display:block;position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+html[data-skin="new"] .liquid i{position:absolute;display:block;will-change:transform;transition:transform 1.6s cubic-bezier(.22,1,.36,1)}
+html[data-skin="new"] .liquid i::before{content:'';position:absolute;inset:0;border-radius:42% 58% 63% 37%/45% 41% 59% 55%;filter:blur(64px);opacity:.5;animation:liqMorph 18s ease-in-out infinite}
+html[data-skin="new"] .liquid .b1{width:620px;height:460px;right:-120px;top:-220px}
+html[data-skin="new"] .liquid .b1::before{background:linear-gradient(135deg,#ffe066,#f5b301 60%,#c77d00)}
+html[data-skin="new"] .liquid .b2{width:700px;height:520px;right:-260px;bottom:-300px}
+html[data-skin="new"] .liquid .b2::before{background:linear-gradient(200deg,#ff9f1c,#d96c00);opacity:.32;animation-delay:-6s}
+html[data-skin="new"] .liquid .b3{width:420px;height:300px;left:40%;bottom:-200px}
+html[data-skin="new"] .liquid .b3::before{background:linear-gradient(90deg,#ffd43b,#fff0a6);opacity:.22;animation-delay:-11s}
+html[data-skin="new"] .liquid .b4{width:620px;height:560px;left:-380px;top:30%}
+html[data-skin="new"] .liquid .b4::before{background:linear-gradient(160deg,#f5b301,#8a5200);opacity:.3;animation-delay:-3s}
+html[data-skin="new"] .liquid .b5{width:320px;height:240px;left:58%;top:22%}
+html[data-skin="new"] .liquid .b5::before{background:linear-gradient(120deg,#fff3c4,#ffd84a);opacity:.12;animation-delay:-8s}
+@keyframes liqMorph{0%,100%{border-radius:42% 58% 63% 37%/45% 41% 59% 55%;transform:translate(0,0) rotate(0) scale(1)}33%{border-radius:61% 39% 44% 56%/58% 62% 38% 42%;transform:translate(40px,-30px) rotate(12deg) scale(1.08)}66%{border-radius:38% 62% 55% 45%/40% 52% 48% 60%;transform:translate(-30px,25px) rotate(-8deg) scale(.95)}}
+html[data-skin="new"][data-theme="light"] .liquid{opacity:.7}
+/* frosted glass: the spheres show through every panel */
+html[data-skin="new"][data-theme="dark"]{--frost:rgba(14,16,21,.5);--frost-side:rgba(12,14,18,.58)}
+html[data-skin="new"][data-theme="light"]{--frost:rgba(255,255,255,.62);--frost-side:rgba(255,255,255,.7)}
+html[data-skin="new"] .card,html[data-skin="new"] .panel,html[data-skin="new"] .ovkpi,html[data-skin="new"] .tablecard,html[data-skin="new"] .icard,html[data-skin="new"] .st-card{
+  background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.015) 45%,rgba(255,255,255,.03)),var(--frost);
+  -webkit-backdrop-filter:blur(26px) saturate(170%);backdrop-filter:blur(26px) saturate(170%);border-color:rgba(255,255,255,.1)}
+html[data-skin="new"][data-theme="light"] .card,html[data-skin="new"][data-theme="light"] .panel,html[data-skin="new"][data-theme="light"] .ovkpi,html[data-skin="new"][data-theme="light"] .tablecard,html[data-skin="new"][data-theme="light"] .icard,html[data-skin="new"][data-theme="light"] .st-card{border-color:rgba(255,255,255,.8)}
+html[data-skin="new"] .side{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.01) 50%),var(--frost-side);-webkit-backdrop-filter:blur(28px) saturate(170%);backdrop-filter:blur(28px) saturate(170%)}
+html[data-skin="new"] .rbtn,html[data-skin="new"] #menuBtn{-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);background:var(--frost)}
+html[data-skin="new"] .st-pulse>div+div,html[data-skin="new"] .st-pulse{border-color:rgba(255,255,255,.08)}
+/* the sliding menu highlight */
+html[data-skin="new"] .nav{position:relative}
+.navpill{display:none}
+html[data-skin="new"] .navpill{display:block;position:absolute;left:14px;right:14px;top:0;height:44px;border-radius:14px;background:var(--accent);box-shadow:0 10px 28px -10px rgba(250,204,21,.8);opacity:0;pointer-events:none;z-index:0;
+  transition:transform .55s cubic-bezier(.34,1.32,.5,1),height .3s ease,opacity .3s ease}
+html[data-skin="new"] .nav a,html[data-skin="new"] .nav .sec{position:relative;z-index:1}
+html[data-skin="new"].pill-on .nav a.on{background:transparent;box-shadow:none}
+html[data-skin="new"] .nav a{transition:color .35s ease,background .2s}
+/* the sliding segment */
+.st-seg{position:relative}
+.st-seg button{position:relative;z-index:1;transition:color .3s}
+.st-thumb{position:absolute;top:4px;bottom:4px;left:0;border-radius:999px;background:var(--card);box-shadow:0 2px 10px rgba(0,0,0,.3);transition:transform .5s cubic-bezier(.34,1.32,.5,1),width .4s ease;z-index:0}
+.st-seg.thumbed button.on{background:none;box-shadow:none}
+/* screens and cards glide in */
+html[data-skin="new"] main>section.v-in{animation:vIn .7s cubic-bezier(.22,1,.36,1) both}
+html[data-skin="new"] .v-in>.pagehead,html[data-skin="new"] .v-in>.toolbar,html[data-skin="new"] .v-in>.pills,html[data-skin="new"] .v-in>.filters{animation:stFade .6s ease both}
+@keyframes vIn{from{transform:translateY(22px)}to{transform:none}} /* no opacity here: it would cut the glass of the panels off the spheres */
+html[data-skin="new"] .v-in .cards>.card,html[data-skin="new"] .v-in .st-card,html[data-skin="new"] .v-in .icard,html[data-skin="new"] .v-in .ovkpi,html[data-skin="new"] .v-in .panel,html[data-skin="new"] .v-in .tablecard{animation:cIn .7s cubic-bezier(.22,1,.36,1) both}
+html[data-skin="new"] .v-in .cards>.card:nth-child(2),html[data-skin="new"] .v-in .st-card:nth-child(2),html[data-skin="new"] .v-in .icard:nth-child(2),html[data-skin="new"] .v-in .ovkpi:nth-child(2){animation-delay:.05s}
+html[data-skin="new"] .v-in .cards>.card:nth-child(3),html[data-skin="new"] .v-in .st-card:nth-child(3),html[data-skin="new"] .v-in .icard:nth-child(3),html[data-skin="new"] .v-in .ovkpi:nth-child(3){animation-delay:.1s}
+html[data-skin="new"] .v-in .cards>.card:nth-child(4),html[data-skin="new"] .v-in .icard:nth-child(4){animation-delay:.15s}
+html[data-skin="new"] .v-in .cards>.card:nth-child(n+5){animation-delay:.2s}
+html[data-skin="new"] .v-in .st-row3,html[data-skin="new"] .v-in .st-row2{animation:cIn .8s .12s cubic-bezier(.22,1,.36,1) both}
+@keyframes cIn{from{opacity:0;transform:translateY(22px) scale(.985)}to{opacity:1;transform:none}}
+/* the chart draws itself, bars grow, the ring fills */
+html[data-skin="new"] .st-plot .cur{stroke-dasharray:1;stroke-dashoffset:1;animation:stDraw 1.4s cubic-bezier(.65,0,.35,1) .1s forwards}
+html[data-skin="new"] .st-plot .area,html[data-skin="new"] .st-plot .prev{animation:stFade 1.2s ease .5s both}
+@keyframes stDraw{to{stroke-dashoffset:0}}
+@keyframes stFade{from{opacity:0}}
+html[data-skin="new"] .st-bars i{transform-origin:bottom;animation:stGrow .9s cubic-bezier(.22,1,.36,1) both;animation-delay:calc(var(--i,0) * 18ms)}
+@keyframes stGrow{from{transform:scaleY(0)}}
+html[data-skin="new"] .st-stack i,html[data-skin="new"] .st-bar i,html[data-skin="new"] .st-meter i{transform-origin:left;animation:stGrowX 1s cubic-bezier(.22,1,.36,1) .2s both}
+@keyframes stGrowX{from{transform:scaleX(0)}}
+.st-ring .val{transition:stroke-dasharray 1.3s cubic-bezier(.22,1,.36,1)}
+@media (max-width:900px){
+  html[data-skin="new"] .liquid .b1{width:380px;height:300px;right:-160px;top:-170px}
+  html[data-skin="new"] .liquid .b2{width:400px;height:320px;right:-220px;bottom:-200px}
+  html[data-skin="new"] .liquid .b4{width:380px;height:340px;left:-260px}
+  html[data-skin="new"] .liquid .b3,html[data-skin="new"] .liquid .b5{display:none}
+  html[data-skin="new"] .card,html[data-skin="new"] .panel,html[data-skin="new"] .st-card,html[data-skin="new"] .tablecard,html[data-skin="new"] .icard{-webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%)}
+}
+@media (prefers-reduced-motion:reduce){
+  html[data-skin="new"] .liquid i,html[data-skin="new"] .liquid i::before,html[data-skin="new"] .navpill,.st-thumb{transition:none;animation:none}
+  html[data-skin="new"] main>section.v-in,html[data-skin="new"] .v-in *,html[data-skin="new"] .st-plot *,html[data-skin="new"] .st-bars i{animation:none!important}
+  html[data-skin="new"] .st-plot .cur{stroke-dasharray:none;stroke-dashoffset:0}
+}
 .studio{display:none}
 html[data-skin="new"] .studio{display:block}
 html[data-skin="new"] #dashView>.pagehead h1{font-size:24px}
@@ -801,13 +875,14 @@ tr.hl td{background:var(--accent-soft)}
     <p style="font-size:13px">Забравена парола? Пишете ни на <a href="mailto:stoimenov@profitbrand.online?subject=Ordyx%20%E2%80%94%20%D0%BD%D0%BE%D0%B2%D0%B0%20%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D0%B0">stoimenov@profitbrand.online</a> от имейла, с който сте регистрирани — ще получите линк за нова парола.</p>
   </div>
 </form>
+<div class="liquid" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i><i class="b5"></i></div>
 <div id="app" class="app" hidden>
   <aside class="side" id="side">
     <div class="brand"><svg class="omark" viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 60,24 40,24" fill="#FFEFA8"/><polygon points="70,4 96,30 76,40 60,24" fill="#FFDD4D"/><polygon points="96,30 96,70 76,60 76,40" fill="#F4C200"/><polygon points="96,70 70,96 60,76 76,60" fill="#D6A400"/><polygon points="70,96 30,96 40,76 60,76" fill="#C49500"/><polygon points="30,96 4,70 24,60 40,76" fill="#DDAC00"/><polygon points="4,70 4,30 24,40 24,60" fill="#FFD21F"/><polygon points="4,30 30,4 40,24 24,40" fill="#FFF3C7"/><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40" fill="#FFD84A"/><polygon points="40,24 60,24 67,31 33,31" fill="#FFF0B3" opacity=".7"/><g fill="none" stroke="#0d0d0c" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><polygon points="40,24 60,24 76,40 76,60 60,76 40,76 24,60 24,40"/><path d="M30 4L40 24M70 4L60 24M96 30L76 40M96 70L76 60M70 96L60 76M30 96L40 76M4 70L24 60M4 30L24 40"/></g></svg><span>ordyx</span></div>
     <button type="button" class="shop" id="shopBtn" aria-haspopup="true" aria-expanded="false"><span class="avatar" id="shopInitial">М</span><span class="shopwho"><small>Магазин</small><b id="shopName">Моят магазин</b></span><span class="caret" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></svg></span></button>
     <div class="shopmenu" id="shopMenu" hidden></div>
     <label class="sidesearch" for="sideQ"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="sideQ" placeholder="Търси поръчка…" autocomplete="off" aria-label="Търси поръчка по име или телефон"><kbd id="sideKbd">Ctrl K</kbd></label>
-    <nav class="nav">
+    <nav class="nav"><span class="navpill" aria-hidden="true"></span>
       <div class="sec">Основни</div>
       <a href="#start" data-view="start"><svg viewBox="0 0 24 24"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/></svg>Първи стъпки</a>
       <a href="#dash" data-view="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Табло</a>
@@ -2770,6 +2845,7 @@ tr.hl td{background:var(--accent-soft)}
     $('app').classList.remove('open');
     var pick = currentShop === 'all' && NEEDS_SHOP[view];
     Object.keys(VIEWS).forEach(function (v) { $(v + 'View').hidden = pick || v !== view; });
+    skinEnter(pick ? 'pick' : view);
     $('pickShopView').hidden = !pick;
     if (pick) {
       $('pickTitle').textContent = VIEWS[view] + ': изберете магазин';
@@ -4126,6 +4202,7 @@ tr.hl td{background:var(--accent-soft)}
     document.querySelector('#dashView>.pagehead h1').textContent = 'Подробно за периода';
     refreshPackCount();
     if (!$('dashView').hidden) loadStudio();
+    setTimeout(function () { skinEnter(viewFromHash()); }, 0);
   }
   function setTheme(theme) {
     document.documentElement.dataset.theme = theme;
@@ -4135,6 +4212,80 @@ tr.hl td{background:var(--accent-soft)}
     if (typeof renderOvChart === 'function' && ovData) renderOvChart();
   }
   $('themeBtn').addEventListener('click', function () { setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'); });
+  /* ---- the liquid glass: the spheres move with the screen, the menu highlight and the period switch slide, numbers count up ---- */
+  var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var LIQ_VIEWS = ['dash', 'orders', 'abandoned', 'buyers', 'costs', 'campaigns', 'calls', 'inventory', 'clients', 'profile', 'integrations', 'start'];
+  function liquidTo(view) {
+    var v = Math.max(0, LIQ_VIEWS.indexOf(view)), w = Math.min(innerWidth, 1600) / 1440;
+    [].forEach.call(document.querySelectorAll('.liquid i'), function (b, k) {
+      if (!v) { b.style.transform = ''; return; }
+      var dx = Math.sin(v * 1.9 + k * 2.3) * 190 * w, dy = Math.cos(v * 1.4 + k * 1.7) * 130 * w, sc = 0.82 + 0.3 * (((v * 3 + k) % 5) / 4);
+      b.style.transform = 'translate(' + dx.toFixed(0) + 'px,' + dy.toFixed(0) + 'px) scale(' + sc.toFixed(2) + ')';
+    });
+  }
+  function navPill() {
+    var pill = document.querySelector('.navpill'), a = document.querySelector('.nav a.on');
+    if (!pill) return;
+    if (!a || !skinOn() || !a.offsetHeight) { pill.style.opacity = '0'; document.documentElement.classList.remove('pill-on'); return; }
+    pill.style.height = a.offsetHeight + 'px';
+    pill.style.transform = 'translateY(' + a.offsetTop + 'px)';
+    pill.style.opacity = '1';
+    document.documentElement.classList.add('pill-on');
+  }
+  function segThumb(seg) {
+    var on = seg.querySelector('button.on'), t = seg.querySelector('.st-thumb');
+    if (!t) { t = document.createElement('span'); t.className = 'st-thumb'; seg.insertBefore(t, seg.firstChild); seg.classList.add('thumbed'); }
+    if (!on || !on.offsetWidth) return;
+    t.style.width = on.offsetWidth + 'px'; t.style.transform = 'translateX(' + on.offsetLeft + 'px)';
+  }
+  function skinEnter(view) {
+    if (!skinOn()) return;
+    var sec = $(view + 'View') && !$(view + 'View').hidden ? $(view + 'View') : $('pickShopView');
+    if (sec && !REDUCED) { sec.classList.remove('v-in'); void sec.offsetWidth; sec.classList.add('v-in'); }
+    liquidTo(view); navPill();
+    if (view === 'dash') setTimeout(function () { segThumb($('stRange')); }, 30);
+  }
+  /** numbers count up from 0: every KPI value the new look shows, whenever it is (re)drawn */
+  var COUNT_SEL = '.card .val, .st-pulse b, .st-live .big b, .st-kv b, .ovkpi .v, .st-ring text, .st-amt, .st-src .pc';
+  var NUM = /\d{1,3}(?:[  ]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?/g;
+  function countUp(el) {
+    if (el.childNodes.length !== 1 || el.firstChild.nodeType !== 3) return;
+    var text = el.firstChild.nodeValue;
+    if (el.__counted === text || !/\d/.test(text)) return;
+    el.__counted = text;
+    var parts = [], last = 0, m;
+    NUM.lastIndex = 0;
+    while ((m = NUM.exec(text))) {
+      var tok = m[0], sep = (tok.match(/[.,](\d+)$/) || [])[0], dec = sep ? sep.length - 1 : 0, group = (tok.match(/[  ]/) || [''])[0];
+      parts.push(text.slice(last, m.index), { v: Number(tok.replace(/[  ]/g, '').replace(',', '.')), dec: dec, ch: sep ? sep.charAt(0) : ',', group: group });
+      last = m.index + tok.length;
+    }
+    parts.push(text.slice(last));
+    var fmt = function (p, x) {
+      var s = x.toFixed(p.dec), i = s.split('.')[0], f = s.split('.')[1];
+      if (p.group) i = i.replace(/\B(?=(\d{3})+(?!\d))/g, p.group);
+      return i + (f ? p.ch + f : '');
+    };
+    var t0 = performance.now(), dur = 1100;
+    (function step(now) {
+      var k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 4);
+      if (el.__counted !== text) return; // redrawn meanwhile
+      el.firstChild.nodeValue = parts.map(function (p) { return typeof p === 'string' ? p : fmt(p, p.v * e); }).join('');
+      if (k < 1) requestAnimationFrame(step); else el.firstChild.nodeValue = text;
+    })(t0);
+  }
+  var countQueued = false;
+  if (!REDUCED && window.MutationObserver) {
+    new MutationObserver(function () {
+      if (countQueued || !skinOn()) return;
+      countQueued = true;
+      requestAnimationFrame(function () {
+        countQueued = false;
+        [].forEach.call(document.querySelectorAll('main ' + COUNT_SEL.split(', ').join(', main ')), function (el) { if (el.offsetParent || el.closest('svg')) countUp(el); });
+      });
+    }).observe(document.querySelector('main'), { childList: true, subtree: true });
+  }
+  window.addEventListener('resize', function () { if (skinOn()) { navPill(); segThumb($('stRange')); } });
   /* ---- the new look: the top tools, the sidebar search and „Табло“ → the studio ---- */
   function skinOn() { return document.documentElement.dataset.skin === 'new'; }
   function stJson(url) {
@@ -4233,7 +4384,7 @@ tr.hl td{background:var(--accent-soft)}
     pts.forEach(function (p, i) { if (i % every === 0 || i === pts.length - 1 && pts.length - 1 - (pts.length - 1) % every >= every / 2) labels += '<text class="ax" x="' + x(i) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(p.tick) + '</text>'; });
     var cur = smooth('current');
     box.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Оборот по дни спрямо предишния период"><defs><linearGradient id="stFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".32"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>' +
-      grid + labels + '<path class="prev" d="' + smooth('previous') + '"/><path class="area" d="' + cur + 'L' + x(pts.length - 1) + ' ' + y(0) + 'L' + x(0) + ' ' + y(0) + 'Z"/><path class="cur" d="' + cur + '"/>' +
+      grid + labels + '<path class="prev" d="' + smooth('previous') + '"/><path class="area" d="' + cur + 'L' + x(pts.length - 1) + ' ' + y(0) + 'L' + x(0) + ' ' + y(0) + 'Z"/><path class="cur" pathLength="1" d="' + cur + '"/>' +
       '<g id="stHov" style="display:none"><line class="hov" y1="' + T + '" y2="' + (T + h) + '"/><circle class="dotc" r="5"/></g></svg><div class="st-tip" id="stTip" hidden></div>';
     var svg = box.firstChild;
     svg.addEventListener('mousemove', function (e) {
@@ -4255,11 +4406,13 @@ tr.hl td{background:var(--accent-soft)}
     $('stGoal').innerHTML = '<h3>Цел за ' + name + '</h3><div class="st-sub">' + (m.daysLeft === 1 ? 'последен ден' : 'още ' + m.daysLeft + ' дни') + '</div>' +
       '<button type="button" class="st-edit" id="stGoalEdit" aria-label="' + (goal ? 'Промени целта' : 'Задай цел') + '" title="' + (goal ? 'Промени целта' : 'Задай цел') + '"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>' +
       '<div class="st-ring" style="margin-top:16px"><svg viewBox="0 0 132 132" aria-hidden="true"><circle class="trk" cx="66" cy="66" r="52"/>' +
-      (goal ? '<circle class="val" cx="66" cy="66" r="52" stroke-dasharray="' + (Math.min(1, share) * C).toFixed(1) + ' ' + C.toFixed(1) + '"/>' : '') +
+      (goal ? '<circle class="val" cx="66" cy="66" r="52" stroke-dasharray="' + (REDUCED ? (Math.min(1, share) * C).toFixed(1) : '0') + ' ' + C.toFixed(1) + '" data-dash="' + (Math.min(1, share) * C).toFixed(1) + ' ' + C.toFixed(1) + '"/>' : '') +
       '<text x="66" y="66" font-size="24" font-weight="700">' + (goal ? Math.round(share * 100) + '%' : '—') + '</text><text x="66" y="86" font-size="11" fill="var(--muted)" style="fill:var(--muted)">' + (goal ? 'от ' + esc(stShort(goal)) + ' €' : 'няма цел') + '</text></svg>' +
       '<div class="st-kv"><div>Досега<b>' + esc(stEur(m.revenue, 0)) + '</b></div>' +
       (goal ? '<div>Нужни на ден<b>' + esc(share >= 1 ? '✓ изпълнена' : stEur(need, 0)) + '</b></div>' : '<div><button type="button" class="st-btn" id="stGoalSet">Задай цел</button></div>') +
       '<div>Целият ' + prevName + '<b>' + esc(stEur(m.lastMonth, 0)) + '</b></div></div></div>';
+    var ring = $('stGoal').querySelector('.st-ring .val');
+    if (ring) requestAnimationFrame(function () { requestAnimationFrame(function () { ring.setAttribute('stroke-dasharray', ring.getAttribute('data-dash')); }); });
   }
   $('stGoal').addEventListener('click', function (e) {
     if (!e.target.closest('#stGoalEdit,#stGoalSet') || !stMonth) return;
@@ -4286,7 +4439,7 @@ tr.hl td{background:var(--accent-soft)}
     var counting = c.visitsSince != null || c.visits > 0;
     $('stLive').innerHTML = '<div class="st-head" style="margin-bottom:8px"><div><h3><span class="st-dot"></span>Магазинът днес</h3><div class="st-sub">' + (counting ? 'посетители от полунощ' : 'поръчки от полунощ') + '</div></div><button type="button" class="st-link" data-go="abandoned">Колички</button></div>' +
       '<div class="big"><b>' + (counting ? c.visits : c.orders) + '</b><span>' + (counting ? 'посетители · ' + c.orders + ' поръчки' : 'поръчки') + '</span></div>' +
-      '<div class="st-bars" title="Поръчки на ден, последните 30 дни">' + days.map(function (v) { return '<i' + (v ? '' : ' class="z"') + ' style="height:' + Math.max(7, v / max * 100) + '%"></i>'; }).join('') + '</div>' +
+      '<div class="st-bars" title="Поръчки на ден, последните 30 дни">' + days.map(function (v, i) { return '<i' + (v ? '' : ' class="z"') + ' style="height:' + Math.max(7, v / max * 100) + '%;--i:' + i + '"></i>'; }).join('') + '</div>' +
       '<div class="st-kv"><div>Колички без поръчка днес<b>' + (today.abandoned ? today.abandoned.count : 0) + '</b></div>' +
       '<div>Конверсия, 30 дни<b>' + (d30.cards.cr != null ? esc(pct(d30.cards.cr)) : '—') + '</b></div>' +
       (top ? '<div>Най-продаван' + (today.topProducts && today.topProducts[0] ? ' днес' : ', 30 дни') + '<b style="max-width:60%;overflow:hidden;text-overflow:ellipsis">' + esc(top.name) + '</b></div>' : '') + '</div>' +
@@ -4350,7 +4503,8 @@ tr.hl td{background:var(--accent-soft)}
   $('stRange').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-r]'); if (!b) return;
     stRange = b.getAttribute('data-r');
-    [].forEach.call(this.children, function (x) { x.classList.toggle('on', x === b); });
+    [].forEach.call(this.querySelectorAll('button'), function (x) { x.classList.toggle('on', x === b); });
+    segThumb(this);
     stChart(stSeq);
   });
   $('studio').addEventListener('click', function (e) { var b = e.target.closest('[data-go]'); if (b) stGo(b.getAttribute('data-go')); });
