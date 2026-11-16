@@ -420,6 +420,22 @@ html[data-skin="new"] #rows select[data-status] option{color:var(--ink);backgrou
   html[data-skin="new"] .icard>button{font-size:12.5px;padding:8px 10px}
 }
 @media (max-width:360px){html[data-skin="new"] .igrid,html[data-skin="new"] .cards{grid-template-columns:1fr}}
+/* a new order's confirmation strip (owner's look) */
+.oconfirm{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:6px;margin-bottom:8px;padding:8px;border-radius:14px;background:rgba(251,146,60,.08);border:1px dashed rgba(251,146,60,.35)}
+html[data-theme="light"] .oconfirm{background:#fff7ed;border-color:#fdba74}
+.oc-main{display:flex;gap:6px;flex:1 1 auto;justify-content:flex-end}
+html[data-skin="new"] #rows .oconfirm button.oc-yes,html[data-skin="new"] #rows .oconfirm button.oc-no{margin:0;padding:7px 12px;border-radius:999px;font-size:12.5px;font-weight:700;white-space:nowrap;flex:1 1 auto}
+html[data-skin="new"] #rows .oc-yes{background:var(--ok);border:1px solid var(--ok);color:#052e16}
+html[data-skin="new"] #rows .oc-yes:hover:not(:disabled){filter:brightness(1.08)}
+html[data-skin="new"][data-theme="light"] #rows .oc-yes{color:#fff}
+html[data-skin="new"] #rows .oc-no{background:transparent;border:1px solid var(--bad-line);color:var(--bad)}
+html[data-skin="new"] #rows .oc-no:hover:not(:disabled){background:var(--bad-soft)}
+.oc-reach{display:flex;gap:6px}
+html[data-skin="new"] #rows .oc-ic{display:grid;place-items:center;width:32px;height:32px;margin:0;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--surface-3);color:var(--ink);text-decoration:none;flex:none}
+html[data-skin="new"] #rows .oc-ic:hover{border-color:var(--accent-line);color:var(--accent-ink)}
+html[data-theme="light"] #rows .oc-ic:hover{color:#8a6100}
+html[data-skin="new"] #rows .oc-ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+@media (max-width:800px){.oconfirm{justify-content:space-between;margin:10px 0 0}.oc-main{justify-content:flex-start}}
 .studio{display:none}
 html[data-skin="new"] .studio{display:block}
 html[data-skin="new"] #dashView>.pagehead h1{font-size:24px}
@@ -2279,6 +2295,7 @@ tr.hl td{background:var(--accent-soft)}
   function skinRows() {
     [].forEach.call($('rows').children, function (tr) {
       var td = tr.lastElementChild; if (!td || td.colSpan > 1 || !tr.querySelector('select[data-status], .stmark')) return;
+      var strip = confirmStrip(tr, td);
       var more = [].slice.call(td.querySelectorAll(MORE_ACTS)), box = document.createElement('div'), menu = document.createElement('div');
       box.className = 'oacts'; menu.className = 'omenu'; menu.hidden = true; menu.setAttribute('role', 'menu');
       more.forEach(function (b) { b.setAttribute('role', 'menuitem'); menu.appendChild(b); });
@@ -2289,12 +2306,44 @@ tr.hl td{background:var(--accent-soft)}
         t.setAttribute('aria-label', 'Още действия'); t.setAttribute('aria-haspopup', 'menu'); t.setAttribute('aria-expanded', 'false');
         box.appendChild(t); box.appendChild(menu);
       }
+      if (strip) td.appendChild(strip);
       td.appendChild(box);
       var sel = tr.querySelector('select[data-status]'); if (sel) sel.setAttribute('data-st', sel.value);
       var dt = tr.querySelector('td[data-label="Дата"]'), cli = tr.querySelector('td.cli');
       if (dt && cli && !cli.querySelector('.odate')) { var od = document.createElement('span'); od.className = 'odate'; od.textContent = dt.textContent; cli.insertBefore(od, cli.querySelector('b')); }
     });
   }
+  /* a new order: confirm or cancel in one tap, or reach the customer — call, the confirmation link, the voice agent */
+  var OC_ICON = {
+    tel: '<svg viewBox="0 0 24 24"><path d="M5 4h3.5l2 5-2.5 1.5a11 11 0 0 0 5.5 5.5l1.5-2.5 5 2V19a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>',
+    msg: '<svg viewBox="0 0 24 24"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.5L3 21l1.5-5.6A8.5 8.5 0 1 1 21 12z"/><path d="m8.5 12 2.3 2.3L15.5 9.7"/></svg>',
+    agent: '<svg viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="13" width="4" height="6" rx="1.5"/><rect x="17" y="13" width="4" height="6" rx="1.5"/><path d="M19 19a3 3 0 0 1-3 3h-3"/></svg>'
+  };
+  function confirmStrip(tr, td) {
+    var sel = tr.querySelector('select[data-status]'), i = sel ? sel.getAttribute('data-status') : null, o = i != null ? orders[i] : null;
+    if (!o || o.status !== 'new' || o.destroyed) return null;
+    var strip = document.createElement('div');
+    strip.className = 'oconfirm';
+    strip.innerHTML = '<div class="oc-main"><button type="button" class="oc-yes" data-quick="confirmed" data-i="' + i + '">✓ Потвърди</button><button type="button" class="oc-no" data-quick="cancelled" data-i="' + i + '">✕ Откажи</button></div><div class="oc-reach"></div>';
+    var reach = strip.querySelector('.oc-reach');
+    if (o.phone) { var a = document.createElement('a'); a.className = 'oc-ic'; a.href = 'tel:' + o.phone; a.title = 'Обади се на ' + o.phone; a.setAttribute('aria-label', a.title); a.innerHTML = OC_ICON.tel; reach.appendChild(a); }
+    [['[data-confirm]', 'msg', 'Изпрати съобщение за потвърждение'], ['[data-call]', 'agent', 'Гласовият агент да звънне и да попита']].forEach(function (x) {
+      var b = td.querySelector(x[0]); if (!b) return;
+      b.className = 'oc-ic'; b.title = x[2]; b.setAttribute('aria-label', x[2]); b.innerHTML = OC_ICON[x[1]];
+      reach.appendChild(b);
+    });
+    return strip;
+  }
+  function quickStatus(btn) {
+    var o = orders[btn.getAttribute('data-i')], next = btn.getAttribute('data-quick');
+    if (!o) return;
+    if (next === 'cancelled' && !window.confirm('Да откажа ли поръчката на ' + (o.name || 'клиента') + ' (' + o.total.toFixed(2) + ' ' + o.currency + ')?')) return;
+    [].forEach.call(btn.parentNode.children, function (b) { b.disabled = true; });
+    fetch(withShop(API + 'orders'), { method: 'PATCH', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: o.id, status: next }) })
+      .then(function (r) { if (r.status === 401) { showLogin(); return; } if (!r.ok) throw new Error(r.status); o.status = next; render(); })
+      .catch(function () { [].forEach.call(btn.parentNode.children, function (b) { b.disabled = false; }); alert('Статусът не беше записан. Опитайте пак.'); });
+  }
+  $('rows').addEventListener('click', function (e) { var b = e.target.closest('[data-quick]'); if (b) quickStatus(b); });
   function closeMenus(except) {
     [].forEach.call(document.querySelectorAll('#rows .omenu:not([hidden])'), function (m) { if (m !== except) { m.hidden = true; m.parentNode.querySelector('.omore').setAttribute('aria-expanded', 'false'); } });
   }
