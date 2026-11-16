@@ -1300,7 +1300,7 @@ tr.hl td{background:var(--accent-soft)}
     <section id="buyersView" hidden>
       <div class="pagehead"><div><h1>Купувачи</h1><div class="sub" id="buSummary">Всеки телефон е един купувач · стойност = поръчките без отказаните и върнатите</div></div><button type="button" class="ghost" id="buCsv">Експорт CSV</button></div>
       <div class="filters"><input type="search" id="buQ" class="search" placeholder="Търси по име или телефон…"><select id="buSort"><option value="spent">Най-много похарчили</option><option value="orders">Най-много поръчки</option><option value="last">Последно поръчали</option></select></div>
-      <div class="pills" id="buPills"><button type="button" class="pill on" data-bu="">Всички</button><button type="button" class="pill" data-bu="vip">⭐ VIP</button><button type="button" class="pill" data-bu="returning">Връщат се</button><button type="button" class="pill" data-bu="new">Нови</button><button type="button" class="pill" data-bu="sleeping">Заспали (90+ дни)</button><button type="button" class="pill" data-bu="risky">⚠️ Рискови</button></div>
+      <div class="pills" id="buPills"><button type="button" class="pill on" data-bu="">Всички</button><button type="button" class="pill" data-bu="vip">⭐ Най-ценни</button><button type="button" class="pill" data-bu="returning">Постоянни</button><button type="button" class="pill" data-bu="new">С първа поръчка</button><button type="button" class="pill" data-bu="sleeping">Неактивни (90+ дни)</button><button type="button" class="pill" data-bu="risky">⚠️ Рискови</button></div>
       <div class="panel"><table id="buTable"></table></div>
       <div class="pager" id="buPager"></div>
     </section>
@@ -2733,7 +2733,7 @@ tr.hl td{background:var(--accent-soft)}
   function dashWarnings(d) {
     var c = d.cards, p = d.profit, out = '';
     if (p && p.missingCosts && p.missingCosts.products) {
-      out += card('⚠️ Печалбата не е вярна', p.missingCosts.products + ' от ' + p.missingCosts.of + ' продукта', 'нямат себестойност (' + money(p.missingCosts.revenue, 'EUR') + ' от оборота се смятат като чиста печалба). Въведи я във „Финанси“.', 'bad');
+      out += card('⚠️ Печалбата не е вярна', p.missingCosts.products + ' от ' + p.missingCosts.of + ' продукта', 'нямат себестойност (' + money(p.missingCosts.revenue, 'EUR') + ' от оборота се смятат за печалба). Въведи я във „Финанси“.', 'bad');
     }
     if (p && p.costsSet === false && currentShop !== 'all') {
       out += card('⚠️ Разходи на поръчка', 'не са въведени', 'опаковка, наложен платеж и връщане се смятат като 0 €. Въведи ги във „Финанси“.', 'warn');
@@ -2768,7 +2768,7 @@ tr.hl td{background:var(--accent-soft)}
     }
     if (p.adVat) out += card('ДДС върху рекламата', money(p.adVat, 'EUR'), 'самоначислява се без право на приспадане (чл. 97а) · ориентировъчно', 'warn');
     out += card('Данък печалба', money(p.profitTax, 'EUR'), (p.profitTaxPct != null ? p.profitTaxPct + '% от ' : 'от ') + 'счетоводната печалба' + (p.profitTaxPct == null ? ', за всеки магазин поотделно' : '') + ' · ориентировъчно', p.profitTax > 0 ? 'warn' : '') +
-      card('Чиста печалба', money(p.netProfit, 'EUR'), 'след ДДС и данък печалба · ориентировъчно', tone(p.netProfit));
+      card('Остава в джоба', money(p.netProfit, 'EUR'), 'след ДДС и данък печалба · ориентировъчно', tone(p.netProfit));
     var sh = currentShop !== 'all' && shopById(currentShop);
     if (p.vatRegistered === false && sh && (sh.currency || 'EUR') === 'EUR') { // the threshold is for EUR turnover
       var year = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Sofia' }).slice(0, 4), over = p.yearRevenue >= p.vatThreshold;
@@ -3011,7 +3011,7 @@ tr.hl td{background:var(--accent-soft)}
       var pf = d.profile || {}, sug = { often: 'често (до 2 месеца)', sometimes: 'понякога (няколко пъти в годината)', rarely: 'рядко (веднъж на година-две)' };
       h += '<div class="awatch"><b>Колко често клиентите ти купуват отново?</b><div style="margin:6px 0 4px"><select data-adv-profile style="max-width:100%">' +
         '<option value="">— не съм избрал —</option>' + ['often', 'sometimes', 'rarely'].map(function (k) { return '<option value="' + k + '"' + (pf.value === k ? ' selected' : '') + '>' + sug[k] + '</option>'; }).join('') + '</select></div>' +
-        (pf.suggested ? '<div class="muted">По поръчките ти: втората поръчка идва средно след ' + pf.secondOrderDays + ' дни → „' + esc(sug[pf.suggested]) + '“.</div>' : '<div class="muted">При „рядко“ не следя повторните покупки и заспалите клиенти.</div>') + '</div>';
+        (pf.suggested ? '<div class="muted">По поръчките ти: втората поръчка идва средно след ' + pf.secondOrderDays + ' дни → „' + esc(sug[pf.suggested]) + '“.</div>' : '<div class="muted">При „рядко“ не следя повторните покупки и неактивните клиенти.</div>') + '</div>';
       h += '<div class="awatch"><b>Какво да следи съветникът</b><div class="muted" style="margin:2px 0 6px">По подразбиране всичко е включено. Изключените не дават съвети.</div>' +
         (d.watched || []).map(function (w) { return '<label><input type="checkbox" data-adv-watch="' + esc(w.rule) + '"' + (w.on ? ' checked' : '') + '> ' + esc(w.name) + '</label>'; }).join('') +
         '<div class="abtns" style="margin-top:10px"><button type="button" class="primary" data-adv-watch-save>Запази</button><button type="button" class="ghost" data-adv-gear>Откажи</button></div></div>';
@@ -3177,7 +3177,7 @@ tr.hl td{background:var(--accent-soft)}
 
   /* ---- Купувачи ---- */
   var buSeg = '', buRows = [], buTimer = null;
-  var BU_SEG = { new: 'нов', returning: 'връща се', vip: '⭐ VIP', sleeping: 'заспал', risky: '⚠️ рисков' };
+  var BU_SEG = { new: 'първа поръчка', returning: 'постоянен', vip: '⭐ най-ценен', sleeping: 'неактивен', risky: '⚠️ рисков' };
   function buUrl(page, csv) { return withShop(API + 'customers?q=' + encodeURIComponent($('buQ').value) + '&segment=' + buSeg + '&sort=' + $('buSort').value + (csv ? '&format=csv' : '&page=' + page)); }
   function loadBuyers(page) {
     fetch(buUrl(page), { credentials: 'same-origin' }).then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Грешка'); return d; }); }).then(function (d) {
@@ -3222,7 +3222,7 @@ tr.hl td{background:var(--accent-soft)}
   function customersCards(c) {
     if (!c) return '';
     return card('Повторни купувачи', c.customers ? pct(c.repeatShare) : '—', c.repeat + ' от ' + c.customers + ' купувачи са поръчали 2+ пъти (за цялото време)', 'ok') +
-      card('Средна стойност на купувач', money(c.avgValue, 'EUR'), 'CLV: похарченото без отказани и върнати', '');
+      card('Средно на купувач', money(c.avgValue, 'EUR'), 'похарченото за цялото време, без отказани и върнати', '');
   }
   function abandonedCard(a) {
     if (!a) return '';
@@ -4410,7 +4410,7 @@ tr.hl td{background:var(--accent-soft)}
   }
   function renderOverview() {
     var d = ovData; if (!d) return;
-    $('ovSub').textContent = (d.shops === 1 ? 'Твоят магазин' : 'Общата картина на ' + d.shops + ' магазина') + ' · ' + OV_LONG[d.range].toLowerCase() + ' спрямо предните';
+    $('ovSub').textContent = (d.shops === 1 ? 'Твоят магазин' : 'Всички ' + d.shops + ' магазина заедно') + ' · ' + OV_LONG[d.range].toLowerCase() + ' спрямо предните';
     $('ovKpis').innerHTML = d.kpis.map(function (k) {
       var ch = ovChange(k.value, k.previous), val = k.format === 'currency' ? ovMoney(k.value) : ovNum(k.value), good = ch.cls !== 'down';
       return '<article class="ovkpi"><div class="l">' + esc(k.label) + '</div><div class="row"><div><div class="v' + (k.unreal ? ' warn' : '') + '">' + esc(val) + '</div>' +
