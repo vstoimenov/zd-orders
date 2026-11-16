@@ -54,7 +54,7 @@ beforeEach(async () => {
 test('the owner logs in with the password only, as before; a client with email + password', async () => {
   let res = await call({ method: 'POST', url: '/api/admin/login', body: { password: 'owner-pass' } });
   assert.equal(res.statusCode, 200);
-  assert.deepEqual(json(await call({ url: '/api/admin/me', cookie: cookieOf(res) })), { role: 'owner' });
+  assert.deepEqual(json(await call({ url: '/api/admin/me', cookie: cookieOf(res) })), { role: 'owner', name: '', email: '' });
   const c = await clientWith([SHOP_A]);
   assert.deepEqual(json(await call({ url: '/api/admin/me', cookie: c })), { role: 'client', email: 'a@client.bg', name: 'Клиент', plan: 'standard', freeUntil: null, subscription: null, planState: { unlimited: true } });
   res = await call({ method: 'POST', url: '/api/admin/login', body: { email: 'a@client.bg', password: 'wrong' } });
