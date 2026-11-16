@@ -342,7 +342,7 @@ html[data-skin="new"] #rows select[data-status] option{color:var(--ink);backgrou
   html[data-skin="new"] .topbar .hello{font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   html[data-skin="new"] .topbar .where{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   html[data-skin="new"] .rbtn{width:42px;height:42px}
-  html[data-skin="new"] .sp-fab{right:14px;bottom:calc(88px + env(safe-area-inset-bottom));width:50px;height:50px;padding:0;justify-content:center;font-size:0;border-radius:50%}
+  html[data-skin="new"] .sp-fab,html[data-skin="new"] .sp-box{display:none!important} /* no support chat on the owner's phone */
   html[data-skin="new"] .sp-fab::before{content:'💬';font-size:21px}
   html[data-skin="new"] .app.open .sp-fab,html[data-skin="new"] .app.open .tabbar{display:none}
   html[data-skin="new"] .sp-box{bottom:calc(146px + env(safe-area-inset-bottom));height:calc(100vh - 220px)}
