@@ -3046,12 +3046,17 @@ tr.hl td{background:var(--accent-soft)}
   }
   /* ---- навигация: страницата е в адреса (#orders, #dash, …) ---- */
   var VIEWS = { profile: 'Профил', orders: 'Поръчки', dash: 'Табло', costs: 'Финанси', inventory: 'Наличности', integrations: 'Интеграции', clients: 'Клиенти', start: 'Първи стъпки', campaigns: 'Кампании', calls: 'Обаждания', abandoned: 'Изоставени', buyers: 'Купувачи' };
+  var currentView = 'orders';
+  /** the line under the greeting: today's date (Sofia) and the screen */
+  function showWhere() {
+    $('where').textContent = document.documentElement.dataset.skin === 'new'
+      ? new Date().toLocaleDateString('bg-BG', innerWidth <= 600 ? { timeZone: 'Europe/Sofia', day: 'numeric', month: 'long' } : { timeZone: 'Europe/Sofia', weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + VIEWS[currentView] : VIEWS[currentView];
+  }
   function viewFromHash() { var v = location.hash.slice(1); return Object.prototype.hasOwnProperty.call(VIEWS, v) ? v : 'orders'; }
   function showView(view) {
     if (view === 'clients' && role !== 'owner') view = 'orders'; // only the owner manages clients
     [].forEach.call(document.querySelectorAll('.nav a[data-view]'), function (a) { a.classList.toggle('on', a.getAttribute('data-view') === view); });
-    $('where').textContent = document.documentElement.dataset.skin === 'new'
-      ? new Date().toLocaleDateString('bg-BG', innerWidth <= 600 ? { day: 'numeric', month: 'long' } : { weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + VIEWS[view] : VIEWS[view];
+    currentView = view; showWhere();
     $('app').classList.remove('open');
     var pick = currentShop === 'all' && NEEDS_SHOP[view];
     Object.keys(VIEWS).forEach(function (v) { $(v + 'View').hidden = pick || v !== view; });
@@ -4447,10 +4452,39 @@ tr.hl td{background:var(--accent-soft)}
   }
   /* the owner's name: the greeting and the card in the menu; a click on the card sets it */
   var ownerMe = { name: '', email: '' };
+  /* the greeting follows the time of day (Sofia) and the day of the week, worded a little differently each time —
+     one pick per part of the day, so it does not flicker while the page is open */
+  var GREETINGS = { // the lines Claude greets with, in Bulgarian
+    morning: ['Добро утро, {n}', 'Кафе и Ordyx, {n}?', 'Здравей, {n}', 'Пак здравей, {n}'],
+    noon: ['Добър ден, {n}', 'Здравей, {n}', 'Пак сме тук, {n}', 'Какво ново, {n}?'],
+    afternoon: ['Добър ден, {n}', 'Пак сме тук, {n}', 'Как върви денят, {n}?', 'Здравей, {n}'],
+    evening: ['Добър вечер, {n}', 'Приятна вечер, {n}', 'Как мина денят, {n}?', 'Пак здравей, {n}'],
+    night: ['Здравей, нощна птицо', 'Работиш до късно, {n}?', 'Още будуваш, {n}?', 'Добър вечер, {n}'],
+    mon: ['Успешен понеделник, {n}'], fri: ['Честит петък, {n}'], sat: ['Хубав уикенд, {n}'], sun: ['Хубав уикенд, {n}']
+  };
+
+  function greetSlot() {
+    var now = new Date(), h = Number(now.toLocaleString('en-GB', { timeZone: 'Europe/Sofia', hour: '2-digit', hour12: false })) % 24;
+    var wd = now.toLocaleDateString('en-US', { timeZone: 'Europe/Sofia', weekday: 'short' }).toLowerCase();
+    var part = h < 5 ? 'night' : h < 11 ? 'morning' : h < 14 ? 'noon' : h < 18 ? 'afternoon' : h < 23 ? 'evening' : 'night';
+    var day = part !== 'night' && GREETINGS[wd] ? wd : null; // a weekday line now and then, never at night
+    return { key: now.toLocaleDateString('sv-SE', { timeZone: 'Europe/Sofia' }) + ':' + part, part: part, day: day };
+  }
+  function greetLine(name) {
+    var slot = greetSlot(), line = null;
+    try { var kept = JSON.parse(sessionStorage.getItem('zdGreet') || 'null'); if (kept && kept.key === slot.key) line = kept.line; } catch (e) { /* private mode */ }
+    if (!line) {
+      var pool = GREETINGS[slot.part].concat(slot.day ? GREETINGS[slot.day] : []);
+      line = pool[Math.floor(Math.random() * pool.length)];
+      try { sessionStorage.setItem('zdGreet', JSON.stringify({ key: slot.key, line: line })); } catch (e) { /* private mode */ }
+    }
+    return name ? line.replace('{n}', name) : line.replace(/,? \{n\}/, '').replace('{n}', '');
+  }
+  setInterval(function () { if (skinOn() && !$('hello').hidden) { greet(); showWhere(); } }, 60000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && skinOn() && !$('hello').hidden) { greet(); showWhere(); } });
   function greet() {
-    var h = new Date().getHours(), hi = h < 5 ? 'Добра нощ' : h < 12 ? 'Добро утро' : h < 18 ? 'Добър ден' : 'Добър вечер';
     var first = (ownerMe.name || '').trim().split(/\s+/)[0];
-    $('hello').textContent = hi + (first ? ', ' + first : '');
+    $('hello').textContent = greetLine(first);
     $('meAv').textContent = ownerMe.name ? stInitials(ownerMe.name) : '?';
     $('meName').textContent = ownerMe.name || 'Въведи името си';
     $('meMail').textContent = ownerMe.email || (ownerMe.name ? '' : 'натисни тук');
