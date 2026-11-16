@@ -1,4 +1,4 @@
-// Voting for the next country on ordyx.eu/europa: counts per country, one vote per browser, a changed mind moves the vote.
+// Voting for the next country on ordyx.eu: counts per country, one vote per browser, a changed mind moves the vote.
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeTestQuery } from './helpers/pglite.js';

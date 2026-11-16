@@ -3598,7 +3598,7 @@ tr.hl td{background:var(--accent-soft)}
       var v = d && d.votes ? Object.keys(d.votes).filter(function (k) { return EU.country(k); }).sort(function (a, b) { return d.votes[b] - d.votes[a]; }) : [];
       if (!v.length) return;
       $('iVotes').hidden = false;
-      $('iVotes').textContent = '🗳 Гласове от ordyx.eu/europa: ' + v.map(function (k) { return EU.country(k).flag + ' ' + EU.country(k).name + ' ' + d.votes[k]; }).join(' · ');
+      $('iVotes').textContent = '🗳 Гласове от ordyx.eu: ' + v.map(function (k) { return EU.country(k).flag + ' ' + EU.country(k).name + ' ' + d.votes[k]; }).join(' · ');
     }).catch(function () {});
   }
   var lastBoxnow = {}, lastBoxnowApi = {};

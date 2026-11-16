@@ -1,7 +1,7 @@
 # Abandoned carts — design (agreed 2026-10-17)
 
 ## Why
-Ordyx sells against RevTrack and Sendica as "fewer lost orders and fewer returned parcels" for ConvertBuilder shops.
+Ordyx sells "fewer lost orders and fewer returned parcels" to ConvertBuilder shops.
 People reach the checkout, type their details and leave. The shop never learns who they were. This module shows the shop
 those people and lets it bring them back with one tap — a human-sent message, not automation.
 
