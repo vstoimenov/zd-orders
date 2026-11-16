@@ -4454,14 +4454,15 @@ tr.hl td{background:var(--accent-soft)}
   var ownerMe = { name: '', email: '' };
   /* the greeting follows the time of day (Sofia) and the day of the week, worded a little differently each time —
      one pick per part of the day, so it does not flicker while the page is open */
-  var GREETINGS = { // the lines Claude greets with, in Bulgarian
-    morning: ['Добро утро, {n}', 'Кафе и Ordyx, {n}?', 'Здравей, {n}', 'Пак здравей, {n}'],
-    noon: ['Добър ден, {n}', 'Здравей, {n}', 'Пак сме тук, {n}', 'Какво ново, {n}?'],
-    afternoon: ['Добър ден, {n}', 'Пак сме тук, {n}', 'Как върви денят, {n}?', 'Здравей, {n}'],
-    evening: ['Добър вечер, {n}', 'Приятна вечер, {n}', 'Как мина денят, {n}?', 'Пак здравей, {n}'],
-    night: ['Здравей, нощна птицо', 'Работиш до късно, {n}?', 'Още будуваш, {n}?', 'Добър вечер, {n}'],
+  var GREETINGS = { // the lines the owner chose
+    morning: ['Добро утро, {n}'],
+    noon: ['Добър ден, {n}', 'Пак сме тук, {n}', 'Какво ново, {n}?'],
+    afternoon: ['Добър ден, {n}'],
+    evening: ['Добър вечер, {n}'],
+    night: ['Добър вечер, {n}'],
     mon: ['Успешен понеделник, {n}'], fri: ['Честит петък, {n}'], sat: ['Хубав уикенд, {n}'], sun: ['Хубав уикенд, {n}']
   };
+
 
   function greetSlot() {
     var now = new Date(), h = Number(now.toLocaleString('en-GB', { timeZone: 'Europe/Sofia', hour: '2-digit', hour12: false })) % 24;
