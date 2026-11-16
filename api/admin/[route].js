@@ -27,12 +27,13 @@ import overview from '../../lib/admin/overview.js';
 import email from '../../lib/admin/email.js';
 import track from '../../lib/admin/track.js';
 import support from '../../lib/admin/support.js';
+import euvote from '../../lib/admin/euvote.js';
 import { send } from '../../lib/http.js';
 import { getQuery } from '../../lib/db.js';
 import { isBlocked } from '../../lib/blocklist.js';
 import { adminUser } from '../../lib/users.js';
 
-const ROUTES = { profile, overview, email, track, support, login, orders, waconnect, stats, costs, integrations, inventory, meta, shops, waybills, push, me, invite, users, onboarding, signup, campaigns, confirm, confirmadmin, abandoned, customers, voice, advisor };
+const ROUTES = { profile, overview, email, track, support, login, orders, waconnect, stats, costs, integrations, inventory, meta, shops, waybills, push, me, invite, users, onboarding, signup, campaigns, confirm, confirmadmin, abandoned, customers, voice, advisor, euvote };
 const pick = (name) => (typeof name === 'string' && Object.hasOwn(ROUTES, name) ? ROUTES[name] : null);
 
 /** Changes only from our own pages: a request carrying another site's Origin is refused (on top of the SameSite cookie). */

@@ -1224,6 +1224,7 @@ tr.hl td{background:var(--accent-soft)}
       <div class="isec">
         <div class="isec-head"><span class="isec-ic"><svg viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62L18.3 9.38a1 1 0 0 0-.78-.38H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg></span><div><h2>Куриери</h2><div class="muted">Офисите и автоматите се обновяват всяка нощ</div></div><label class="icountry">Държава<select id="iCountry" aria-label="Държава"></select></label></div>
         <div class="tip" id="iCountryLine" hidden style="margin:0 0 14px"></div>
+        <div class="tip" id="iVotes" hidden style="margin:0 0 14px"></div>
         <div class="igrid">
           <div class="icard bg-only"><div class="tile econt">E<img src="https://www.google.com/s2/favicons?domain=econt.com&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Еконт</b> <span class="chip ok">активен</span><div class="muted">Куриерски услуги и автомати</div><div class="muted" id="iEcont"></div><div class="muted" id="iEcontApiLine"></div></div><button type="button" class="primary" id="iEcontOpen">+ Товарителници</button></div>
           <div class="icard bg-only"><div class="tile speedy">S<img src="https://www.google.com/s2/favicons?domain=speedy.bg&amp;sz=128" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()"></div><div class="ibody"><b>Спиди</b> <span class="chip ok">активен</span><div class="muted">Експресни куриерски доставки</div><div class="muted" id="iSpeedy"></div><div class="muted" id="iSpeedyApiLine"></div></div><button type="button" class="primary" id="iSpeedyOpen">+ Товарителници</button></div>
@@ -3592,6 +3593,13 @@ tr.hl td{background:var(--accent-soft)}
     };
     $('iCountry').addEventListener('change', showCountry);
     showCountry();
+    // the platform owner sees where the demand is: the votes from ordyx.eu/europa
+    if (role === 'owner') fetch(API + 'euvote', { credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+      var v = d && d.votes ? Object.keys(d.votes).filter(function (k) { return EU.country(k); }).sort(function (a, b) { return d.votes[b] - d.votes[a]; }) : [];
+      if (!v.length) return;
+      $('iVotes').hidden = false;
+      $('iVotes').textContent = '🗳 Гласове от ordyx.eu/europa: ' + v.map(function (k) { return EU.country(k).flag + ' ' + EU.country(k).name + ' ' + d.votes[k]; }).join(' · ');
+    }).catch(function () {});
   }
   var lastBoxnow = {}, lastBoxnowApi = {};
   function renderBoxnow(b, a) {

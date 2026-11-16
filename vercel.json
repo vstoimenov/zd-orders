@@ -190,6 +190,16 @@
       "destination": "/landing/oferta.html"
     },
     {
+      "source": "/europa",
+      "has": [
+        {
+          "type": "host",
+          "value": "ordyx.eu"
+        }
+      ],
+      "destination": "/landing/europa.html"
+    },
+    {
       "source": "/dev",
       "has": [
         {
