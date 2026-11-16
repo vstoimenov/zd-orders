@@ -320,6 +320,102 @@ html[data-skin="new"] #rows select[data-status] option{color:var(--ink);backgrou
   html[data-skin="new"] #rows .odate{display:block;font-size:11.5px;color:var(--muted)}
 }
 @media (max-width:800px){.oacts{justify-content:flex-start}html[data-skin="new"] #rows td:last-child{width:auto}}
+/* ---- the new look on a phone: an app-like tab bar, compact cards, 2-up numbers, swipeable filters ---- */
+.tabbar{display:none}
+@media (max-width:900px){
+  html[data-skin="new"] .tabbar{display:grid;grid-template-columns:repeat(5,1fr);align-items:center;position:fixed;z-index:25;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));height:66px;padding:0 6px;border-radius:24px;
+    border:1px solid rgba(255,255,255,.12);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.02)),var(--frost-side);-webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%);box-shadow:0 18px 40px -14px rgba(0,0,0,.7)}
+  html[data-skin="new"][data-theme="light"] .tabbar{border-color:rgba(255,255,255,.9);box-shadow:0 14px 34px -14px rgba(20,20,15,.35)}
+  html[data-skin="new"] .tabbar a,html[data-skin="new"] .tabbar button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:54px;border:0;background:none;padding:0;border-radius:16px;color:var(--muted);text-decoration:none;font-size:10.5px;font-weight:600;transition:color .2s,background .2s}
+  html[data-skin="new"] .tabbar svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  html[data-skin="new"] .tabbar a.on{color:var(--ink);background:rgba(255,255,255,.07)}
+  html[data-skin="new"][data-theme="light"] .tabbar a.on{background:rgba(20,20,15,.05)}
+  html[data-skin="new"] .tabbar a.on svg{color:var(--accent);filter:drop-shadow(0 2px 8px rgba(250,204,21,.6))}
+  html[data-skin="new"][data-theme="light"] .tabbar a.on svg{color:#b88a00}
+  html[data-skin="new"] .tabbar .tabnew{width:54px;height:54px;margin:0 auto;border-radius:18px;background:var(--accent);color:var(--on-accent);box-shadow:0 10px 24px -8px rgba(250,204,21,.85)}
+  html[data-skin="new"] .tabbar .tabnew svg{width:24px;height:24px;stroke-width:2.4}
+  html[data-skin="new"] .tabbar .tbadge{position:absolute;top:3px;left:calc(50% + 6px);min-width:17px;height:17px;padding:0 5px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-size:10px;font-weight:800;display:grid;place-items:center}
+  html[data-skin="new"] main{padding:6px 14px calc(100px + env(safe-area-inset-bottom))}
+  html[data-skin="new"] #menuBtn,html[data-skin="new"] #tbNew,html[data-skin="new"] #tbSearch{display:none}
+  html[data-skin="new"] .topbar{padding:12px 16px 10px;gap:10px}
+  html[data-skin="new"] .topbar .tbtitle{min-width:0;flex:1}
+  html[data-skin="new"] .topbar .hello{font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  html[data-skin="new"] .topbar .where{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  html[data-skin="new"] .rbtn{width:42px;height:42px}
+  html[data-skin="new"] .sp-fab{right:14px;bottom:calc(88px + env(safe-area-inset-bottom));width:50px;height:50px;padding:0;justify-content:center;font-size:0;border-radius:50%}
+  html[data-skin="new"] .sp-fab::before{content:'💬';font-size:21px}
+  html[data-skin="new"] .app.open .sp-fab,html[data-skin="new"] .app.open .tabbar{display:none}
+  html[data-skin="new"] .sp-box{bottom:calc(146px + env(safe-area-inset-bottom));height:calc(100vh - 220px)}
+  html[data-skin="new"] .pagehead{margin-bottom:16px;gap:10px}
+  html[data-skin="new"] .pagehead h1{font-size:28px}
+  html[data-skin="new"] .pagehead .sub{font-size:13.5px}
+  html[data-skin="new"] .pagehead .actions{display:flex;gap:8px;flex-wrap:wrap}
+  html[data-skin="new"] .pagehead .actions button{padding:8px 14px;font-size:13px}
+  /* numbers two to a row */
+  html[data-skin="new"] .cards{grid-template-columns:1fr 1fr;gap:10px}
+  html[data-skin="new"] .card{padding:14px 14px 15px;border-radius:18px}
+  html[data-skin="new"] .card .label{font-size:12px}
+  html[data-skin="new"] .card .val{font-size:22px;margin-top:8px;word-break:break-word}
+  html[data-skin="new"] .card .hint{font-size:11px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  html[data-skin="new"] .panel{padding:16px;border-radius:18px}
+  /* the studio */
+  .st-top,.st-row3,.st-row2{gap:12px;margin-bottom:12px}
+  .st-col{gap:12px}
+  .st-chart .st-head{flex-direction:column;align-items:stretch;gap:10px}
+  .st-chart .st-legend{display:none}
+  .st-seg{display:flex}.st-seg button{flex:1}
+  .st-live .big b{font-size:38px}
+  .st-ring svg{width:112px;height:112px}
+  .st-table thead{display:none}
+  html[data-skin="new"] .st-table,html[data-skin="new"] .st-table tbody{display:block}
+  html[data-skin="new"] .st-table tr{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 10px;padding:10px 0;border:0;border-bottom:1px solid var(--line)}
+  html[data-skin="new"] .st-table tr:last-child{border-bottom:0}
+  html[data-skin="new"] .st-table td{display:block;padding:0;border:0}
+  html[data-skin="new"] .st-table td:first-child{grid-row:1/3}
+  html[data-skin="new"] .st-table td.r{text-align:right}
+  /* swipeable filters */
+  html[data-skin="new"] .pills{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -14px 14px;padding:2px 14px}
+  html[data-skin="new"] .pills::-webkit-scrollbar{display:none}
+  html[data-skin="new"] .pills>*{flex:none;white-space:nowrap}
+  html[data-skin="new"] #filters{display:grid;grid-template-columns:1fr 1fr auto;gap:8px}
+  html[data-skin="new"] #filters .search{grid-column:1/-1;min-width:0}
+  html[data-skin="new"] #filters input[type="date"]{min-width:0;width:100%;padding:9px 10px}
+  /* tables become cards; label and value side by side */
+  html[data-skin="new"] .tablecard{background:none;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;overflow:visible}
+  html[data-skin="new"] .tablecard tbody tr{margin-bottom:12px;padding:8px 0;border:1px solid rgba(255,255,255,.1);border-radius:20px;background:linear-gradient(160deg,rgba(255,255,255,.08),rgba(255,255,255,.015) 50%),var(--frost);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px)}
+  html[data-skin="new"][data-theme="light"] .tablecard tbody tr{border-color:rgba(255,255,255,.85);box-shadow:var(--shadow)}
+  html[data-skin="new"] .tablecard td[data-label]{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:8px;padding:7px 16px;border:0;text-align:left}
+  html[data-skin="new"] .tablecard td[data-label]::before{display:inline;flex:0 0 38%;margin:0;font-size:11px;letter-spacing:.04em}
+  html[data-skin="new"] .tablecard td[data-label]>div{flex-basis:auto}
+  /* Поръчки: one compact card per order */
+  html[data-skin="new"] #rows tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 12px;padding:16px}
+  html[data-skin="new"] #rows tr.st-new{box-shadow:inset 3px 0 0 var(--accent)}
+  html[data-skin="new"] #rows tr.st-new td:first-child{box-shadow:none}
+  html[data-skin="new"] #rows td{display:block;padding:0;text-align:left}
+  html[data-skin="new"] #rows td[data-label]::before{display:none}
+  html[data-skin="new"] #rows td[data-label="Дата"]{display:none}
+  html[data-skin="new"] #rows td.cli{grid-column:1/-1;position:relative;padding-left:50px;min-height:38px}
+  html[data-skin="new"] #rows td.cli .oav{left:0;top:2px;transform:none}
+  html[data-skin="new"] #rows .odate{display:block;font-size:11.5px;color:var(--muted)}
+  html[data-skin="new"] #rows td[data-label="Доставка"],html[data-skin="new"] #rows td[data-label="Артикули"]{grid-column:1/-1;font-size:13px;padding-left:50px}
+  html[data-skin="new"] #rows td[data-label="Доставка"]::after{content:''}
+  html[data-skin="new"] #rows td[data-label="Сума"]{padding-left:50px;align-self:center}
+  html[data-skin="new"] #rows td[data-label="Сума"] b{font-size:16px}
+  html[data-skin="new"] #rows td[data-label="Статус"]{align-self:center;justify-self:end}
+  html[data-skin="new"] #rows td:last-child{grid-column:1/-1;width:auto;padding-top:4px;border-top:1px solid var(--line)}
+  html[data-skin="new"] #rows .oacts{justify-content:flex-start;padding-top:10px}
+  html[data-skin="new"] #rows .oacts .omore{margin-left:auto}
+  html[data-skin="new"] #rows .oacts{flex-wrap:nowrap}
+  html[data-skin="new"] #rows .oacts>button{white-space:nowrap;font-size:12px;padding:6px 10px}
+  /* Интеграции: two to a row */
+  html[data-skin="new"] .igrid{grid-template-columns:1fr 1fr;gap:10px}
+  html[data-skin="new"] .icard{padding:14px;gap:10px;border-radius:18px}
+  html[data-skin="new"] .icard .tile{width:42px;height:42px;border-radius:13px}
+  html[data-skin="new"] .icard .ibody b{font-size:14px}
+  html[data-skin="new"] .icard .ibody .muted{font-size:12px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  html[data-skin="new"] .icard>button{font-size:12.5px;padding:8px 10px}
+}
+@media (max-width:360px){html[data-skin="new"] .igrid,html[data-skin="new"] .cards{grid-template-columns:1fr}}
 .studio{display:none}
 html[data-skin="new"] .studio{display:block}
 html[data-skin="new"] #dashView>.pagehead h1{font-size:24px}
@@ -965,6 +1061,13 @@ tr.hl td{background:var(--accent-soft)}
     <div class="mecard" id="meCard"><span class="avatar" id="meAv"></span><span class="who"><b id="meName"></b><small id="meMail"></small></span><button type="button" id="meOut" aria-label="Изход" title="Изход"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></button></div>
   </aside>
   <div class="scrim" id="scrim"></div>
+  <nav class="tabbar" id="tabbar" aria-label="Бързо меню">
+    <a href="#dash" data-tab="dash"><svg viewBox="0 0 24 24" data-ico="dash"></svg><span>Табло</span></a>
+    <a href="#orders" data-tab="orders"><svg viewBox="0 0 24 24" data-ico="orders"></svg><span>Поръчки</span><b class="tbadge" id="tabOrdN" hidden></b></a>
+    <button type="button" class="tabnew" id="tabNew" aria-label="Нова поръчка"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    <a href="#inventory" data-tab="inventory"><svg viewBox="0 0 24 24" data-ico="inventory"></svg><span>Наличности</span></a>
+    <button type="button" id="tabMenu" aria-label="Цялото меню"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg><span>Меню</span></button>
+  </nav>
   <div>
     <div class="topbar"><button type="button" class="iconbtn" id="menuBtn" aria-label="Меню"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button><div class="tbtitle"><b class="hello" id="hello" hidden></b><span class="where" id="where"></span></div>
       <div class="tbtools"><button type="button" class="rbtn" id="tbSearch" aria-label="Търси поръчка"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button><button type="button" class="rbtn" id="tbPack" aria-label="За пакетиране" title="За пакетиране"><svg viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5"/><path d="M12 13v8"/></svg><span class="dot" id="tbPackN" hidden></span></button><button type="button" class="rbtn" id="tbBell" aria-label="Известия"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></button><button type="button" class="tbcta" id="tbNew" aria-label="Нова поръчка"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Нова поръчка</span></button></div></div>
@@ -2941,7 +3044,7 @@ tr.hl td{background:var(--accent-soft)}
     if (view === 'clients' && role !== 'owner') view = 'orders'; // only the owner manages clients
     [].forEach.call(document.querySelectorAll('.nav a[data-view]'), function (a) { a.classList.toggle('on', a.getAttribute('data-view') === view); });
     $('where').textContent = document.documentElement.dataset.skin === 'new'
-      ? new Date().toLocaleDateString('bg-BG', { weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + VIEWS[view] : VIEWS[view];
+      ? new Date().toLocaleDateString('bg-BG', innerWidth <= 600 ? { day: 'numeric', month: 'long' } : { weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + VIEWS[view] : VIEWS[view];
     $('app').classList.remove('open');
     var pick = currentShop === 'all' && NEEDS_SHOP[view];
     Object.keys(VIEWS).forEach(function (v) { $(v + 'View').hidden = pick || v !== view; });
@@ -4333,6 +4436,7 @@ tr.hl td{background:var(--accent-soft)}
       if (navClassic[v] == null) navClassic[v] = svg.innerHTML;
       svg.innerHTML = on ? NAV_ICONS[v] : navClassic[v];
     });
+    if (on) [].forEach.call(document.querySelectorAll('.tabbar svg[data-ico]'), function (svg) { svg.innerHTML = NAV_ICONS[svg.getAttribute('data-ico')]; });
   }
   /* the owner's name: the greeting and the card in the menu; a click on the card sets it */
   var ownerMe = { name: '', email: '' };
@@ -4385,6 +4489,7 @@ tr.hl td{background:var(--accent-soft)}
     var sec = $(view + 'View') && !$(view + 'View').hidden ? $(view + 'View') : $('pickShopView');
     if (sec && !REDUCED) { sec.classList.remove('v-in'); void sec.offsetWidth; sec.classList.add('v-in'); }
     liquidTo(view); navPill();
+    [].forEach.call(document.querySelectorAll('.tabbar a[data-tab]'), function (a) { a.classList.toggle('on', a.getAttribute('data-tab') === view); });
     if (view === 'dash') setTimeout(function () { segThumb($('stRange')); }, 30);
   }
   /** numbers count up from 0: every KPI value the new look shows, whenever it is (re)drawn */
@@ -4461,7 +4566,7 @@ tr.hl td{background:var(--accent-soft)}
     location.hash = '#' + where;
   }
   function setPackCount(n) {
-    [$('ordBadge'), $('tbPackN')].forEach(function (el) { el.hidden = !n; el.textContent = n > 99 ? '99+' : String(n || ''); });
+    [$('ordBadge'), $('tbPackN'), $('tabOrdN')].forEach(function (el) { el.hidden = !n; el.textContent = n > 99 ? '99+' : String(n || ''); });
   }
   function refreshPackCount() {
     if (!skinOn()) return;
@@ -4657,6 +4762,8 @@ tr.hl td{background:var(--accent-soft)}
   $('tbPack').addEventListener('click', function () { stGo('pack'); });
   $('tbBell').addEventListener('click', function () { $('notifBtn').click(); });
   $('tbNew').addEventListener('click', function () { stGo('new'); });
+  $('tabNew').addEventListener('click', function () { stGo('new'); });
+  $('tabMenu').addEventListener('click', function () { $('app').classList.add('open'); });
   $('meOut').addEventListener('click', function () { $('logout').click(); });
   $('sideQ').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); stGo('search'); } if (e.key === 'Escape') this.blur(); });
   if (/Mac|iPhone|iPad/.test(navigator.platform || '')) $('sideKbd').textContent = '⌘K';
