@@ -89,3 +89,23 @@ test('a client sees only its shops; the route needs a login and takes the range'
   assert.equal(json(await call(owner, '/api/admin/overview?range=bogus')).range, '30d');
   assert.equal((await call('', '/api/admin/overview')).statusCode, 401);
 });
+
+test('„Табло“ in the new look: one shop or the admin\'s own, the orders of the same day before, the month and its goal', async () => {
+  await order({ ago: 0, total: 30 }); await order({ ago: 7, total: 12 }); await order({ shopId: other, ago: 0, total: 500 });
+  const post = async (cookie, body) => { const res = fakeRes(); await router({ method: 'POST', url: '/api/admin/overview', headers: { cookie }, body: JSON.stringify(body), socket: {} }, res); return res; };
+  let d = json(await call(owner, `/api/admin/overview?range=7d&shop=${SHOP}`));
+  assert.equal(d.shops, 1); assert.equal(d.kpis[0].value, 30, 'only this shop');
+  const last = d.points[d.points.length - 1];
+  assert.deepEqual([last.current, last.orders, last.previous, last.previousOrders], [30, 1, 12, 1], 'today against the same weekday a week before');
+  const sofiaMonth = (ms) => new Date(ms).toLocaleDateString('sv-SE', { timeZone: 'Europe/Sofia' }).slice(0, 7);
+  const thisMonth = sofiaMonth(Date.now());
+  assert.equal(d.month.revenue, 30 + (sofiaMonth(Date.now() - 7 * 864e5) === thisMonth ? 12 : 0));
+  assert.equal(d.month.goal, null); assert.ok(d.month.daysLeft >= 1 && d.month.daysLeft <= 31);
+  assert.equal((await post(owner, { action: 'goal', amount: 2400, shop: SHOP })).statusCode, 200);
+  assert.equal(json(await call(owner, `/api/admin/overview?range=7d&shop=${SHOP}`)).month.goal, 2400);
+  assert.equal(json(await call(owner, '/api/admin/overview?range=7d&shop=all')).month.goal, null, 'a goal per shop');
+  assert.equal((await post(owner, { action: 'goal', amount: -5, shop: SHOP })).statusCode, 400);
+  await post(owner, { action: 'goal', amount: 0, shop: SHOP });
+  assert.equal(json(await call(owner, `/api/admin/overview?range=7d&shop=${SHOP}`)).month.goal, null, '0 removes it');
+  assert.equal(json(await call(owner, '/api/admin/overview?range=7d')).month, undefined, '„Профил“ is unchanged');
+});
