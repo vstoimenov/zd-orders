@@ -420,22 +420,51 @@ html[data-skin="new"] #rows select[data-status] option{color:var(--ink);backgrou
   html[data-skin="new"] .icard>button{font-size:12.5px;padding:8px 10px}
 }
 @media (max-width:360px){html[data-skin="new"] .igrid,html[data-skin="new"] .cards{grid-template-columns:1fr}}
-/* a new order's confirmation strip (owner's look) */
-.oconfirm{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:6px;margin-bottom:8px;padding:8px;border-radius:14px;background:rgba(251,146,60,.08);border:1px dashed rgba(251,146,60,.35)}
-html[data-theme="light"] .oconfirm{background:#fff7ed;border-color:#fdba74}
-.oc-main{display:flex;gap:6px;flex:1 1 auto;justify-content:flex-end}
-html[data-skin="new"] #rows .oconfirm button.oc-yes,html[data-skin="new"] #rows .oconfirm button.oc-no{margin:0;padding:7px 12px;border-radius:999px;font-size:12.5px;font-weight:700;white-space:nowrap;flex:1 1 auto}
-html[data-skin="new"] #rows .oc-yes{background:var(--ok);border:1px solid var(--ok);color:#052e16}
-html[data-skin="new"] #rows .oc-yes:hover:not(:disabled){filter:brightness(1.08)}
-html[data-skin="new"][data-theme="light"] #rows .oc-yes{color:#fff}
-html[data-skin="new"] #rows .oc-no{background:transparent;border:1px solid var(--bad-line);color:var(--bad)}
-html[data-skin="new"] #rows .oc-no:hover:not(:disabled){background:var(--bad-soft)}
-.oc-reach{display:flex;gap:6px}
-html[data-skin="new"] #rows .oc-ic{display:grid;place-items:center;width:32px;height:32px;margin:0;padding:0;border-radius:50%;border:1px solid var(--line);background:var(--surface-3);color:var(--ink);text-decoration:none;flex:none}
-html[data-skin="new"] #rows .oc-ic:hover{border-color:var(--accent-line);color:var(--accent-ink)}
-html[data-theme="light"] #rows .oc-ic:hover{color:#8a6100}
-html[data-skin="new"] #rows .oc-ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
-@media (max-width:800px){.oconfirm{justify-content:space-between;margin:10px 0 0}.oc-main{justify-content:flex-start}}
+/* a new order waiting for confirmation (owner's look): a slim bar under the row on a computer, a block in the card on a phone */
+.oc{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;padding:10px 12px 10px 14px;border-radius:16px;
+  background:linear-gradient(90deg,rgba(251,146,60,.1),rgba(251,146,60,.03) 45%,transparent);border:1px solid rgba(251,146,60,.22)}
+html[data-theme="light"] .oc{background:linear-gradient(90deg,#fff3e6,#fffaf4 50%,#fff);border-color:#fed7aa}
+.oc-state{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:650;color:var(--warn);white-space:nowrap}
+html[data-theme="light"] .oc-state{color:#c2410c}
+.oc-state i{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 0 0 rgba(251,146,60,.6);animation:ocPulse 1.8s ease-out infinite}
+@keyframes ocPulse{70%{box-shadow:0 0 0 7px rgba(251,146,60,0)}100%{box-shadow:0 0 0 0 rgba(251,146,60,0)}}
+.oc-reach{display:flex;gap:6px;flex:1 1 auto;flex-wrap:wrap}
+.oc-main{display:flex;gap:8px;margin-left:auto}
+html[data-skin="new"] #rows .oc .oc-chip{display:inline-flex;align-items:center;gap:7px;height:34px;margin:0;padding:0 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface-3);color:var(--text-2);font-size:12.5px;font-weight:600;text-decoration:none;white-space:nowrap;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+html[data-skin="new"] #rows .oc .oc-chip:hover{border-color:var(--accent-line);color:var(--ink);background:var(--surface-2)}
+html[data-skin="new"] #rows .oc svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+html[data-skin="new"] #rows .oc .oc-yes,html[data-skin="new"] #rows .oc .oc-no{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:38px;margin:0;border-radius:999px;font-size:13.5px;font-weight:700;white-space:nowrap;cursor:pointer;transition:transform .12s,filter .15s,background .15s,color .15s,border-color .15s}
+html[data-skin="new"] #rows .oc .oc-yes{padding:0 20px;border:0;background:linear-gradient(180deg,#5ee28f,#22c55e);color:#052e16;box-shadow:0 10px 22px -10px rgba(34,197,94,.85),inset 0 1px 0 rgba(255,255,255,.35)}
+html[data-skin="new"][data-theme="light"] #rows .oc .oc-yes{background:linear-gradient(180deg,#22c55e,#16a34a);color:#fff}
+html[data-skin="new"] #rows .oc .oc-yes svg{stroke-width:2.6}
+html[data-skin="new"] #rows .oc .oc-yes:hover:not(:disabled){filter:brightness(1.07)}
+html[data-skin="new"] #rows .oc .oc-yes:active:not(:disabled),html[data-skin="new"] #rows .oc .oc-no:active:not(:disabled){transform:scale(.97)}
+html[data-skin="new"] #rows .oc .oc-no{padding:0 15px;border:1px solid var(--line);background:transparent;color:var(--muted)}
+html[data-skin="new"] #rows .oc .oc-no:hover:not(:disabled){border-color:var(--bad-line);background:var(--bad-soft);color:var(--bad)}
+html[data-skin="new"] #rows .oc button:disabled{opacity:.55;cursor:default}
+/* computer: the bar is its own row, joined to the order above */
+.oc-row{display:none}
+.oc .l-short{display:none}
+html[data-skin="new"] #rows tr.oc-row{display:table-row;background:rgba(250,204,21,.04)}
+html[data-skin="new"] #rows tr.oc-row:hover{background:rgba(250,204,21,.04)}
+html[data-skin="new"] #rows tr.oc-row td{padding:0 18px 14px;box-shadow:inset 3px 0 0 var(--accent)}
+html[data-skin="new"] #rows tr.has-oc td{border-bottom:0}
+.oconfirm{display:none}
+@media (max-width:800px){
+  html[data-skin="new"] #rows tr.oc-row{display:none}
+  html[data-skin="new"] #rows .oconfirm{display:block;grid-column:1/-1}
+  html[data-skin="new"] #rows .oconfirm .oc{display:grid;grid-template-columns:1fr auto;gap:10px;padding:12px}
+  html[data-skin="new"] #rows .oconfirm .oc-state{grid-column:1/-1}
+  html[data-skin="new"] #rows .oconfirm .oc-main{display:contents}
+  html[data-skin="new"] #rows .oconfirm .oc-yes{grid-column:1;grid-row:2;height:44px;font-size:14.5px}
+  html[data-skin="new"] #rows .oconfirm .oc-no{grid-column:2;grid-row:2;height:44px}
+  html[data-skin="new"] #rows .oconfirm .oc-reach{grid-column:1/-1;grid-row:3;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  html[data-skin="new"] #rows .oconfirm .oc-chip{justify-content:center;gap:5px;padding:0 4px;height:38px;font-size:11.5px;min-width:0}
+  html[data-skin="new"] #rows .oconfirm .oc-chip span{overflow:hidden;text-overflow:ellipsis}
+  html[data-skin="new"] #rows .oconfirm .oc-chip .l-long{display:none}
+  html[data-skin="new"] #rows .oconfirm .oc-chip .l-short{display:inline}
+  html[data-skin="new"] #rows .oconfirm .oc-chip svg{width:14px;height:14px}
+}
 .studio{display:none}
 html[data-skin="new"] .studio{display:block}
 html[data-skin="new"] #dashView>.pagehead h1{font-size:24px}
@@ -2317,31 +2346,48 @@ tr.hl td{background:var(--accent-soft)}
   var OC_ICON = {
     tel: '<svg viewBox="0 0 24 24"><path d="M5 4h3.5l2 5-2.5 1.5a11 11 0 0 0 5.5 5.5l1.5-2.5 5 2V19a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>',
     msg: '<svg viewBox="0 0 24 24"><path d="M21 12a8.5 8.5 0 0 1-12.4 7.5L3 21l1.5-5.6A8.5 8.5 0 1 1 21 12z"/><path d="m8.5 12 2.3 2.3L15.5 9.7"/></svg>',
-    agent: '<svg viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="13" width="4" height="6" rx="1.5"/><rect x="17" y="13" width="4" height="6" rx="1.5"/><path d="M19 19a3 3 0 0 1-3 3h-3"/></svg>'
+    agent: '<svg viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="13" width="4" height="6" rx="1.5"/><rect x="17" y="13" width="4" height="6" rx="1.5"/><path d="M19 19a3 3 0 0 1-3 3h-3"/></svg>',
+    check: '<svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+    x: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>'
   };
   function confirmStrip(tr, td) {
     var sel = tr.querySelector('select[data-status]'), i = sel ? sel.getAttribute('data-status') : null, o = i != null ? orders[i] : null;
     if (!o || o.status !== 'new' || o.destroyed) return null;
-    var strip = document.createElement('div');
-    strip.className = 'oconfirm';
-    strip.innerHTML = '<div class="oc-main"><button type="button" class="oc-yes" data-quick="confirmed" data-i="' + i + '">✓ Потвърди</button><button type="button" class="oc-no" data-quick="cancelled" data-i="' + i + '">✕ Откажи</button></div><div class="oc-reach"></div>';
-    var reach = strip.querySelector('.oc-reach');
-    if (o.phone) { var a = document.createElement('a'); a.className = 'oc-ic'; a.href = 'tel:' + o.phone; a.title = 'Обади се на ' + o.phone; a.setAttribute('aria-label', a.title); a.innerHTML = OC_ICON.tel; reach.appendChild(a); }
-    [['[data-confirm]', 'msg', 'Изпрати съобщение за потвърждение'], ['[data-call]', 'agent', 'Гласовият агент да звънне и да попита']].forEach(function (x) {
-      var b = td.querySelector(x[0]); if (!b) return;
-      b.className = 'oc-ic'; b.title = x[2]; b.setAttribute('aria-label', x[2]); b.innerHTML = OC_ICON[x[1]];
-      reach.appendChild(b);
-    });
-    return strip;
+    var msg = td.querySelector('[data-confirm]'), call = td.querySelector('[data-call]');
+    if (msg) msg.remove();
+    if (call) call.remove();
+    var chip = function (el, icon, label, title, short) { el.className = 'oc-chip'; el.title = title; el.innerHTML = OC_ICON[icon] + '<span class="l-long">' + label + '</span><span class="l-short">' + (short || label) + '</span>'; return el; };
+    var build = function () {
+      var box = document.createElement('div');
+      box.className = 'oc';
+      box.innerHTML = '<span class="oc-state"><i></i>Чака потвърждение</span><div class="oc-reach"></div>' +
+        '<div class="oc-main"><button type="button" class="oc-no" data-quick="cancelled" data-i="' + i + '">' + OC_ICON.x + 'Откажи</button>' +
+        '<button type="button" class="oc-yes" data-quick="confirmed" data-i="' + i + '">' + OC_ICON.check + 'Потвърди</button></div>';
+      var reach = box.querySelector('.oc-reach');
+      if (o.phone) { var a = document.createElement('a'); a.href = 'tel:' + o.phone; reach.appendChild(chip(a, 'tel', 'Обади се', 'Обади се на ' + o.phone)); }
+      if (msg) reach.appendChild(chip(msg.cloneNode(false), 'msg', 'Съобщение', 'Изпрати съобщение за потвърждение'));
+      if (call) reach.appendChild(chip(call.cloneNode(false), 'agent', 'Гласов агент', 'Гласовият агент да звънне и да попита', 'Агент'));
+      return box;
+    };
+    // computer: a bar under the row
+    var row = document.createElement('tr'), cell = document.createElement('td');
+    row.className = 'oc-row'; cell.colSpan = tr.children.length; cell.appendChild(build()); row.appendChild(cell);
+    tr.classList.add('has-oc');
+    tr.parentNode.insertBefore(row, tr.nextSibling);
+    // phone: the same inside the card
+    var inCard = document.createElement('div');
+    inCard.className = 'oconfirm'; inCard.appendChild(build());
+    return inCard;
   }
   function quickStatus(btn) {
     var o = orders[btn.getAttribute('data-i')], next = btn.getAttribute('data-quick');
     if (!o) return;
     if (next === 'cancelled' && !window.confirm('Да откажа ли поръчката на ' + (o.name || 'клиента') + ' (' + o.total.toFixed(2) + ' ' + o.currency + ')?')) return;
-    [].forEach.call(btn.parentNode.children, function (b) { b.disabled = true; });
+    var twins = document.querySelectorAll('#rows [data-quick][data-i="' + btn.getAttribute('data-i') + '"]');
+    [].forEach.call(twins, function (b) { b.disabled = true; });
     fetch(withShop(API + 'orders'), { method: 'PATCH', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: o.id, status: next }) })
       .then(function (r) { if (r.status === 401) { showLogin(); return; } if (!r.ok) throw new Error(r.status); o.status = next; render(); })
-      .catch(function () { [].forEach.call(btn.parentNode.children, function (b) { b.disabled = false; }); alert('Статусът не беше записан. Опитайте пак.'); });
+      .catch(function () { [].forEach.call(twins, function (b) { b.disabled = false; }); alert('Статусът не беше записан. Опитайте пак.'); });
   }
   $('rows').addEventListener('click', function (e) { var b = e.target.closest('[data-quick]'); if (b) quickStatus(b); });
   function closeMenus(except) {
