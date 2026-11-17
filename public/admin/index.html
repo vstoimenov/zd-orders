@@ -470,6 +470,13 @@ html[data-skin="new"] #rows tr.has-oc td{border-bottom:0}
   html[data-skin="new"] #rows .oconfirm .oc-chip .l-short{display:inline}
   html[data-skin="new"] #rows .oconfirm .oc-chip svg{width:14px;height:14px}
 }
+/* the courier chip in Поръчки */
+.ctag{display:inline-flex;align-items:center;gap:6px;margin:0 0 6px;padding:3px 9px 3px 5px;border-radius:999px;font-size:12px;font-weight:700;line-height:1.3;background:var(--surface-2);color:var(--ink);border:1px solid var(--line);white-space:nowrap}
+.ctag img{width:16px;height:16px;border-radius:4px;background:#fff;padding:1px;object-fit:contain}
+.ctag i{font-style:normal;font-weight:600;color:var(--muted)}
+.ctag i::before{content:"·";margin-right:5px}
+.ctag-econt{border-color:rgba(29,79,145,.35)}.ctag-speedy{border-color:rgba(212,20,28,.35)}.ctag-boxnow{border-color:rgba(68,194,160,.4)}
+#rows td[data-label="Доставка"] .ctag{display:flex;width:max-content}
 .studio{display:none}
 html[data-skin="new"] .studio{display:block}
 html[data-skin="new"] #dashView>.pagehead h1{font-size:24px}
@@ -2297,6 +2304,14 @@ tr.hl td{background:var(--accent-soft)}
     if (fulOn || (o.fulfilment && o.fulfilment.sentAt)) return o.fulfilment && o.fulfilment.sentAt ? '<span class="wb muted">📦 при склада от ' + esc(when(o.fulfilment.sentAt)) + '</span>' : (o.fulfilment && o.fulfilment.pending ? '<span class="wb dup" title="Складът още не е приел поръчката — вижте Интеграции → Fulfilment склад">⏳ чака склада</span>' : '');
     return ['econt', 'speedy', 'boxnow', 'other'].indexOf(o.courier) >= 0 && ['new', 'confirmed', 'shipped'].indexOf(o.status) >= 0 ? '<button type="button" class="wbbtn" data-wb="' + i + '">Създай товарителница</button>' : '';
   }
+  /** which courier and how: a small chip with the logo above the address (a new order's text often lacks the courier's name) */
+  var COURIER_TAG = { econt: ['Еконт', '/logos/econt.svg'], speedy: ['Спиди', '/logos/speedy.svg'], boxnow: ['BOX NOW', '/logos/boxnow.svg'] };
+  function courierTag(o) {
+    var c = COURIER_TAG[o.courier], t = String(o.deliveryType || '');
+    var how = /locker|automat/.test(t) || /автомат/i.test(o.officeText || '') ? 'автомат' : /address/.test(t) ? 'до адрес' : /office/.test(t) ? 'офис' : '';
+    if (!c && !how) return '';
+    return '<span class="ctag ctag-' + esc(o.courier || 'other') + '">' + (c ? '<img src="' + c[1] + '" alt="" width="16" height="16">' + c[0] : 'Друг куриер') + (how ? '<i>' + how + '</i>' : '') + '</span>';
+  }
   function render() {
     $('count').textContent = total + (total === 1 ? ' поръчка' : ' поръчки');
     $('rows').innerHTML = orders.map(function (o, i) {
@@ -2310,7 +2325,7 @@ tr.hl td{background:var(--accent-soft)}
           (o.cbCheck === 'pending' ? '<span class="dup" title="Модулът я изпрати, но ConvertBuilder още не я показва. Докато не я потвърди, няма автоматично съобщение, известие, наличности и не влиза в таблото. Ако е истинска, ще се оправи сама до минути.">непотвърдена от магазина</span>' : '') +
           '<br><a href="tel:' + esc(o.phone) + '">' + esc(o.phone) + '</a>' + (o.email ? '<br><span class="muted">' + esc(o.email) + '</span>' : '') +
           '<br>' + nkBadge(o) + (currentShop === 'all' && shopById(o.shopId) ? '<br><span class="shoptag">' + esc(shopById(o.shopId).display) + '</span>' : '') + '</td>' +
-        '<td data-label="Доставка">' + esc(o.officeText) + (o.redirect ? '<br><span class="muted" style="text-decoration:line-through">' + esc(o.redirect.from) + '</span>' : '') + '<br><span class="muted">' + esc(o.city) + (o.postCode ? ' ' + esc(o.postCode) : '') + '</span></td>' +
+        '<td data-label="Доставка">' + courierTag(o) + esc(o.officeText) + (o.redirect ? '<br><span class="muted" style="text-decoration:line-through">' + esc(o.redirect.from) + '</span>' : '') + '<br><span class="muted">' + esc(o.city) + (o.postCode ? ' ' + esc(o.postCode) : '') + '</span></td>' +
         '<td data-label="Артикули">' + items + '</td>' +
         '<td data-label="Сума"><b>' + o.total.toFixed(2) + ' ' + esc(o.currency) + '</b></td>' +
         '<td data-label="Статус">' + (o.destroyed ? '<span class="stmark st-destroyed">🗑 Унищожена</span>' : '<select data-status="' + i + '">' + opts + '</select>') +
