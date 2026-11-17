@@ -477,6 +477,19 @@ html[data-skin="new"] #rows tr.has-oc td{border-bottom:0}
 .ctag i::before{content:"·";margin-right:5px}
 .ctag-econt{border-color:rgba(29,79,145,.35)}.ctag-speedy{border-color:rgba(212,20,28,.35)}.ctag-boxnow{border-color:rgba(68,194,160,.4)}
 #rows td[data-label="Доставка"] .ctag{display:flex;width:max-content}
+.oedit svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;margin-right:5px}
+html[data-skin="new"] #rows .oedit{width:34px;height:34px;padding:0;margin:0;border-radius:50%;display:grid;place-items:center;background:var(--surface-3);border:1px solid var(--line);color:var(--ink);flex:none}
+html[data-skin="new"] #rows .oedit:hover{border-color:var(--accent-line)}
+html[data-skin="new"] #rows .oedit svg{margin:0}
+html[data-skin="new"] #rows .oedit span{display:none}
+html[data-skin="new"] #noItems th,html[data-skin="new"] #noItems td{padding:6px 4px}
+html[data-skin="new"] #noItems input{width:100%;min-width:0}
+@media (max-width:800px){
+  html[data-skin="new"] #rows .oacts .wbbtn{order:1;flex:1 1 100%}
+  html[data-skin="new"] #rows .oacts .packbtn,html[data-skin="new"] #rows .oacts .packed{order:2}
+  html[data-skin="new"] #rows .oacts .oedit{order:3}
+  html[data-skin="new"] #rows .oacts .omore{order:4;margin-left:auto}
+}
 .studio{display:none}
 html[data-skin="new"] .studio{display:block}
 html[data-skin="new"] #dashView>.pagehead h1{font-size:24px}
@@ -1785,7 +1798,7 @@ tr.hl td{background:var(--accent-soft)}
   </div>
   <div class="modal" id="newOrderModal" hidden>
     <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="noTitle" style="max-width:720px">
-      <div class="dhead"><div class="tile" style="color:#111;background:var(--accent)">🧾</div><div><h2 id="noTitle">Нова поръчка</h2><div class="muted" style="font-size:15px">По телефона, от съобщение или от друг сайт — влиза като всяка друга поръчка</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
+      <div class="dhead"><div class="tile" style="color:#111;background:var(--accent)">🧾</div><div><h2 id="noTitle">Нова поръчка</h2><div class="muted" style="font-size:15px" id="noSub">По телефона, от съобщение или от друг сайт — влиза като всяка друга поръчка</div></div><button type="button" class="x" data-close aria-label="Затвори">×</button></div>
       <div class="dbody">
         <div class="fgrid">
           <label>Име и фамилия<input type="text" id="noName" maxlength="120"></label>
@@ -1793,6 +1806,7 @@ tr.hl td{background:var(--accent-soft)}
           <label>Имейл (по желание)<input type="email" id="noEmail" maxlength="160"></label>
           <label>Доставка<select id="noType"><option value="econt_office">Еконт – офис / автомат</option><option value="speedy_office">Спиди – офис / автомат</option><option value="boxnow_locker">BOX NOW – автомат</option><option value="econt_address">Еконт – до адрес</option><option value="speedy_address">Спиди – до адрес</option><option value="other">Друго (вземане от място, друг куриер)</option></select></label>
         </div>
+        <div class="tip" id="noNow" hidden style="margin:0 0 10px"></div>
         <div id="noPick"></div>
         <div class="fgrid" id="noAddr" hidden>
           <label>Град<input type="text" id="noCity" maxlength="80"></label>
@@ -2330,7 +2344,7 @@ tr.hl td{background:var(--accent-soft)}
         '<td data-label="Сума"><b>' + o.total.toFixed(2) + ' ' + esc(o.currency) + '</b></td>' +
         '<td data-label="Статус">' + (o.destroyed ? '<span class="stmark st-destroyed">🗑 Унищожена</span>' : '<select data-status="' + i + '">' + opts + '</select>') +
           (o.redirect && o.status === 'shipped' ? '<span class="stmark st-redirected" title="Пренасочена от: ' + esc(o.redirect.from) + '">↪ Пренасочена</span>' : '') + prioSelect(o, i) + '</td>' +
-        '<td>' + packedCell(o, i) + (['new', 'confirmed'].indexOf(o.status) >= 0 && !o.shipment && !o.waybillState && !(o.fulfilment && o.fulfilment.sentAt) ? '<button type="button" data-dl="' + i + '" title="Друг офис, автомат или адрес">📍 Доставка</button>' : '') + (o.deliveryChangedBy === 'customer' ? '<span class="tag" title="Клиентът смени доставката от страницата на поръчката">📍 сменена от клиента</span>' : '') + invoiceCell(o, i) + (['new', 'confirmed'].indexOf(o.status) >= 0 && o.phone ? '<button type="button" data-confirm="' + i + '">💬 Потвърди</button>' + (DEMO || role !== 'owner' ? '' : '<button type="button" data-call="' + i + '" title="Гласов агент звъни на клиента и пита дали потвърждава">📞 Потвърди</button>') : '') + confirmBadge(o) +
+        '<td>' + packedCell(o, i) + (['new', 'confirmed'].indexOf(o.status) >= 0 && !o.shipment && !o.waybillState && !(o.fulfilment && o.fulfilment.sentAt) ? '<button type="button" class="oedit" data-edit="' + i + '" title="Редактирай: клиент, артикули, сума, куриер и доставка" aria-label="Редактирай поръчката"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span>Редактирай</span></button>' : '') + (o.deliveryChangedBy === 'customer' ? '<span class="tag" title="Клиентът смени доставката от страницата на поръчката">📍 сменена от клиента</span>' : '') + invoiceCell(o, i) + (['new', 'confirmed'].indexOf(o.status) >= 0 && o.phone ? '<button type="button" data-confirm="' + i + '">💬 Потвърди</button>' + (DEMO || role !== 'owner' ? '' : '<button type="button" data-call="' + i + '" title="Гласов агент звъни на клиента и пита дали потвърждава">📞 Потвърди</button>') : '') + confirmBadge(o) +
           shipmentCell(o, i) + (o.status === 'shipped' && o.shipment && o.shipment.number && !o.shipment.demo ? '<button type="button" data-redir="' + i + '" title="Към друг офис, автомат или адрес на същия куриер — преди пратката да се върне">↪ Пренасочи</button>' : '') +
           (['new', 'confirmed', 'cancelled'].indexOf(o.status) >= 0 && !o.destroyed && !o.shipment ? '<button type="button" data-destroy="' + i + '" title="Фалшива, тестова или дублирана поръчка — не се брои никъде">🗑 Унищожи</button>' : '') +
           '<button type="button" data-slip="' + i + '" title="Лист за пакетиране с QR код">🖨 Лист</button><button type="button" data-copy="' + i + '">Копирай за товарителница</button><button type="button" class="del" data-del="' + i + '" title="Изтрий поръчката от системата">Изтрий</button></td>' +
@@ -2492,9 +2506,12 @@ tr.hl td{background:var(--accent-soft)}
     if (!$('noTotal').getAttribute('data-touched')) $('noTotal').value = sum ? sum.toFixed(2).replace('.', ',') : '';
   }
   var noCartId = null; // the abandoned cart this order is made from („Направи поръчка“)
+  var noEdit = null; // the order being edited: {id, type, officeId, officeText}
   function openNewOrder() {
     if (noPicker) { noPicker.destroy(); noPicker = null; } // a fresh picker: the previous customer's office never carries over
-    noChoice = null; noCartId = null;
+    noChoice = null; noCartId = null; noEdit = null;
+    $('noTitle').textContent = 'Нова поръчка'; $('noSave').textContent = 'Запиши поръчката'; $('noNow').hidden = true;
+    $('noSub').textContent = 'По телефона, от съобщение или от друг сайт — влиза като всяка друга поръчка';
     ['noName', 'noPhone', 'noEmail', 'noCity', 'noPost', 'noAddress', 'noOtherText', 'noTotal', 'noInvCompany', 'noInvEik', 'noInvVat', 'noInvMol', 'noInvAddress'].forEach(function (id) { $(id).value = ''; });
     $('noInvOn').checked = false; $('noInv').hidden = true;
     $('noTotal').removeAttribute('data-touched'); $('noErr').textContent = ''; $('noPay').value = 'cod';
@@ -2504,6 +2521,34 @@ tr.hl td{background:var(--accent-soft)}
     noTypeChanged();
   }
   $('noNew').addEventListener('click', openNewOrder);
+  /** „Редактирай“: the same window, filled with the order; the office stays unless another is picked */
+  function openEditOrder(o) {
+    openNewOrder();
+    noEdit = { id: o.id, type: o.deliveryType, officeId: o.officeId || '', officeText: o.officeText || '' };
+    $('noTitle').textContent = 'Редактирай поръчката'; $('noSave').textContent = 'Запази промените';
+    $('noSub').textContent = 'Клиент, артикули, сума, куриер и доставка — докато поръчката няма товарителница';
+    $('noName').value = o.name || ''; $('noPhone').value = o.phone || ''; $('noEmail').value = o.email || '';
+    var items = (o.items || []).filter(function (it) { return it && it.name; });
+    $('noItems').querySelector('tbody').innerHTML = items.length ? items.map(function (it) { return noItemRow({ name: it.name, qty: it.qty || 1, price: it.price != null ? String(it.price).replace('.', ',') : '' }); }).join('') : noItemRow();
+    $('noTotal').value = o.total != null ? Number(o.total).toFixed(2).replace('.', ',') : ''; $('noTotal').setAttribute('data-touched', '1');
+    $('noPay').value = o.paymentMethod === 'cod' || !o.paymentMethod ? 'cod' : 'card';
+    var inv = o.invoice || {};
+    if (inv.company || inv.eik) { $('noInvOn').checked = true; $('noInv').hidden = false; $('noInvCompany').value = inv.company || ''; $('noInvEik').value = inv.eik || ''; $('noInvVat').value = inv.vat || ''; $('noInvMol').value = inv.mol || ''; $('noInvAddress').value = inv.address || ''; }
+    var t = $('noType').querySelector('option[value="' + o.deliveryType + '"]') ? o.deliveryType : 'other';
+    $('noType').value = t;
+    if (t === 'other') $('noOtherText').value = o.officeText || '';
+    if (/_address$/.test(t)) { $('noCity').value = o.city || ''; $('noPost').value = o.postCode || ''; $('noAddress').value = o.addressText || ''; }
+    noTypeChanged();
+    noEditNow();
+  }
+  /** the current office, kept unless another is picked (an office typed by the shop's checkout has no id: then pick one) */
+  function noEditNow() {
+    var same = noEdit && $('noType').value === noEdit.type && OFFICE_TYPES.indexOf(noEdit.type) >= 0;
+    $('noNow').hidden = !same;
+    if (!same) return;
+    $('noNow').innerHTML = noEdit.officeId ? '📍 Сега: <b>' + esc(noEdit.officeText) + '</b>. Избери друг офис само ако искаш да го смениш.' : '📍 Клиентът е написал: <b>' + esc(noEdit.officeText) + '</b>. Избери офиса от списъка, за да може да се направи товарителница.';
+    if (noEdit.officeId && !(noChoice && noChoice.officeId)) noChoice = { officeId: noEdit.officeId, officeText: noEdit.officeText, kept: true };
+  }
   /** The new order form filled from an abandoned cart; the shop picks the office with the customer on the phone. */
   function orderFromCart(c) {
     openNewOrder();
@@ -2515,7 +2560,7 @@ tr.hl td{background:var(--accent-soft)}
     if (c.deliveryText) $('noErr').textContent = 'В количката: ' + c.deliveryText + ' — изберете офиса или адреса.';
   }
   $('noInvOn').addEventListener('change', function () { $('noInv').hidden = !$('noInvOn').checked; });
-  $('noType').addEventListener('change', noTypeChanged);
+  $('noType').addEventListener('change', function () { if (noChoice && noChoice.kept) noChoice = null; noTypeChanged(); noEditNow(); });
   $('noAddItem').addEventListener('click', function () { $('noItems').querySelector('tbody').insertAdjacentHTML('beforeend', noItemRow()); });
   $('noItems').addEventListener('click', function (e) { if (e.target.classList.contains('no-del')) { e.target.closest('tr').remove(); noSum(); } });
   $('noItems').addEventListener('input', noSum);
@@ -2532,9 +2577,9 @@ tr.hl td{background:var(--accent-soft)}
     } else if (ADDRESS_TYPES.indexOf(t) >= 0) { order.city = $('noCity').value; order.post_code = $('noPost').value; order.address_text = $('noAddress').value; }
     else order.office_text = $('noOtherText').value;
     $('noErr').textContent = '';
-    busy($('noSave'), fetch(withShop(API + 'orders'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'create', order: order, cartId: noCartId || undefined }) })
+    busy($('noSave'), fetch(withShop(API + 'orders'), { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(noEdit ? { action: 'edit', id: noEdit.id, order: order } : { action: 'create', order: order, cartId: noCartId || undefined }) })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (r.status === 401) { showLogin(); throw new Error('auth'); } if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status)); return d; }); }))
-      .then(function () { var fromCart = noCartId; $('newOrderModal').hidden = true; noCartId = null; if (fromCart) loadAbandoned(); else load(1); })
+      .then(function () { var fromCart = noCartId, edited = noEdit; $('newOrderModal').hidden = true; noCartId = null; noEdit = null; if (fromCart) loadAbandoned(); else load(edited ? page : 1); })
       .catch(function (e) { if (e.message !== 'auth') $('noErr').textContent = e.message; });
   });
 
@@ -2621,6 +2666,7 @@ tr.hl td{background:var(--accent-soft)}
     if (btn.getAttribute('data-confirm') != null) { openConfirm(orders[btn.getAttribute('data-confirm')]); return; }
     if (btn.getAttribute('data-call') != null) { voiceCall(orders[btn.getAttribute('data-call')], btn); return; }
     if (btn.getAttribute('data-dl') != null) { openDelivery(orders[btn.getAttribute('data-dl')]); return; }
+    var eb = btn.closest && btn.closest('[data-edit]'); if (eb) { openEditOrder(orders[eb.getAttribute('data-edit')]); return; }
     if (btn.getAttribute('data-redir') != null) { openDelivery(orders[btn.getAttribute('data-redir')], true); return; }
     if (btn.getAttribute('data-destroy') != null) {
       var dz = orders[btn.getAttribute('data-destroy')];

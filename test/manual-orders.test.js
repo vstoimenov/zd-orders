@@ -195,3 +195,21 @@ test('a cart of another shop is never linked', async () => {
   const [c] = await q(`select order_id from zd.abandoned_carts where id = $1::uuid`, [cart]);
   assert.equal(c.order_id, null);
 });
+
+test('„Редактирай“: the shop changes the customer, items, amount and the courier of an order not sent yet; never one with a waybill', async () => {
+  await post({ action: 'create', order: manual() });
+  const [o] = (await listOrders(q)).rows;
+  let res = await post({ action: 'edit', id: o.id, order: manual({ name: 'Мария Петрова', phone: '0899 111 222', delivery_type: 'speedy_office', office_id: 'speedy:79', items: [{ name: 'Книга', qty: 3, price: 12.9 }], total: 43.2 }) });
+  assert.equal(res.statusCode, 200, res.body);
+  const e = json(res).order;
+  assert.deepEqual([e.name, e.phoneNorm, e.courier, e.deliveryType, e.officeId, e.total, e.items[0].qty], ['Мария Петрова', '+359899111222', 'speedy', 'speedy_office', 'speedy:79', 43.2, 3]);
+  assert.match(e.officeText, /^СПИДИ – /);
+  assert.equal(e.deliveryChangedBy, 'shop');
+  res = await post({ action: 'edit', id: o.id, order: manual({ delivery_type: 'econt_address', office_id: '', city: 'Плевен', address_text: 'ул. Васил Левски 1' }) });
+  assert.deepEqual([json(res).order.courier, json(res).order.deliveryType], ['econt', 'econt_address']);
+  assert.equal((await post({ action: 'edit', id: o.id, order: manual({ name: '' }) })).statusCode, 400);
+  await q(`update zd.orders set waybill_number = '1051' where id = $1::uuid`, [o.id]);
+  res = await post({ action: 'edit', id: o.id, order: manual() });
+  assert.equal(res.statusCode, 400); assert.match(json(res).error, /товарителница/);
+  assert.equal((await post({ action: 'edit', id: '00000000-0000-4000-8000-0000000000ff', order: manual() })).statusCode, 400);
+});
