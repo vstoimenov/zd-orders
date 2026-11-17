@@ -16,7 +16,7 @@
 <link rel="icon" href="icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0b0b0a">
-<script>try{var zdSkin=localStorage.getItem('zdSkin');if(zdSkin==='new'){document.documentElement.dataset.skin='new';document.documentElement.dataset.theme=localStorage.getItem('zdTheme')||'dark'}}catch(e){}</script>
+<script>try{if(location.pathname.indexOf('/demo')!==0){document.documentElement.dataset.skin='new';document.documentElement.dataset.theme=localStorage.getItem('zdTheme')||'dark'}}catch(e){}</script>
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -91,7 +91,12 @@ html:not([data-skin="new"]) #ordBadge{display:none}
 html[data-skin="new"] .logout{margin:4px 14px;border-color:transparent;border-radius:14px}
 html[data-skin="new"] #logout{display:none}
 html[data-skin="new"] .themebtn{margin-top:auto;padding-top:14px}
-html[data-skin="new"] .side .whoami{display:none}
+html[data-skin="new"] .side .whoami{margin:8px 14px 0;padding:10px 12px;border-radius:14px;border:1px solid var(--side-line);background:var(--side-2);color:var(--side-muted);word-break:normal}
+html[data-skin="new"] .side .whoami .free,html[data-skin="new"] .side .whoami .sub{margin:0}
+html[data-skin="new"] .planbar{display:block;margin:8px 36px 0;padding:12px 16px;border-radius:16px;line-height:1.5;-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+html[data-skin="new"] .planbar .meter{display:inline-block;vertical-align:middle;width:160px;margin:0 10px}
+@media (max-width:900px){html[data-skin="new"] .planbar{margin:4px 14px 0}}
+html[data-skin="new"] .side .whoami .sub+.free,html[data-skin="new"] .side .whoami .free+.sub{margin-top:4px}
 .mecard{display:none}
 html[data-skin="new"] .mecard{display:flex;align-items:center;gap:11px;margin:8px 14px 14px;padding:10px 10px 10px 12px;border:1px solid var(--side-line);border-radius:18px;background:var(--side-2)}
 html[data-skin="new"] .mecard .avatar{width:36px;height:36px;font-size:13px;letter-spacing:.02em}
@@ -4244,10 +4249,11 @@ tr.hl td{background:var(--accent-soft)}
       $('callsSoon').hidden = role === 'owner'; $('callsTip').hidden = role !== 'owner'; // calls: the owner only for now
       $('callsSetSoon').hidden = role === 'owner'; $('callsSetChip').hidden = role === 'owner'; $('callsSetOwner').hidden = role !== 'owner';
       $('whoami').hidden = role !== 'client';
-      if (role === 'client') $('whoami').innerHTML = '<b>' + esc(d.name || 'Клиент') + '</b>' + esc(d.email) + freeLine(d.freeUntil) + subLine(d.subscription);
+      if (role === 'client') $('whoami').innerHTML = freeLine(d.freeUntil) + subLine(d.subscription); // the name and e-mail are on the card under it
+      $('whoami').hidden = role !== 'client' || !$('whoami').innerHTML;
       planState = (d && d.planState) || null; renderPlanBar();
       if (role) initSupport(d);
-      applySkin(role === 'owner', d);
+      applySkin(true, d);
     }).catch(function () {});
   }
   function shopName(id) { var s = shopById(id); return s ? s.display : '—'; }
@@ -4590,8 +4596,10 @@ tr.hl td{background:var(--accent-soft)}
     var first = (ownerMe.name || '').trim().split(/\s+/)[0];
     $('hello').textContent = greetLine(first);
     $('meAv').textContent = ownerMe.name ? stInitials(ownerMe.name) : '?';
-    $('meName').textContent = ownerMe.name || 'Въведи името си';
-    $('meMail').textContent = ownerMe.email || (ownerMe.name ? '' : 'натисни тук');
+    var own = role === 'owner'; // only the owner sets the name here; a client's comes from their account
+    $('meName').textContent = ownerMe.name || (own ? 'Въведи името си' : 'Моят акаунт');
+    $('meMail').textContent = ownerMe.email || (ownerMe.name || !own ? '' : 'натисни тук');
+    $('meCard').style.cursor = own ? '' : 'default';
   }
   $('meCard').addEventListener('click', function (e) {
     if (e.target.closest('#meOut') || role !== 'owner') return;
