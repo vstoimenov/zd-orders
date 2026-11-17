@@ -4887,7 +4887,7 @@ tr.hl td{background:var(--accent-soft)}
     var list = (d.orders || []).slice(0, 4);
     $('stPack').innerHTML = list.length ? list.map(function (o) {
       var n = (o.items || []).reduce(function (s, it) { return s + (Number(it.qty) || 1); }, 0);
-      return '<li><span class="st-av">' + esc(stInitials(o.name)) + '</span><span class="st-who"><b>' + esc(o.name || '—') + '</b><small>' + esc(when(o.createdAt)) + ' · ' + n + (n === 1 ? ' артикул' : ' артикула') + '</small></span><span class="st-amt">' + esc(money(Number(o.total), o.currency)) + '</span></li>';
+      return '<li><span class="st-av">' + esc(stInitials(o.name)) + '</span><span class="st-who"><b>' + esc(o.name || '—') + '</b><small>' + (COURIER_TAG[o.courier] ? esc(COURIER_TAG[o.courier][0]) + ' · ' : '') + esc(when(o.createdAt)) + ' · ' + n + (n === 1 ? ' артикул' : ' артикула') + '</small></span><span class="st-amt">' + esc(money(Number(o.total), o.currency)) + '</span></li>';
     }).join('') : '<li class="st-empty">🎉 Няма поръчки за пакетиране.</li>';
   }
   function stStock(d) {
