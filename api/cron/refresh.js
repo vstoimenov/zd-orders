@@ -1,6 +1,7 @@
 import { getQuery } from '../../lib/db.js';
 import { fetchEcont, normalizeOffices, normalizeCities, econtPoints } from '../../lib/econt.js';
-import { fetchSpeedyMap, parseSpeedyOffices, attachPostCodes } from '../../lib/speedy.js';
+import { fetchSpeedyMap, parseSpeedyOffices, attachPostCodes, fetchSpeedyOfficesApi, parseSpeedyApiOffices } from '../../lib/speedy.js';
+import { shopsWith, getSecret } from '../../lib/integrations-repo.js';
 import { fetchBoxnowLockers } from '../../lib/boxnow.js';
 import { replaceOffices, replaceCities } from '../../lib/catalog-repo.js';
 import { send, safeEqual, searchParams } from '../../lib/http.js';
@@ -45,7 +46,7 @@ export default async function handler(req, res) {
     result.cities = await replaceCities(q, cities);
     // Speedy comes from an unofficial public page: a failure there must not fail the Econt refresh
     try {
-      result.speedy = await replaceOffices(q, 'speedy', attachPostCodes(parseSpeedyOffices(await fetchSpeedyMap()), cities, econtPoints(officesJson)), { minRatio: 0.8 });
+      result.speedy = await refreshSpeedy(q, cities, econtPoints(officesJson));
     } catch (err) {
       console.error('[cron] speedy refresh failed', err);
       result.speedy = { error: err.message };
@@ -151,4 +152,21 @@ export default async function handler(req, res) {
     console.error('[cron] office alerts failed', err);
   }
   return econtOk ? send(res, 200, result) : send(res, 500, { error: 'server', ...result });
+}
+
+/**
+ * Speedy's offices: first from its official API with a connected shop's contract (addresses and post codes, every new office),
+ * else from the public map page. A list far shorter than the one kept is never written (replaceOffices' minRatio).
+ */
+export async function refreshSpeedy(q, cities, points, { fetchImpl = fetch } = {}) {
+  for (const shopId of (await shopsWith(q, 'speedy')).slice(0, 3)) {
+    try {
+      const stored = JSON.parse(await getSecret(q, 'speedy', shopId));
+      if (!stored?.username || !stored?.password || stored.demo) continue;
+      const offices = attachPostCodes(parseSpeedyApiOffices(await fetchSpeedyOfficesApi(stored, fetchImpl)), cities, points);
+      const r = await replaceOffices(q, 'speedy', offices, { minRatio: 0.8 });
+      if (!r.skipped && r.upserted) return { ...r, source: 'api' };
+    } catch (err) { console.error('[cron] speedy offices via API failed', err.message); }
+  }
+  return { ...(await replaceOffices(q, 'speedy', attachPostCodes(parseSpeedyOffices(await (fetchImpl === fetch ? fetchSpeedyMap() : fetchSpeedyMap(fetchImpl))), cities, points), { minRatio: 0.8 })), source: 'map' };
 }
