@@ -5062,7 +5062,7 @@ tr.hl td{background:var(--accent-soft)}
           '<td>' + (p.balance > 0 ? '<button type="button" class="ghost" data-payout="' + i + '">Изплатено</button>' : '') + '</td></tr>';
       }).join('') + '</tbody>' : '';
       partnersData = pts;
-      $('cFounders').textContent = d.founders ? 'Founders 20: остават ' + d.founders.left + ' от ' + d.founders.of + ' места' : '';
+      $('cFounders').textContent = d.founders && d.founders.left < d.founders.of ? 'Founders 20: остават ' + d.founders.left + ' от ' + d.founders.of + ' места' : '';
       $('cTable').innerHTML = table(['Клиент', 'Магазини', 'Абонамент', 'Състояние', 'Последен вход', ''], clientsData.map(function (u, i) {
         var state = !u.active ? '<span class="badge bad">спрян</span>' : u.hasPassword ? '<span class="badge ok">активен</span>' : '<span class="badge">чака парола</span>';
         if (u.freeUntil) {
@@ -5862,14 +5862,14 @@ tr.hl td{background:var(--accent-soft)}
 
   /* ---- линк от собственика: клиентът си задава парола ---- */
   var inviteToken = new URLSearchParams(location.search).get('invite');
-  /* ---- плановете при регистрацията (цените са с ДДС; стартовите — до 30.11.2026 23:59) ---- */
+  /* ---- плановете при регистрацията (цените са с ДДС; стартовите остават само за избрали ги преди 16.11.2026) ---- */
   var PLAN_LIST = [
     { key: 'starter', name: 'Starter', what: '1 магазин · 300 поръчки на месец', monthly: 67, launchMonthly: 40.2, launchYearly: 321.6 },
     { key: 'growth', name: 'Growth', what: '3 магазина · 1 000 поръчки · Growth Lab', monthly: 97, launchMonthly: 58.2, launchYearly: 465.6 },
     { key: 'business', name: 'Business', what: '6 магазина · 4 000 поръчки · Growth Lab', monthly: 147, launchMonthly: 88.2, launchYearly: 705.6 },
     { key: 'free', name: 'Free', what: '1 магазин · 50 поръчки на месец · първите 14 дни Starter', free: true },
   ];
-  var suPick = { plan: 'growth', billing: 'monthly' }, suInfo = { launch: true, foundersLeft: 20 };
+  var suPick = { plan: 'growth', billing: 'monthly' }, suInfo = { launch: false, foundersLeft: 0 };
   function eurS(v) { v = Math.round(v * 100) / 100; var t = v.toFixed(v % 1 ? 2 : 0).split('.'); return t[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + (t[1] ? ',' + t[1] : '') + ' €'; }
   function planPrice(p, billing) { if (p.free) return 0; return suInfo.launch ? (billing === 'yearly' ? p.launchYearly : p.launchMonthly) : (billing === 'yearly' ? p.monthly * 12 : p.monthly); }
   function renderPlans() {
@@ -5896,7 +5896,7 @@ tr.hl td{background:var(--accent-soft)}
       : (suPick.billing === 'yearly' ? 'Годишно: ' + price + ' на година.' : 'Месечно: ' + price + ' на месец.') + ' Цени с ДДС.');
   }
   function planPicker(d) {
-    suInfo = { launch: d && d.launch !== false, foundersLeft: d && d.foundersLeft != null ? d.foundersLeft : 20 };
+    suInfo = { launch: Boolean(d && d.launch === true), foundersLeft: d && d.foundersLeft != null ? d.foundersLeft : 0 };
     var u = new URLSearchParams(location.search);
     if (PLAN_LIST.some(function (x) { return x.key === u.get('plan'); })) suPick.plan = u.get('plan');
     if (u.get('billing') === 'yearly') suPick.billing = 'yearly';

@@ -6,13 +6,13 @@ import { quote, chooseSubscription, markPaid, cancelSubscription, foundersLeft, 
 
 let q;
 beforeEach(async () => { q = await makeTestQuery(); });
-const BEFORE = new Date('2026-11-30T21:59:00Z'); // 23:59 in Sofia on 30.11
-const AFTER = new Date('2026-11-30T22:00:01Z'); // 00:00:01 on 1.12 in Sofia
+const BEFORE = new Date('2026-11-16T09:59:00Z'); // 11:59 in Sofia on 16.11, while the launch offer was open
+const AFTER = new Date('2026-11-16T10:00:01Z'); // the offer is closed
 let n = 0;
 const user = async () => (await q(`insert into zd.users (email, name) values ($1, 'К') returning id`, [`u${++n}@x.bg`]))[0].id;
 const row = async (id) => (await q(`select ${SUB_COLS} from zd.users where id = $1::uuid`, [id]))[0];
 
-test('launch prices until 30.11.2026 23:59 in Sofia, regular after; with VAT', () => {
+test('launch prices while the offer was open (until 16.11.2026 12:00 in Sofia), regular after; with VAT', () => {
   assert.deepEqual(quote('starter', 'monthly', BEFORE), { plan: 'starter', billing: 'monthly', launch: true, price: 40.2, regular: 67 });
   assert.deepEqual(quote('growth', 'yearly', BEFORE), { plan: 'growth', billing: 'yearly', launch: true, price: 465.6, regular: 1164 });
   assert.equal(quote('business', 'yearly', BEFORE).price, 705.6);
@@ -24,10 +24,10 @@ test('launch prices until 30.11.2026 23:59 in Sofia, regular after; with VAT', (
 test('the plan picked at registration: 14 days free; a change keeps the launch price of the first choice', async () => {
   const id = await user();
   let s = await chooseSubscription(q, id, { plan: 'growth', billing: 'monthly' }, BEFORE);
-  assert.equal(s.price, 58.2); assert.equal(s.trialUntil, '2026-12-14T21:59:00.000Z'); assert.equal(s.launchActive, true);
+  assert.equal(s.price, 58.2); assert.equal(s.trialUntil, '2026-11-30T09:59:00.000Z'); assert.equal(s.launchActive, true);
   s = await chooseSubscription(q, id, { plan: 'business', billing: 'yearly' }, AFTER);
   assert.deepEqual([s.planName, s.billing, s.price, s.regular, s.launch], ['Business', 'yearly', 705.6, 1764, true]);
-  assert.equal(s.trialUntil, '2026-12-14T21:59:00.000Z', 'the free period is not restarted');
+  assert.equal(s.trialUntil, '2026-11-30T09:59:00.000Z', 'the free period is not restarted');
   const late = await user();
   assert.equal((await chooseSubscription(q, late, { plan: 'growth', billing: 'monthly' }, AFTER)).price, 97);
 });
@@ -74,9 +74,9 @@ test('Free at registration: 14 days on Starter, then Free with no payment due; a
   const { planState } = await import('../lib/plan-gate.js');
   const id = await user();
   let s = await chooseSubscription(q, id, { plan: 'free', billing: 'yearly' }, BEFORE);
-  assert.deepEqual([s.plan, s.billing, s.wantsFree, s.trialUntil], ['starter', 'monthly', true, '2026-12-14T21:59:00.000Z']);
-  assert.equal((await planState(q, { id }, new Date('2026-12-01T10:00:00Z'))).effective, 'starter');
-  const after = await planState(q, { id }, new Date('2026-12-20T10:00:00Z'));
+  assert.deepEqual([s.plan, s.billing, s.wantsFree, s.trialUntil], ['starter', 'monthly', true, '2026-11-30T09:59:00.000Z']);
+  assert.equal((await planState(q, { id }, new Date('2026-11-25T10:00:00Z'))).effective, 'starter');
+  const after = await planState(q, { id }, new Date('2026-12-05T10:00:00Z'));
   assert.deepEqual([after.effective, after.limit, after.wantsFree], ['free', 50, true]);
   s = await chooseSubscription(q, id, { plan: 'growth', billing: 'monthly' }, AFTER);
   assert.deepEqual([s.plan, s.wantsFree], ['growth', false]);

@@ -83,8 +83,8 @@ body.ended .live{display:none}
         </div>
         <div class="rl"><span>1</span><b id="n">3 магазина</b><span>10+</span></div>
         <small>Спестяваш</small>
-        <span class="v" id="v">159 €</span>
-        <s id="d">3 × 53 € на месец по редовна цена</s>
+        <span class="v" id="v">441 €</span>
+        <s id="d">3 × 147 € на месец по редовна цена</s>
       </div>
       <a class="cta" id="cta1" href="https://app.ordyx.eu/admin/?offer=1">Вземи 3-те месеца безплатно</a>
       <p class="note">Без карта · регистрация за 1 минута</p>
@@ -96,7 +96,7 @@ body.ended .live{display:none}
     <div class="it"><span>📦</span>Товарителници за Еконт, Спиди и BOX NOW с едно натискане</div>
     <div class="it"><span>🗺️</span><div>Избор на офис или автомат с карта и „Намери ме“ в чекаута<small>Увеличаваш конверсиите си с над 10%</small></div></div>
     <div class="it"><span>🛡️</span>Проверка на клиента в НЕкоректен, преди да пратиш</div>
-    <div class="it"><span>📊</span>Реална печалба след реклама, ДДС и данъци</div>
+    <div class="it"><span>📊</span>Колко ти остава след реклама, ДДС и данъци</div>
     <div class="it"><span>🛒</span>Изоставени колички и напомняния с едно натискане</div>
     <div class="it"><span>🏷️</span>Листове за пакетиране с QR код</div>
     <div class="it"><span>🏬</span>Всички магазини на един екран</div>
@@ -113,15 +113,15 @@ body.ended .live{display:none}
 
   <div class="foot">
     <a class="cta live" id="cta2" href="https://app.ordyx.eu/admin/?offer=1">Регистрирай се безплатно</a>
-    <p class="legal">Цените са без ДДС. <a href="https://ordyx.eu/terms">Общи условия</a> · <a href="https://ordyx.eu/privacy">Поверителност</a></p>
+    <p class="legal">Цените са с ДДС. <a href="https://ordyx.eu/terms">Общи условия</a> · <a href="https://ordyx.eu/privacy">Поверителност</a></p>
   </div>
 </div>
 <script>
 (function () {
-  // regular prices: 29 € the first shop + 12 € every next one (without VAT)
+  // regular prices with VAT: Business 147 € for 6 shops, 7 € every shop above that
   var r = document.getElementById('shops');
   function calc() {
-    var s = Number(r.value), m = 29 + 12 * (s - 1);
+    var s = Number(r.value), m = 147 + 7 * Math.max(0, s - 6);
     document.getElementById('n').textContent = s === 10 ? '10+ магазина' : s + (s === 1 ? ' магазин' : ' магазина');
     document.getElementById('v').textContent = (3 * m) + ' €';
     document.getElementById('d').textContent = '3 × ' + m + ' € на месец по редовна цена';
