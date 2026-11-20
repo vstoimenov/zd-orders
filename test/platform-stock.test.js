@@ -165,3 +165,21 @@ test('ConvertBuilder: stock pulled from its products; a site without a products 
   assert.equal((typeof cfg === 'string' ? JSON.parse(cfg) : cfg).stockApi, false);
   await pullCbStockSoon(q, SHOP); // stockApi false: nothing asked, nothing thrown
 });
+
+test('ConvertBuilder: a product with one variant is the product itself — named as the order lines name it, and added', async () => {
+  const items = mapProductStock([
+    { name: 'Докато спиш', variants: [{ name: 'Default', sku: 'DS-1', stock: 12 }] },
+    { name: 'Пирамида', sku: 'P-1', variants: [{ title: 'Default Title', quantity: 4 }] },
+    { name: 'Тениска', variants: [{ name: 'M', stock: 1 }, { name: 'L', stock: 2 }] },
+  ]);
+  assert.deepEqual(items, [
+    { name: 'Докато спиш', sku: 'DS-1', stock: 12, variant: false },
+    { name: 'Пирамида', sku: 'P-1', stock: 4, variant: false },
+    { name: 'Тениска - M', sku: '', stock: 1, variant: true },
+    { name: 'Тениска - L', sku: '', stock: 2, variant: true },
+  ]);
+  const r = await syncPlatformStock(q, { shopId: SHOP, source: 'convertbuilder', items: items.filter((i) => !i.variant) });
+  assert.equal(r.created, 2);
+  await order([{ name: 'Докато спиш', qty: 1 }]);
+  assert.equal(Number((await prod('Докато спиш')).stock), 12, 'the platform counts the sale itself');
+});
