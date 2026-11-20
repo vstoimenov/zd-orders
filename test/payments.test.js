@@ -14,7 +14,7 @@ let q;
 beforeEach(async () => { q = await makeTestQuery(); setQueryForTests(q); });
 const owner = `zdo_admin=${signSession('secret')}`;
 const call = async ({ method = 'GET', url, cookie, body }) => { const res = fakeRes(); await router({ method, url, headers: cookie ? { cookie } : {}, body: body === undefined ? undefined : JSON.stringify(body) }, res); return res; };
-const BEFORE = new Date('2026-11-20T10:00:00Z');
+const BEFORE = new Date('2026-11-10T10:00:00Z'); // inside the launch window (it closed 16.11.2026): these clients keep their launch price
 async function client() {
   const c = await createClient(q, { email: 'k@shop.bg', name: 'Клиент' });
   const u = await acceptInvite(q, c.token, 'client-pass-1');
@@ -40,7 +40,7 @@ test('the first payment marks the plan paid; each payment pays a month from the 
 test('a yearly payment pays 12 months; before any payment the next one is due when the free days end', async () => {
   const { id } = await client();
   const s = await chooseSubscription(q, id, { plan: 'starter', billing: 'yearly' }, BEFORE);
-  assert.deepEqual(nextPayment(s, []), { date: '2026-12-04', amount: 321.6, regularFrom: null });
+  assert.deepEqual(nextPayment(s, []), { date: '2026-11-24', amount: 321.6, regularFrom: null });
   await addPayment(q, id, { paidAt: '2026-12-04' }, new Date('2026-12-04T10:00:00Z'));
   assert.deepEqual((await listPayments(q, id)).map((p) => [p.amount, p.periodFrom, p.periodTo]), [[321.6, '2026-12-04', '2027-12-03']]);
 });
